@@ -168,31 +168,55 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     return (
         <KeyboardAvoidingView style={[flex]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <Image
-                source={FORGOT_PASSWORD_ELLIPSE_IMAGE}
+            <View
                 style={{
+                    position: 'absolute',
+                    top: 0,
                     width: wp(100),
                     height: hp(25),
-                    resizeMode: 'cover',
-                    position: 'absolute',
-                    top: 0,
-                    zIndex: 999,
+                    zIndex: 999
                 }}
-            />
+                pointerEvents="none"
+            >
+                <Image
+                    source={FORGOT_PASSWORD_ELLIPSE_IMAGE}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        resizeMode: 'cover',
+                    }}
+                />
+            </View>
             <View style={[styles.container, { backgroundColor: whiteColor, }]}>
-            <Image
-                source={FORGOT_PASSWORD_ELLIPSE_IMAGE}
-                style={{
-                    width: wp(100),
-                    height: hp(65),
-                    resizeMode: 'cover',
-                    position: 'absolute',
-                    top: 0,
-                    zIndex: 999,
-                }}
-            />
+                <View
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        width: wp(100),
+                        height: hp(25),
+                        zIndex: 999
+                    }}
+                    pointerEvents="none"
+                >
+                    <Image
+                        source={FORGOT_PASSWORD_ELLIPSE_IMAGE}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            resizeMode: 'cover',
+                        }}
+                    />
+                </View>
                 <View style={[{ width: '100%', height: hp(5) }, flexDirectionRow, alignItemsCenter]}>
-                    <TouchableOpacity style={[styles.backIcon, alignItemsCenter]} onPress={() => navigation.goBack()}>
+                    <TouchableOpacity style={[styles.backIcon, alignItemsCenter]} onPress={() => {
+                        if (currentStep === 'email') {
+                            navigation.goBack();
+                        } else if (currentStep === 'otp') {
+                            setCurrentStep('email');
+                        } else if (currentStep === 'password') {
+                            setCurrentStep('otp');
+                        }
+                    }}>
                         <Ionicons name={'arrow-back'} size={33} color={blackColor} />
                     </TouchableOpacity>
                 </View>
@@ -278,11 +302,6 @@ const ForgotPasswordScreen = ({ navigation }) => {
                                     onPress={toggleShowPassword}
                                 />
                             }
-                            leftIcon={
-                                <View>
-                                    <MaterialCommunityIcons name={"lock"} size={22} color={mediumGray} />
-                                </View>
-                            }
                         />
                         {passwordError && <Text style={styles.error}>{passwordError}</Text>}
                         <CustomTextInput
@@ -304,11 +323,6 @@ const ForgotPasswordScreen = ({ navigation }) => {
                                     color={grayColor}
                                     onPress={toggleShowConfirmPassword}
                                 />
-                            }
-                            leftIcon={
-                                <View>
-                                    <MaterialCommunityIcons name={"lock"} size={22} color={mediumGray} />
-                                </View>
                             }
                         />
                         {confirmPasswordError && <Text style={styles.error}>{confirmPasswordError}</Text>}
@@ -338,7 +352,7 @@ export default ForgotPasswordScreen;
 const styles = StyleSheet.create({
     container: {
         padding: spacings.large,
-        backgroundColor: whiteColor
+        backgroundColor: whiteColor,
     },
     box: {
         width: '100%', height: hp(100), padding: spacings.large

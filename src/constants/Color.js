@@ -15,11 +15,16 @@ export const verylightGrayColor = "#E6E6E6";
 export const mediumGray = "#808080";
 export const lightPink = "#FFEBEB";
 export const blackOpacity7 = 'rgba(0,0,0,0.7)';
-export const greenColor = "#3B8000";
+export const greenColor = "#4caf50";
 
 
 
-export const orangeColor = '#FF5733';
+export const orangeColor = '#f44336';
 export const lightOrangeColor = '#EF502E';
 export const ExtraExtralightOrangeColor = '#FFF4F1';
 export const blueColor = "#007BFF";
+export const simpleBlueColor = '#3f51b5';
+export const pinkColor = '#e91e63';
+export const darkYellowColor = '#f7931e';
+export const yellowColor = '#fcd34d'
+

@@ -7,19 +7,30 @@ import SplashScreen from './src/screens/SplashScreen';
 import AuthStack from './src/navigations/AuthStack';
 import { NavigationContainer } from '@react-navigation/native';
 import MainTabNavigator from './src/navigations/MainTabNavigator';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { flex, alignItemsCenter, alignJustifyCenter } = BaseStyle;
 
 function App(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // add this
+
 
   useEffect(() => {
-    // Simulate a splash screen timeout
     const timer = setTimeout(() => {
-      setIsLoading(false); // Hide splash screen after 3 seconds
-    }, 5000);
+      setIsLoading(false);
+    }, 2000);
 
     return () => clearTimeout(timer);
+  }, []);
+  useEffect(() => {
+    const checkLogin = async () => {
+      const loginStatus = await AsyncStorage.getItem('isLoggedIn');
+      setIsLoggedIn(loginStatus === 'true');
+      setIsLoading(false);
+    };
+
+    checkLogin();
   }, []);
 
   return (
@@ -28,12 +39,18 @@ function App(): React.JSX.Element {
         style={{
           height:
             Platform.OS === 'ios'
-              ? hp(93)
+              ? hp(94.7)
               : hp(100)
         }}
       >
         <NavigationContainer>
-          {isLoading ? <SplashScreen /> : <AuthStack />}
+          {isLoading ? (
+            <SplashScreen />
+          ) : isLoggedIn ? (
+            <MainTabNavigator />
+          ) : (
+            <AuthStack />
+          )}
         </NavigationContainer>
       </KeyboardAvoidingView>
     </SafeAreaView>

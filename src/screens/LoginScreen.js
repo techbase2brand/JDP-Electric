@@ -9,6 +9,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/dist/MaterialCommu
 import { GOOGLE_ICON, LOGIN_IMAGE } from '../assests/images';
 import { DONT_HAVE_ACCOUNT, FORGOT_PASSWORD, LET_CONNECT_WITH_US, LOGIN, SIGN_UP } from '../constants/Constants';
 import CustomButton from '../components/CustomButton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { flex, alignItemsCenter, alignJustifyCenter, resizeModeContain, flexDirectionRow, justifyContentSpaceBetween, textAlign } = BaseStyle;
 
@@ -18,6 +19,44 @@ const LoginScreen = ({ navigation }) => {
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [isPasswordVisible, setPasswordVisible] = useState(false);
+
+
+    const validateEmail = (email) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const onPressForgotPassword = () => {
+        navigation.navigate("ForgotPassword")
+    }
+
+    const handleLogin = async() => {
+        let isValid = true;
+
+        // Reset previous errors
+        setEmailError('');
+        setPasswordError('');
+
+        if (!email.trim()) {
+            setEmailError('Email is required');
+            isValid = false;
+        } else if (!validateEmail(email)) {
+            setEmailError('Please enter a valid email');
+            isValid = false;
+        }
+
+        if (!password.trim()) {
+            setPasswordError('Password is required');
+            isValid = false;
+        }
+
+        if (isValid) {
+            await AsyncStorage.setItem('isLoggedIn', 'true');
+            console.log("Login success:", email, password);
+            navigation.navigate("MainTabNavigator"); 
+            // Alert.alert("Login Successful", `Welcome back, ${email}`);
+        }
+    };
 
     return (
         <View style={[flex, styles.container]}>
@@ -61,16 +100,16 @@ const LoginScreen = ({ navigation }) => {
                 {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
                 <View style={[{ width: "100%", height: hp(3), alignItems: "flex-end", marginTop: spacings.large }]}>
                     <Text style={[styles.title, { fontSize: style.fontSizeMedium.fontSize }]}
-                    // onPress={()=>navigation.navigate("ForgotPassword")}
+                    onPress={onPressForgotPassword}
                     >{FORGOT_PASSWORD}</Text>
                 </View>
                 <View style={{ marginTop: Platform.OS === "android" ? hp(5) : hp(3) }}>
                     <CustomButton title={LOGIN}
-                    // onPress={()=>navigation.navigate("MainTabNavigator")}
+                    onPress={handleLogin}
                     />
                 </View>
                 <View style={[flexDirectionRow, alignJustifyCenter]}>
-                    <Text style={[styles.title, { fontSize: style.fontSizeNormal.fontSize, fontWeight: 0 }, textAlign]}>{DONT_HAVE_ACCOUNT}</Text>
+                    <Text style={[styles.title, { fontSize: style.fontSizeNormal.fontSize, fontWeight: 0 }, textAlign]}>{DONT_HAVE_ACCOUNT} </Text>
                     <Text style={[styles.title, { fontSize: style.fontSizeNormal.fontSize, fontWeight: 0, color: blueColor }, textAlign]}
                         onPress={() => console.log("Clikded")}
                     >

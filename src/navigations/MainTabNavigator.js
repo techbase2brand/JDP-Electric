@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 15,
+    paddingVertical: 20,
     backgroundColor: '#3A8DFF',
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
