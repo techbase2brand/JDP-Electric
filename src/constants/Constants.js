@@ -20,10 +20,13 @@
 // export const ALREADY_HAVE_AN_ACCOUNT = "Already have an Account?";
 
 
-export const LET_CONNECT_WITH_US = "Let’s Connect With Us!";
+export const LET_CONNECT_WITH_US = "Please sign in to access your account and personalized features.";
+export const SIGN_IN = "Sign In";
+
 export const FORGOT_PASSWORD = "Forgot Password?";
 export const LOGIN = "Login";
 export const SIGN_UP = "Sign Up";
+export const CREATE_AN_ACCOUNT="Create an account?";
 export const DONT_HAVE_ACCOUNT = "Don't have an account?";
 export const EMAIL = "Email";
 export const ENTER_YOU_EMAIL = "Enter your email we’ll send a otp on your email to reset your password.";

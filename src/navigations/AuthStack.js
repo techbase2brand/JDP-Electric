@@ -40,9 +40,9 @@ export default function AuthStack() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isFirstLaunch && (
+      {/* {isFirstLaunch && ( */}
         <Stack.Screen name="OnBoard" component={OnBoardingScreen} />
-      )}
+      {/* )} */}
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="MainTabNavigator" component={MainTabNavigator} />

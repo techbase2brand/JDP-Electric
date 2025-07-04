@@ -34,7 +34,7 @@ const Header = ({ title, onBack, showProfile, scanner }) => {
                             />
                             <View>
                                 <Text style={styles.name}>John Smith</Text>
-                                <Text style={styles.role}>Electrical</Text>
+                                <Text style={styles.role}>Lead Labor</Text>
                             </View>
                         </View>
                         <TouchableOpacity style={styles.notificationIcon}>
@@ -43,7 +43,7 @@ const Header = ({ title, onBack, showProfile, scanner }) => {
                     </>
                 ) : (
                     <>
-                        <View style={{ flex: 1 }}>
+                        {/* <View style={{ flex: 1 }}>
                             <View style={styles.searchWrapper}>
                                 <TextInput
                                     placeholder="Search..."
@@ -52,7 +52,7 @@ const Header = ({ title, onBack, showProfile, scanner }) => {
                                 />
                                 <Ionicons name="search" size={20} color={grayColor} style={{ marginLeft: 10 }} />
                             </View>
-                        </View>
+                        </View> */}
                         {scanner ? <TouchableOpacity style={[styles.notificationIcon, { marginTop: !showProfile ? 10 : 0 }]}>
                             <MaterialCommunityIcons name="line-scan" size={34} color={whiteColor} />
                         </TouchableOpacity>
@@ -64,7 +64,7 @@ const Header = ({ title, onBack, showProfile, scanner }) => {
             </View>
 
             {/* Search Bar if profile is shown */}
-            {showProfile && (
+            {/* {showProfile && (
                 <View style={styles.searchWrapper}>
                     <TextInput
                         placeholder="Search..."
@@ -73,7 +73,7 @@ const Header = ({ title, onBack, showProfile, scanner }) => {
                     />
                     <Ionicons name="search" size={20} color={grayColor} style={{ marginLeft: 10 }} />
                 </View>
-            )}
+            )} */}
         </View>
     );
 };
@@ -81,7 +81,7 @@ const Header = ({ title, onBack, showProfile, scanner }) => {
 const styles = {
     headerContainer: {
         padding: 16,
-        backgroundColor: lightBlueColor,
+        backgroundColor: "#009FE3",
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
     },

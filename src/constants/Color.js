@@ -1,6 +1,5 @@
 export const darkgrayColor = "#252837";
 export const whiteColor = "#fff";
-export const blackColor = "#252837";
 export const grayColor = "#646E77";
 export const redColor = "#FF0000";
 export const goldColor = "#FFA928";
@@ -22,7 +21,10 @@ export const greenColor = "#4caf50";
 export const orangeColor = '#f44336';
 export const lightOrangeColor = '#EF502E';
 export const ExtraExtralightOrangeColor = '#FFF4F1';
-export const blueColor = "#007BFF";
+
+export const blueColor = "#0071BC";
+export const blackColor = "#151515";
+
 export const simpleBlueColor = '#3f51b5';
 export const pinkColor = '#e91e63';
 export const darkYellowColor = '#f7931e';

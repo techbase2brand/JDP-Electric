@@ -27,7 +27,7 @@ function App(): React.JSX.Element {
     const checkLogin = async () => {
       const loginStatus = await AsyncStorage.getItem('isLoggedIn');
       setIsLoggedIn(loginStatus === 'true');
-      setIsLoading(false);
+      // setIsLoading(false);
     };
 
     checkLogin();

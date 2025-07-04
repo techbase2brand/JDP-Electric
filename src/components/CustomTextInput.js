@@ -5,7 +5,7 @@ import { blackColor, blueColor, grayColor, lightShadeBlue, mediumGray, redColor,
 
 const CustomTextInput = ({ placeholder, style, rightIcon, label, required, leftIcon, ...props }) => {
   return (
-    <View style={{ marginTop: spacings.xxxLarge }}>
+    <View style={{ marginTop: spacings.ExtraLarge2x }}>
       <Text style={[styles.label]}>{label}{required && <Text style={styles.asterisk}> *</Text>}</Text>
       <View style={[styles.inputContainer, style]}>
         {leftIcon && <View style={{marginRight:8}}>{leftIcon}</View>}
@@ -24,16 +24,25 @@ const CustomTextInput = ({ placeholder, style, rightIcon, label, required, leftI
 
 const styles = StyleSheet.create({
   label: {
-    fontSize: 16,
-    fontWeight: '500',
+    position:"absolute",
+    bottom:24,
+    left:24,
+    fontSize: 10,
     color: blackColor, // Default color
     marginBottom: 10,
+    zIndex:99,
+    paddingHorizontal:10,
+    paddingVertical:5,
+    borderRadius:7,
+    borderWidth:1,
+    borderColor:"#15151533",
+    backgroundColor:"#F1F1F1",
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: blackColor,
+    borderColor:"#15151533",
     borderRadius: 50,
     paddingHorizontal: 15,
     paddingVertical:2,
