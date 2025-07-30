@@ -28,5 +28,6 @@ export const blackColor = "#151515";
 export const simpleBlueColor = '#3f51b5';
 export const pinkColor = '#e91e63';
 export const darkYellowColor = '#f7931e';
-export const yellowColor = '#fcd34d'
+export const yellowColor = '#fcd34d';
+export const tabColor="#3A79E8"
 

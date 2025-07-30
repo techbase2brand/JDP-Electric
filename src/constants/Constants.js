@@ -39,3 +39,50 @@ export const RESEND_CODE = " Resend Code";
 export const RESET_PASSWORD = "Reset Password";
 export const PASSWORD = "Password";
 export const SET_THE_NEW_PASSWORD = "Set the new password for your account so you can login and access all the features.";
+
+
+export const SETTINGS_DESCRIPTIONS = {
+  pushNotifications: 'Receive push notifications on your device',
+  emailNotifications: 'Receive notifications via email',
+  jobAssignments: 'Get notified about new job assignments',
+  timerReminders: 'Reminders about timer and break times',
+  materialUpdates: 'Updates about material orders and deliveries',
+  teamMessages: 'Messages from team members and supervisors',
+  locationTracking: 'Allow app to track your location for timer features',
+  dataSharing: 'Share anonymous usage data to improve the app',
+  analytics: 'Help us improve the app with usage analytics',
+  darkMode: 'Use dark theme for the app',
+  autoStartTimer: 'Automatically start timer when entering job site',
+};
+
+export const DEFAULT_USER_INFO = {
+  name: 'Sarah Johnson',
+  email: 'sarah.johnson@jdpelectrics.com',
+  phone: '+1 (555) 123-4567',
+  employeeId: 'EMP-001',
+  department: 'Field Operations',
+  hireDate: '2023-01-15',
+  role: 'Lead Labor',
+};
+
+export const DEFAULT_SETTINGS = {
+  notifications: {
+    pushNotifications: true,
+    emailNotifications: true,
+    jobAssignments: true,
+    timerReminders: true,
+    materialUpdates: false,
+    teamMessages: true,
+  },
+  privacy: {
+    locationTracking: true,
+    dataSharing: false,
+    analytics: true,
+  },
+  preferences: {
+    darkMode: false,
+    language: 'English',
+    units: 'Imperial',
+    autoStartTimer: true,
+  },
+};

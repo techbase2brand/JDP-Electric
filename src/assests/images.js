@@ -9,16 +9,14 @@ export const GOOGLE_ICON = require('./googleIcon.png');
 export const SUCCESS_IMAGE = require('./success.png');
 export const FORGOT_PASSWORD_ELLIPSE_IMAGE = require('./forgotpasswordellipse.png');
 
-// tabIcons 
-export const HOME_ICON = require('./tab_assests/home.png');
-export const HOME_ICON_FOCUSED = require('./tab_assests/home_focused.png');
-export const TIMESHEET_ICON = require('./tab_assests/time_sheet.png');
-export const TIMESHEET_ICON_FOCUSED = require('./tab_assests/time_sheet_focused.png');
-export const JOBS_ICON = require('./tab_assests/jobs.png');
-export const JOBS_ICON_FOCUSED = require('./tab_assests/jobs_focused.png');
-export const PROFILE_ICON = require('./tab_assests/user.png');
-export const PROFILE_ICON_FOCUSED = require('./tab_assests/user_focused.png');
-
-
-
-
+// tabIcons
+export const HOME_ICON = require('./tab_assests/light/Home.png');
+export const HOME_ICON_FOCUSED = require('./tab_assests/bold/Home.png');
+export const TIMESHEET_ICON = require('./tab_assests/light/Calendar.png');
+export const TIMESHEET_ICON_FOCUSED = require('./tab_assests/bold/Calendar.png');
+export const JOBS_ICON = require('./tab_assests/light/Work.png');
+export const JOBS_ICON_FOCUSED = require('./tab_assests/bold/Work.png');
+export const REPORTS_ICON = require('./tab_assests/light/Activity.png');
+export const REPORTS_ICON_FOCUSED = require('./tab_assests/bold/Activity.png');
+export const PROFILE_ICON = require('./tab_assests/light/Profile.png');
+export const PROFILE_ICON_FOCUSED = require('./tab_assests/bold/Profile.png');
