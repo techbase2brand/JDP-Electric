@@ -43,7 +43,7 @@ interface User {
   avatar?: string;
 }
 
-const ProfileScreen = React.memo(({user, onNavigate, onLogout}) => {
+const ProfileScreen = React.memo(({user, onNavigate, onLogout, navigation}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -125,12 +125,12 @@ const ProfileScreen = React.memo(({user, onNavigate, onLogout}) => {
     setShowPhotoOptions(!showPhotoOptions);
   }, [showPhotoOptions]);
 
-  const handleFormChange = useCallback((field: string, value: string) => {
+  const handleFormChange = useCallback((field, value) => {
     setEditForm(prev => ({...prev, [field]: value}));
   }, []);
 
   const renderSkillBadge = useCallback(
-    (skill: string, index: number) => (
+    (skill, index) => (
       <Animated.View
         key={index}
         style={[
@@ -262,7 +262,7 @@ const ProfileScreen = React.memo(({user, onNavigate, onLogout}) => {
           <View style={styles.headerTop}>
             <View style={styles.headerLeft}>
               <TouchableOpacity
-                onPress={() => onNavigate('dashboard')}
+                onPress={() => navigation.goBack()}
                 style={styles.backButton}
                 activeOpacity={0.7}>
                 <Text style={styles.backButtonText}>‹</Text>

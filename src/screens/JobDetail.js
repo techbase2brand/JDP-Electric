@@ -108,12 +108,12 @@ export default function JobDetail({
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => onNavigate('job-listing')}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButton}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Job Details</Text>
-        <TouchableOpacity onPress={() => onNavigate('timer-screen')}>
-          <Text style={styles.timerButton}>⏱️</Text>
+        <TouchableOpacity>
+          <Text style={styles.timerButton}></Text>
         </TouchableOpacity>
       </View>
 
@@ -121,8 +121,8 @@ export default function JobDetail({
         {/* Job Header */}
         <View style={styles.jobHeader}>
           <View style={styles.jobTitleContainer}>
-            <Text style={styles.jobId}>{job.id}</Text>
-            <Text style={styles.jobTitle}>{job.title}</Text>
+            <Text style={styles.jobId}>{job?.id}</Text>
+            <Text style={styles.jobTitle}>{job?.title}</Text>
           </View>
           <View style={styles.statusBadges}>
             <View
@@ -220,25 +220,25 @@ export default function JobDetail({
 
           <TouchableOpacity
             style={[styles.actionButton, {backgroundColor: '#8B5CF6'}]}
-            onPress={() => onNavigate('order-products')}>
+            onPress={() => navigation.navigate('OrderProducts')}>
             <Text style={styles.actionButtonText}>📦 Order Materials</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.actionButton, {backgroundColor: '#10B981'}]}
-            onPress={() => onNavigate('bluesheet-submission')}>
+            onPress={() => navigation.navigate('BluesheetSubmission')}>
             <Text style={styles.actionButtonText}>📋 Submit Bluesheet</Text>
           </TouchableOpacity>
 
           {/* Status Update Buttons */}
-          {getStatusButtons().map(button => (
+          {/* {getStatusButtons().map(button => (
             <TouchableOpacity
               key={button.status}
               style={[styles.actionButton, {backgroundColor: button.color}]}
               onPress={() => handleStatusUpdate(button.status)}>
               <Text style={styles.actionButtonText}>{button.label}</Text>
             </TouchableOpacity>
-          ))}
+          ))} */}
         </View>
 
         {/* Additional Information */}
