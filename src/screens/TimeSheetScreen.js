@@ -2,571 +2,623 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
-  SafeAreaView,
-  StyleSheet,
-  StatusBar,
-  Alert,
   ScrollView,
+  TouchableOpacity,
+  Alert,
+  StatusBar,
+  StyleSheet,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
+
+// Embedded Colors
+const Colors = {
+  primary: '#3B82F6',
+  primaryLight: '#EBF4FF',
+  white: '#FFFFFF',
+  backgroundLight: '#F8FAFC',
+  text: '#1E293B',
+  textSecondary: '#64748B',
+  textLight: '#94A3B8',
+  border: '#E2E8F0',
+  success: '#10B981',
+  successLight: '#D1FAE5',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+  error: '#EF4444',
+  errorLight: '#FEE2E2',
+};
+
+// Embedded Spacing and Dimensions
+const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+};
+
+const BorderRadius = {
+  sm: 6,
+  md: 8,
+  lg: 12,
+};
+
+const Shadows = {
+  md: {
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+};
+
+
 
 const TimeSheetScreen = () => {
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [seconds, setSeconds] = useState(0);
-  const [selectedJob, setSelectedJob] = useState('');
-  const [isOnBreak, setIsOnBreak] = useState(false);
-  const [breakSeconds, setBreakSeconds] = useState(0);
-  const [location, setLocation] = useState('Houston, TX');
-  const [gpsStatus, setGpsStatus] = useState('Connected');
+  const navigation = useNavigation();
+  const [currentEntry, setCurrentEntry] = useState(null);
+  const [timeEntries, setTimeEntries] = useState([]);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
-  const jobs = [
-    { id: 'JOB-001', title: 'Electrical Panel Upgrade' },
-    { id: 'JOB-002', title: 'Commercial Lighting Installation' },
-    { id: 'JOB-003', title: 'Emergency Generator Maintenance' },
-  ];
-
-  const timeEntries = [
-    { id: 1, job: 'JOB-001', duration: '2h 30m', date: 'Today 08:00' },
-    { id: 2, job: 'JOB-002', duration: '1h 45m', date: 'Today 11:00' },
-  ];
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
+  // useEffect(() => {
+  //   StatusBar.setBarStyle('dark-content');
+  //   loadTimeEntries();
     
-    if (isRunning && !isPaused && !isOnBreak) {
-      interval = setInterval(() => {
-        setSeconds(prevSeconds => prevSeconds + 1);
-      }, 1000);
-    } else if (isOnBreak && isRunning) {
-      interval = setInterval(() => {
-        setBreakSeconds(prevSeconds => prevSeconds + 1);
-      }, 1000);
+  //   // Timer interval for active entries
+  //   const interval = setInterval(() => {
+  //     if (currentEntry && currentEntry.status === 'active') {
+  //       const now = new Date();
+  //       const elapsed = Math.floor((now.getTime() - currentEntry.startTime.getTime()) / 1000);
+  //       setElapsedTime(elapsed);
+  //     }
+  //   }, 1000);
+
+  //   return () => clearInterval(interval);
+  // }, [currentEntry]);
+
+  const loadTimeEntries = () => {
+    // Mock data for time entries
+    const mockEntries = [
+      {
+        id: '1',
+        jobId: 'job1',
+        jobTitle: 'Electrical Panel Upgrade',
+        startTime: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
+        endTime: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+        totalHours: 3,
+        status: 'completed',
+        notes: 'Completed main panel installation',
+      },
+      {
+        id: '2',
+        jobId: 'job2',
+        jobTitle: 'Outlet Installation',
+        startTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        totalHours: 0,
+        status: 'active',
+        notes: '',
+      },
+    ];
+
+    setTimeEntries(mockEntries);
+    const activeEntry = mockEntries.find(entry => entry.status === 'active');
+    if (activeEntry) {
+      setCurrentEntry(activeEntry);
     }
-
-    return () => clearInterval(interval);
-  }, [isRunning, isPaused, isOnBreak]);
-
-  const formatTime = (totalSeconds) => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const secs = totalSeconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleStart = () => {
-    if (!selectedJob) {
-      Alert.alert('Select Job', 'Please select a job before starting the timer');
-      return;
-    }
-    setIsRunning(true);
-    setIsPaused(false);
-  };
-
-  const handlePause = () => {
-    setIsPaused(!isPaused);
-  };
-
-  const handleStop = () => {
+  const startTimer = () => {
     Alert.alert(
-      'Stop Timer',
-      'Are you sure you want to stop the timer and save this time entry?',
+      'Start Timer',
+      'Select a job to start tracking time',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Stop & Save', 
+        {
+          text: 'Select Job',
           onPress: () => {
-            setIsRunning(false);
-            setIsPaused(false);
-            setIsOnBreak(false);
-            setSeconds(0);
-            setBreakSeconds(0);
-            Alert.alert('Success', 'Time entry saved successfully!');
-          }
+            // In a real app, this would open job selection
+            const newEntry = {
+              id: `entry-${Date.now()}`,
+              jobId: 'selected-job',
+              jobTitle: 'New Job Task',
+              startTime: new Date(),
+              totalHours: 0,
+              status: 'active',
+            };
+            setCurrentEntry(newEntry);
+            setTimeEntries(prev => [...prev, newEntry]);
+          },
         },
       ]
     );
   };
 
-  const handleBreak = () => {
-    if (isOnBreak) {
-      setIsOnBreak(false);
-      setBreakSeconds(0);
-    } else {
-      setIsOnBreak(true);
-    }
+  const pauseTimer = () => {
+    if (!currentEntry) return;
+    
+    const updatedEntry = {
+      ...currentEntry,
+      status: 'paused',
+    };
+    
+    setCurrentEntry(updatedEntry);
+    setTimeEntries(prev => 
+      prev.map(entry => 
+        entry.id === currentEntry.id ? updatedEntry : entry
+      )
+    );
   };
 
-  const renderJobSelector = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Select Job</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.jobSelector}>
-          {jobs.map((job) => (
-            <TouchableOpacity
-              key={job.id}
-              style={[
-                styles.jobOption,
-                selectedJob === job.id && styles.jobOptionSelected,
-              ]}
-              onPress={() => setSelectedJob(job.id)}
-            >
-              <Text style={styles.jobId}>{job.id}</Text>
-              <Text style={[
-                styles.jobTitle,
-                selectedJob === job.id && styles.jobTitleSelected,
-              ]}>
-                {job.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
+  const resumeTimer = () => {
+    if (!currentEntry) return;
+    
+    const updatedEntry = {
+      ...currentEntry,
+      status: 'active',
+    };
+    
+    setCurrentEntry(updatedEntry);
+    setTimeEntries(prev => 
+      prev.map(entry => 
+        entry.id === currentEntry.id ? updatedEntry : entry
+      )
+    );
+  };
+
+  const stopTimer = () => {
+    if (!currentEntry) return;
+
+    Alert.alert(
+      'Stop Timer',
+      'Are you sure you want to stop tracking time for this job?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Stop',
+          style: 'destructive',
+          onPress: () => {
+            const now = new Date();
+            const totalHours = Math.floor((now.getTime() - currentEntry.startTime.getTime()) / (1000 * 60 * 60));
+            
+            const updatedEntry = {
+              ...currentEntry,
+              endTime: now,
+              totalHours,
+              status: 'completed',
+            };
+            
+            setTimeEntries(prev => 
+              prev.map(entry => 
+                entry.id === currentEntry.id ? updatedEntry : entry
+              )
+            );
+            setCurrentEntry(null);
+            setElapsedTime(0);
+          },
+        },
+      ]
+    );
+  };
+
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getTotalHoursToday = () => {
+    const today = new Date().toDateString();
+    return timeEntries
+      .filter(entry => entry.startTime.toDateString() === today)
+      .reduce((total, entry) => total + entry.totalHours, 0);
+  };
+
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Icon name="arrow-back" size={24} color={Colors.text} />
+      </TouchableOpacity>
+      
+      <Text style={styles.headerTitle}>Timesheet</Text>
+      
+      <TouchableOpacity 
+        style={styles.historyButton}
+        onPress={() => navigation.navigate('TimesheetHistory')}
+      >
+        <Icon name="history" size={24} color={Colors.text} />
+      </TouchableOpacity>
     </View>
   );
 
-  const renderLocationStatus = () => (
-    <View style={styles.locationContainer}>
-      <View style={styles.locationHeader}>
-        <Text style={styles.locationIcon}>📍</Text>
-        <View style={styles.locationInfo}>
-          <Text style={styles.locationText}>{location}</Text>
-          <Text style={styles.gpsStatusText}>GPS: {gpsStatus}</Text>
+  const renderActiveTimer = () => {
+    if (!currentEntry) return null;
+
+    return (
+      <View style={styles.activeTimerContainer}>
+        <Text style={styles.activeJobTitle}>{currentEntry.jobTitle}</Text>
+        <Text style={styles.timerDisplay}>{formatTime(elapsedTime)}</Text>
+        
+        <View style={styles.timerControls}>
+          {currentEntry.status === 'active' ? (
+            <>
+              <TouchableOpacity style={styles.pauseButton} onPress={pauseTimer}>
+                <Icon name="pause" size={24} color={Colors.white} />
+                <Text style={styles.controlButtonText}>Pause</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.stopButton} onPress={stopTimer}>
+                <Icon name="stop" size={24} color={Colors.white} />
+                <Text style={styles.controlButtonText}>Stop</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <TouchableOpacity style={styles.resumeButton} onPress={resumeTimer}>
+                <Icon name="play-arrow" size={24} color={Colors.white} />
+                <Text style={styles.controlButtonText}>Resume</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.stopButton} onPress={stopTimer}>
+                <Icon name="stop" size={24} color={Colors.white} />
+                <Text style={styles.controlButtonText}>Stop</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
-        <View style={[
-          styles.gpsIndicator,
-          { backgroundColor: gpsStatus === 'Connected' ? '#10B981' : '#F59E0B' }
-        ]} />
       </View>
-      <View style={styles.geofenceStatus}>
-        <Text style={styles.geofenceText}>🎯 Within job site geofence</Text>
+    );
+  };
+
+  const renderStartTimer = () => {
+    if (currentEntry) return null;
+
+    return (
+      <View style={styles.startTimerContainer}>
+        <Icon name="timer" size={80} color={Colors.textLight} />
+        <Text style={styles.startTimerTitle}>Ready to track time</Text>
+        <Text style={styles.startTimerSubtitle}>
+          Start a timer to track time spent on jobs
+        </Text>
+        
+        <TouchableOpacity style={styles.startButton} onPress={startTimer}>
+          <Icon name="play-arrow" size={24} color={Colors.white} />
+          <Text style={styles.startButtonText}>Start Timer</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderTodaysSummary = () => (
+    <View style={styles.summaryContainer}>
+      <Text style={styles.summaryTitle}>Today's Summary</Text>
+      
+      <View style={styles.summaryStats}>
+        <View style={styles.statCard}>
+          <Icon name="schedule" size={24} color={Colors.primary} />
+          <Text style={styles.statNumber}>{getTotalHoursToday()}h</Text>
+          <Text style={styles.statLabel}>Total Hours</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <Icon name="work" size={24} color={Colors.success} />
+          <Text style={styles.statNumber}>
+            {timeEntries.filter(entry => 
+              entry.startTime.toDateString() === new Date().toDateString()
+            ).length}
+          </Text>
+          <Text style={styles.statLabel}>Jobs Worked</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <Icon name="check-circle" size={24} color={Colors.warning} />
+          <Text style={styles.statNumber}>
+            {timeEntries.filter(entry => 
+              entry.status === 'completed' && 
+              entry.startTime.toDateString() === new Date().toDateString()
+            ).length}
+          </Text>
+          <Text style={styles.statLabel}>Completed</Text>
+        </View>
       </View>
     </View>
   );
 
-  const renderTimeEntry = (entry) => (
-    <View key={entry.id} style={styles.timeEntryCard}>
-      <View style={styles.timeEntryHeader}>
-        <Text style={styles.timeEntryJob}>{entry.job}</Text>
-        <Text style={styles.timeEntryDuration}>{entry.duration}</Text>
-      </View>
-      <Text style={styles.timeEntryDate}>{entry.date}</Text>
+  const renderRecentEntries = () => (
+    <View style={styles.recentContainer}>
+      <Text style={styles.sectionTitle}>Recent Entries</Text>
+      
+      {timeEntries.slice(0, 5).map((entry) => (
+        <View key={entry.id} style={styles.entryCard}>
+          <View style={styles.entryHeader}>
+            <Text style={styles.entryJobTitle}>{entry.jobTitle}</Text>
+            <View style={[
+              styles.entryStatus,
+              { backgroundColor: 
+                entry.status === 'active' ? Colors.success :
+                entry.status === 'paused' ? Colors.warning :
+                Colors.textSecondary
+              }
+            ]}>
+              <Text style={styles.entryStatusText}>{entry.status}</Text>
+            </View>
+          </View>
+          
+          <Text style={styles.entryTime}>
+            {entry.startTime.toLocaleDateString()} - {entry.totalHours}h
+          </Text>
+          
+          {entry.notes && (
+            <Text style={styles.entryNotes}>{entry.notes}</Text>
+          )}
+        </View>
+      ))}
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Time Tracker</Text>
-        <View style={styles.todayHours}>
-          <Text style={styles.todayHoursText}>Today: 4h 15m</Text>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Job Selector */}
-        {renderJobSelector()}
-
-        {/* Timer Display */}
-        <View style={styles.timerSection}>
-          <View style={styles.timerDisplay}>
-            <Text style={styles.timerText}>{formatTime(seconds)}</Text>
-            {isOnBreak && (
-              <View style={styles.breakDisplay}>
-                <Text style={styles.breakLabel}>Break Time</Text>
-                <Text style={styles.breakTime}>{formatTime(breakSeconds)}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Timer Controls */}
-          <View style={styles.timerControls}>
-            {!isRunning ? (
-              <TouchableOpacity style={styles.startButton} onPress={handleStart}>
-                <Text style={styles.startButtonText}>▶️ Start</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.activeControls}>
-                <TouchableOpacity 
-                  style={[styles.controlButton, styles.pauseButton]} 
-                  onPress={handlePause}
-                >
-                  <Text style={styles.controlButtonText}>
-                    {isPaused ? '▶️ Resume' : '⏸️ Pause'}
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.controlButton, styles.stopButton]} 
-                  onPress={handleStop}
-                >
-                  <Text style={styles.controlButtonText}>⏹️ Stop</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          {/* Break Button */}
-          {isRunning && (
-            <TouchableOpacity 
-              style={[
-                styles.breakButton,
-                isOnBreak && styles.breakButtonActive
-              ]} 
-              onPress={handleBreak}
-            >
-              <Text style={[
-                styles.breakButtonText,
-                isOnBreak && styles.breakButtonTextActive
-              ]}>
-                {isOnBreak ? '🔄 End Break' : '☕ Take Break'}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Status Indicators */}
-          {isRunning && (
-            <View style={styles.statusIndicators}>
-              <View style={[
-                styles.statusBadge,
-                { backgroundColor: isPaused ? '#F59E0B' : '#10B981' }
-              ]}>
-                <Text style={styles.statusText}>
-                  {isPaused ? 'PAUSED' : isOnBreak ? 'ON BREAK' : 'ACTIVE'}
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* Location Status */}
-        {renderLocationStatus()}
-
-        {/* Manual Time Entry */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Manual Entry</Text>
-          <TouchableOpacity style={styles.manualEntryButton}>
-            <Text style={styles.manualEntryText}>➕ Add Manual Time Entry</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Today's Time Entries */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today's Time Entries</Text>
-          {timeEntries.map(renderTimeEntry)}
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.quickActionButton}>
-              <Text style={styles.quickActionText}>📋 View Timesheet</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.quickActionButton}>
-              <Text style={styles.quickActionText}>📤 Submit Hours</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+      {renderHeader()}
+      
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {renderActiveTimer()}
+        {renderStartTimer()}
+        {renderTodaysSummary()}
+        {renderRecentEntries()}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
+// Embedded Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Colors.backgroundLight,
   },
+
+  // Header
   header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: Colors.white,
+    paddingTop: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.backgroundLight,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
+    color: Colors.text,
   },
-  todayHours: {
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+  historyButton: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    backgroundColor: Colors.backgroundLight,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  todayHoursText: {
-    fontSize: 12,
-    color: '#1E40AF',
-    fontWeight: '500',
-  },
-  content: {
+
+  // Scroll Container
+  scrollContainer: {
     flex: 1,
   },
-  section: {
-    backgroundColor: '#FFFFFF',
-    margin: 16,
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+  scrollContent: {
+    paddingBottom: Spacing.xl,
   },
-  sectionTitle: {
+
+  // Active Timer
+  activeTimerContainer: {
+    backgroundColor: Colors.white,
+    margin: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    ...Shadows.md,
+  },
+  activeJobTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
-    marginBottom: 16,
-  },
-  jobSelector: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  jobOption: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    padding: 12,
-    minWidth: 180,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  jobOptionSelected: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#1E40AF',
-  },
-  jobId: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  jobTitle: {
-    fontSize: 14,
-    color: '#374151',
-    fontWeight: '500',
-  },
-  jobTitleSelected: {
-    color: '#1E40AF',
-  },
-  timerSection: {
-    backgroundColor: '#FFFFFF',
-    margin: 16,
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    color: Colors.text,
+    marginBottom: Spacing.md,
+    textAlign: 'center',
   },
   timerDisplay: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  timerText: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#1E40AF',
-    fontFamily: 'monospace',
-  },
-  breakDisplay: {
-    marginTop: 12,
-    alignItems: 'center',
-  },
-  breakLabel: {
-    fontSize: 14,
-    color: '#F59E0B',
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  breakTime: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#F59E0B',
+    color: Colors.primary,
+    marginBottom: Spacing.xl,
     fontFamily: 'monospace',
   },
   timerControls: {
-    width: '100%',
-    marginBottom: 16,
-  },
-  startButton: {
-    backgroundColor: '#10B981',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    width: '100%',
-  },
-  startButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  activeControls: {
     flexDirection: 'row',
-    gap: 12,
-  },
-  controlButton: {
-    flex: 1,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
+    gap: Spacing.md,
   },
   pauseButton: {
-    backgroundColor: '#F59E0B',
-  },
-  stopButton: {
-    backgroundColor: '#EF4444',
-  },
-  controlButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  breakButton: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  breakButtonActive: {
-    backgroundColor: '#FEF3C7',
-  },
-  breakButtonText: {
-    color: '#6B7280',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  breakButtonTextActive: {
-    color: '#92400E',
-  },
-  statusIndicators: {
-    alignItems: 'center',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  statusText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  locationContainer: {
-    backgroundColor: '#FFFFFF',
-    margin: 16,
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  locationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: Colors.warning,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
   },
-  locationIcon: {
-    fontSize: 16,
-    marginRight: 8,
-  },
-  locationInfo: {
-    flex: 1,
-  },
-  locationText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-  },
-  gpsStatusText: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  gpsIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  geofenceStatus: {
-    backgroundColor: '#F0FDF4',
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  geofenceText: {
-    fontSize: 12,
-    color: '#15803D',
-    textAlign: 'center',
-  },
-  manualEntryButton: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    paddingVertical: 12,
+  resumeButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderStyle: 'dashed',
+    backgroundColor: Colors.success,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
   },
-  manualEntryText: {
-    color: '#6B7280',
+  stopButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.error,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  controlButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+
+  // Start Timer
+  startTimerContainer: {
+    backgroundColor: Colors.white,
+    margin: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    ...Shadows.md,
+  },
+  startTimerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  startTimerSubtitle: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.xl,
+  },
+  startButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.sm,
+  },
+  startButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+
+  // Summary
+  summaryContainer: {
+    backgroundColor: Colors.white,
+    margin: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    ...Shadows.md,
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: Spacing.md,
+  },
+  summaryStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: Spacing.md,
+    backgroundColor: Colors.backgroundLight,
+    borderRadius: BorderRadius.md,
+    marginHorizontal: Spacing.xs,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginTop: Spacing.sm,
+  },
+  statLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    color: Colors.textSecondary,
+    marginTop: Spacing.xs,
   },
-  timeEntryCard: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+
+  // Recent Entries
+  recentContainer: {
+    backgroundColor: Colors.white,
+    margin: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    ...Shadows.md,
   },
-  timeEntryHeader: {
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: Spacing.md,
+  },
+  entryCard: {
+    backgroundColor: Colors.backgroundLight,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  entryHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: Spacing.sm,
   },
-  timeEntryJob: {
-    fontSize: 14,
+  entryJobTitle: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
-  },
-  timeEntryDuration: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E40AF',
-  },
-  timeEntryDate: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  quickActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  quickActionButton: {
+    color: Colors.text,
     flex: 1,
-    backgroundColor: '#1E40AF',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
   },
-  quickActionText: {
-    color: '#FFFFFF',
+  entryStatus: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+  },
+  entryStatusText: {
     fontSize: 12,
+    color: Colors.white,
     fontWeight: '500',
+    textTransform: 'capitalize',
+  },
+  entryTime: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  entryNotes: {
+    fontSize: 14,
+    color: Colors.text,
+    marginTop: Spacing.xs,
   },
 });
 

@@ -8,9 +8,11 @@ import JobDetailsScreen from '../screens/JobDetailsScreen';
 import CreateJobScreen from '../screens/CreateJobScreen';
 import JobDetail from '../screens/JobDetail';
 import MapScreen from '../screens/MapScreen';
-import TimeSheetScreen from '../screens/TimeSheetScreen';
 import BluesheetSubmission from '../screens/BluesheetSubmission';
 import OrderProducts from '../screens/OrderProducts';
+import TimerScreen from '../screens/TimerScreen';
+import CartScreen from '../screens/CartScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
 
 const Stack = createStackNavigator();
 
@@ -21,13 +23,14 @@ export default function JobStack() {
       <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} />
       <Stack.Screen name="JobDetail" component={JobDetail} />
       <Stack.Screen name="MapScreen" component={MapScreen} />
-      <Stack.Screen name="TimeSheetScreen" component={TimeSheetScreen} />
+      <Stack.Screen name="TimerScreen" component={TimerScreen} />
       <Stack.Screen
         name="BluesheetSubmission"
         component={BluesheetSubmission}
       />
       <Stack.Screen name="OrderProducts" component={OrderProducts} />
-
+      <Stack.Screen name="CartScreen" component={CartScreen} />
+      <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} />
       <Stack.Screen name="CreateJobScreen" component={CreateJobScreen} />
     </Stack.Navigator>
   );

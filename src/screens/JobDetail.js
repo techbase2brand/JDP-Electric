@@ -7,6 +7,8 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
 
 export default function JobDetail({
   //   job,
@@ -109,9 +111,14 @@ export default function JobDetail({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Back</Text>
+            <Icon name="arrow-back" size={24} color={"#00000"} />
+          {/* <Text style={styles.backButton}>← Back</Text> */}
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Job Details</Text>
+         <TouchableOpacity>
+          <Text style={styles.timerButton}>Job Details</Text>
+            
+        {/* <Text style={{color:"#0000"}}>Job Details</Text> */}
+        </TouchableOpacity>
         <TouchableOpacity>
           <Text style={styles.timerButton}></Text>
         </TouchableOpacity>
@@ -214,7 +221,7 @@ export default function JobDetail({
 
           <TouchableOpacity
             style={[styles.actionButton, {backgroundColor: '#3B82F6'}]}
-            onPress={() => navigation.navigate('TimeSheetScreen')}>
+            onPress={() => navigation.navigate('TimerScreen')}>
             <Text style={styles.actionButtonText}>⏱️ Start Timer</Text>
           </TouchableOpacity>
 
@@ -269,28 +276,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+    paddingBottom:100
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 20,
     paddingBottom: 16,
-    backgroundColor: '#1E40AF',
+    // backgroundColor: '#1E40AF',
   },
   backButton: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#0000',
     fontWeight: '500',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: 'black',
   },
   timerButton: {
-    fontSize: 20,
+     fontSize: 20,
+    fontWeight: 'bold',
   },
   headerRight: {
     width: 40,

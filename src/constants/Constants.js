@@ -40,7 +40,6 @@ export const RESET_PASSWORD = "Reset Password";
 export const PASSWORD = "Password";
 export const SET_THE_NEW_PASSWORD = "Set the new password for your account so you can login and access all the features.";
 
-
 export const SETTINGS_DESCRIPTIONS = {
   pushNotifications: 'Receive push notifications on your device',
   emailNotifications: 'Receive notifications via email',

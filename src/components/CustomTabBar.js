@@ -13,6 +13,7 @@ import Animated, {
   LinearTransition,
 } from 'react-native-reanimated';
 import { tabColor } from '../constants/Color';
+import LinearGradient from 'react-native-linear-gradient';
 
 const {width} = Dimensions.get('window');
 const AnimatedTouchableOpacity =
@@ -24,7 +25,13 @@ const INACTIVE_BG = 'transparent';
 
 export default function CustomTabBar({state, descriptors, navigation, icons}) {
   return (
-    <View style={styles.container}>
+    // <View style={styles.container}>
+        <LinearGradient
+    colors={['#155DFC', '#1447E6', '#432DD7']}
+    style={styles.container}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 0 }}
+  >
       {state.routes.map((route, index) => {
         const {options} = descriptors[route.key];
         const label =
@@ -81,7 +88,8 @@ export default function CustomTabBar({state, descriptors, navigation, icons}) {
           </AnimatedTouchableOpacity>
         );
       })}
-    </View>
+    {/* </View> */}
+    </LinearGradient>
   );
 }
 
@@ -93,11 +101,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: tabColor,
     width: '80%',
+    height: '8%',
+
     alignSelf: 'center',
     bottom: 40,
     borderRadius: 40,
-    paddingHorizontal: 12,
-    paddingVertical: 15,
+    // paddingHorizontal: 12,
+    // paddingVertical: 15,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 5},
     shadowOpacity: 0.3,

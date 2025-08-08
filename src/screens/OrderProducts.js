@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -9,18 +9,17 @@ import {
   Alert,
 } from 'react-native';
 
-
-export default function OrderProducts({ onNavigate, navigation }) {
+export default function OrderProducts({onNavigate, navigation}) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cart, setCart] = useState([]);
 
   const categories = [
-    { id: 'all', name: 'All Items' },
-    { id: 'wire', name: 'Wire & Cable' },
-    { id: 'outlets', name: 'Outlets & Switches' },
-    { id: 'conduit', name: 'Conduit & Fittings' },
-    { id: 'tools', name: 'Tools' },
+    {id: 'all', name: 'All Items'},
+    {id: 'wire', name: 'Wire & Cable'},
+    {id: 'outlets', name: 'Outlets & Switches'},
+    {id: 'conduit', name: 'Conduit & Fittings'},
+    {id: 'tools', name: 'Tools'},
   ];
 
   const mockProducts = [
@@ -38,7 +37,7 @@ export default function OrderProducts({ onNavigate, navigation }) {
       id: '2',
       name: 'GFCI Outlet 15A',
       category: 'outlets',
-      price: 12.50,
+      price: 12.5,
       unit: 'each',
       description: 'Ground fault circuit interrupter outlet',
       inStock: true,
@@ -70,40 +69,45 @@ export default function OrderProducts({ onNavigate, navigation }) {
     let filtered = mockProducts;
 
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      filtered = filtered.filter(
+        product => product.category === selectedCategory,
+      );
     }
 
     if (searchQuery) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        product =>
+          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.description.toLowerCase().includes(searchQuery.toLowerCase()),
       );
     }
 
     return filtered;
   };
 
-  const addToCart = (product) => {
+  const addToCart = product => {
     const existingItem = cart.find(item => item.id === product.id);
-    
+
     if (existingItem) {
-      setCart(cart.map(item =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
+      setCart(
+        cart.map(item =>
+          item.id === product.id
+            ? {...item, quantity: item.quantity + 1}
+            : item,
+        ),
+      );
     } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+      setCart([...cart, {...product, quantity: 1}]);
     }
 
     Alert.alert('Added to Cart', `${product.name} added to cart`);
   };
 
   const getCartTotal = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
-  const renderProductItem = ({ item }) => (
+  const renderProductItem = ({item}) => (
     <View style={styles.productCard}>
       <View style={styles.productHeader}>
         <Text style={styles.productIcon}>{item.image}</Text>
@@ -118,19 +122,22 @@ export default function OrderProducts({ onNavigate, navigation }) {
           </View>
         </View>
       </View>
-      
+
       <View style={styles.productActions}>
-        <View style={[styles.stockIndicator, { backgroundColor: item.inStock ? '#10B981' : '#EF4444' }]}>
+        <View
+          style={[
+            styles.stockIndicator,
+            {backgroundColor: item.inStock ? '#10B981' : '#EF4444'},
+          ]}>
           <Text style={styles.stockText}>
             {item.inStock ? 'In Stock' : 'Out of Stock'}
           </Text>
         </View>
-        
+
         <TouchableOpacity
           style={[styles.addButton, !item.inStock && styles.disabledButton]}
           onPress={() => addToCart(item)}
-          disabled={!item.inStock}
-        >
+          disabled={!item.inStock}>
           <Text style={styles.addButtonText}>Add to Cart</Text>
         </TouchableOpacity>
       </View>
@@ -145,7 +152,7 @@ export default function OrderProducts({ onNavigate, navigation }) {
           <Text style={styles.backButton}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Order Materials</Text>
-        <TouchableOpacity onPress={() => onNavigate('cart')}>
+        <TouchableOpacity onPress={() => navigation.navigate('CartScreen')}>
           <View style={styles.cartButton}>
             <Text style={styles.cartIcon}>🛒</Text>
             {cart.length > 0 && (
@@ -174,21 +181,19 @@ export default function OrderProducts({ onNavigate, navigation }) {
           horizontal
           showsHorizontalScrollIndicator={false}
           data={categories}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
+          keyExtractor={item => item.id}
+          renderItem={({item}) => (
             <TouchableOpacity
               style={[
                 styles.categoryButton,
                 selectedCategory === item.id && styles.activeCategoryButton,
               ]}
-              onPress={() => setSelectedCategory(item.id)}
-            >
+              onPress={() => setSelectedCategory(item.id)}>
               <Text
                 style={[
                   styles.categoryText,
                   selectedCategory === item.id && styles.activeCategoryText,
-                ]}
-              >
+                ]}>
                 {item.name}
               </Text>
             </TouchableOpacity>
@@ -199,7 +204,7 @@ export default function OrderProducts({ onNavigate, navigation }) {
       {/* Products List */}
       <FlatList
         data={getFilteredProducts()}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         renderItem={renderProductItem}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
@@ -207,11 +212,12 @@ export default function OrderProducts({ onNavigate, navigation }) {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyIcon}>📦</Text>
             <Text style={styles.emptyTitle}>No products found</Text>
-            <Text style={styles.emptyText}>Try adjusting your search or category filter</Text>
+            <Text style={styles.emptyText}>
+              Try adjusting your search or category filter
+            </Text>
           </View>
         )}
       />
-
       {/* Cart Summary */}
       {cart.length > 0 && (
         <View style={styles.cartSummary}>
@@ -221,8 +227,7 @@ export default function OrderProducts({ onNavigate, navigation }) {
           </View>
           <TouchableOpacity
             style={styles.viewCartButton}
-            onPress={() => onNavigate('cart')}
-          >
+            onPress={() => navigation.navigate('CartScreen')}>
             <Text style={styles.viewCartText}>View Cart</Text>
           </TouchableOpacity>
         </View>
@@ -419,7 +424,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginBottom:110,
+    marginBottom: 110,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
   },

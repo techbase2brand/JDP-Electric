@@ -7,13 +7,18 @@ import ReportsScreen from '../screens/ReportsScreen';
 import NotificationScreen from '../screens/NotificationScreen';
 import SupportScreen from '../screens/SupportScreen';
 import JobDetail from '../screens/JobDetail';
-import TimeSheetScreen from '../screens/TimeSheetScreen';
 import MapScreen from '../screens/MapScreen';
 import InvoiceScreen from '../screens/InvoiceScreen';
 import WarrantyChecker from '../screens/WarrantyChecker';
 import ProfileScreen from '../screens/ProfileScreen';
 import BluesheetSubmission from '../screens/BluesheetSubmission';
 import OrderProducts from '../screens/OrderProducts';
+import TimerScreen from '../screens/TimerScreen';
+import CartScreen from '../screens/CartScreen';
+import CheckoutScreen from '../screens/CheckoutScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import TermsConditionsScreen from '../screens/TermsConditionsScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 
 const Stack = createStackNavigator();
 
@@ -30,10 +35,15 @@ export default function HomeStack() {
       <Stack.Screen name="MapScreen" component={MapScreen} />
       <Stack.Screen name="BluesheetSubmission" component={BluesheetSubmission} />
       <Stack.Screen name="OrderProducts" component={OrderProducts} />
-      <Stack.Screen name="TimeSheetScreen" component={TimeSheetScreen} />
+      <Stack.Screen name="CartScreen" component={CartScreen} />
+      <Stack.Screen name="TimerScreen" component={TimerScreen} />
       <Stack.Screen name="InvoiceScreen" component={InvoiceScreen} />
+      <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} />
       <Stack.Screen name="WarrantyChecker" component={WarrantyChecker} />
       <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="TermsConditions" component={TermsConditionsScreen} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
     </Stack.Navigator>
   );
 }

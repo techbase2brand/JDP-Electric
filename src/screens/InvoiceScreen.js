@@ -318,7 +318,7 @@ export default function InvoiceScreen({onNavigate, navigation}) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Back</Text>
+          <Text style={styles.backButton}>← </Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Invoice Management</Text>
         <View style={styles.headerRight} />
@@ -388,19 +388,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 20,
     paddingBottom: 16,
-    backgroundColor: '#1E40AF',
+    // backgroundColor: '#1E40AF',
   },
   backButton: {
-    fontSize: 16,
-    color: '#FFFFFF',
+    fontSize: 24,
+    color: '#000',
     fontWeight: '500',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#000',
   },
   headerRight: {
     width: 40,

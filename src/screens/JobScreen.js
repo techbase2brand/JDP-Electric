@@ -290,98 +290,98 @@ const JobsScreen = ({navigation}) => {
   // ];
 
   const jobs = [
-  {
-    id: 'JOB-001',
-    title: 'Electrical Panel Upgrade',
-    description: 'Upgrade main electrical panel from 100A to 200A service',
-    status: 'In Progress',
-    priority: 'HIGH',
-    technician: 'David Thompson',
-    time: '08:00 (8h est.)',
-    location: '1234 Oak Street, Houston, TX 77001',
-    client: 'Residential Client',
-    statusColor: '#193CB8',
-    priorityColor: '#9F0712',
-    date: 'Today',
-    startCoordinates: { latitude: 29.7604, longitude: -95.3698 }, // Houston downtown
-    destinationCoordinates: { latitude: 29.7704, longitude: -95.3598 }, // ~1.5 km away
-  },
-  {
-    id: 'JOB-002',
-    title: 'Commercial Lighting Installation',
-    description: 'Install LED lighting system in conference rooms',
-    status: 'Scheduled',
-    priority: 'MEDIUM',
-    technician: 'Sarah Johnson',
-    time: '14:00 (6h est.)',
-    location: '1500 Corporate Blvd, Houston, TX 77002',
-    client: 'TechCorp Office',
-    statusColor: '#016630',
-    priorityColor: '#894B00',
-    date: 'Today',
-    startCoordinates: { latitude: 29.7604, longitude: -95.3698 },
-    destinationCoordinates: { latitude: 29.7584, longitude: -95.3610 }, // ~1 km
-  },
-  {
-    id: 'JOB-003',
-    title: 'Emergency Generator Maintenance',
-    description: 'Routine maintenance and testing of backup generator',
-    status: 'Scheduled',
-    priority: 'HIGH',
-    technician: 'Mike Rodriguez',
-    time: '09:00 (4h est.)',
-    location: '2000 Medical Center Dr, Houston, TX 77030',
-    client: 'Metro Hospital',
-    statusColor: '#016630',
-    priorityColor: '#9F0712',
-    date: 'Jan 26',
-    startCoordinates: { latitude: 29.7604, longitude: -95.3698 },
-    destinationCoordinates: { latitude: 29.7130, longitude: -95.3990 }, // ~6.5 km
-  },
-  {
-    id: 'JOB-004',
-    title: 'HVAC System Repair',
-    description: 'Fix heating system in office building lobby',
-    status: 'Completed',
-    priority: 'MEDIUM',
-    technician: 'Lisa Chen',
-    time: 'Completed',
-    location: '500 Main Street, Houston, TX 77002',
-    client: 'Downtown Plaza',
-    statusColor: '#00A63E',
-    priorityColor: '#894B00',
-    date: 'Yesterday',
-    startCoordinates: { latitude: 29.7604, longitude: -95.3698 },
-    destinationCoordinates: { latitude: 29.7570, longitude: -95.3700 }, // ~0.5 km
-  },
-  {
-    id: 'JOB-005',
-    title: 'Security System Installation',
-    description: 'Install new security cameras and access control',
-    status: 'In Progress',
-    priority: 'LOW',
-    technician: 'John Smith',
-    time: '10:00 (3h est.)',
-    location: '800 Commerce St, Houston, TX 77002',
-    client: 'SecureBuilding Inc',
-    statusColor: '#193CB8',
-    priorityColor: '#6B7280',
-    date: 'Today',
-    startCoordinates: { latitude: 29.7604, longitude: -95.3698 },
-    destinationCoordinates: { latitude: 29.7595, longitude: -95.3662 }, // ~0.4 km
-  },
-];
+    {
+      id: 'JOB-001',
+      title: 'Electrical Panel Upgrade',
+      description: 'Upgrade main electrical panel from 100A to 200A service',
+      status: 'In Progress',
+      priority: 'HIGH',
+      technician: 'David Thompson',
+      time: '08:00 (8h est.)',
+      location: '1234 Oak Street, Houston, TX 77001',
+      client: 'Residential Client',
+      statusColor: '#193CB8',
+      priorityColor: '#9F0712',
+      date: 'Today',
+      startCoordinates: {latitude: 29.7604, longitude: -95.3698}, // Houston downtown
+      destinationCoordinates: {latitude: 29.7704, longitude: -95.3598}, // ~1.5 km away
+    },
+    {
+      id: 'JOB-002',
+      title: 'Commercial Lighting Installation',
+      description: 'Install LED lighting system in conference rooms',
+      status: 'Scheduled',
+      priority: 'MEDIUM',
+      technician: 'Sarah Johnson',
+      time: '14:00 (6h est.)',
+      location: '1500 Corporate Blvd, Houston, TX 77002',
+      client: 'TechCorp Office',
+      statusColor: '#016630',
+      priorityColor: '#894B00',
+      date: 'Today',
+      startCoordinates: {latitude: 29.7604, longitude: -95.3698},
+      destinationCoordinates: {latitude: 29.7584, longitude: -95.361}, // ~1 km
+    },
+    {
+      id: 'JOB-003',
+      title: 'Emergency Generator Maintenance',
+      description: 'Routine maintenance and testing of backup generator',
+      status: 'Scheduled',
+      priority: 'HIGH',
+      technician: 'Mike Rodriguez',
+      time: '09:00 (4h est.)',
+      location: '2000 Medical Center Dr, Houston, TX 77030',
+      client: 'Metro Hospital',
+      statusColor: '#016630',
+      priorityColor: '#9F0712',
+      date: 'Jan 26',
+      startCoordinates: {latitude: 29.7604, longitude: -95.3698},
+      destinationCoordinates: {latitude: 29.713, longitude: -95.399}, // ~6.5 km
+    },
+    {
+      id: 'JOB-004',
+      title: 'HVAC System Repair',
+      description: 'Fix heating system in office building lobby',
+      status: 'Completed',
+      priority: 'MEDIUM',
+      technician: 'Lisa Chen',
+      time: 'Completed',
+      location: '500 Main Street, Houston, TX 77002',
+      client: 'Downtown Plaza',
+      statusColor: '#00A63E',
+      priorityColor: '#894B00',
+      date: 'Yesterday',
+      startCoordinates: {latitude: 29.7604, longitude: -95.3698},
+      destinationCoordinates: {latitude: 29.757, longitude: -95.37}, // ~0.5 km
+    },
+    {
+      id: 'JOB-005',
+      title: 'Security System Installation',
+      description: 'Install new security cameras and access control',
+      status: 'In Progress',
+      priority: 'LOW',
+      technician: 'John Smith',
+      time: '10:00 (3h est.)',
+      location: '800 Commerce St, Houston, TX 77002',
+      client: 'SecureBuilding Inc',
+      statusColor: '#193CB8',
+      priorityColor: '#6B7280',
+      date: 'Today',
+      startCoordinates: {latitude: 29.7604, longitude: -95.3698},
+      destinationCoordinates: {latitude: 29.7595, longitude: -95.3662}, // ~0.4 km
+    },
+  ];
 
   const getFilteredJobs = () => {
     if (selectedFilter === 'All') return jobs;
-    return jobs.filter(job => job.status === selectedFilter);
+    return jobs.filter(job => job.status == selectedFilter);
   };
 
   const renderFilterButton = ({item}) => (
     <TouchableOpacity
       style={[
         styles.filterButton,
-        selectedFilter === item && styles.activeFilterButton,
+        selectedFilter == item && styles.activeFilterButton,
       ]}
       onPress={() => setSelectedFilter(item)}>
       <Text
@@ -395,7 +395,7 @@ const JobsScreen = ({navigation}) => {
   );
 
   const renderJobCard = ({item}) => (
-    <TouchableOpacity style={styles.jobCard}  >
+    <TouchableOpacity style={styles.jobCard}>
       <View style={styles.jobHeader}>
         <View style={styles.jobHeaderLeft}>
           <Text style={styles.jobId}>{item.id}</Text>
@@ -446,7 +446,9 @@ const JobsScreen = ({navigation}) => {
       </View>
 
       <View style={styles.jobActions}>
-        <TouchableOpacity style={styles.actionButton}  onPress={() => navigation.navigate('JobDetail', {job: item})}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('JobDetail', {job: item})}>
           <Text style={styles.actionButtonText}>View Details</Text>
         </TouchableOpacity>
         {item.status === 'Scheduled' && (
@@ -473,36 +475,40 @@ const JobsScreen = ({navigation}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
+      {/* <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" /> */}
 
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Jobs</Text>
-        <View style={styles.headerStats}>
-          <Text style={styles.statsText}>{getFilteredJobs().length} jobs</Text>
+      <View style={{marginBottom: 190}}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Jobs</Text>
+          <View style={styles.headerStats}>
+            <Text style={styles.statsText}>
+              {getFilteredJobs().length} jobs
+            </Text>
+          </View>
         </View>
-      </View>
 
-      {/* Filters */}
-      <View style={styles.filtersContainer}>
+        {/* Filters */}
+        <View style={styles.filtersContainer}>
+          <FlatList
+            horizontal
+            data={filters}
+            renderItem={renderFilterButton}
+            keyExtractor={item => item}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersList}
+          />
+        </View>
+
+        {/* Jobs List */}
         <FlatList
-          horizontal
-          data={filters}
-          renderItem={renderFilterButton}
-          keyExtractor={item => item}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersList}
+          data={getFilteredJobs()}
+          renderItem={renderJobCard}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.jobsList}
+          showsVerticalScrollIndicator={false}
         />
       </View>
-
-      {/* Jobs List */}
-      <FlatList
-        data={getFilteredJobs()}
-        renderItem={renderJobCard}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.jobsList}
-        showsVerticalScrollIndicator={false}
-      />
     </SafeAreaView>
   );
 };

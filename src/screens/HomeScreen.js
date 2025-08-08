@@ -17,7 +17,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Entypo from 'react-native-vector-icons/Entypo';
 
 import LinearGradient from 'react-native-linear-gradient';
-import {widthPercentageToDP} from '../utils';
+import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 
 const HomeScreen = ({navigation}) => {
   const statsData = [
@@ -76,7 +76,7 @@ const HomeScreen = ({navigation}) => {
     },
     {
       title: 'Create Job',
-      icon: <Ionicons name="create" size={26} color={whiteColor} />,
+      icon: <Entypo name="plus" size={26} color={whiteColor} />,
       color: '#005F5A',
     },
     {
@@ -134,10 +134,10 @@ const HomeScreen = ({navigation}) => {
       navigation.navigate('CreateJobScreen'); // replace 'CreateJob' with your actual screen name
     } else if (title == 'View Reports') {
       navigation.navigate('ReportsScreen');
-    } else if (title == 'Generate Invoice'){
-      navigation.navigate('InvoiceScreen')
-    }else if (title == 'Check Warranty'){
-      navigation.navigate('WarrantyChecker')
+    } else if (title == 'Generate Invoice') {
+      navigation.navigate('InvoiceScreen');
+    } else if (title == 'Check Warranty') {
+      navigation.navigate('WarrantyChecker');
     }
 
     // You can add other conditions here for other actions
@@ -175,7 +175,26 @@ const HomeScreen = ({navigation}) => {
       style={[styles.quickActionButton, {backgroundColor: item.color}]}
       onPress={() => handleQuickActionPress(item.title)}>
       <View style={[styles.quickActionIcon, {backgroundColor: item.color}]}>
-        <Text style={styles.quickActionIconText}>{item.icon}</Text>
+        <View style={ {
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                display:"flex",
+                justifyContent:"center",
+                textAlign: 'center',
+                alignItems: 'center',
+                padding: 4,
+                width: 44,
+                height: 44,
+                borderRadius:1000,
+                marginVertical:10
+              }}>
+          <Text
+            style={[
+              styles.quickActionIconText,
+             {alignSelf:"center"}
+            ]}>
+            {item.icon}
+          </Text>
+        </View>
       </View>
       <Text style={styles.quickActionText}>{item.title}</Text>
     </TouchableOpacity>
@@ -267,7 +286,7 @@ const HomeScreen = ({navigation}) => {
     <SafeAreaView style={styles.container}>
       {/* <StatusBar backgroundColor="#155DFC" barStyle="light-content" /> */}
 
-      <ScrollView style={{}} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{marginBottom:70}} showsVerticalScrollIndicator={false}>
         {/* Header Section */}
         <LinearGradient
           colors={['#155DFC', '#1447E6', '#432DD7']}
@@ -288,8 +307,10 @@ const HomeScreen = ({navigation}) => {
               </View>
             </View>
             <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.avatar} onPress={()=> navigation.navigate("ProfileScreen")}>
-                <Text style={styles.avatarText}>SJ</Text>
+              <TouchableOpacity
+                style={styles.avatar}
+                onPress={() => navigation.navigate('ProfileScreen')}>
+                <Text style={styles.avatarText}>P</Text>
                 <View style={styles.onlineIndicator} />
               </TouchableOpacity>
               <TouchableOpacity
@@ -372,7 +393,7 @@ const HomeScreen = ({navigation}) => {
                 <Text style={styles.viewAllText}>View All →</Text>
               </TouchableOpacity>
             </View>
-            {upcomingJobs.map(renderUpcomingJob)}
+            {upcomingJobs?.map(renderUpcomingJob)}
           </View>
 
           {/* Team Performance */}
@@ -428,7 +449,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-    marginBottom: 100,
+    // marginBottom: 100,
   },
   header: {
     // backgroundColor: '#432DD7',
@@ -780,7 +801,7 @@ const styles = StyleSheet.create({
     color: '#101828',
     marginBottom: 8,
   },
-  upcomingJobDetails: {
+  upcomingbDeJotails: {
     flexDirection: 'row',
     gap: 16,
     fontSize: 12,
