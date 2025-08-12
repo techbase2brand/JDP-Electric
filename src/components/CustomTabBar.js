@@ -24,6 +24,86 @@ const ACTIVE_BG = '#fff';
 const INACTIVE_BG = 'transparent';
 
 export default function CustomTabBar({state, descriptors, navigation, icons}) {
+  const homeIndex = state.routes.findIndex(r => r.name === 'Home');
+  const jobIndex = state.routes.findIndex(r => r.name === 'Jobs');
+  const ProfileIndex = state.routes.findIndex(r => r.name === 'Profile'); // <- yaha Jobs tab ka name use karo
+   // <- yaha Jobs tab ka name use karo
+
+  // Home tab ke liye hide list
+  const homeHideOnScreens = [
+    'JobStack',
+    'CreateJobScreen',
+    'ReportsScreen',
+    'NotificationScreen',
+    'SupportScreen',
+    'JobDetail',
+    'MapScreen',
+    'BluesheetSubmission',
+    'OrderProducts',
+    'OrderConfirmationScreen',
+    'OrderHistoryScreen',
+    'CartScreen',
+    'TimerScreen',
+    'InvoiceScreen',
+    'CheckoutScreen',
+    'WarrantyChecker',
+    'ProfileScreen',
+    'EditProfile',
+    'TermsConditions',
+    'PrivacyPolicy',
+  ];
+
+  // Job tab ke liye hide list
+  const jobHideOnScreens = [
+    'JobDetailsScreen',
+    'JobDetail',
+    'MapScreen',
+    'TimerScreen',
+    'BluesheetSubmission',
+    'OrderProducts',
+    'OrderConfirmationScreen',
+    'OrderHistoryScreen',
+    'CartScreen',
+    'CheckoutScreen',
+    'CreateJobScreen',
+  ];
+
+   const profileHideOnScreens = [
+    'EditProfile',
+    'TermsConditions',
+    'SupportScreen',
+    'PrivacyPolicy',
+  ];
+
+  // --- Check for Home tab ---
+  if (state.index === homeIndex) {
+    const homeState = state.routes[homeIndex]?.state;
+    const nestedRouteName = homeState?.routes?.[homeState.index]?.name;
+
+    if (nestedRouteName && homeHideOnScreens.includes(nestedRouteName)) {
+      return null;
+    }
+  }
+
+  // --- Check for Job tab ---
+  if (state.index === jobIndex) {
+    const jobState = state.routes[jobIndex]?.state;
+    const nestedRouteName = jobState?.routes?.[jobState.index]?.name;
+
+    if (nestedRouteName && jobHideOnScreens.includes(nestedRouteName)) {
+      return null;
+    }
+  }
+
+  // --- Check for Profile tab ---
+  if (state.index === ProfileIndex) {
+    const jobState = state.routes[ProfileIndex]?.state;
+    const nestedRouteName = jobState?.routes?.[jobState.index]?.name;
+
+    if (nestedRouteName && profileHideOnScreens.includes(nestedRouteName)) {
+      return null;
+    }
+  }
   return (
     // <View style={styles.container}>
         <LinearGradient

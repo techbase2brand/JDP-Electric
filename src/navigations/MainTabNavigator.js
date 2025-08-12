@@ -36,7 +36,7 @@ export default function MainTabNavigator() {
       screenOptions={{
         headerShown: false,
       }}>
-      <Tab.Screen name="Home" component={HomeStack} />
+      <Tab.Screen name="Home" component={HomeStack}  />
       <Tab.Screen name="TimeSheet" component={TimeSheetStack} />
       <Tab.Screen name="Jobs" component={JobStack} />
       <Tab.Screen name="Reports" component={ReportsStack} />

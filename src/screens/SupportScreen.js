@@ -733,7 +733,7 @@ const openEmail = () => {
 
 // Embedded Styles
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: Colors.backgroundLight, paddingBottom:100},
+  container: {flex: 1, backgroundColor: Colors.backgroundLight, paddingBottom:0},
   header: {
     backgroundColor: Colors.white,
     paddingTop: Spacing.lg,

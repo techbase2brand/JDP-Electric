@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   StyleSheet,
   StatusBar,
+  Image,
 } from 'react-native';
 import {tabColor, whiteColor} from '../constants/Color';
 import Feather from 'react-native-vector-icons/Feather';
@@ -18,6 +19,16 @@ import Entypo from 'react-native-vector-icons/Entypo';
 
 import LinearGradient from 'react-native-linear-gradient';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
+import {
+  CREATE_JOB,
+  INVOICE_ICON,
+  JOB_ICON,
+  JOBS_ICON,
+  REPORT_ICON,
+  REPORTS_ICON,
+  SUPPORT_ICON,
+  WARRENTY_ICON,
+} from '../assests/images';
 
 const HomeScreen = ({navigation}) => {
   const statsData = [
@@ -56,32 +67,44 @@ const HomeScreen = ({navigation}) => {
   const quickActions = [
     {
       title: 'View Jobs',
-      icon: <MaterialIcons name="preview" size={26} color={whiteColor} />,
+      // icon: <MaterialIcons name="preview" size={26} color={whiteColor} />,
+      icon: JOB_ICON,
+
       color: '#3B82F6',
     },
     {
       title: 'View Reports',
-      icon: <FontAwesome name="line-chart" size={20} color={whiteColor} />,
+      // icon: <FontAwesome name="line-chart" size={20} color={whiteColor} />,
+      icon: REPORT_ICON,
+
       color: '#0D542B',
     },
     {
       title: 'Generate Invoice',
-      icon: <FontAwesome name="file-pdf-o" size={24} color={whiteColor} />,
+      icon: INVOICE_ICON,
+
+      // icon: <FontAwesome name="file-pdf-o" size={24} color={whiteColor} />,
       color: '#6E11B0',
     },
     {
       title: 'Check Warranty',
-      icon: <Feather name="check-square" size={24} color={whiteColor} />,
+      icon: WARRENTY_ICON,
+
+      // icon: <Feather name="check-square" size={24} color={whiteColor} />,
       color: '#9F2D00',
     },
     {
       title: 'Create Job',
-      icon: <Entypo name="plus" size={26} color={whiteColor} />,
+      icon: CREATE_JOB,
+
+      // icon: <Entypo name="plus" size={26} color={whiteColor} />,
       color: '#005F5A',
     },
     {
       title: 'Support Center',
-      icon: <MaterialIcons name="support-agent" size={26} color={whiteColor} />,
+      icon: SUPPORT_ICON,
+
+      // icon: <MaterialIcons name="support-agent" size={26} color={whiteColor} />,
       color: '#A50036',
     },
   ];
@@ -175,27 +198,20 @@ const HomeScreen = ({navigation}) => {
       style={[styles.quickActionButton, {backgroundColor: item.color}]}
       onPress={() => handleQuickActionPress(item.title)}>
       <View style={[styles.quickActionIcon, {backgroundColor: item.color}]}>
-        <View style={ {
-                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                display:"flex",
-                justifyContent:"center",
-                textAlign: 'center',
-                alignItems: 'center',
-                padding: 4,
-                width: 44,
-                height: 44,
-                borderRadius:1000,
-                marginVertical:10
-              }}>
-          <Text
+       
+          {/* <Text
             style={[
               styles.quickActionIconText,
              {alignSelf:"center"}
             ]}>
             {item.icon}
-          </Text>
+          </Text> */}
+          <Image
+            source={item.icon}
+            style={[styles.quickActionIconImage, {alignSelf: 'center'}]}
+          />
         </View>
-      </View>
+      
       <Text style={styles.quickActionText}>{item.title}</Text>
     </TouchableOpacity>
   );
@@ -274,9 +290,9 @@ const HomeScreen = ({navigation}) => {
         <View style={styles.jobDetailRow}>
           <Text style={styles.jobDetailIcon}>
             {' '}
-            <Ionicons name="timer-outline" size={18} color={tabColor} />
+            <Ionicons name="timer-outline" size={16} color={tabColor} />
           </Text>
-          <Text style={styles.jobDetailText}>{item.duration}</Text>
+          <Text style={styles.jobDetailText}> {item.duration}</Text>
         </View>
       </View>
     </View>
@@ -286,7 +302,9 @@ const HomeScreen = ({navigation}) => {
     <SafeAreaView style={styles.container}>
       {/* <StatusBar backgroundColor="#155DFC" barStyle="light-content" /> */}
 
-      <ScrollView style={{marginBottom:70}} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{marginBottom: 70}}
+        showsVerticalScrollIndicator={false}>
         {/* Header Section */}
         <LinearGradient
           colors={['#155DFC', '#1447E6', '#432DD7']}
@@ -620,6 +638,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  quickActionIconImage: {
+    width: 40,
+    height: 40,
+    resizeMode: 'contain',
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -761,6 +784,7 @@ const styles = StyleSheet.create({
   },
   jobDetailIcon: {
     fontSize: 12,
+    marginTop: 6,
   },
   jobDetailText: {
     fontSize: 12,

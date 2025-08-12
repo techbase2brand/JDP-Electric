@@ -19,6 +19,9 @@ import CheckoutScreen from '../screens/CheckoutScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import TermsConditionsScreen from '../screens/TermsConditionsScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+import OrderConfirmationScreen from '../screens/OrderConfirmationScreen';
+import OrderHistoryScreen from '../screens/OrderHistoryScreen';
+import JobsScreen from '../screens/JobScreen';
 
 const Stack = createStackNavigator();
 
@@ -26,15 +29,17 @@ export default function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen name="JobStack" component={JobStack} />
+      <Stack.Screen name="JobStack" component={JobsScreen} />
       <Stack.Screen name="CreateJobScreen" component={CreateJobScreen} />
       <Stack.Screen name="ReportsScreen" component={ReportsScreen} />
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
       <Stack.Screen name="SupportScreen" component={SupportScreen} />
-      <Stack.Screen name="JobDetail" component={JobDetail} />
+      <Stack.Screen name="JobDetail" component={JobDetail} options={{ tabBarStyle: { display: 'none' } }} />
       <Stack.Screen name="MapScreen" component={MapScreen} />
       <Stack.Screen name="BluesheetSubmission" component={BluesheetSubmission} />
       <Stack.Screen name="OrderProducts" component={OrderProducts} />
+      <Stack.Screen name="OrderConfirmationScreen" component={OrderConfirmationScreen} />
+      <Stack.Screen name="OrderHistoryScreen" component={OrderHistoryScreen} />
       <Stack.Screen name="CartScreen" component={CartScreen} />
       <Stack.Screen name="TimerScreen" component={TimerScreen} />
       <Stack.Screen name="InvoiceScreen" component={InvoiceScreen} />

@@ -8,9 +8,10 @@ import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 const GOOGLE_MAPS_APIKEY = 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI';
 
 const MapScreen = ({route, navigation}) => {
-  const {startCoordinates, destinationCoordinates, title, JobId} = route.params;
+  const { title, JobId} = route.params;
   const mapRef = useRef(null);
-
+const startCoordinates= {latitude: 29.7604, longitude: -95.3698}
+   const   destinationCoordinates= {latitude: 29.757, longitude: -95.37}
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>

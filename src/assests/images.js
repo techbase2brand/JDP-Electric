@@ -20,3 +20,11 @@ export const REPORTS_ICON = require('./tab_assests/light/Activity.png');
 export const REPORTS_ICON_FOCUSED = require('./tab_assests/bold/Activity.png');
 export const PROFILE_ICON = require('./tab_assests/light/Profile.png');
 export const PROFILE_ICON_FOCUSED = require('./tab_assests/bold/Profile.png');
+
+
+export const CREATE_JOB = require('./tab_assests/home_icon/create_job.png');
+export const INVOICE_ICON = require('./tab_assests/home_icon/invoice.png');
+export const JOB_ICON = require('./tab_assests/home_icon/job.png');
+export const REPORT_ICON = require('./tab_assests/home_icon/report.png');
+export const SUPPORT_ICON = require('./tab_assests/home_icon/support.png');
+export const WARRENTY_ICON = require('./tab_assests/home_icon/warrenty.png');

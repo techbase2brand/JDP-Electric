@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -12,16 +12,16 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 // import { useAuth } from '../utils/AuthContext';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 
-const EditProfileScreen = ({ navigation }) => {
+const EditProfileScreen = ({navigation}) => {
   // const { user, updateUser } = useAuth();
   const [avatarUri, setAvatarUri] = useState(null);
-// console.log("user",user);
+  // console.log("user",user);
 
   const [formData, setFormData] = useState({
-    name:  'Sarah Johnson',
-    email:  'sarah.johnson@jdpelectric.us',
+    name: 'Sarah Johnson',
+    email: 'sarah.johnson@jdpelectric.us',
     phone: '+1 (555) 123-4567',
     address: '1234 Main Street',
     city: 'Houston',
@@ -31,7 +31,7 @@ const EditProfileScreen = ({ navigation }) => {
     emergencyPhone: '+1 (555) 987-6543',
     employeeId: 'EMP-001',
     department: 'Electrical Services',
-    position:  'Lead Labor',
+    position: 'Lead Labor',
     hireDate: '2020-03-15',
   });
 
@@ -55,8 +55,8 @@ const EditProfileScreen = ({ navigation }) => {
       // Alert.alert(
       //   'Success',
       //   'Profile updated successfully!',
-      //   [{ text: 'OK', onPress: () => 
-      navigation.goBack()
+      //   [{ text: 'OK', onPress: () =>
+      navigation.goBack();
       //   }]
       // );
     } catch (error) {
@@ -74,7 +74,7 @@ const EditProfileScreen = ({ navigation }) => {
         {
           text: 'Camera',
           onPress: () => {
-            launchCamera({ mediaType: 'photo' }, (response) => {
+            launchCamera({mediaType: 'photo'}, response => {
               if (!response.didCancel && !response.errorCode) {
                 setAvatarUri(response.assets[0].uri);
               }
@@ -84,21 +84,27 @@ const EditProfileScreen = ({ navigation }) => {
         {
           text: 'Gallery',
           onPress: () => {
-            launchImageLibrary({ mediaType: 'photo' }, (response) => {
+            launchImageLibrary({mediaType: 'photo'}, response => {
               if (!response.didCancel && !response.errorCode) {
                 setAvatarUri(response.assets[0].uri);
               }
             });
           },
         },
-        { text: 'Cancel', style: 'cancel' },
+        {text: 'Cancel', style: 'cancel'},
       ],
-      { cancelable: true }
+      {cancelable: true},
     );
   };
 
-
-  const InputField = ({ label, value, onChangeText, placeholder, keyboardType = 'default', editable = true }) => (
+  const InputField = ({
+    label,
+    value,
+    onChangeText,
+    placeholder,
+    keyboardType = 'default',
+    editable = true,
+  }) => (
     <View style={styles.inputGroup}>
       <Text style={styles.inputLabel}>{label}</Text>
       <TextInput
@@ -115,19 +121,18 @@ const EditProfileScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View  style={styles.header}>
+      <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+            onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={24} color="#000" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profile</Text>
           <TouchableOpacity
             style={styles.saveButton}
             onPress={handleSave}
-            disabled={isLoading}
+            // disabled={isLoading}
           >
             <Text style={styles.saveButtonText}>
               {isLoading ? 'Saving...' : 'Save'}
@@ -142,14 +147,19 @@ const EditProfileScreen = ({ navigation }) => {
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
               {avatarUri ? (
-                <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+                <Image source={{uri: avatarUri}} style={styles.avatarImage} />
               ) : (
                 <Text style={styles.avatarText}>
-                  {formData.name.split(' ').map(n => n[0]).join('')}
+                  {formData.name
+                    .split(' ')
+                    .map(n => n[0])
+                    .join('')}
                 </Text>
               )}
             </View>
-            <TouchableOpacity style={styles.changePhotoButton} onPress={handleImagePicker}>
+            <TouchableOpacity
+              style={styles.changePhotoButton}
+              onPress={handleImagePicker}>
               <Icon name="camera-alt" size={20} color="#2563eb" />
               <Text style={styles.changePhotoText}>Change Photo</Text>
             </TouchableOpacity>
@@ -163,14 +173,14 @@ const EditProfileScreen = ({ navigation }) => {
           <InputField
             label="Full Name"
             value={formData.name}
-            onChangeText={(text) => setFormData({ ...formData, name: text })}
+            onChangeText={text => setFormData({...formData, name: text})}
             placeholder="Enter your full name"
           />
 
           <InputField
             label="Email Address"
             value={formData.email}
-            onChangeText={(text) => setFormData({ ...formData, email: text })}
+            onChangeText={text => setFormData({...formData, email: text})}
             placeholder="Enter your email"
             keyboardType="email-address"
           />
@@ -178,7 +188,7 @@ const EditProfileScreen = ({ navigation }) => {
           <InputField
             label="Phone Number"
             value={formData.phone}
-            onChangeText={(text) => setFormData({ ...formData, phone: text })}
+            onChangeText={text => setFormData({...formData, phone: text})}
             placeholder="Enter your phone number"
             keyboardType="phone-pad"
           />
@@ -191,7 +201,7 @@ const EditProfileScreen = ({ navigation }) => {
           <InputField
             label="Street Address"
             value={formData.address}
-            onChangeText={(text) => setFormData({ ...formData, address: text })}
+            onChangeText={text => setFormData({...formData, address: text})}
             placeholder="Enter your address"
           />
 
@@ -200,7 +210,7 @@ const EditProfileScreen = ({ navigation }) => {
               <InputField
                 label="City"
                 value={formData.city}
-                onChangeText={(text) => setFormData({ ...formData, city: text })}
+                onChangeText={text => setFormData({...formData, city: text})}
                 placeholder="City"
               />
             </View>
@@ -208,7 +218,7 @@ const EditProfileScreen = ({ navigation }) => {
               <InputField
                 label="State"
                 value={formData.state}
-                onChangeText={(text) => setFormData({ ...formData, state: text })}
+                onChangeText={text => setFormData({...formData, state: text})}
                 placeholder="State"
               />
             </View>
@@ -217,7 +227,7 @@ const EditProfileScreen = ({ navigation }) => {
           <InputField
             label="ZIP Code"
             value={formData.zipCode}
-            onChangeText={(text) => setFormData({ ...formData, zipCode: text })}
+            onChangeText={text => setFormData({...formData, zipCode: text})}
             placeholder="ZIP Code"
             keyboardType="numeric"
           />
@@ -230,14 +240,18 @@ const EditProfileScreen = ({ navigation }) => {
           <InputField
             label="Contact Name"
             value={formData.emergencyContact}
-            onChangeText={(text) => setFormData({ ...formData, emergencyContact: text })}
+            onChangeText={text =>
+              setFormData({...formData, emergencyContact: text})
+            }
             placeholder="Emergency contact name"
           />
 
           <InputField
             label="Contact Phone"
             value={formData.emergencyPhone}
-            onChangeText={(text) => setFormData({ ...formData, emergencyPhone: text })}
+            onChangeText={text =>
+              setFormData({...formData, emergencyPhone: text})
+            }
             placeholder="Emergency contact phone"
             keyboardType="phone-pad"
           />
@@ -280,7 +294,12 @@ const EditProfileScreen = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Skills & Certifications</Text>
           <View style={styles.skillsContainer}>
-            {['Electrical Installation', 'Project Management', 'Safety Compliance', 'Troubleshooting'].map((skill, index) => (
+            {[
+              'Electrical Installation',
+              'Project Management',
+              'Safety Compliance',
+              'Troubleshooting',
+            ].map((skill, index) => (
               <View key={index} style={styles.skillChip}>
                 <Text style={styles.skillText}>{skill}</Text>
                 <TouchableOpacity>
@@ -295,7 +314,7 @@ const EditProfileScreen = ({ navigation }) => {
           </View>
         </View>
 
-        <View style={{ height: 40 }} />
+        <View style={{height: 40}} />
       </ScrollView>
     </View>
   );
@@ -305,7 +324,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
-    paddingBottom:100,
+    // paddingBottom:100,
   },
   header: {
     // paddingTop: 50,
@@ -316,7 +335,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 10
+    padding: 10,
   },
   backButton: {
     padding: 8,
@@ -329,7 +348,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   saveButton: {
-    backgroundColor: 'rgb(2, 162, 231)',
+    backgroundColor: '#3B82F6',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
@@ -373,7 +392,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -390,7 +409,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -476,4 +495,3 @@ const styles = StyleSheet.create({
 });
 
 export default EditProfileScreen;
-

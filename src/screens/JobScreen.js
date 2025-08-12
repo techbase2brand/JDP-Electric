@@ -1,687 +1,813 @@
-// import React, { useEffect, useState } from 'react'
-// import { FlatList, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-// import { BaseStyle } from '../constants/Style';
-// import { widthPercentageToDP as wp, heightPercentageToDP as hp } from '../utils';
-// import { style, spacings } from '../constants/Fonts';
-// import { blackColor, greenColor, orangeColor, whiteColor, yellowColor } from '../constants/Color';
-// import Header from '../components/Header';
-
-// const { flex, alignItemsCenter, alignJustifyCenter, resizeModeContain, flexDirectionRow, justifyContentSpaceBetween, justifyContentCenter, textAlign } = BaseStyle;
-
-// const JobScreen = ({ navigation }) => {
-//   const [selectedTab, setSelectedTab] = useState('All');
-//   const [currentTime, setCurrentTime] = useState(getFormattedTime());
-
-//   useEffect(() => {
-//     const interval = setInterval(() => {
-//       setCurrentTime(getFormattedTime());
-//     }, 1000); // Update every 1 second
-
-//     return () => clearInterval(interval); // Cleanup
-//   }, []);
-
-//   function getFormattedTime() {
-//     return new Date().toLocaleTimeString([], { hour12: false });
-//   }
-//   const jobData = [
-//     { id: '1001', siteName: 'Alberta. 110...', status: 'Pending' },
-//     { id: '1002', siteName: 'Alberta. 110...', status: 'Complete' },
-//     { id: '1003', siteName: 'Alberta. 110...', status: 'Ongoing', time: '11:02:08' },
-//     { id: '1004', siteName: 'Alberta. 110...', status: 'Pending' },
-//     { id: '1005', siteName: 'Alberta. 110...', status: 'Complete' },
-//     { id: '1006', siteName: 'Alberta. 110...', status: 'Complete' },
-//     { id: '1007', siteName: 'Alberta. 110...', status: 'Complete' },
-//     { id: '1008', siteName: 'Alberta. 110...', status: 'Complete' },
-//     { id: '1009', siteName: 'Alberta. 110...', status: 'Pending' },
-//     { id: '10010', siteName: 'Alberta. 110...', status: 'Complete' },
-//   ];
-
-//   const renderJobItem = ({ item, index }) => {
-//     const isOngoing = item.status === 'Ongoing';
-//     // Background color logic
-//     let backgroundColor = '';
-//     if (isOngoing) {
-//       backgroundColor = yellowColor;
-//     } else {
-//       backgroundColor = index % 2 === 0 ? whiteColor : '#F4FBFF';
-//     }
-//     return (
-//       <Pressable
-//         style={[styles.row, { backgroundColor }]}
-//         onPress={() => navigation.navigate("JobDetailsScreen", {
-//           id: item.id,
-//           status: item.status,
-//           // time: item?.time
-//         })}>
-//         <Text style={[flex, justifyContentCenter, { paddingLeft: spacings.xxxLarge }]}>#{item.id}</Text>
-//         <Text style={[flex, justifyContentCenter]}>{item.siteName}</Text>
-//         <View style={[flex, justifyContentCenter]}>
-//           {isOngoing ? (
-//             <Text style={styles.ongoingText}>
-//               {/* Ongoing {item.time} */}
-//               Ongoing {currentTime}
-//             </Text>
-//           ) : (
-//             <View style={[
-//               styles.statusBadge,
-//               item.status === 'Pending' && styles.pending,
-//               item.status === 'Complete' && styles.complete,
-//             ]}>
-//               <Text style={styles.statusText}>{item.status}</Text>
-//             </View>
-//           )}
-//         </View>
-//       </Pressable>
-//     );
-//   };
-
-//   const filteredJobs = jobData.filter(item =>
-//     selectedTab === 'All' ? true : item.status === selectedTab
-//   );
-
-//   return (
-//     <View style={[flex, { backgroundColor: whiteColor }]}>
-//       <Header showProfile={false} scanner={true} />
-//       <View style={[styles.container]}>
-//         {/* <View style={[styles.tabContainer, flexDirectionRow, justifyContentSpaceBetween]}> */}
-//         <ScrollView
-//           horizontal
-//           showsHorizontalScrollIndicator={false}
-//           contentContainerStyle={[styles.tabContainer, flexDirectionRow, justifyContentSpaceBetween, { paddingHorizontal: 10 }]}
-//         >
-//           {['All', 'Complete', 'Ongoing', 'Pending'].map(tab => (
-//             <TouchableOpacity
-//               key={tab}
-//               style={[
-//                 styles.tab,
-//                 selectedTab === tab && styles.activeTab
-//               ]}
-//               onPress={() => setSelectedTab(tab)}
-//             >
-//               <Text
-//                 style={[
-//                   styles.tabText,
-//                   selectedTab === tab && styles.activeTabText
-//                 ]}
-//               >
-//                 {tab} Jobs
-//               </Text>
-//             </TouchableOpacity>
-//           ))}
-//         </ScrollView>
-
-//         <View style={[flexDirectionRow, alignItemsCenter, styles.headerRow]}>
-//           <Text style={[flex, justifyContentCenter, { paddingHorizontal: spacings.xxxLarge }]}>ID No.</Text>
-//           <Text style={[flex, justifyContentCenter]}>Site Name</Text>
-//           <Text style={[flex, justifyContentCenter]}>Status</Text>
-//         </View>
-//         {/* Job List */}
-//         <FlatList
-//           data={filteredJobs}
-//           renderItem={renderJobItem}
-//           keyExtractor={(item, index) => item.id + index}
-//           style={{ height: hp(60.5) }}
-//           showsVerticalScrollIndicator={false}
-//         />
-//       </View>
-
-//     </View>
-//   )
-// }
-
-// export default JobScreen
-
-// const styles = StyleSheet.create({
-//   container: {
-//     backgroundColor: whiteColor,
-//     paddingVertical: spacings.large
-//   },
-//   tabContainer: {
-//     marginBottom: spacings.xLarge,
-//     paddingHorizontal: spacings.large,
-//   },
-//   tab: {
-//     paddingHorizontal: spacings.xLarge,
-//     paddingVertical: spacings.medium,
-//     borderRadius: 20,
-//     borderWidth: 1,
-//     borderColor: blackColor,
-//     marginRight: spacings.xLarge
-//   },
-//   activeTab: {
-//     backgroundColor: blackColor
-//   },
-//   tabText: {
-//     color: blackColor
-//   },
-//   activeTabText: {
-//     color: whiteColor
-//   },
-//   row: {
-//     flexDirection: 'row',
-//     paddingVertical: spacings.large,
-//     borderBottomWidth: 1,
-//     borderBottomColor: '#eee'
-//   },
-//   headerRow: {
-//     width: wp(100),
-//     height: hp(4.5),
-//     backgroundColor: '#F4FBFF',
-//   },
-//   statusBadge: {
-//     paddingVertical: 4,
-//     paddingHorizontal: spacings.xLarge,
-//     borderRadius: 10,
-//     alignSelf: 'flex-start'
-//   },
-//   pending: {
-//     backgroundColor: orangeColor
-//   },
-//   complete: {
-//     backgroundColor: greenColor
-//   },
-//   statusText: {
-//     color: whiteColor,
-//     fontSize: style.fontSizeNormal.fontSize
-//   },
-//   ongoingRow: {
-//     backgroundColor: yellowColor
-//   },
-//   ongoingText: {
-//     color: blackColor,
-//     fontSize: style.fontSizeNormal.fontSize,
-//   }
-// })
-
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
-  SafeAreaView,
-  StyleSheet,
+  TextInput,
   StatusBar,
+  SafeAreaView,
+  Linking,
+  Alert,
 } from 'react-native';
-import Feather from 'react-native-vector-icons/Feather';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Entypo from 'react-native-vector-icons/Entypo';
-import {tabColor} from '../constants/Color';
+import {widthPercentageToDP} from '../utils';
 
-const JobsScreen = ({navigation}) => {
-  const [selectedFilter, setSelectedFilter] = useState('All');
+// JDP Electrics Colors
+const COLORS = {
+  primary: '#3B82F6',
+  primaryDark: '#1E40AF',
+  primaryLight: '#93C5FD',
+  success: '#10B981',
+  warning: '#F59E0B',
+  danger: '#EF4444',
+  white: '#FFFFFF',
+  gray50: '#F9FAFB',
+  gray100: '#F3F4F6',
+  gray200: '#E5E7EB',
+  gray300: '#D1D5DB',
+  gray400: '#9CA3AF',
+  gray500: '#6B7280',
+  gray600: '#4B5563',
+  gray700: '#374151',
+  gray800: '#1F2937',
+  gray900: '#111827',
+  blue50: '#EFF6FF',
+  blue100: '#DBEAFE',
+  green50: '#ECFDF5',
+  green100: '#D1FAE5',
+  yellow50: '#FFFBEB',
+  yellow100: '#FEF3C7',
+  red50: '#FEF2F2',
+  red100: '#FEE2E2',
+};
 
-  const filters = ['All', 'In Progress', 'Scheduled', 'Completed', 'Cancelled'];
+const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
+  const [jobs, setJobs] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('active');
 
-  // const jobs = [
-  //   {
-  //     id: 'JOB-001',
-  //     title: 'Electrical Panel Upgrade',
-  //     description: 'Upgrade main electrical panel from 100A to 200A service',
-  //     status: 'In Progress',
-  //     priority: 'HIGH',
-  //     technician: 'David Thompson',
-  //     time: '08:00 (8h est.)',
-  //     location: '1234 Oak Street, Houston, TX 77001',
-  //     client: 'Residential Client',
-  //     statusColor: '#193CB8',
-  //     priorityColor: '#9F0712',
-  //     date: 'Today',
-  //   },
-  //   {
-  //     id: 'JOB-002',
-  //     title: 'Commercial Lighting Installation',
-  //     description: 'Install LED lighting system in conference rooms',
-  //     status: 'Scheduled',
-  //     priority: 'MEDIUM',
-  //     technician: 'Sarah Johnson',
-  //     time: '14:00 (6h est.)',
-  //     location: '1500 Corporate Blvd, Houston, TX 77002',
-  //     client: 'TechCorp Office',
-  //     statusColor: '#016630',
-  //     priorityColor: '#894B00',
-  //     date: 'Today',
-  //   },
-  //   {
-  //     id: 'JOB-003',
-  //     title: 'Emergency Generator Maintenance',
-  //     description: 'Routine maintenance and testing of backup generator',
-  //     status: 'Scheduled',
-  //     priority: 'HIGH',
-  //     technician: 'Mike Rodriguez',
-  //     time: '09:00 (4h est.)',
-  //     location: '2000 Medical Center Dr, Houston, TX 77030',
-  //     client: 'Metro Hospital',
-  //     statusColor: '#016630',
-  //     priorityColor: '#9F0712',
-  //     date: 'Jan 26',
-  //   },
-  //   {
-  //     id: 'JOB-004',
-  //     title: 'HVAC System Repair',
-  //     description: 'Fix heating system in office building lobby',
-  //     status: 'Completed',
-  //     priority: 'MEDIUM',
-  //     technician: 'Lisa Chen',
-  //     time: 'Completed',
-  //     location: '500 Main Street, Houston, TX 77002',
-  //     client: 'Downtown Plaza',
-  //     statusColor: '#00A63E',
-  //     priorityColor: '#894B00',
-  //     date: 'Yesterday',
-  //   },
-  //   {
-  //     id: 'JOB-005',
-  //     title: 'Security System Installation',
-  //     description: 'Install new security cameras and access control',
-  //     status: 'In Progress',
-  //     priority: 'LOW',
-  //     technician: 'John Smith',
-  //     time: '10:00 (3h est.)',
-  //     location: '800 Commerce St, Houston, TX 77002',
-  //     client: 'SecureBuilding Inc',
-  //     statusColor: '#193CB8',
-  //     priorityColor: '#6B7280',
-  //     date: 'Today',
-  //   },
-  // ];
+  // Load mock job data
+  useEffect(() => {
+    const mockJobs = [
+      {
+        id: '1',
+        jobId: 'JDP-2024-001',
+        title: 'Electrical Panel Upgrade',
+        customer: {
+          name: 'ABC Manufacturing',
+          address: '1234 Industrial Blvd, Houston, TX 77001',
+          phone: '+1 (555) 0101',
+        },
+        status: 'active',
+        priority: 'high',
+        scheduledDate: '2024-01-15',
+        scheduledTime: '08:00 AM',
+        assignedTo: ['Sarah Johnson', 'Mike Wilson'],
+        specialInstructions:
+          'Customer prefers work to be done during off-hours. Main power shutdown required.',
+        tags: ['Electrical', 'Panel Upgrade', 'High Priority'],
+        location: {
+          latitude: 29.7604,
+          longitude: -95.3698,
+          address: '1234 Industrial Blvd, Houston, TX 77001',
+        },
+        estimatedHours: 8,
+      },
+      {
+        id: '2',
+        jobId: 'JDP-2024-002',
+        title: 'Outlet Installation Project',
+        customer: {
+          name: 'XYZ Office Complex',
+          address: '5678 Business Dr, Dallas, TX 75201',
+          phone: '+1 (555) 0102',
+        },
+        status: 'assigned',
+        priority: 'medium',
+        scheduledDate: '2024-01-16',
+        scheduledTime: '09:00 AM',
+        assignedTo: ['David Chen'],
+        specialInstructions:
+          'Install GFCI outlets in conference rooms. Coordinate with building manager.',
+        tags: ['Outlets', 'GFCI', 'Office'],
+        location: {
+          latitude: 32.7767,
+          longitude: -96.797,
+          address: '5678 Business Dr, Dallas, TX 75201',
+        },
+        estimatedHours: 4,
+      },
+      {
+        id: '3',
+        jobId: 'JDP-2024-003',
+        title: 'Emergency Lighting Repair',
+        customer: {
+          name: 'DEF Hospital',
+          address: '9876 Medical Center Dr, Austin, TX 78701',
+          phone: '+1 (555) 0103',
+        },
+        status: 'pending',
+        priority: 'high',
+        scheduledDate: '2024-01-14',
+        scheduledTime: '07:00 AM',
+        assignedTo: ['Lisa Rodriguez'],
+        specialInstructions:
+          'Critical infrastructure repair. Hospital environment - follow safety protocols.',
+        tags: ['Emergency', 'Lighting', 'Hospital', 'Critical'],
+        location: {
+          latitude: 30.2672,
+          longitude: -97.7431,
+          address: '9876 Medical Center Dr, Austin, TX 78701',
+        },
+        estimatedHours: 6,
+      },
+      {
+        id: '4',
+        jobId: 'JDP-2024-004',
+        title: 'LED Lighting Installation',
+        customer: {
+          name: 'GHI Retail Store',
+          address: '2468 Shopping Center, San Antonio, TX 78201',
+          phone: '+1 (555) 0104',
+        },
+        status: 'completed',
+        priority: 'low',
+        scheduledDate: '2024-01-12',
+        scheduledTime: '10:00 AM',
+        assignedTo: ['Tom Anderson'],
+        specialInstructions:
+          'Replace fluorescent fixtures with LED. Store remains open during work.',
+        tags: ['LED', 'Lighting', 'Retail', 'Energy Efficient'],
+        location: {
+          latitude: 29.4241,
+          longitude: -98.4936,
+          address: '2468 Shopping Center, San Antonio, TX 78201',
+        },
+        estimatedHours: 3,
+      },
+      {
+        id: '5',
+        jobId: 'JDP-2024-005',
+        title: 'Generator Installation',
+        customer: {
+          name: 'JKL Data Center',
+          address: '1357 Technology Pkwy, Houston, TX 77002',
+          phone: '+1 (555) 0105',
+        },
+        status: 'active',
+        priority: 'high',
+        scheduledDate: '2024-01-18',
+        scheduledTime: '06:00 AM',
+        assignedTo: ['Sarah Johnson', 'Mike Wilson', 'David Chen'],
+        specialInstructions:
+          'Backup generator installation. Coordinate with facility management and IT team.',
+        tags: ['Generator', 'Backup Power', 'Data Center', 'Critical'],
+        location: {
+          latitude: 29.7604,
+          longitude: -95.3698,
+          address: '1357 Technology Pkwy, Houston, TX 77002',
+        },
+        estimatedHours: 12,
+      },
+    ];
 
-  const jobs = [
+    setJobs(mockJobs);
+  }, []);
+
+  // Tab configuration
+  const tabs = [
     {
-      id: 'JOB-001',
-      title: 'Electrical Panel Upgrade',
-      description: 'Upgrade main electrical panel from 100A to 200A service',
-      status: 'In Progress',
-      priority: 'HIGH',
-      technician: 'David Thompson',
-      time: '08:00 (8h est.)',
-      location: '1234 Oak Street, Houston, TX 77001',
-      client: 'Residential Client',
-      statusColor: '#193CB8',
-      priorityColor: '#9F0712',
-      date: 'Today',
-      startCoordinates: {latitude: 29.7604, longitude: -95.3698}, // Houston downtown
-      destinationCoordinates: {latitude: 29.7704, longitude: -95.3598}, // ~1.5 km away
+      key: 'active',
+      label: 'Active',
+      count: jobs.filter(j => j.status === 'active').length,
     },
     {
-      id: 'JOB-002',
-      title: 'Commercial Lighting Installation',
-      description: 'Install LED lighting system in conference rooms',
-      status: 'Scheduled',
-      priority: 'MEDIUM',
-      technician: 'Sarah Johnson',
-      time: '14:00 (6h est.)',
-      location: '1500 Corporate Blvd, Houston, TX 77002',
-      client: 'TechCorp Office',
-      statusColor: '#016630',
-      priorityColor: '#894B00',
-      date: 'Today',
-      startCoordinates: {latitude: 29.7604, longitude: -95.3698},
-      destinationCoordinates: {latitude: 29.7584, longitude: -95.361}, // ~1 km
+      key: 'assigned',
+      label: 'Assigned',
+      count: jobs.filter(j => j.status === 'assigned').length,
     },
     {
-      id: 'JOB-003',
-      title: 'Emergency Generator Maintenance',
-      description: 'Routine maintenance and testing of backup generator',
-      status: 'Scheduled',
-      priority: 'HIGH',
-      technician: 'Mike Rodriguez',
-      time: '09:00 (4h est.)',
-      location: '2000 Medical Center Dr, Houston, TX 77030',
-      client: 'Metro Hospital',
-      statusColor: '#016630',
-      priorityColor: '#9F0712',
-      date: 'Jan 26',
-      startCoordinates: {latitude: 29.7604, longitude: -95.3698},
-      destinationCoordinates: {latitude: 29.713, longitude: -95.399}, // ~6.5 km
+      key: 'pending',
+      label: 'Pending',
+      count: jobs.filter(j => j.status === 'pending').length,
     },
     {
-      id: 'JOB-004',
-      title: 'HVAC System Repair',
-      description: 'Fix heating system in office building lobby',
-      status: 'Completed',
-      priority: 'MEDIUM',
-      technician: 'Lisa Chen',
-      time: 'Completed',
-      location: '500 Main Street, Houston, TX 77002',
-      client: 'Downtown Plaza',
-      statusColor: '#00A63E',
-      priorityColor: '#894B00',
-      date: 'Yesterday',
-      startCoordinates: {latitude: 29.7604, longitude: -95.3698},
-      destinationCoordinates: {latitude: 29.757, longitude: -95.37}, // ~0.5 km
-    },
-    {
-      id: 'JOB-005',
-      title: 'Security System Installation',
-      description: 'Install new security cameras and access control',
-      status: 'In Progress',
-      priority: 'LOW',
-      technician: 'John Smith',
-      time: '10:00 (3h est.)',
-      location: '800 Commerce St, Houston, TX 77002',
-      client: 'SecureBuilding Inc',
-      statusColor: '#193CB8',
-      priorityColor: '#6B7280',
-      date: 'Today',
-      startCoordinates: {latitude: 29.7604, longitude: -95.3698},
-      destinationCoordinates: {latitude: 29.7595, longitude: -95.3662}, // ~0.4 km
+      key: 'completed',
+      label: 'Completed',
+      count: jobs.filter(j => j.status === 'completed').length,
     },
   ];
 
-  const getFilteredJobs = () => {
-    if (selectedFilter === 'All') return jobs;
-    return jobs.filter(job => job.status == selectedFilter);
+  // Filter jobs based on active tab and search query
+  const filteredJobs = jobs.filter(job => {
+    const matchesTab = job.status === activeTab;
+    const matchesSearch =
+      searchQuery === '' ||
+      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.jobId.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesTab && matchesSearch;
+  });
+
+  // Get status color
+  const getStatusColor = status => {
+    switch (status) {
+      case 'active':
+        return COLORS.primary;
+      case 'assigned':
+        return COLORS.warning;
+      case 'pending':
+        return COLORS.danger;
+      case 'completed':
+        return COLORS.success;
+      default:
+        return COLORS.gray500;
+    }
   };
 
-  const renderFilterButton = ({item}) => (
-    <TouchableOpacity
-      style={[
-        styles.filterButton,
-        selectedFilter == item && styles.activeFilterButton,
-      ]}
-      onPress={() => setSelectedFilter(item)}>
-      <Text
+  // Get priority color
+  const getPriorityColor = priority => {
+    switch (priority) {
+      case 'high':
+        return COLORS.danger;
+      case 'medium':
+        return COLORS.warning;
+      case 'low':
+        return COLORS.success;
+      default:
+        return COLORS.gray500;
+    }
+  };
+
+  // Handle phone call
+  const handleCall = phoneNumber => {
+    Linking.openURL(`tel:${phoneNumber}`);
+  };
+
+  // Handle navigation
+  const handleNavigate = job => {
+    const address = encodeURIComponent(job.location.address);
+    const url = `https://maps.google.com/?q=${address}`;
+    Linking.openURL(url);
+  };
+
+  // Handle start timer
+  const handleStartTimer = job => {
+    navigation.navigate('TimerScreen')
+    // if (onStartTimer) {
+    //   onStartTimer(job);
+    // } else {
+    //   Alert.alert('Timer', `Starting timer for ${job.title}`);
+    // }
+  };
+
+  // Render header
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}>
+        <Ionicons name="arrow-back" size={24} color={COLORS.white} />
+      </TouchableOpacity>
+
+      <View style={styles.headerCenter}>
+        <Text style={styles.headerTitle}>Job Management</Text>
+        <Text style={styles.headerSubtitle}>
+          {filteredJobs.length} {activeTab} jobs
+        </Text>
+      </View>
+
+      <TouchableOpacity
         style={[
-          styles.filterText,
-          selectedFilter === item && styles.activeFilterText,
-        ]}>
-        {item}
-      </Text>
+          styles.headerButton,
+          {
+            display: 'flex',
+            flexDirection: 'row',
+            backgroundColor: '#10B981',
+            width: widthPercentageToDP(24),
+          },
+        ]}
+        onPress={() => navigation.navigate('CreateJobScreen')}>
+        <Ionicons name="add" size={24} color={COLORS.white} />
+        <Text style={{color: '#fff', fontWeight: '600'}}>New Job</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // Render search bar
+  const renderSearchBar = () => (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={20} color={COLORS.gray400} />
+        <TextInput
+          style={styles.searchInput}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search jobs, customers, job ID..."
+          placeholderTextColor={COLORS.gray400}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={20} color={COLORS.gray400} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  // Render tabs
+  const renderTabs = () => (
+    <View style={styles.tabsContainer}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={styles.tabsContent}>
+          {tabs.map(tab => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.tab, activeTab === tab.key && styles.activeTab]}
+              onPress={() => setActiveTab(tab.key)}>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === tab.key && styles.activeTabText,
+                ]}>
+                {tab.label}
+              </Text>
+              <View
+                style={[
+                  styles.tabBadge,
+                  activeTab === tab.key && styles.activeTabBadge,
+                ]}>
+                <Text
+                  style={[
+                    styles.tabBadgeText,
+                    activeTab === tab.key && styles.activeTabBadgeText,
+                  ]}>
+                  {tab.count}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
+  );
+
+  // Render job card
+  const renderJobCard = job => (
+    <TouchableOpacity
+      key={job.id}
+      style={styles.jobCard}
+      onPress={() => navigation.navigate('JobDetail', job)}>
+      {/* Job Header */}
+      <View style={styles.jobCardHeader}>
+        <View style={styles.jobCardTitleSection}>
+          <Text style={styles.jobId}>{job.jobId}</Text>
+          <View style={styles.jobStatusPriority}>
+            <View
+              style={[
+                styles.statusBadge,
+                {backgroundColor: getStatusColor(job.status)},
+              ]}>
+              <Text style={styles.statusText}>{job.status.toUpperCase()}</Text>
+            </View>
+            <View
+              style={[
+                styles.priorityBadge,
+                {backgroundColor: getPriorityColor(job.priority)},
+              ]}>
+              <Ionicons name="flag" size={10} color={COLORS.white} />
+              <Text style={styles.priorityText}>
+                {job.priority.toUpperCase()}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Job Title */}
+      <Text style={styles.jobTitle}>{job.title}</Text>
+
+      {/* Customer Info */}
+      <View style={styles.customerSection}>
+        <Text style={styles.customerName}>{job.customer.name}</Text>
+        <Text style={styles.customerAddress}>{job.customer.address}</Text>
+      </View>
+
+      {/* Schedule Info */}
+      <View style={styles.scheduleSection}>
+        <View style={styles.scheduleItem}>
+          <Ionicons name="calendar" size={16} color={COLORS.gray500} />
+          <Text style={styles.scheduleText}>
+            {new Date(job.scheduledDate).toLocaleDateString()}
+          </Text>
+        </View>
+        <View style={styles.scheduleItem}>
+          <Ionicons name="time" size={16} color={COLORS.gray500} />
+          <Text style={styles.scheduleText}>{job.scheduledTime}</Text>
+        </View>
+        <View style={styles.scheduleItem}>
+          <Ionicons name="hourglass" size={16} color={COLORS.gray500} />
+          <Text style={styles.scheduleText}>{job.estimatedHours}h</Text>
+        </View>
+      </View>
+
+      {/* Assigned To */}
+      <View style={styles.assignedSection}>
+        <Ionicons name="people" size={16} color={COLORS.gray500} />
+        <Text style={styles.assignedText}>
+          Assigned to: {job.assignedTo.join(', ')}
+        </Text>
+      </View>
+
+      {/* Special Instructions */}
+      {job.specialInstructions && (
+        <View style={styles.instructionsSection}>
+          <Ionicons
+            name="information-circle"
+            size={16}
+            color={COLORS.warning}
+          />
+          <Text style={styles.instructionsText}>{job.specialInstructions}</Text>
+        </View>
+      )}
+
+      {/* Tags */}
+      <View style={styles.tagsSection}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.tagsContainer}>
+            {job.tags.map((tag, index) => (
+              <View key={index} style={styles.tag}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* Action Icons */}
+      <View style={styles.actionsSection}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleCall(job.customer.phone)}>
+          <Ionicons name="call" size={20} color={COLORS.primary} />
+          <Text style={styles.actionText}>Call</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleNavigate(job)}>
+          <Ionicons name="navigate" size={20} color={COLORS.primary} />
+          <Text style={styles.actionText}>Navigate</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleStartTimer(job)}>
+          <Ionicons name="timer" size={20} color={COLORS.primary} />
+          <Text style={styles.actionText}>Timer</Text>
+        </TouchableOpacity>
+      </View>
     </TouchableOpacity>
   );
 
-  const renderJobCard = ({item}) => (
-    <TouchableOpacity style={styles.jobCard}>
-      <View style={styles.jobHeader}>
-        <View style={styles.jobHeaderLeft}>
-          <Text style={styles.jobId}>{item.id}</Text>
-          <View style={[styles.statusBadge, {backgroundColor: '#E3F2FD'}]}>
-            <Text style={[styles.statusText, {color: item.statusColor}]}>
-              {item.status}
-            </Text>
-          </View>
-          <View style={[styles.priorityBadge, {backgroundColor: '#ECEEF2'}]}>
-            <Text style={[styles.priorityText, {color: item.priorityColor}]}>
-              {item.priority}
-            </Text>
-          </View>
-        </View>
-        <Text style={styles.dateText}>{item.date}</Text>
+  // Render empty state
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <View style={styles.emptyIconContainer}>
+        <Ionicons name="briefcase-outline" size={80} color={COLORS.gray300} />
       </View>
-
-      <Text style={styles.jobTitle}>{item.title}</Text>
-      <Text style={styles.jobDescription}>{item.description}</Text>
-
-      <View style={styles.jobDetails}>
-        <View style={styles.jobDetailRow}>
-          <Text style={styles.jobDetailIcon}>
-            {' '}
-            <Feather name="user" size={18} color={tabColor} />
-          </Text>
-          <Text style={styles.jobDetailText}>{item.technician}</Text>
-        </View>
-        <View style={styles.jobDetailRow}>
-          <Text style={styles.jobDetailIcon}>
-            {' '}
-            <FontAwesome name="hospital-o" size={18} color={tabColor} />
-          </Text>
-          <Text style={styles.jobDetailText}>{item.client}</Text>
-        </View>
-        <View style={styles.jobDetailRow}>
-          <Text style={styles.jobDetailIcon}>
-            <Ionicons name="timer-outline" size={18} color={tabColor} />
-          </Text>
-          <Text style={styles.jobDetailText}>{item.time}</Text>
-        </View>
-        <View style={styles.jobDetailRow}>
-          <Text style={styles.jobDetailIcon}>
-            <Feather name="map-pin" size={18} color={tabColor} />
-          </Text>
-          <Text style={styles.jobDetailText}>{item.location}</Text>
-        </View>
-      </View>
-
-      <View style={styles.jobActions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('JobDetail', {job: item})}>
-          <Text style={styles.actionButtonText}>View Details</Text>
-        </TouchableOpacity>
-        {item.status === 'Scheduled' && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.primaryActionButton]}>
-            <Text
-              style={[styles.actionButtonText, styles.primaryActionButtonText]}>
-              Start Job
-            </Text>
-          </TouchableOpacity>
-        )}
-        {item.status === 'In Progress' && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.successActionButton]}>
-            <Text
-              style={[styles.actionButtonText, styles.successActionButtonText]}>
-              Complete Job
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </TouchableOpacity>
+      <Text style={styles.emptyTitle}>No {activeTab} jobs</Text>
+      <Text style={styles.emptySubtitle}>
+        {searchQuery
+          ? 'Try adjusting your search criteria'
+          : `No jobs in the ${activeTab} category`}
+      </Text>
+    </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" /> */}
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
 
-      {/* Header */}
-      <View style={{marginBottom: 190}}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Jobs</Text>
-          <View style={styles.headerStats}>
-            <Text style={styles.statsText}>
-              {getFilteredJobs().length} jobs
-            </Text>
-          </View>
-        </View>
+      {renderHeader()}
+      {renderSearchBar()}
+      {renderTabs()}
 
-        {/* Filters */}
-        <View style={styles.filtersContainer}>
-          <FlatList
-            horizontal
-            data={filters}
-            renderItem={renderFilterButton}
-            keyExtractor={item => item}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filtersList}
-          />
-        </View>
-
-        {/* Jobs List */}
-        <FlatList
-          data={getFilteredJobs()}
-          renderItem={renderJobCard}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.jobsList}
-          showsVerticalScrollIndicator={false}
-        />
-      </View>
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}>
+        {filteredJobs.length === 0 ? (
+          renderEmptyState()
+        ) : (
+          <View style={styles.jobsList}>{filteredJobs.map(renderJobCard)}</View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
+// Styles
+const styles = {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.white,
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.primary,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 16,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#101828',
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.white,
   },
-  headerStats: {
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  statsText: {
+  headerSubtitle: {
     fontSize: 12,
-    color: '#155DFC',
-    fontWeight: '500',
+    color: COLORS.primaryLight,
+    marginTop: 2,
   },
-  filtersContainer: {
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 12,
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchContainer: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray50,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: COLORS.gray900,
+    marginLeft: 8,
+  },
+  tabsContainer: {
+    backgroundColor: COLORS.white,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: COLORS.gray200,
   },
-  filtersList: {
-    paddingHorizontal: 20,
+  tabsContent: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 8,
   },
-  filterButton: {
-    backgroundColor: '#F3F4F6',
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 12,
+    backgroundColor: COLORS.gray100,
+    gap: 8,
   },
-  activeFilterButton: {
-    backgroundColor: '#155DFC',
+  activeTab: {
+    backgroundColor: COLORS.primary,
   },
-  filterText: {
+  tabText: {
     fontSize: 14,
-    color: '#6B7280',
     fontWeight: '500',
+    color: COLORS.gray600,
   },
-  activeFilterText: {
-    color: '#FFFFFF',
+  activeTabText: {
+    color: COLORS.white,
+  },
+  tabBadge: {
+    backgroundColor: COLORS.gray300,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 20,
+    alignItems: 'center',
+  },
+  activeTabBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  tabBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.gray600,
+  },
+  activeTabBadgeText: {
+    color: COLORS.white,
+  },
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: COLORS.gray50,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   jobsList: {
-    padding: 20,
+    padding: 16,
+    gap: 16,
   },
   jobCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowColor: COLORS.gray900,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  jobHeader: {
+  jobCardHeader: {
+    marginBottom: 12,
+  },
+  jobCardTitleSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  jobHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
   },
   jobId: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#101828',
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  jobStatusPriority: {
+    flexDirection: 'row',
+    gap: 8,
   },
   statusBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 6,
   },
   statusText: {
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: '600',
+    color: COLORS.white,
   },
   priorityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
     borderRadius: 6,
+    gap: 3,
   },
   priorityText: {
-    fontSize: 10,
-    fontWeight: '500',
-  },
-  dateText: {
-    fontSize: 11,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontSize: 9,
+    fontWeight: '600',
+    color: COLORS.white,
   },
   jobTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#101828',
-    marginBottom: 6,
+    color: COLORS.gray900,
+    marginBottom: 12,
   },
-  jobDescription: {
+  customerSection: {
+    marginBottom: 12,
+  },
+  customerName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.gray800,
+    marginBottom: 4,
+  },
+  customerAddress: {
     fontSize: 14,
-    color: '#4A5565',
-    marginBottom: 16,
+    color: COLORS.gray600,
     lineHeight: 20,
   },
-  jobDetails: {
+  scheduleSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  scheduleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  scheduleText: {
+    fontSize: 13,
+    color: COLORS.gray600,
+  },
+  assignedSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
+    marginBottom: 12,
+  },
+  assignedText: {
+    fontSize: 14,
+    color: COLORS.gray700,
+    flex: 1,
+  },
+  instructionsSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: COLORS.yellow50,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  instructionsText: {
+    fontSize: 13,
+    color: COLORS.gray700,
+    flex: 1,
+    lineHeight: 18,
+  },
+  tagsSection: {
     marginBottom: 16,
   },
-  jobDetailRow: {
+  tagsContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
+    paddingRight: 16,
   },
-  jobDetailIcon: {
-    fontSize: 14,
+  tag: {
+    backgroundColor: COLORS.blue50,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.blue100,
   },
-  jobDetailText: {
-    fontSize: 13,
-    color: '#4A5565',
-    flex: 1,
+  tagText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.primary,
   },
-  jobActions: {
+  actionsSection: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-around',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gray200,
+    paddingTop: 16,
   },
   actionButton: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-    paddingVertical: 12,
-    borderRadius: 8,
     alignItems: 'center',
+    gap: 4,
   },
-  primaryActionButton: {
-    backgroundColor: '#155DFC',
-  },
-  successActionButton: {
-    backgroundColor: '#00A63E',
-  },
-  actionButtonText: {
-    fontSize: 14,
+  actionText: {
+    fontSize: 12,
     fontWeight: '500',
-    color: '#374151',
+    color: COLORS.primary,
   },
-  primaryActionButtonText: {
-    color: '#FFFFFF',
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
   },
-  successActionButtonText: {
-    color: '#FFFFFF',
+  emptyIconContainer: {
+    marginBottom: 16,
   },
-});
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.gray900,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: COLORS.gray600,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+};
 
-export default JobsScreen;
+export default JobListingScreen;
