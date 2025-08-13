@@ -13,6 +13,8 @@ import CheckoutScreen from '../screens/CheckoutScreen';
 import OrderConfirmationScreen from '../screens/OrderConfirmationScreen';
 import OrderHistoryScreen from '../screens/OrderHistoryScreen';
 import HomeScreen from '../screens/HomeScreen';
+import JobTimesheet from '../screens/JobTimeSheet';
+import ReportsScreen from '../screens/ReportsScreen';
 
 const Stack = createStackNavigator();
 
@@ -20,6 +22,8 @@ export default function JobStack() {
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="JobStack" component={JobScreen} />
+      <Stack.Screen name="JobTimesheet" component={JobTimesheet} />
+      <Stack.Screen name="ReportsScreen" component={ReportsScreen} />
       <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} />
       <Stack.Screen name="JobDetail" component={JobDetail} />
       <Stack.Screen name="MapScreen" component={MapScreen} />

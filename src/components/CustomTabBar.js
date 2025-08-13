@@ -12,7 +12,7 @@ import Animated, {
   FadeOut,
   LinearTransition,
 } from 'react-native-reanimated';
-import { tabColor } from '../constants/Color';
+import {tabColor} from '../constants/Color';
 import LinearGradient from 'react-native-linear-gradient';
 
 const {width} = Dimensions.get('window');
@@ -27,7 +27,7 @@ export default function CustomTabBar({state, descriptors, navigation, icons}) {
   const homeIndex = state.routes.findIndex(r => r.name === 'Home');
   const jobIndex = state.routes.findIndex(r => r.name === 'Jobs');
   const ProfileIndex = state.routes.findIndex(r => r.name === 'Profile'); // <- yaha Jobs tab ka name use karo
-   // <- yaha Jobs tab ka name use karo
+  // <- yaha Jobs tab ka name use karo
 
   // Home tab ke liye hide list
   const homeHideOnScreens = [
@@ -51,6 +51,7 @@ export default function CustomTabBar({state, descriptors, navigation, icons}) {
     'EditProfile',
     'TermsConditions',
     'PrivacyPolicy',
+    'JobTimesheet',
   ];
 
   // Job tab ke liye hide list
@@ -66,9 +67,10 @@ export default function CustomTabBar({state, descriptors, navigation, icons}) {
     'CartScreen',
     'CheckoutScreen',
     'CreateJobScreen',
+    'JobTimesheet',
   ];
 
-   const profileHideOnScreens = [
+  const profileHideOnScreens = [
     'EditProfile',
     'TermsConditions',
     'SupportScreen',
@@ -106,12 +108,11 @@ export default function CustomTabBar({state, descriptors, navigation, icons}) {
   }
   return (
     // <View style={styles.container}>
-        <LinearGradient
-    colors={['#155DFC', '#1447E6', '#432DD7']}
-    style={styles.container}
-    start={{ x: 0, y: 0 }}
-    end={{ x: 1, y: 0 }}
-  >
+    <LinearGradient
+      colors={['#155DFC', '#1447E6', '#432DD7']}
+      style={styles.container}
+      start={{x: 0, y: 0}}
+      end={{x: 1, y: 0}}>
       {state.routes.map((route, index) => {
         const {options} = descriptors[route.key];
         const label =
@@ -168,7 +169,7 @@ export default function CustomTabBar({state, descriptors, navigation, icons}) {
           </AnimatedTouchableOpacity>
         );
       })}
-    {/* </View> */}
+      {/* </View> */}
     </LinearGradient>
   );
 }

@@ -824,11 +824,11 @@ const JobDetailScreen = ({
   const priorityConfig = getPriorityConfig(job.priority || 'medium');
 
   const handleNavigate = (screen, jobData) => {
-    if (onNavigate) {
-      onNavigate(screen, jobData);
-    } else {
+    // if (onNavigate) {
+    //   navigation.navigate(screen, jobData);
+    // } else {
       navigation.navigate(screen, jobData ? {job: jobData} : undefined);
-    }
+    // }
   };
 
   const handleBack = () => {
@@ -1159,7 +1159,7 @@ const JobDetailScreen = ({
                 onPress={() =>
                   onViewTimesheet
                     ? onViewTimesheet(job)
-                    : handleNavigate('TimesheetScreen')
+                    : handleNavigate('JobTimesheet')
                 }>
                 <Icon name="schedule" size={20} color={Colors.text} />
                 <Text style={styles.gridActionText}>Timesheet</Text>
@@ -1167,7 +1167,7 @@ const JobDetailScreen = ({
 
               <TouchableOpacity
                 style={styles.gridActionButton}
-                onPress={() => handleNavigate('ReportsScreen', job)}>
+                onPress={() => navigation.navigate('ReportsScreen')}>
                 <Icon name="bar-chart" size={20} color={Colors.text} />
                 <Text style={styles.gridActionText}>Reports</Text>
               </TouchableOpacity>

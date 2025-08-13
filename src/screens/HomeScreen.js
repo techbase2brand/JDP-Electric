@@ -20,10 +20,13 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import LinearGradient from 'react-native-linear-gradient';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import {
+  COMPLETED,
   CREATE_JOB,
+  GROUP_PEOPLE,
   INVOICE_ICON,
   JOB_ICON,
   JOBS_ICON,
+  PERFORMANCE,
   REPORT_ICON,
   REPORTS_ICON,
   SUPPORT_ICON,
@@ -67,46 +70,34 @@ const HomeScreen = ({navigation}) => {
   const quickActions = [
     {
       title: 'View Jobs',
-      // icon: <MaterialIcons name="preview" size={26} color={whiteColor} />,
       icon: JOB_ICON,
-
       color: '#3B82F6',
     },
     {
-      title: 'View Reports',
-      // icon: <FontAwesome name="line-chart" size={20} color={whiteColor} />,
+      title: 'View Activity',
       icon: REPORT_ICON,
-
       color: '#0D542B',
     },
     {
       title: 'Generate Invoice',
       icon: INVOICE_ICON,
-
-      // icon: <FontAwesome name="file-pdf-o" size={24} color={whiteColor} />,
       color: '#6E11B0',
     },
-    {
-      title: 'Check Warranty',
-      icon: WARRENTY_ICON,
-
-      // icon: <Feather name="check-square" size={24} color={whiteColor} />,
-      color: '#9F2D00',
-    },
+    // {
+    //   title: 'Check Warranty',
+    //   icon: WARRENTY_ICON,
+    //   color: '#9F2D00',
+    // },
     {
       title: 'Create Job',
       icon: CREATE_JOB,
-
-      // icon: <Entypo name="plus" size={26} color={whiteColor} />,
       color: '#005F5A',
     },
-    {
-      title: 'Support Center',
-      icon: SUPPORT_ICON,
-
-      // icon: <MaterialIcons name="support-agent" size={26} color={whiteColor} />,
-      color: '#A50036',
-    },
+    // {
+    //   title: 'Support Center',
+    //   icon: SUPPORT_ICON,
+    //   color: '#A50036',
+    // },
   ];
 
   const todaysJobs = [
@@ -155,8 +146,8 @@ const HomeScreen = ({navigation}) => {
   const handleQuickActionPress = title => {
     if (title == 'Create Job') {
       navigation.navigate('CreateJobScreen'); // replace 'CreateJob' with your actual screen name
-    } else if (title == 'View Reports') {
-      navigation.navigate('ReportsScreen');
+    } else if (title == 'View Activity') {
+      navigation.navigate('ActivitySummaryScreen');
     } else if (title == 'Generate Invoice') {
       navigation.navigate('InvoiceScreen');
     } else if (title == 'Check Warranty') {
@@ -198,20 +189,19 @@ const HomeScreen = ({navigation}) => {
       style={[styles.quickActionButton, {backgroundColor: item.color}]}
       onPress={() => handleQuickActionPress(item.title)}>
       <View style={[styles.quickActionIcon, {backgroundColor: item.color}]}>
-       
-          {/* <Text
+        {/* <Text
             style={[
               styles.quickActionIconText,
              {alignSelf:"center"}
             ]}>
             {item.icon}
           </Text> */}
-          <Image
-            source={item.icon}
-            style={[styles.quickActionIconImage, {alignSelf: 'center'}]}
-          />
-        </View>
-      
+        <Image
+          source={item.icon}
+          style={[styles.quickActionIconImage, {alignSelf: 'center'}]}
+        />
+      </View>
+
       <Text style={styles.quickActionText}>{item.title}</Text>
     </TouchableOpacity>
   );
@@ -370,7 +360,8 @@ const HomeScreen = ({navigation}) => {
           {/* Quick Actions */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
+              <MaterialIcons name="electric-bolt" size={24} color={tabColor} />
+              <Text style={styles.sectionTitle}>Quick Actions</Text>
               <View style={styles.accessBadge}>
                 <Text style={styles.accessText}>Lead Access</Text>
               </View>
@@ -415,12 +406,13 @@ const HomeScreen = ({navigation}) => {
           </View>
 
           {/* Team Performance */}
-          <View style={styles.section}>
+          {/* <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-                <Entypo name="users" size={24} color={tabColor} /> Team
-                Performance Overview
-              </Text>
+              <Image
+                source={PERFORMANCE}
+                style={{width: 28, height: 28, marginRight: 10}}
+              />
+              <Text style={styles.sectionTitle}>Team Performance Overview</Text>
               <View style={styles.dashboardBadge}>
                 <Text style={styles.dashboardText}>Lead Dashboard</Text>
               </View>
@@ -429,7 +421,7 @@ const HomeScreen = ({navigation}) => {
               <View
                 style={[styles.performanceCard, {backgroundColor: '#F0FDF4'}]}>
                 <View style={styles.performanceIcon}>
-                  <Text>✅</Text>
+                  <Image source={COMPLETED} style={{width: 28, height: 28}} />
                 </View>
                 <Text style={styles.performanceLabel}>Jobs Completed</Text>
                 <Text style={[styles.performanceValue, {color: '#0D542B'}]}>
@@ -442,10 +434,11 @@ const HomeScreen = ({navigation}) => {
               <View
                 style={[styles.performanceCard, {backgroundColor: '#EFF6FF'}]}>
                 <View style={styles.performanceIcon}>
-                  <Text>
-                    {' '}
-                    <Entypo name="users" size={24} color={tabColor} />
-                  </Text>
+                  <Image
+                    source={GROUP_PEOPLE}
+                    style={{width: 28, height: 28}}
+                  />
+                 
                 </View>
                 <Text style={styles.performanceLabel}>Active Technicians</Text>
                 <Text style={[styles.performanceValue, {color: '#1C398E'}]}>
@@ -456,7 +449,7 @@ const HomeScreen = ({navigation}) => {
                 </Text>
               </View>
             </View>
-          </View>
+          </View> */}
         </ScrollView>
       </ScrollView>
     </SafeAreaView>
@@ -855,7 +848,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   performanceIcon: {
-    backgroundColor: '#FFFFFF',
+    // backgroundColor: '#FFFFFF',
     width: 28,
     height: 28,
     borderRadius: 14,

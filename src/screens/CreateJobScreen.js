@@ -133,11 +133,11 @@ const CreateJobScreen = ({onCreateJob, route}) => {
   ];
 
   const steps = [
-    {id: 1, title: 'Job Type', description: 'Select job type'},
-    {id: 2, title: 'Job Details', description: 'Enter job information'},
-    {id: 3, title: 'Resources', description: 'Scheduling & team'},
+    // {id: 1, title: 'Job Type', description: 'Select job type'},
+    {id: 1, title: 'Job Details', description: 'Enter job information'},
+    {id: 2, title: 'Resources', description: 'Scheduling & team'},
     // {id: 4, title: 'Materials', description: 'Required materials'},
-    {id: 4, title: 'Review', description: 'Review & create'},
+    {id: 3, title: 'Review', description: 'Review & create'},
   ];
 
   useEffect(() => {
@@ -391,7 +391,7 @@ const CreateJobScreen = ({onCreateJob, route}) => {
 
       <View style={styles.headerContent}>
         <Text style={styles.headerTitle}>Create New Job</Text>
-        <Text style={styles.headerSubtitle}>Step {currentStep} of 4</Text>
+        <Text style={styles.headerSubtitle}>Step {currentStep} of 3</Text>
       </View>
 
       <View style={styles.headerSpacer} />
@@ -427,35 +427,46 @@ const CreateJobScreen = ({onCreateJob, route}) => {
       </View>
     </TouchableOpacity>
   );
+  useEffect(() => {
+    {
+      renderJobTypeCard(
+        'service-based',
+        'Service-Based Job',
+        'For one-time service jobs with specific deliverables and a defined timeline (e.g., installations, repairs, maintenance).',
+        'build',
+        Colors.primary,
+      );
+    }
+  }, []);
 
-  const renderStep1 = () => (
-    <View style={styles.stepContainer}>
-      <View style={styles.stepHeader}>
-        <Text style={styles.stepTitle}>Select Job Type</Text>
-        <Text style={styles.stepSubtitle}>
-          Choose the type of job you want to create
-        </Text>
-      </View>
+  // const renderStep1 = () => (
+  //   <View style={styles.stepContainer}>
+  //     <View style={styles.stepHeader}>
+  //       <Text style={styles.stepTitle}>Select Job Type</Text>
+  //       <Text style={styles.stepSubtitle}>
+  //         Choose the type of job you want to create
+  //       </Text>
+  //     </View>
 
-      <View style={styles.jobTypeContainer}>
-        {renderJobTypeCard(
-          'service-based',
-          'Service-Based Job',
-          'For one-time service jobs with specific deliverables and a defined timeline (e.g., installations, repairs, maintenance).',
-          'build',
-          Colors.primary,
-        )}
+  //     <View style={styles.jobTypeContainer}>
+  //       {renderJobTypeCard(
+  //         'service-based',
+  //         'Service-Based Job',
+  //         'For one-time service jobs with specific deliverables and a defined timeline (e.g., installations, repairs, maintenance).',
+  //         'build',
+  //         Colors.primary,
+  //       )}
 
-        {renderJobTypeCard(
-          'contract-based',
-          'Contract-Based Job',
-          'For ongoing or long-term jobs involving external contractors or outsourcing with extended timelines and multiple phases.',
-          'group',
-          Colors.success,
-        )}
-      </View>
-    </View>
-  );
+  //       {renderJobTypeCard(
+  //         'contract-based',
+  //         'Contract-Based Job',
+  //         'For ongoing or long-term jobs involving external contractors or outsourcing with extended timelines and multiple phases.',
+  //         'group',
+  //         Colors.success,
+  //       )}
+  //     </View>
+  //   </View>
+  // );
 
   // const renderInputField = (
   //   label,
@@ -565,7 +576,8 @@ const CreateJobScreen = ({onCreateJob, route}) => {
           'Enter the name/title of the job',
         )}
         {renderInputField(
-          formData.jobType === 'service-based' ? 'Customer *' : 'Contractor *',
+          // formData.jobType === 'service-based' ? 'Customer *' : 'Contractor *',
+          'Customer *',
           formData.customer,
           text => updateFormData('customer', text),
           "Enter the client's or company's name",
@@ -1160,9 +1172,9 @@ const CreateJobScreen = ({onCreateJob, route}) => {
       {renderStepIndicator()}
 
       <View style={styles.content}>
-        {currentStep === 1 && renderStep1()}
-        {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && renderStep3()}
+        {/* {currentStep === 1 && renderStep1()} */}
+        {currentStep === 1 && renderStep2()}
+        {currentStep === 2 && renderStep3()}
         {/* {currentStep === 4 && renderStep4()} */}
         {currentStep === 4 && renderStep4()}
       </View>

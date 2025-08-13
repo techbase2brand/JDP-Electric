@@ -18,6 +18,9 @@ import {
   TIMESHEET_ICON_FOCUSED,
 } from '../assests/images';
 import ReportsStack from './ReportsStack';
+import ActivitySummaryScreen from '../screens/ActivitySummaryScreen';
+import ActivitySummarySStack from './ActivitySummaryStack';
+import ActivitySummaryStack from './ActivitySummaryStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -26,7 +29,7 @@ export default function MainTabNavigator() {
     Home: {focused: HOME_ICON_FOCUSED, unfocused: HOME_ICON},
     TimeSheet: {focused: TIMESHEET_ICON_FOCUSED, unfocused: TIMESHEET_ICON},
     Jobs: {focused: JOBS_ICON_FOCUSED, unfocused: JOBS_ICON},
-    Reports: {focused: REPORTS_ICON_FOCUSED, unfocused: REPORTS_ICON},
+    Activity: {focused: REPORTS_ICON_FOCUSED, unfocused: REPORTS_ICON},
     Profile: {focused: PROFILE_ICON_FOCUSED, unfocused: PROFILE_ICON},
   };
 
@@ -36,10 +39,10 @@ export default function MainTabNavigator() {
       screenOptions={{
         headerShown: false,
       }}>
-      <Tab.Screen name="Home" component={HomeStack}  />
+      <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen name="TimeSheet" component={TimeSheetStack} />
       <Tab.Screen name="Jobs" component={JobStack} />
-      <Tab.Screen name="Reports" component={ReportsStack} />
+      <Tab.Screen name="Activity" component={ActivitySummaryStack} />
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
   );

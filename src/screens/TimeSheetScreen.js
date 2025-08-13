@@ -1,1635 +1,1080 @@
-// import React, { useState, useEffect } from 'react';
-// import {
-//   View,
-//   Text,
-//   ScrollView,
-//   TouchableOpacity,
-//   Alert,
-//   StatusBar,
-//   StyleSheet,
-// } from 'react-native';
-// import Icon from 'react-native-vector-icons/MaterialIcons';
-// import { useNavigation } from '@react-navigation/native';
-
-// // Embedded Colors
-// const Colors = {
-//   primary: '#3B82F6',
-//   primaryLight: '#EBF4FF',
-//   white: '#FFFFFF',
-//   backgroundLight: '#F8FAFC',
-//   text: '#1E293B',
-//   textSecondary: '#64748B',
-//   textLight: '#94A3B8',
-//   border: '#E2E8F0',
-//   success: '#10B981',
-//   successLight: '#D1FAE5',
-//   warning: '#F59E0B',
-//   warningLight: '#FEF3C7',
-//   error: '#EF4444',
-//   errorLight: '#FEE2E2',
-// };
-
-// // Embedded Spacing and Dimensions
-// const Spacing = {
-//   xs: 4,
-//   sm: 8,
-//   md: 16,
-//   lg: 24,
-//   xl: 32,
-// };
-
-// const BorderRadius = {
-//   sm: 6,
-//   md: 8,
-//   lg: 12,
-// };
-
-// const Shadows = {
-//   md: {
-//     shadowColor: '#000',
-//     shadowOffset: {
-//       width: 0,
-//       height: 2,
-//     },
-//     shadowOpacity: 0.1,
-//     shadowRadius: 3.84,
-//     elevation: 5,
-//   },
-// };
-
-
-
-// const TimeSheetScreen = () => {
-//   const navigation = useNavigation();
-//   const [currentEntry, setCurrentEntry] = useState(null);
-//   const [timeEntries, setTimeEntries] = useState([]);
-//   const [elapsedTime, setElapsedTime] = useState(0);
-
-//   // useEffect(() => {
-//   //   StatusBar.setBarStyle('dark-content');
-//   //   loadTimeEntries();
-    
-//   //   // Timer interval for active entries
-//   //   const interval = setInterval(() => {
-//   //     if (currentEntry && currentEntry.status === 'active') {
-//   //       const now = new Date();
-//   //       const elapsed = Math.floor((now.getTime() - currentEntry.startTime.getTime()) / 1000);
-//   //       setElapsedTime(elapsed);
-//   //     }
-//   //   }, 1000);
-
-//   //   return () => clearInterval(interval);
-//   // }, [currentEntry]);
-
-//   const loadTimeEntries = () => {
-//     // Mock data for time entries
-//     const mockEntries = [
-//       {
-//         id: '1',
-//         jobId: 'job1',
-//         jobTitle: 'Electrical Panel Upgrade',
-//         startTime: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-//         endTime: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
-//         totalHours: 3,
-//         status: 'completed',
-//         notes: 'Completed main panel installation',
-//       },
-//       {
-//         id: '2',
-//         jobId: 'job2',
-//         jobTitle: 'Outlet Installation',
-//         startTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-//         totalHours: 0,
-//         status: 'active',
-//         notes: '',
-//       },
-//     ];
-
-//     setTimeEntries(mockEntries);
-//     const activeEntry = mockEntries.find(entry => entry.status === 'active');
-//     if (activeEntry) {
-//       setCurrentEntry(activeEntry);
-//     }
-//   };
-
-//   const startTimer = () => {
-//     Alert.alert(
-//       'Start Timer',
-//       'Select a job to start tracking time',
-//       [
-//         { text: 'Cancel', style: 'cancel' },
-//         {
-//           text: 'Select Job',
-//           onPress: () => {
-//             // In a real app, this would open job selection
-//             const newEntry = {
-//               id: `entry-${Date.now()}`,
-//               jobId: 'selected-job',
-//               jobTitle: 'New Job Task',
-//               startTime: new Date(),
-//               totalHours: 0,
-//               status: 'active',
-//             };
-//             setCurrentEntry(newEntry);
-//             setTimeEntries(prev => [...prev, newEntry]);
-//           },
-//         },
-//       ]
-//     );
-//   };
-
-//   const pauseTimer = () => {
-//     if (!currentEntry) return;
-    
-//     const updatedEntry = {
-//       ...currentEntry,
-//       status: 'paused',
-//     };
-    
-//     setCurrentEntry(updatedEntry);
-//     setTimeEntries(prev => 
-//       prev.map(entry => 
-//         entry.id === currentEntry.id ? updatedEntry : entry
-//       )
-//     );
-//   };
-
-//   const resumeTimer = () => {
-//     if (!currentEntry) return;
-    
-//     const updatedEntry = {
-//       ...currentEntry,
-//       status: 'active',
-//     };
-    
-//     setCurrentEntry(updatedEntry);
-//     setTimeEntries(prev => 
-//       prev.map(entry => 
-//         entry.id === currentEntry.id ? updatedEntry : entry
-//       )
-//     );
-//   };
-
-//   const stopTimer = () => {
-//     if (!currentEntry) return;
-
-//     Alert.alert(
-//       'Stop Timer',
-//       'Are you sure you want to stop tracking time for this job?',
-//       [
-//         { text: 'Cancel', style: 'cancel' },
-//         {
-//           text: 'Stop',
-//           style: 'destructive',
-//           onPress: () => {
-//             const now = new Date();
-//             const totalHours = Math.floor((now.getTime() - currentEntry.startTime.getTime()) / (1000 * 60 * 60));
-            
-//             const updatedEntry = {
-//               ...currentEntry,
-//               endTime: now,
-//               totalHours,
-//               status: 'completed',
-//             };
-            
-//             setTimeEntries(prev => 
-//               prev.map(entry => 
-//                 entry.id === currentEntry.id ? updatedEntry : entry
-//               )
-//             );
-//             setCurrentEntry(null);
-//             setElapsedTime(0);
-//           },
-//         },
-//       ]
-//     );
-//   };
-
-//   const formatTime = (seconds) => {
-//     const hours = Math.floor(seconds / 3600);
-//     const minutes = Math.floor((seconds % 3600) / 60);
-//     const secs = seconds % 60;
-//     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-//   };
-
-//   const getTotalHoursToday = () => {
-//     const today = new Date().toDateString();
-//     return timeEntries
-//       .filter(entry => entry.startTime.toDateString() === today)
-//       .reduce((total, entry) => total + entry.totalHours, 0);
-//   };
-
-//   const renderHeader = () => (
-//     <View style={styles.header}>
-//       <TouchableOpacity 
-//         style={styles.backButton}
-//         onPress={() => navigation.goBack()}
-//       >
-//         <Icon name="arrow-back" size={24} color={Colors.text} />
-//       </TouchableOpacity>
-      
-//       <Text style={styles.headerTitle}>Timesheet</Text>
-      
-//       <TouchableOpacity 
-//         style={styles.historyButton}
-//         onPress={() => navigation.navigate('TimesheetHistory')}
-//       >
-//         <Icon name="history" size={24} color={Colors.text} />
-//       </TouchableOpacity>
-//     </View>
-//   );
-
-//   const renderActiveTimer = () => {
-//     if (!currentEntry) return null;
-
-//     return (
-//       <View style={styles.activeTimerContainer}>
-//         <Text style={styles.activeJobTitle}>{currentEntry.jobTitle}</Text>
-//         <Text style={styles.timerDisplay}>{formatTime(elapsedTime)}</Text>
-        
-//         <View style={styles.timerControls}>
-//           {currentEntry.status === 'active' ? (
-//             <>
-//               <TouchableOpacity style={styles.pauseButton} onPress={pauseTimer}>
-//                 <Icon name="pause" size={24} color={Colors.white} />
-//                 <Text style={styles.controlButtonText}>Pause</Text>
-//               </TouchableOpacity>
-              
-//               <TouchableOpacity style={styles.stopButton} onPress={stopTimer}>
-//                 <Icon name="stop" size={24} color={Colors.white} />
-//                 <Text style={styles.controlButtonText}>Stop</Text>
-//               </TouchableOpacity>
-//             </>
-//           ) : (
-//             <>
-//               <TouchableOpacity style={styles.resumeButton} onPress={resumeTimer}>
-//                 <Icon name="play-arrow" size={24} color={Colors.white} />
-//                 <Text style={styles.controlButtonText}>Resume</Text>
-//               </TouchableOpacity>
-              
-//               <TouchableOpacity style={styles.stopButton} onPress={stopTimer}>
-//                 <Icon name="stop" size={24} color={Colors.white} />
-//                 <Text style={styles.controlButtonText}>Stop</Text>
-//               </TouchableOpacity>
-//             </>
-//           )}
-//         </View>
-//       </View>
-//     );
-//   };
-
-//   const renderStartTimer = () => {
-//     if (currentEntry) return null;
-
-//     return (
-//       <View style={styles.startTimerContainer}>
-//         <Icon name="timer" size={80} color={Colors.textLight} />
-//         <Text style={styles.startTimerTitle}>Ready to track time</Text>
-//         <Text style={styles.startTimerSubtitle}>
-//           Start a timer to track time spent on jobs
-//         </Text>
-        
-//         <TouchableOpacity style={styles.startButton} onPress={startTimer}>
-//           <Icon name="play-arrow" size={24} color={Colors.white} />
-//           <Text style={styles.startButtonText}>Start Timer</Text>
-//         </TouchableOpacity>
-//       </View>
-//     );
-//   };
-
-//   const renderTodaysSummary = () => (
-//     <View style={styles.summaryContainer}>
-//       <Text style={styles.summaryTitle}>Today's Summary</Text>
-      
-//       <View style={styles.summaryStats}>
-//         <View style={styles.statCard}>
-//           <Icon name="schedule" size={24} color={Colors.primary} />
-//           <Text style={styles.statNumber}>{getTotalHoursToday()}h</Text>
-//           <Text style={styles.statLabel}>Total Hours</Text>
-//         </View>
-        
-//         <View style={styles.statCard}>
-//           <Icon name="work" size={24} color={Colors.success} />
-//           <Text style={styles.statNumber}>
-//             {timeEntries.filter(entry => 
-//               entry.startTime.toDateString() === new Date().toDateString()
-//             ).length}
-//           </Text>
-//           <Text style={styles.statLabel}>Jobs Worked</Text>
-//         </View>
-        
-//         <View style={styles.statCard}>
-//           <Icon name="check-circle" size={24} color={Colors.warning} />
-//           <Text style={styles.statNumber}>
-//             {timeEntries.filter(entry => 
-//               entry.status === 'completed' && 
-//               entry.startTime.toDateString() === new Date().toDateString()
-//             ).length}
-//           </Text>
-//           <Text style={styles.statLabel}>Completed</Text>
-//         </View>
-//       </View>
-//     </View>
-//   );
-
-//   const renderRecentEntries = () => (
-//     <View style={styles.recentContainer}>
-//       <Text style={styles.sectionTitle}>Recent Entries</Text>
-      
-//       {timeEntries.slice(0, 5).map((entry) => (
-//         <View key={entry.id} style={styles.entryCard}>
-//           <View style={styles.entryHeader}>
-//             <Text style={styles.entryJobTitle}>{entry.jobTitle}</Text>
-//             <View style={[
-//               styles.entryStatus,
-//               { backgroundColor: 
-//                 entry.status === 'active' ? Colors.success :
-//                 entry.status === 'paused' ? Colors.warning :
-//                 Colors.textSecondary
-//               }
-//             ]}>
-//               <Text style={styles.entryStatusText}>{entry.status}</Text>
-//             </View>
-//           </View>
-          
-//           <Text style={styles.entryTime}>
-//             {entry.startTime.toLocaleDateString()} - {entry.totalHours}h
-//           </Text>
-          
-//           {entry.notes && (
-//             <Text style={styles.entryNotes}>{entry.notes}</Text>
-//           )}
-//         </View>
-//       ))}
-//     </View>
-//   );
-
-//   return (
-//     <View style={styles.container}>
-//       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-      
-//       {renderHeader()}
-      
-//       <ScrollView
-//         style={styles.scrollContainer}
-//         showsVerticalScrollIndicator={false}
-//         contentContainerStyle={styles.scrollContent}
-//       >
-//         {renderActiveTimer()}
-//         {renderStartTimer()}
-//         {renderTodaysSummary()}
-//         {renderRecentEntries()}
-//       </ScrollView>
-//     </View>
-//   );
-// };
-
-// // Embedded Styles
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: Colors.backgroundLight,
-//   },
-
-//   // Header
-//   header: {
-//     backgroundColor: Colors.white,
-//     paddingTop: Spacing.lg,
-//     paddingHorizontal: Spacing.md,
-//     paddingBottom: Spacing.md,
-//     borderBottomWidth: 1,
-//     borderBottomColor: Colors.border,
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     justifyContent: 'space-between',
-//   },
-//   backButton: {
-//     width: 40,
-//     height: 40,
-//     borderRadius: 20,
-//     backgroundColor: Colors.backgroundLight,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//   },
-//   headerTitle: {
-//     fontSize: 20,
-//     fontWeight: 'bold',
-//     color: Colors.text,
-//   },
-//   historyButton: {
-//     width: 40,
-//     height: 40,
-//     borderRadius: 20,
-//     backgroundColor: Colors.backgroundLight,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//   },
-
-//   // Scroll Container
-//   scrollContainer: {
-//     flex: 1,
-//   },
-//   scrollContent: {
-//     paddingBottom: Spacing.xl,
-//   },
-
-//   // Active Timer
-//   activeTimerContainer: {
-//     backgroundColor: Colors.white,
-//     margin: Spacing.md,
-//     borderRadius: BorderRadius.lg,
-//     padding: Spacing.xl,
-//     alignItems: 'center',
-//     ...Shadows.md,
-//   },
-//   activeJobTitle: {
-//     fontSize: 18,
-//     fontWeight: '600',
-//     color: Colors.text,
-//     marginBottom: Spacing.md,
-//     textAlign: 'center',
-//   },
-//   timerDisplay: {
-//     fontSize: 48,
-//     fontWeight: 'bold',
-//     color: Colors.primary,
-//     marginBottom: Spacing.xl,
-//     fontFamily: 'monospace',
-//   },
-//   timerControls: {
-//     flexDirection: 'row',
-//     gap: Spacing.md,
-//   },
-//   pauseButton: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     backgroundColor: Colors.warning,
-//     borderRadius: BorderRadius.lg,
-//     paddingVertical: Spacing.md,
-//     paddingHorizontal: Spacing.lg,
-//     gap: Spacing.sm,
-//   },
-//   resumeButton: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     backgroundColor: Colors.success,
-//     borderRadius: BorderRadius.lg,
-//     paddingVertical: Spacing.md,
-//     paddingHorizontal: Spacing.lg,
-//     gap: Spacing.sm,
-//   },
-//   stopButton: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     backgroundColor: Colors.error,
-//     borderRadius: BorderRadius.lg,
-//     paddingVertical: Spacing.md,
-//     paddingHorizontal: Spacing.lg,
-//     gap: Spacing.sm,
-//   },
-//   controlButtonText: {
-//     fontSize: 16,
-//     fontWeight: '600',
-//     color: Colors.white,
-//   },
-
-//   // Start Timer
-//   startTimerContainer: {
-//     backgroundColor: Colors.white,
-//     margin: Spacing.md,
-//     borderRadius: BorderRadius.lg,
-//     padding: Spacing.xl,
-//     alignItems: 'center',
-//     ...Shadows.md,
-//   },
-//   startTimerTitle: {
-//     fontSize: 24,
-//     fontWeight: 'bold',
-//     color: Colors.text,
-//     marginTop: Spacing.lg,
-//     marginBottom: Spacing.sm,
-//   },
-//   startTimerSubtitle: {
-//     fontSize: 16,
-//     color: Colors.textSecondary,
-//     textAlign: 'center',
-//     marginBottom: Spacing.xl,
-//   },
-//   startButton: {
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     backgroundColor: Colors.primary,
-//     borderRadius: BorderRadius.lg,
-//     paddingVertical: Spacing.md,
-//     paddingHorizontal: Spacing.xl,
-//     gap: Spacing.sm,
-//   },
-//   startButtonText: {
-//     fontSize: 18,
-//     fontWeight: '600',
-//     color: Colors.white,
-//   },
-
-//   // Summary
-//   summaryContainer: {
-//     backgroundColor: Colors.white,
-//     margin: Spacing.md,
-//     borderRadius: BorderRadius.lg,
-//     padding: Spacing.md,
-//     ...Shadows.md,
-//   },
-//   summaryTitle: {
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     color: Colors.text,
-//     marginBottom: Spacing.md,
-//   },
-//   summaryStats: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//   },
-//   statCard: {
-//     flex: 1,
-//     alignItems: 'center',
-//     padding: Spacing.md,
-//     backgroundColor: Colors.backgroundLight,
-//     borderRadius: BorderRadius.md,
-//     marginHorizontal: Spacing.xs,
-//   },
-//   statNumber: {
-//     fontSize: 24,
-//     fontWeight: 'bold',
-//     color: Colors.text,
-//     marginTop: Spacing.sm,
-//   },
-//   statLabel: {
-//     fontSize: 14,
-//     color: Colors.textSecondary,
-//     marginTop: Spacing.xs,
-//   },
-
-//   // Recent Entries
-//   recentContainer: {
-//     backgroundColor: Colors.white,
-//     margin: Spacing.md,
-//     borderRadius: BorderRadius.lg,
-//     padding: Spacing.md,
-//     ...Shadows.md,
-//   },
-//   sectionTitle: {
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     color: Colors.text,
-//     marginBottom: Spacing.md,
-//   },
-//   entryCard: {
-//     backgroundColor: Colors.backgroundLight,
-//     borderRadius: BorderRadius.md,
-//     padding: Spacing.md,
-//     marginBottom: Spacing.sm,
-//   },
-//   entryHeader: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     marginBottom: Spacing.sm,
-//   },
-//   entryJobTitle: {
-//     fontSize: 16,
-//     fontWeight: '600',
-//     color: Colors.text,
-//     flex: 1,
-//   },
-//   entryStatus: {
-//     paddingHorizontal: Spacing.sm,
-//     paddingVertical: Spacing.xs,
-//     borderRadius: BorderRadius.sm,
-//   },
-//   entryStatusText: {
-//     fontSize: 12,
-//     color: Colors.white,
-//     fontWeight: '500',
-//     textTransform: 'capitalize',
-//   },
-//   entryTime: {
-//     fontSize: 14,
-//     color: Colors.textSecondary,
-//   },
-//   entryNotes: {
-//     fontSize: 14,
-//     color: Colors.text,
-//     marginTop: Spacing.xs,
-//   },
-// });
-
-// export default TimeSheetScreen;
-
-import React, { useState, useEffect } from 'react';
+import React, {useState, useMemo} from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   TextInput,
-  StatusBar,
   StyleSheet,
-  Modal,
   Alert,
+  StatusBar,
+  SafeAreaView,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import Feather from 'react-native-vector-icons/Feather';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
-// Embedded Colors - JDP Electrics Theme
-const Colors = {
-  primary: '#3B82F6',
-  primaryLight: '#EBF4FF',
-  primaryDark: '#2563EB',
-  white: '#FFFFFF',
-  background: '#F8FAFC',
-  backgroundLight: '#F1F5F9',
-  text: '#1E293B',
-  textSecondary: '#64748B',
-  textLight: '#94A3B8',
-  border: '#E2E8F0',
-  success: '#10B981',
-  successLight: '#D1FAE5',
-  successDark: '#059669',
-  warning: '#F59E0B',
-  warningLight: '#FEF3C7',
-  error: '#EF4444',
-  errorLight: '#FEE2E2',
-  purple: '#8B5CF6',
-  purpleLight: '#F3E8FF',
-  indigo: '#6366F1',
-  indigoLight: '#EEF2FF',
-  orange: '#F97316',
-  orangeLight: '#FED7AA',
-  green: '#22C55E',
-  greenLight: '#DCFCE7',
-};
+import {tabColor} from '../constants/Color';
 
-// Embedded Spacing
-const Spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
-};
+const TimesheetScreen = ({navigation, user, jobs}) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('date');
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
 
-const BorderRadius = {
-  sm: 6,
-  md: 8,
-  lg: 12,
-  xl: 16,
-  xxl: 20,
-};
-
-const Shadows = {
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-};
-const TimesheetScreen = ({
-  user: propUser,
-  selectedJob: propSelectedJob,
-  onNavigate,
-  hasLeadAccess: propHasLeadAccess,
-  route
-}) => {
-  const navigation = useNavigation();
-
-  // Mock user data
-  const mockUser = {
-    id: '1',
-    name: 'Sarah Johnson',
-    role: 'Lead Labor'
-  };
-
-  const user = propUser || mockUser;
-  const hasLeadAccess = propHasLeadAccess ?? user.role === 'Lead Labor';
-  const selectedJob = propSelectedJob || route?.params?.job;
-
-  // State
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [timeEntries, setTimeEntries] = useState([
+  // Mock comprehensive timesheet data across all jobs
+  const allTimesheets = [
     {
-      id: '1',
-      activity: 'Electrical Panel Installation',
-      startTime: '08:00 AM',
-      endTime: '12:00 PM',
-      duration: 240,
-      description: 'Main panel installation and wiring',
-      jobId: 'job-1',
-      location: 'Downtown Office Complex',
-      worker: 'Sarah Johnson',
-      isManual: false
+      id: 'TS-2024-001',
+      jobId: 'JDP-2024-001',
+      jobTitle: 'Electrical Panel Upgrade',
+      customer: 'ABC Manufacturing',
+      date: '2024-01-15',
+      submittedAt: '2024-01-15T18:00:00Z',
+      approvedAt: '2024-01-16T09:30:00Z',
+      approvedBy: 'Sarah Johnson',
+      status: 'approved',
+      labourHours: 8.5,
+      labourCost: 680.0,
+      materialCost: 450.0,
+      additionalCharges: 75.0,
+      totalCost: 1205.0,
+      assignedTo: ['Mike Wilson', 'David Chen'],
+      submittedBy: 'Mike Wilson',
+      employeeId: 'JDP002',
+      location: '1234 Oak Street, Houston, TX',
+      priority: 'high',
     },
     {
-      id: '2',
-      activity: 'Circuit Testing',
-      startTime: '01:00 PM',
-      endTime: '03:30 PM',
-      duration: 150,
-      description: 'Testing all circuits and connections',
-      jobId: 'job-1',
-      location: 'Downtown Office Complex',
-      worker: 'Sarah Johnson',
-      isManual: false
+      id: 'TS-2024-002',
+      jobId: 'JDP-2024-002',
+      jobTitle: 'Commercial Lighting Retrofit',
+      customer: 'TechCorp Office Building',
+      date: '2024-01-16',
+      submittedAt: '2024-01-16T17:45:00Z',
+      status: 'submitted',
+      labourHours: 6.0,
+      labourCost: 480.0,
+      materialCost: 320.0,
+      additionalCharges: 25.0,
+      totalCost: 825.0,
+      assignedTo: ['Lisa Rodriguez', 'James Mitchell'],
+      submittedBy: 'Lisa Rodriguez',
+      employeeId: 'JDP003',
+      location: '567 Corporate Dr, Houston, TX',
+      priority: 'medium',
     },
     {
-      id: '3',
-      activity: 'Documentation',
-      startTime: '03:30 PM',
-      endTime: '04:00 PM',
-      duration: 30,
-      description: 'Updating job records and photos',
-      location: 'Office',
-      worker: 'Sarah Johnson',
-      isManual: true
+      id: 'TS-2024-003',
+      jobId: 'JDP-2024-003',
+      jobTitle: 'Emergency Generator Maintenance',
+      customer: 'Metro Hospital',
+      date: '2024-01-12',
+      submittedAt: '2024-01-12T16:20:00Z',
+      approvedAt: '2024-01-13T08:15:00Z',
+      approvedBy: 'Sarah Johnson',
+      status: 'approved',
+      labourHours: 4.5,
+      labourCost: 450.0,
+      materialCost: 180.0,
+      additionalCharges: 50.0,
+      totalCost: 680.0,
+      assignedTo: ['Tom Anderson'],
+      submittedBy: 'Tom Anderson',
+      employeeId: 'JDP004',
+      location: '890 Medical Center Blvd, Houston, TX',
+      priority: 'high',
+    },
+    {
+      id: 'TS-2024-004',
+      jobId: 'JDP-2024-004',
+      jobTitle: 'Security System Wiring',
+      customer: 'Retail Mall Complex',
+      date: '2024-01-18',
+      submittedAt: '2024-01-18T19:00:00Z',
+      status: 'submitted',
+      labourHours: 7.0,
+      labourCost: 560.0,
+      materialCost: 280.0,
+      additionalCharges: 40.0,
+      totalCost: 880.0,
+      assignedTo: ['Lisa Rodriguez', 'David Chen'],
+      submittedBy: 'David Chen',
+      employeeId: 'JDP005',
+      location: '777 Shopping Center Dr, Houston, TX',
+      priority: 'medium',
+    },
+    {
+      id: 'TS-2024-005',
+      jobId: 'JDP-2024-005',
+      jobTitle: 'Office Building Rewiring',
+      customer: 'Downtown Business Center',
+      date: '2024-01-10',
+      submittedAt: '2024-01-10T17:30:00Z',
+      status: 'rejected',
+      rejectionReason:
+        'Material costs seem excessive. Please review and resubmit with detailed breakdown.',
+      labourHours: 12.0,
+      labourCost: 960.0,
+      materialCost: 800.0,
+      additionalCharges: 120.0,
+      totalCost: 1880.0,
+      assignedTo: ['Mike Wilson', 'Tom Anderson', 'James Mitchell'],
+      submittedBy: 'Mike Wilson',
+      employeeId: 'JDP002',
+      location: '456 Business Ave, Houston, TX',
+      priority: 'low',
+    },
+    {
+      id: 'TS-2024-006',
+      jobId: 'JDP-2024-006',
+      jobTitle: 'Data Center Power Installation',
+      customer: 'CloudTech Data Center',
+      date: '2024-01-19',
+      submittedAt: '2024-01-19T20:15:00Z',
+      status: 'submitted',
+      labourHours: 16.0,
+      labourCost: 1280.0,
+      materialCost: 950.0,
+      additionalCharges: 200.0,
+      totalCost: 2430.0,
+      assignedTo: ['Sarah Johnson', 'Mike Wilson', 'David Chen'],
+      submittedBy: 'Sarah Johnson',
+      employeeId: 'JDP001',
+      location: '999 Tech Park Dr, Houston, TX',
+      priority: 'high',
+    },
+  ];
+
+  // Filter and sort timesheets
+  const filteredTimesheets = useMemo(() => {
+    let filtered = allTimesheets;
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(
+        timesheet => timesheet.status === statusFilter,
+      );
     }
-  ]);
 
-  const [showAddEntryModal, setShowAddEntryModal] = useState(false);
-  const [editingEntry, setEditingEntry] = useState(null);
-  const [newEntry, setNewEntry] = useState({
-    activity: '',
-    startTime: '',
-    endTime: '',
-    description: '',
-    location: '',
-    worker: user.name,
-    isManual: true
-  });
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        timesheet =>
+          timesheet.jobId.toLowerCase().includes(query) ||
+          timesheet.jobTitle.toLowerCase().includes(query) ||
+          timesheet.customer.toLowerCase().includes(query) ||
+          timesheet.submittedBy.toLowerCase().includes(query),
+      );
+    }
 
-  // Calculate totals
-  const totalMinutes = timeEntries.reduce((sum, entry) => sum + entry.duration, 0);
-  const totalHours = Math.floor(totalMinutes / 60);
-  const remainingMinutes = totalMinutes % 60;
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'date':
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case 'submitted':
+          return (
+            new Date(b.submittedAt).getTime() -
+            new Date(a.submittedAt).getTime()
+          );
+        case 'cost':
+          return b.totalCost - a.totalCost;
+        case 'customer':
+          return a.customer.localeCompare(b.customer);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [allTimesheets, statusFilter, searchQuery, sortBy]);
+
+  // Calculate summary statistics
+  const summaryStats = useMemo(() => {
+    const total = allTimesheets.length;
+    const submitted = allTimesheets.filter(
+      t => t.status === 'submitted',
+    ).length;
+    const approved = allTimesheets.filter(t => t.status === 'approved').length;
+    const rejected = allTimesheets.filter(t => t.status === 'rejected').length;
+    const totalCost = allTimesheets.reduce((sum, t) => sum + t.totalCost, 0);
+    const totalHours = allTimesheets.reduce((sum, t) => sum + t.labourHours, 0);
+
+    return {
+      total,
+      submitted,
+      approved,
+      rejected,
+      totalCost,
+      totalHours,
+    };
+  }, [allTimesheets]);
 
   // Helper functions
-  const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
+  const getStatusColor = status => {
+    switch (status) {
+      case 'draft':
+        return {backgroundColor: '#f3f4f6', color: '#374151'};
+      case 'submitted':
+        return {backgroundColor: '#dbeafe', color: '#1d4ed8'};
+      case 'approved':
+        return {backgroundColor: '#dcfce7', color: '#166534'};
+      case 'rejected':
+        return {backgroundColor: '#fee2e2', color: '#dc2626'};
+      default:
+        return {backgroundColor: '#f3f4f6', color: '#374151'};
+    }
+  };
+
+  const getStatusIcon = status => {
+    switch (status) {
+      case 'draft':
+        return '🕐';
+      case 'submitted':
+        return (
+          <MaterialIcons name="warning-amber" size={24} color="#f1c206ff" />
+        );
+
+      case 'approved':
+        return <FontAwesome name="check-circle" size={18} color="#166534" />;
+      case 'rejected':
+        return '❌';
+      default:
+        return '🕐';
+    }
+  };
+
+  const getPriorityColor = priority => {
+    switch (priority) {
+      case 'high':
+        return {backgroundColor: '#fee2e2', color: '#dc2626'};
+      case 'medium':
+        return {backgroundColor: '#fef3c7', color: '#d97706'};
+      case 'low':
+        return {backgroundColor: '#dcfce7', color: '#166534'};
+      default:
+        return {backgroundColor: '#f3f4f6', color: '#374151'};
+    }
+  };
+
+  const formatDate = dateString => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
       year: 'numeric',
-      month: 'long',
-      day: 'numeric'
     });
   };
 
-  const formatDuration = (minutes) => {
-    const hours = Math.floor(minutes/ 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
-
-  const calculateDuration = (startTime, endTime) => {
-    // Simple duration calculation (would use proper time parsing in real app)
-    const start = new Date(`2024-01-01 ${startTime}`);
-    const end = new Date(`2024-01-01 ${endTime}`);
-    return Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60));
-  };
-
-  // Handlers
-  const handleBack = () => {
-    navigation.goBack();
-  };
-
-  const handleNavigate = (screen, params) => {
-    if (onNavigate) {
-      onNavigate(screen, params);
-    } else {
-      navigation.navigate(screen, params);
-    }
-  };
-
-  const handleAddEntry = () => {
-    if (!newEntry.activity || !newEntry.startTime || !newEntry.endTime) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
-    }
-
-    const duration = calculateDuration(newEntry.startTime, newEntry.endTime);
-    const entry = {
-      id: Date.now().toString(),
-      activity: newEntry.activity,
-      startTime: newEntry.startTime,
-      endTime: newEntry.endTime,
-      duration,
-      description: newEntry.description || '',
-      location: newEntry.location || '',
-      worker: newEntry.worker || user.name,
-      isManual: true,
-      jobId: newEntry.jobId
-    };
-
-    setTimeEntries(prev => [...prev, entry]);
-    setNewEntry({
-      activity: '',
-      startTime: '',
-      endTime: '',
-      description: '',
-      location: '',
-      worker: user.name,
-      isManual: true
+  const formatDateTime = dateString => {
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
     });
-    setShowAddEntryModal(false);
   };
 
-  const handleEditEntry = (entry) => {
-    if (!hasLeadAccess && !entry.isManual) {
-      Alert.alert('Access Denied', 'Only Lead Labor can edit automatic entries');
-      return;
-    }
-    setEditingEntry(entry);
-    setNewEntry({
-      activity: entry.activity,
-      startTime: entry.startTime,
-      endTime: entry.endTime,
-      description: entry.description,
-      location: entry.location,
-      worker: entry.worker,
-      jobId: entry.jobId
-    });
-    setShowAddEntryModal(true);
-  };
-
-  const handleUpdateEntry = () => {
-    if (!editingEntry || !newEntry.activity || !newEntry.startTime || !newEntry.endTime) {
-      Alert.alert('Error', 'Please fill in all required fields');
-      return;
-    }
-
-    const duration = calculateDuration(newEntry.startTime, newEntry.endTime);
-    const updatedEntry = {
-      ...editingEntry,
-      activity: newEntry.activity,
-      startTime: newEntry.startTime,
-      endTime: newEntry.endTime,
-      duration,
-      description: newEntry.description || '',
-      location: newEntry.location || '',
-      worker: newEntry.worker || user.name,
-      jobId: newEntry.jobId
-    };
-
-    setTimeEntries(prev => prev.map(entry => 
-      entry.id === editingEntry.id ? updatedEntry : entry
-    ));
-    setEditingEntry(null);
-    setNewEntry({
-      activity: '',
-      startTime: '',
-      endTime: '',
-      description: '',
-      location: '',
-      worker: user.name,
-      isManual: true
-    });
-    setShowAddEntryModal(false);
-  };
-
-  const handleDeleteEntry = (entryId) => {
-    Alert.alert(
-      'Delete Entry',
-      'Are you sure you want to delete this time entry?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: () => {
-            setTimeEntries(prev => prev.filter(entry => entry.id !== entryId));
-          }
-        }
-      ]
+  const canEditTimesheet = timesheet => {
+    // Can edit if status is draft or submitted and user has lead access
+    return (
+      timesheet.status === 'draft' ||
+      (timesheet.status === 'submitted' && user?.role === 'Lead Labor') ||
+      timesheet.status === 'rejected'
     );
   };
 
-  const handleSubmitTimesheet = () => {
-    if (!hasLeadAccess) {
-      Alert.alert('Access Denied', 'Only Lead Labor can submit timesheets');
-      return;
-    }
-
-    Alert.alert(
-      'Submit Timesheet',
-      `Submit timesheet for ${formatDate(selectedDate)}?\n\nTotal Hours: ${totalHours}h ${remainingMinutes}m`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Submit', 
-          onPress: () => {
-            Alert.alert('Success', 'Timesheet submitted successfully');
-            handleNavigate('JDPSubmissionScreen', { 
-              timesheet: { entries: timeEntries, totalHours: totalHours + (remainingMinutes / 60) },
-              date: selectedDate 
-            });
-          }
-        }
-      ]
-    );
+  const handleViewTimesheet = timesheet => {
+    navigation.navigate('ViewTimesheet', {timesheet});
   };
 
-  const renderTimeEntry = (entry) => (
-    <View key={entry.id} style={styles.timeEntryCard}>
-      <View style={styles.timeEntryHeader}>
-        <View style={styles.timeEntryTitle}>
-          <Text style={styles.activityName}>{entry.activity}</Text>
-          <View style={styles.timeEntryMeta}>
-            {entry.isManual ? (
-              <View style={styles.manualBadge}>
-                <Icon name="edit" size={12} color={Colors.warning} />
-                <Text style={styles.manualBadgeText}>Manual</Text>
-              </View>
-            ) : (
-              <View style={styles.autoBadge}>
-                <Icon name="timer" size={12} color={Colors.success} />
-                <Text style={styles.autoBadgeText}>Auto</Text>
-              </View>
-            )}
-          </View>
-        </View>
-        
-        <View style={styles.timeEntryActions}>
-          <TouchableOpacity 
-            style={styles.editButton}
-            onPress={() => handleEditEntry(entry)}
-          >
-            <Icon name="edit" size={16} color={Colors.primary} />
-          </TouchableOpacity>
-          
-          {entry.isManual && (
-            <TouchableOpacity 
-              style={styles.deleteButton}
-              onPress={() => handleDeleteEntry(entry.id)}
-            >
-              <Icon name="delete" size={16} color={Colors.error} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+  const statusOptions = [
+    {label: 'All Statuses', value: 'all'},
+    {label: 'Submitted', value: 'submitted'},
+    {label: 'Approved', value: 'approved'},
+    {label: 'Rejected', value: 'rejected'},
+    {label: 'Draft', value: 'draft'},
+  ];
 
-      <View style={styles.timeEntryBody}>
-        <View style={styles.timeDetails}>
-          <View style={styles.timeRow}>
-            <Icon name="access-time" size={16} color={Colors.textSecondary} />
-            <Text style={styles.timeText}>
-              {entry.startTime} - {entry.endTime}
-            </Text>
-            <Text style={styles.durationText}>
-              ({formatDuration(entry.duration)})
-            </Text>
-          </View>
-          
-          <View style={styles.locationRow}>
-            <Icon name="location-on" size={16} color={Colors.textSecondary} />
-            <Text style={styles.locationText}>{entry.location}</Text>
-          </View>
-          
-          <View style={styles.workerRow}>
-            <Icon name="person" size={16} color={Colors.textSecondary} />
-            <Text style={styles.workerText}>{entry.worker}</Text>
-          </View>
-        </View>
+  const sortOptions = [
+    {label: 'Job Date', value: 'date'},
+    {label: 'Submitted Date', value: 'submitted'},
+    {label: 'Total Cost', value: 'cost'},
+    {label: 'Customer', value: 'customer'},
+  ];
 
-        {entry.description ? (
-          <View style={styles.descriptionContainer}>
-            <Text style={styles.descriptionText}>{entry.description}</Text>
-          </View>
-        ) : null}
-      </View>
-    </View>
-  );
+  const renderDropdown = (
+    options,
+    selectedValue,
+    onSelect,
+    isVisible,
+    onToggle,
+    placeholder,
+  ) => (
+    <View style={styles.dropdownContainer}>
+      <TouchableOpacity style={styles.dropdownButton} onPress={onToggle}>
+        <Text style={styles.dropdownButtonText}>
+          {options.find(opt => opt.value === selectedValue)?.label ||
+            placeholder}
+        </Text>
+        <Text style={styles.dropdownArrow}>{isVisible ? '▲' : '▼'}</Text>
+      </TouchableOpacity>
 
-  const renderAddEntryModal = () => (
-    <Modal
-      visible={showAddEntryModal}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={() => {
-        setShowAddEntryModal(false);
-        setEditingEntry(null);
-        setNewEntry({
-          activity: '',
-          startTime: '',
-          endTime: '',
-          description: '',
-          location: '',
-          worker: user.name,
-          isManual: true
-        });
-      }}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.addEntryModal}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingEntry ? 'Edit Time Entry' : 'Add Time Entry'}
-            </Text>
-            <TouchableOpacity 
-              style={styles.closeButton}
+      {isVisible && (
+        <View style={styles.dropdownMenu}>
+          {options.map(option => (
+            <TouchableOpacity
+              key={option.value}
+              style={[
+                styles.dropdownMenuItem,
+                selectedValue === option.value &&
+                  styles.dropdownMenuItemSelected,
+              ]}
               onPress={() => {
-                setShowAddEntryModal(false);
-                setEditingEntry(null);
-              }}
-            >
-              <Icon name="close" size={24} color={Colors.text} />
+                onSelect(option.value);
+                onToggle();
+              }}>
+              <Text
+                style={[
+                  styles.dropdownMenuItemText,
+                  selectedValue === option.value &&
+                    styles.dropdownMenuItemTextSelected,
+                ]}>
+                {option.label}
+              </Text>
             </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>Activity *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={newEntry.activity}
-                onChangeText={(text) => setNewEntry(prev => ({ ...prev, activity: text }))}
-                placeholder="Enter activity name"
-                placeholderTextColor={Colors.textLight}
-              />
-            </View>
-
-            <View style={styles.timeInputRow}>
-              <View style={[styles.formField, { flex: 1, marginRight: Spacing.sm }]}>
-                <Text style={styles.fieldLabel}>Start Time *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={newEntry.startTime}
-                  onChangeText={(text) => setNewEntry(prev => ({ ...prev, startTime: text }))}
-                  placeholder="09:00 AM"
-                  placeholderTextColor={Colors.textLight}
-                />
-              </View>
-
-              <View style={[styles.formField, { flex: 1, marginLeft: Spacing.sm }]}>
-                <Text style={styles.fieldLabel}>End Time *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={newEntry.endTime}
-                  onChangeText={(text) => setNewEntry(prev => ({ ...prev, endTime: text }))}
-                  placeholder="05:00 PM"
-                  placeholderTextColor={Colors.textLight}
-                />
-              </View>
-            </View>
-
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>Location</Text>
-              <TextInput
-                style={styles.textInput}
-                value={newEntry.location}
-                onChangeText={(text) => setNewEntry(prev => ({ ...prev, location: text }))}
-                placeholder="Work location"
-                placeholderTextColor={Colors.textLight}
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>Worker</Text>
-              <TextInput
-                style={styles.textInput}
-                value={newEntry.worker}
-                onChangeText={(text) => setNewEntry(prev => ({ ...prev, worker: text }))}
-                placeholder="Worker name"
-                placeholderTextColor={Colors.textLight}
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>Description</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                value={newEntry.description}
-                onChangeText={(text) => setNewEntry(prev => ({ ...prev, description: text }))}
-                placeholder="Description of work performed"
-                placeholderTextColor={Colors.textLight}
-                multiline={true}
-                numberOfLines={3}
-              />
-            </View>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity 
-                style={styles.cancelButton}
-                onPress={() => {
-                  setShowAddEntryModal(false);
-                  setEditingEntry(null);
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.saveButton}
-                onPress={editingEntry ? handleUpdateEntry : handleAddEntry}
-              >
-                <Text style={styles.saveButtonText}>
-                  {editingEntry ? 'Update' : 'Add Entry'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
+          ))}
         </View>
-      </View>
-    </Modal>
+      )}
+    </View>
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
-      
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
+
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Icon name="arrow-back" size={24} color={Colors.white} />
-          </TouchableOpacity>
-          
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>Daily Timesheet</Text>
-            <Text style={styles.headerSubtitle}>{formatDate(selectedDate)}</Text>
-          </View>
-          
-          <TouchableOpacity 
-            style={styles.addButton}
-            onPress={() => setShowAddEntryModal(true)}
-          >
-            <Icon name="add" size={24} color={Colors.white} />
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>All Timesheets</Text>
+          <Text style={styles.headerSubtitle}>
+            {filteredTimesheets.length} of {allTimesheets.length} timesheets
+          </Text>
         </View>
 
-        {/* Summary Cards */}
-        <View style={styles.summaryContainer}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{totalHours}h {remainingMinutes}m</Text>
-            <Text style={styles.summaryLabel}>Total Time</Text>
-          </View>
-          
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{timeEntries.length}</Text>
-            <Text style={styles.summaryLabel}>Activities</Text>
-          </View>
-          
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>
-              {timeEntries.filter(e => !e.isManual).length}
-            </Text>
-            <Text style={styles.summaryLabel}>Auto Tracked</Text>
-          </View>
-        </View>
+        <View style={styles.headerSpacer} />
       </View>
 
-      {/* Time Entries */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.entriesSection}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Time Entries</Text>
-            <Text style={styles.sectionSubtitle}>
-              {timeEntries.length} activities logged
-            </Text>
+        {/* Summary Statistics */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <View style={[styles.statIcon, {backgroundColor: '#dbeafe'}]}>
+                <MaterialIcons
+                  name="pending-actions"
+                  size={24}
+                  color="#3B82F6"
+                />
+              </View>
+              <Text style={styles.statValue}>{summaryStats.total}</Text>
+              <Text style={styles.statLabel}>Total Timesheets</Text>
+            </View>
+
+            <View style={styles.statCard}>
+              <View style={[styles.statIcon, {backgroundColor: '#dcfce7'}]}>
+                <MaterialIcons name="check-circle" size={24} color="#166534" />
+              </View>
+              <Text style={styles.statValue}>{summaryStats.approved}</Text>
+              <Text style={styles.statLabel}>Approved</Text>
+            </View>
           </View>
 
-          {timeEntries.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Icon name="schedule" size={64} color={Colors.textLight} />
-              <Text style={styles.emptyStateTitle}>No time entries</Text>
-              <Text style={styles.emptyStateSubtitle}>
-                Add your first time entry to get started
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <View style={[styles.statIcon, {backgroundColor: '#fef3c7'}]}>
+                <MaterialIcons
+                  name="warning-amber"
+                  size={24}
+                  color="#f1c206ff"
+                />
+              </View>
+              <Text style={styles.statValue}>{summaryStats.submitted}</Text>
+              <Text style={styles.statLabel}>Pending Review</Text>
+            </View>
+
+            <View style={styles.statCard}>
+              <View style={[styles.statIcon, {backgroundColor: '#e0e7ff'}]}>
+                <MaterialIcons
+                  name="attach-money"
+                  size={24}
+                  color="#0c40edff"
+                />
+              </View>
+              <Text style={styles.statValue}>
+                ${summaryStats.totalCost.toLocaleString()}
               </Text>
-              <TouchableOpacity 
-                style={styles.addFirstEntryButton}
-                onPress={() => setShowAddEntryModal(true)}
-              >
-                <Text style={styles.addFirstEntryText}>Add Time Entry</Text>
-              </TouchableOpacity>
+              <Text style={styles.statLabel}>Total Value</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Filters and Search */}
+        <View style={styles.filtersCard}>
+          {/* Search */}
+          <View style={styles.searchContainer}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by job ID, title, customer, or employee..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor="#6b7280"
+            />
+          </View>
+
+          {/* Filters */}
+          <View style={styles.filtersRow}>
+            {renderDropdown(
+              statusOptions,
+              statusFilter,
+              setStatusFilter,
+              showStatusDropdown,
+              () => {
+                setShowStatusDropdown(!showStatusDropdown);
+                setShowSortDropdown(false);
+              },
+              'Filter by status',
+            )}
+
+            {renderDropdown(
+              sortOptions,
+              sortBy,
+              setSortBy,
+              showSortDropdown,
+              () => {
+                setShowSortDropdown(!showSortDropdown);
+                setShowStatusDropdown(false);
+              },
+              'Sort by',
+            )}
+          </View>
+        </View>
+
+        {/* Timesheets List */}
+        <View style={styles.timesheetsList}>
+          {filteredTimesheets.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateIcon}>📋</Text>
+              <Text style={styles.emptyStateTitle}>
+                {searchQuery
+                  ? 'No matching timesheets found'
+                  : 'No timesheets found'}
+              </Text>
+              <Text style={styles.emptyStateSubtitle}>
+                {searchQuery
+                  ? 'Try adjusting your search terms or filters.'
+                  : 'Timesheets will appear here once they are submitted.'}
+              </Text>
             </View>
           ) : (
-            timeEntries.map(renderTimeEntry)
+            filteredTimesheets.map(timesheet => (
+              <View key={timesheet.id} style={styles.timesheetCard}>
+                {/* Header */}
+                <View style={styles.timesheetHeader}>
+                  <View style={styles.timesheetTitleContainer}>
+                    <View style={styles.timesheetBadges}>
+                      <Text style={styles.timesheetId}>{timesheet.jobId}</Text>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          getStatusColor(timesheet.status),
+                        ]}>
+                        <Text style={styles.statusIcon}>
+                          {getStatusIcon(timesheet.status)}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.statusBadgeText,
+                            {color: getStatusColor(timesheet.status).color},
+                          ]}>
+                          {timesheet.status.replace('-', ' ').toUpperCase()}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.priorityBadge,
+                          getPriorityColor(timesheet.priority),
+                        ]}>
+                        <Text
+                          style={[
+                            styles.priorityBadgeText,
+                            {color: getPriorityColor(timesheet.priority).color},
+                          ]}>
+                          {timesheet.priority.toUpperCase()}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.timesheetTitle}>
+                      {timesheet.jobTitle}
+                    </Text>
+                    <Text style={styles.timesheetCustomer}>
+                      {timesheet.customer}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Details Grid */}
+                <View style={styles.detailsGrid}>
+                  <View style={styles.detailRow}>
+                    <View style={styles.detailItem}>
+                      <AntDesign name="calendar" size={18} color={tabColor} />
+                      <Text style={styles.detailText}>
+                        Job Date: {formatDate(timesheet.date)}
+                      </Text>
+                    </View>
+                    <View style={styles.detailItem}>
+                      <Feather name="clock" size={20} color={tabColor} />
+                      <Text style={styles.detailText}>
+                        Hours: {timesheet.labourHours}h
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <View style={styles.detailItem}>
+                      <Feather name="user" size={20} color={tabColor} />
+                      <Text style={styles.detailText}>
+                        By: {timesheet.submittedBy}
+                      </Text>
+                    </View>
+                    <View style={styles.detailItem}>
+                      <Feather name="users" size={20} color={tabColor} />
+                      <Text style={styles.detailText}>
+                        Team: {timesheet.assignedTo.length}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Cost Breakdown */}
+                <View style={styles.costBreakdown}>
+                  <View style={styles.costRow}>
+                    <View style={styles.costItem}>
+                      <Text style={styles.costLabel}>Labour</Text>
+                      <Text style={styles.costValue}>
+                        ${timesheet.labourCost.toFixed(0)}
+                      </Text>
+                    </View>
+                    <View style={styles.costItem}>
+                      <Text style={styles.costLabel}>Materials</Text>
+                      <Text style={styles.costValue}>
+                        ${timesheet.materialCost.toFixed(0)}
+                      </Text>
+                    </View>
+                    <View style={styles.costItem}>
+                      <Text style={styles.costLabel}>Other</Text>
+                      <Text style={styles.costValue}>
+                        ${timesheet.additionalCharges.toFixed(0)}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.costTotal}>
+                    <Text style={styles.costTotalLabel}>
+                      Total: ${timesheet.totalCost.toLocaleString()}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Status-specific information */}
+                {timesheet.status === 'approved' && timesheet.approvedAt && (
+                  <View style={styles.statusInfo}>
+                    <View style={styles.statusInfoIcon}>
+                      <FontAwesome
+                        name="check-circle"
+                        size={18}
+                        color="#166534"
+                      />
+                    </View>
+                    <Text style={styles.statusInfoText}>
+                      Approved by {timesheet.approvedBy} on{' '}
+                      {formatDateTime(timesheet.approvedAt)}
+                    </Text>
+                  </View>
+                )}
+
+                {timesheet.status === 'rejected' &&
+                  timesheet.rejectionReason && (
+                    <View
+                      style={[styles.statusInfo, {backgroundColor: '#fee2e2'}]}>
+                      <View style={styles.statusInfoIcon}>
+                        <MaterialIcons
+                          name="warning-amber"
+                          size={24}
+                          color="#dc2626"
+                        />
+                      </View>
+                      <View>
+                        <Text
+                          style={[
+                            styles.statusInfoText,
+                            {color: '#dc2626', fontWeight: '600'},
+                          ]}>
+                          Rejected
+                        </Text>
+                        <Text
+                          style={[styles.statusInfoText, {color: '#dc2626'}]}>
+                          {timesheet.rejectionReason}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
+                {/* Footer */}
+                <View style={styles.timesheetFooter}>
+                  <Text style={styles.submittedText}>
+                    Submitted {formatDateTime(timesheet.submittedAt)}
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.viewButton,
+                      canEditTimesheet(timesheet)
+                        ? styles.viewButtonPrimary
+                        : styles.viewButtonSecondary,
+                    ]}
+                    onPress={() => handleViewTimesheet(timesheet)}>
+                    <Feather
+                      name="eye"
+                      size={20}
+                      color={canEditTimesheet(timesheet) ? '#fff' : tabColor}
+                    />
+                    <Text
+                      style={[
+                        styles.viewButtonText,
+                        canEditTimesheet(timesheet)
+                          ? styles.viewButtonTextPrimary
+                          : styles.viewButtonTextSecondary,
+                      ]}>
+                      {canEditTimesheet(timesheet)
+                        ? 'View Details'
+                        : 'View (Read-only)'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))
           )}
         </View>
 
-        {/* Quick Actions */}
-        {timeEntries.length > 0 && (
-          <View style={styles.actionsSection}>
-            <Text style={styles.sectionTitle}>Actions</Text>
-            
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => handleNavigate('MaterialTrackingScreen', { job: selectedJob })}
-            >
-              <Icon name="inventory" size={20} color={Colors.primary} />
-              <Text style={styles.actionButtonText}>Material Tracking</Text>
-              <Icon name="chevron-right" size={20} color={Colors.textLight} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.actionButton}
-              onPress={() => handleNavigate('JobSummaryScreen', { job: selectedJob })}
-            >
-              <Icon name="assessment" size={20} color={Colors.primary} />
-              <Text style={styles.actionButtonText}>Job Summary</Text>
-              <Icon name="chevron-right" size={20} color={Colors.textLight} />
-            </TouchableOpacity>
-            
-            {hasLeadAccess && (
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.submitActionButton]}
-                onPress={handleSubmitTimesheet}
-              >
-                <Icon name="send" size={20} color={Colors.white} />
-                <Text style={[styles.actionButtonText, styles.submitActionText]}>
-                  Submit to JDP
-                </Text>
-                <Icon name="chevron-right" size={20} color={Colors.white} />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-
-        <View style={{ height: 100 }} />
+        {/* Bottom spacing */}
+        <View style={styles.bottomSpacing} />
       </ScrollView>
-
-      {renderAddEntryModal()}
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: '#f9fafb',
+    marginBottom: 100,
   },
-
-  // Header
   header: {
-    backgroundColor: Colors.primary,
-    paddingTop: Spacing.xl,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
-  },
-  headerTop: {
+    backgroundColor: '#3B82F6',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingTop: 20,
   },
   backButton: {
-    padding: Spacing.sm,
+    padding: 8,
   },
-  headerCenter: {
-    alignItems: 'center',
+  backButtonText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: '600',
+  },
+  headerContent: {
     flex: 1,
+    alignItems: 'center',
   },
   headerTitle: {
+    color: 'white',
     fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.white,
+    fontWeight: '600',
   },
   headerSubtitle: {
+    color: '#93c5fd',
     fontSize: 14,
-    color: Colors.primaryLight,
-    marginTop: Spacing.xs,
+    marginTop: 2,
   },
-  addButton: {
-    padding: Spacing.sm,
+  headerSpacer: {
+    width: 40,
   },
-
-  // Summary
-  summaryContainer: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-  },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    alignItems: 'center',
-  },
-  summaryValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: Colors.white,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: Colors.primaryLight,
-    marginTop: Spacing.xs,
-  },
-
-  // Content
   content: {
     flex: 1,
   },
-
-  // Sections
-  entriesSection: {
-    backgroundColor: Colors.white,
-    paddingVertical: Spacing.lg,
+  statsContainer: {
+    padding: 16,
   },
-  sectionHeader: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: Spacing.xs,
-  },
-
-  // Time Entry Cards
-  timeEntryCard: {
-    backgroundColor: Colors.backgroundLight,
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    ...Shadows.sm,
-  },
-  timeEntryHeader: {
+  statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.sm,
+    marginBottom: 16,
   },
-  timeEntryTitle: {
+  statCard: {
     flex: 1,
-    marginRight: Spacing.md,
+    backgroundColor: 'white',
+    marginHorizontal: 8,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  activityName: {
+  statIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  statIconText: {
+    fontSize: 24,
+  },
+  statValue: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+  },
+  filtersCard: {
+    backgroundColor: 'white',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1000,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    backgroundColor: '#f9fafb',
+  },
+  searchIcon: {
     fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: Spacing.xs,
+    marginRight: 8,
   },
-  timeEntryMeta: {
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#111827',
+  },
+  filtersRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  dropdownContainer: {
+    flex: 1,
+    position: 'relative',
+    zIndex: 1000,
+  },
+  dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: 'white',
   },
-  manualBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.warningLight,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.sm,
-    gap: Spacing.xs,
+  dropdownButtonText: {
+    fontSize: 14,
+    color: '#111827',
+    flex: 1,
   },
-  manualBadgeText: {
+  dropdownArrow: {
     fontSize: 12,
-    color: Colors.warning,
-    fontWeight: '500',
+    color: '#6b7280',
   },
-  autoBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.successLight,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.sm,
-    gap: Spacing.xs,
+  dropdownMenu: {
+    position: 'absolute',
+    top: 48,
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 2000,
   },
-  autoBadgeText: {
-    fontSize: 12,
-    color: Colors.success,
-    fontWeight: '500',
+  dropdownMenuItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
   },
-  timeEntryActions: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
+  dropdownMenuItemSelected: {
+    backgroundColor: '#3B82F6',
   },
-  editButton: {
-    padding: Spacing.sm,
-  },
-  deleteButton: {
-    padding: Spacing.sm,
-  },
-  timeEntryBody: {
-    gap: Spacing.sm,
-  },
-  timeDetails: {
-    gap: Spacing.sm,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  timeText: {
+  dropdownMenuItemText: {
     fontSize: 14,
-    color: Colors.text,
-    fontWeight: '500',
+    color: '#111827',
   },
-  durationText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+  dropdownMenuItemTextSelected: {
+    color: 'white',
   },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
+  timesheetsList: {
+    paddingHorizontal: 16,
   },
-  locationText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  workerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  workerText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  descriptionContainer: {
-    backgroundColor: Colors.white,
-    padding: Spacing.sm,
-    borderRadius: BorderRadius.sm,
-    marginTop: Spacing.sm,
-  },
-  descriptionText: {
-    fontSize: 14,
-    color: Colors.text,
-    lineHeight: 20,
-  },
-
-  // Empty State
   emptyState: {
+    backgroundColor: 'white',
+    padding: 48,
+    borderRadius: 12,
     alignItems: 'center',
-    paddingVertical: Spacing.xxl,
-    paddingHorizontal: Spacing.lg,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  emptyStateIcon: {
+    fontSize: 48,
+    marginBottom: 16,
   },
   emptyStateTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.text,
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.sm,
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
   },
   emptyStateSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
+    fontSize: 16,
+    color: '#6b7280',
     textAlign: 'center',
-    marginBottom: Spacing.xl,
   },
-  addFirstEntryButton: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+  timesheetCard: {
+    backgroundColor: 'white',
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  addFirstEntryText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.white,
+  timesheetHeader: {
+    marginBottom: 12,
   },
-
-  // Actions Section
-  actionsSection: {
-    backgroundColor: Colors.white,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-    marginTop: Spacing.sm,
+  timesheetTitleContainer: {
+    flex: 1,
   },
-  actionButton: {
+  timesheetBadges: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.backgroundLight,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.md,
-    gap: Spacing.md,
+    marginBottom: 8,
+    flexWrap: 'wrap',
   },
-  actionButtonText: {
-    flex: 1,
+  timesheetId: {
     fontSize: 16,
-    fontWeight: '500',
-    color: Colors.text,
+    fontWeight: '600',
+    color: '#111827',
+    marginRight: 8,
   },
-  submitActionButton: {
-    backgroundColor: Colors.primary,
-  },
-  submitActionText: {
-    color: Colors.white,
-  },
-
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  addEntryModal: {
-    backgroundColor: Colors.white,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    // maxHeight: '90%',
-  },
-  modalHeader: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
+    marginBottom: 4,
   },
-  modalTitle: {
-    fontSize: 18,
+  statusIcon: {
+    fontSize: 12,
+    marginRight: 4,
+  },
+  statusBadgeText: {
+    fontSize: 12,
     fontWeight: '600',
-    color: Colors.text,
   },
-  closeButton: {
-    padding: Spacing.sm,
+  priorityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  modalContent: {
-    flex: 1,
-    padding: Spacing.lg,
+  priorityBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
-
-  // Form Fields
-  formField: {
-    marginBottom: Spacing.lg,
+  timesheetTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 4,
   },
-  fieldLabel: {
+  timesheetCustomer: {
     fontSize: 14,
-    fontWeight: '500',
-    color: Colors.text,
-    marginBottom: Spacing.sm,
+    color: '#6b7280',
   },
-  textInput: {
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    fontSize: 16,
-    color: Colors.text,
-    backgroundColor: Colors.white,
+  detailsGrid: {
+    marginBottom: 16,
   },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  timeInputRow: {
+  detailRow: {
     flexDirection: 'row',
+    marginBottom: 8,
   },
-
-  // Modal Actions
-  modalActions: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    marginTop: Spacing.lg,
-  },
-  cancelButton: {
+  detailItem: {
     flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  cancelButtonText: {
+  detailIcon: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    marginRight: 8,
+    width: 20,
   },
-  saveButton: {
+  detailText: {
+    fontSize: 14,
+    color: '#6b7280',
     flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.primary,
+    marginLeft: 10,
+  },
+  costBreakdown: {
+    backgroundColor: '#f9fafb',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  costRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  costItem: {
+    flex: 1,
     alignItems: 'center',
   },
-  saveButtonText: {
-    fontSize: 16,
+  costLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  costValue: {
+    fontSize: 14,
     fontWeight: '600',
-    color: Colors.white,
+    color: '#111827',
+  },
+  costTotal: {
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    paddingTop: 8,
+    alignItems: 'center',
+  },
+  costTotalLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  statusInfo: {
+    backgroundColor: '#dcfce7',
+    padding: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  statusInfoIcon: {
+    marginRight: 12,
+  },
+  statusInfoText: {
+    fontSize: 14,
+    color: '#166534',
+    flex: 1,
+  },
+  timesheetFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  submittedText: {
+    fontSize: 12,
+    color: '#6b7280',
+    flex: 1,
+  },
+  viewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  viewButtonPrimary: {
+    backgroundColor: '#3B82F6',
+  },
+  viewButtonSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  viewButtonIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  viewButtonText: {
+    fontSize: 14,
+    marginLeft: 10,
+    fontWeight: '600',
+  },
+  viewButtonTextPrimary: {
+    color: 'white',
+  },
+  viewButtonTextSecondary: {
+    color: '#6b7280',
+  },
+  bottomSpacing: {
+    // height: ,
   },
 });
 

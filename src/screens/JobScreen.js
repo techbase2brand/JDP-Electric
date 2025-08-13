@@ -778,7 +778,9 @@ const styles = {
   },
   actionButton: {
     alignItems: 'center',
+    paddingVertical:6,
     gap: 4,
+    width:widthPercentageToDP(20),
   },
   actionText: {
     fontSize: 12,

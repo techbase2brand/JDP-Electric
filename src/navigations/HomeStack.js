@@ -22,6 +22,8 @@ import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import OrderConfirmationScreen from '../screens/OrderConfirmationScreen';
 import OrderHistoryScreen from '../screens/OrderHistoryScreen';
 import JobsScreen from '../screens/JobScreen';
+import ActivitySummaryScreen from '../screens/ActivitySummaryScreen';
+import JobTimesheet from '../screens/JobTimeSheet';
 
 const Stack = createStackNavigator();
 
@@ -30,7 +32,9 @@ export default function HomeStack() {
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="JobStack" component={JobsScreen} />
+      <Stack.Screen name="JobTimesheet" component={JobTimesheet} />
       <Stack.Screen name="CreateJobScreen" component={CreateJobScreen} />
+      <Stack.Screen name="ActivitySummaryScreen" component={ActivitySummaryScreen} />
       <Stack.Screen name="ReportsScreen" component={ReportsScreen} />
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
       <Stack.Screen name="SupportScreen" component={SupportScreen} />

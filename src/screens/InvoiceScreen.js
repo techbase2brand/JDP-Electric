@@ -1,4 +1,3 @@
-
 // import React, { useState, useEffect } from 'react';
 
 // import {
@@ -16,7 +15,6 @@
 //   FlatList,
 // } from 'react-native';
 // import Ionicons from 'react-native-vector-icons/Ionicons';
-
 
 // // JDP Electrics Colors
 // const COLORS = {
@@ -92,7 +90,7 @@
 
 //   const calculateSubtotal = (
 //     laborItems ,
-//     materialItems 
+//     materialItems
 //   ) => {
 //     const laborTotal = laborItems.reduce(
 //       (sum, item) => sum + ensureNumber(item.amount),
@@ -1663,9 +1661,7 @@
 
 // export default InvoiceScreen;
 
-
-
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -1679,9 +1675,11 @@ import {
   Platform,
   Modal,
   FlatList,
+  Image,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
+import {MAIN_LOGO_IMAGE} from '../assests/images';
+import {heightPercentageToDP} from '../utils';
 
 // JDP Electrics Colors
 const COLORS = {
@@ -1712,12 +1710,12 @@ const WorkerDropdown = ({
   selectedWorkerId,
   workers,
   onSelect,
-  placeholder = "Select Worker"
+  placeholder = 'Select Worker',
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const selectedWorker = workers.find(w => w.id === selectedWorkerId);
 
-  const handleWorkerSelect = (workerId) => {
+  const handleWorkerSelect = workerId => {
     onSelect(workerId);
     setModalVisible(false);
   };
@@ -1726,8 +1724,7 @@ const WorkerDropdown = ({
     <>
       <TouchableOpacity
         style={styles.dropdownButton}
-        onPress={() => setModalVisible(true)}
-      >
+        onPress={() => setModalVisible(true)}>
         <View style={styles.dropdownContent}>
           {selectedWorker ? (
             <View style={styles.selectedWorkerDisplay}>
@@ -1737,9 +1734,12 @@ const WorkerDropdown = ({
                 </Text>
               </View>
               <View style={styles.selectedWorkerInfo}>
-                <Text style={styles.selectedWorkerName}>{selectedWorker.name}</Text>
+                <Text style={styles.selectedWorkerName}>
+                  {selectedWorker.name}
+                </Text>
                 <Text style={styles.selectedWorkerDetails}>
-                  {selectedWorker.role} • ${selectedWorker.hourlyRate.toFixed(2)}/hr
+                  {selectedWorker.role} • $
+                  {selectedWorker.hourlyRate.toFixed(2)}/hr
                 </Text>
               </View>
             </View>
@@ -1754,31 +1754,28 @@ const WorkerDropdown = ({
         visible={modalVisible}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
+        onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Worker</Text>
               <TouchableOpacity
                 onPress={() => setModalVisible(false)}
-                style={styles.modalCloseButton}
-              >
+                style={styles.modalCloseButton}>
                 <Ionicons name="close" size={24} color={COLORS.gray600} />
               </TouchableOpacity>
             </View>
-            
+
             <FlatList
               data={workers}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
+              keyExtractor={item => item.id}
+              renderItem={({item}) => (
                 <TouchableOpacity
                   style={[
                     styles.workerOption,
-                    selectedWorkerId === item.id && styles.workerOptionSelected
+                    selectedWorkerId === item.id && styles.workerOptionSelected,
                   ]}
-                  onPress={() => handleWorkerSelect(item.id)}
-                >
+                  onPress={() => handleWorkerSelect(item.id)}>
                   <View style={styles.workerOptionContent}>
                     <View style={styles.workerAvatar}>
                       <Text style={styles.workerAvatarText}>
@@ -1794,7 +1791,11 @@ const WorkerDropdown = ({
                     </View>
                   </View>
                   {selectedWorkerId === item.id && (
-                    <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                    <Ionicons
+                      name="checkmark"
+                      size={20}
+                      color={COLORS.primary}
+                    />
                   )}
                 </TouchableOpacity>
               )}
@@ -1807,11 +1808,7 @@ const WorkerDropdown = ({
   );
 };
 
-const InvoiceManagementScreen = ({
-  selectedJob,
-  onNavigate,
-  navigation
-}) => {
+const InvoiceManagementScreen = ({selectedJob, onNavigate, navigation}) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [activeTab, setActiveTab] = useState('labor');
   const [loading, setLoading] = useState(false);
@@ -1823,33 +1820,33 @@ const InvoiceManagementScreen = ({
       name: 'Sarah Johnson',
       role: 'Lead Electrician',
       hourlyRate: 85.0,
-      avatar: 'SJ'
+      avatar: 'SJ',
     },
     {
       id: '2',
       name: 'Mike Wilson',
       role: 'Electrician',
       hourlyRate: 65.0,
-      avatar: 'MW'
+      avatar: 'MW',
     },
     {
       id: '3',
       name: 'John Martinez',
       role: 'Apprentice Electrician',
       hourlyRate: 45.0,
-      avatar: 'JM'
+      avatar: 'JM',
     },
     {
       id: '4',
       name: 'Lisa Chen',
       role: 'Senior Electrician',
       hourlyRate: 75.0,
-      avatar: 'LC'
+      avatar: 'LC',
     },
   ];
 
   // Helper functions
-  const ensureNumber = (value) => {
+  const ensureNumber = value => {
     if (typeof value === 'number' && !isNaN(value)) {
       return value;
     }
@@ -1857,17 +1854,14 @@ const InvoiceManagementScreen = ({
     return isNaN(parsed) ? 0 : parsed;
   };
 
-  const calculateSubtotal = (
-    laborItems,
-    materialItems
-  ) => {
+  const calculateSubtotal = (laborItems, materialItems) => {
     const laborTotal = laborItems.reduce(
       (sum, item) => sum + ensureNumber(item.amount),
-      0
+      0,
     );
     const materialTotal = materialItems.reduce(
       (sum, item) => sum + ensureNumber(item.amount),
-      0
+      0,
     );
     return laborTotal + materialTotal;
   };
@@ -1880,7 +1874,8 @@ const InvoiceManagementScreen = ({
         type: 'labor',
         qty: 2.5,
         item: 'Electrical Installation Work',
-        description: 'TIME AND MATERIAL TO INSTALL TIMER\nDENNIS H-11-24\nTIMER PROVIDED',
+        description:
+          'TIME AND MATERIAL TO INSTALL TIMER\nDENNIS H-11-24\nTIMER PROVIDED',
         rate: 85.0,
         amount: 212.5,
         laborName: 'Sarah Johnson',
@@ -1896,13 +1891,13 @@ const InvoiceManagementScreen = ({
         amount: 65.0,
         laborName: 'Mike Wilson',
         laborId: '2',
-      }
+      },
     ];
 
     const initialMaterialItems = [];
     const initialSubtotal = calculateSubtotal(
       initialLaborItems,
-      initialMaterialItems
+      initialMaterialItems,
     );
     const initialPaymentsCredits = -150.0;
     const initialBalanceDue = initialSubtotal + initialPaymentsCredits;
@@ -1937,7 +1932,7 @@ const InvoiceManagementScreen = ({
   const updateInvoiceField = (field, value) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
-      setInvoice((prev) => ({
+      setInvoice(prev => ({
         ...prev,
         [parent]: {
           ...prev[parent],
@@ -1945,8 +1940,8 @@ const InvoiceManagementScreen = ({
         },
       }));
     } else {
-      setInvoice((prev) => {
-        const updatedInvoice = { ...prev, [field]: value };
+      setInvoice(prev => {
+        const updatedInvoice = {...prev, [field]: value};
 
         if (field === 'paymentsCredits') {
           const paymentsCredits = ensureNumber(value);
@@ -1961,20 +1956,15 @@ const InvoiceManagementScreen = ({
   };
 
   // Update invoice item
-  const updateInvoiceItem = (
-    itemId,
-    field,
-    value,
-    itemType
-  ) => {
-    setInvoice((prev) => {
+  const updateInvoiceItem = (itemId, field, value, itemType) => {
+    setInvoice(prev => {
       const itemsKey = itemType === 'labor' ? 'laborItems' : 'materialItems';
-      const updatedItems = prev[itemsKey].map((item) => {
+      const updatedItems = prev[itemsKey].map(item => {
         if (item.id === itemId) {
-          const updatedItem = { ...item, [field]: value };
+          const updatedItem = {...item, [field]: value};
 
           if (field === 'laborId' && itemType === 'labor') {
-            const worker = availableWorkers.find((w) => w.id === value);
+            const worker = availableWorkers.find(w => w.id === value);
             if (worker) {
               updatedItem.laborName = worker.name;
               updatedItem.rate = worker.hourlyRate;
@@ -2002,7 +1992,7 @@ const InvoiceManagementScreen = ({
 
       const newSubtotal = calculateSubtotal(
         itemType === 'labor' ? updatedItems : prev.laborItems,
-        itemType === 'material' ? updatedItems : prev.materialItems
+        itemType === 'material' ? updatedItems : prev.materialItems,
       );
 
       return {
@@ -2015,7 +2005,7 @@ const InvoiceManagementScreen = ({
   };
 
   // Add new item
-  const addNewItem = (type) => {
+  const addNewItem = type => {
     const newItem = {
       id: `${type}-${Date.now()}`,
       type,
@@ -2028,12 +2018,12 @@ const InvoiceManagementScreen = ({
       laborId: type === 'labor' ? undefined : undefined,
     };
 
-    setInvoice((prev) => {
+    setInvoice(prev => {
       const itemsKey = type === 'labor' ? 'laborItems' : 'materialItems';
       const updatedItems = [...prev[itemsKey], newItem];
       const newSubtotal = calculateSubtotal(
         type === 'labor' ? updatedItems : prev.laborItems,
-        type === 'material' ? updatedItems : prev.materialItems
+        type === 'material' ? updatedItems : prev.materialItems,
       );
 
       return {
@@ -2047,12 +2037,12 @@ const InvoiceManagementScreen = ({
 
   // Remove item
   const removeItem = (itemId, itemType) => {
-    setInvoice((prev) => {
+    setInvoice(prev => {
       const itemsKey = itemType === 'labor' ? 'laborItems' : 'materialItems';
-      const updatedItems = prev[itemsKey].filter((item) => item.id !== itemId);
+      const updatedItems = prev[itemsKey].filter(item => item.id !== itemId);
       const newSubtotal = calculateSubtotal(
         itemType === 'labor' ? updatedItems : prev.laborItems,
-        itemType === 'material' ? updatedItems : prev.materialItems
+        itemType === 'material' ? updatedItems : prev.materialItems,
       );
 
       return {
@@ -2066,13 +2056,10 @@ const InvoiceManagementScreen = ({
 
   // Navigation handlers
   const proceedToPreview = () => {
-    if (
-      invoice.laborItems.length === 0 &&
-      invoice.materialItems.length === 0
-    ) {
+    if (invoice.laborItems.length === 0 && invoice.materialItems.length === 0) {
       Alert.alert(
         'Missing Items',
-        'Please add at least one labor or material item to the invoice'
+        'Please add at least one labor or material item to the invoice',
       );
       return;
     }
@@ -2090,7 +2077,7 @@ const InvoiceManagementScreen = ({
   const handleSendInvoice = () => {
     setLoading(true);
     setTimeout(() => {
-      setInvoice((prev) => ({ ...prev, status: 'sent' }));
+      setInvoice(prev => ({...prev, status: 'sent'}));
       Alert.alert('Success', 'Invoice sent to customer successfully!', [
         {
           text: 'OK',
@@ -2108,7 +2095,7 @@ const InvoiceManagementScreen = ({
   };
 
   // Render labor item form
-  const renderLaborItemForm = (items) => (
+  const renderLaborItemForm = items => (
     <View style={styles.itemsContainer}>
       {items.map((item, index) => (
         <View key={item.id} style={styles.laborItemCard}>
@@ -2122,9 +2109,12 @@ const InvoiceManagementScreen = ({
             {items.length > 1 && (
               <TouchableOpacity
                 style={styles.removeButton}
-                onPress={() => removeItem(item.id, 'labor')}
-              >
-                <Ionicons name="remove-circle" size={20} color={COLORS.danger} />
+                onPress={() => removeItem(item.id, 'labor')}>
+                <Ionicons
+                  name="remove-circle"
+                  size={20}
+                  color={COLORS.danger}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -2135,7 +2125,7 @@ const InvoiceManagementScreen = ({
             <WorkerDropdown
               selectedWorkerId={item.laborId}
               workers={availableWorkers}
-              onSelect={(workerId) => 
+              onSelect={workerId =>
                 updateInvoiceItem(item.id, 'laborId', workerId, 'labor')
               }
               placeholder="Choose a worker"
@@ -2148,12 +2138,12 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={item.qty.toString()}
-                onChangeText={(text) =>
+                onChangeText={text =>
                   updateInvoiceItem(
                     item.id,
                     'qty',
                     parseFloat(text) || 0,
-                    'labor'
+                    'labor',
                   )
                 }
                 keyboardType="numeric"
@@ -2165,12 +2155,12 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={item.rate.toString()}
-                onChangeText={(text) =>
+                onChangeText={text =>
                   updateInvoiceItem(
                     item.id,
                     'rate',
                     parseFloat(text) || 0,
-                    'labor'
+                    'labor',
                   )
                 }
                 keyboardType="numeric"
@@ -2184,7 +2174,7 @@ const InvoiceManagementScreen = ({
             <TextInput
               style={styles.input}
               value={item.item}
-              onChangeText={(text) =>
+              onChangeText={text =>
                 updateInvoiceItem(item.id, 'item', text, 'labor')
               }
               placeholder="Service performed"
@@ -2196,7 +2186,7 @@ const InvoiceManagementScreen = ({
             <TextInput
               style={[styles.input, styles.textArea]}
               value={item.description}
-              onChangeText={(text) =>
+              onChangeText={text =>
                 updateInvoiceItem(item.id, 'description', text, 'labor')
               }
               placeholder="Detailed work description"
@@ -2220,8 +2210,7 @@ const InvoiceManagementScreen = ({
 
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => addNewItem('labor')}
-      >
+        onPress={() => addNewItem('labor')}>
         <Ionicons name="add-circle" size={20} color={COLORS.primary} />
         <Text style={styles.addButtonText}>Add Labor Entry</Text>
       </TouchableOpacity>
@@ -2229,23 +2218,24 @@ const InvoiceManagementScreen = ({
   );
 
   // Render material item form
-  const renderMaterialItemForm = (items) => (
+  const renderMaterialItemForm = items => (
     <View style={styles.itemsContainer}>
       {items.map((item, index) => (
         <View key={item.id} style={styles.materialItemCard}>
           <View style={styles.itemHeader}>
             <View style={styles.itemHeaderLeft}>
               <Ionicons name="cube" size={16} color={COLORS.success} />
-              <Text style={styles.itemHeaderTitle}>
-                Material {index + 1}
-              </Text>
+              <Text style={styles.itemHeaderTitle}>Material {index + 1}</Text>
             </View>
             {items.length > 1 && (
               <TouchableOpacity
                 style={styles.removeButton}
-                onPress={() => removeItem(item.id, 'material')}
-              >
-                <Ionicons name="remove-circle" size={20} color={COLORS.danger} />
+                onPress={() => removeItem(item.id, 'material')}>
+                <Ionicons
+                  name="remove-circle"
+                  size={20}
+                  color={COLORS.danger}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -2256,12 +2246,12 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={item.qty.toString()}
-                onChangeText={(text) =>
+                onChangeText={text =>
                   updateInvoiceItem(
                     item.id,
                     'qty',
                     parseFloat(text) || 0,
-                    'material'
+                    'material',
                   )
                 }
                 keyboardType="numeric"
@@ -2273,12 +2263,12 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={item.rate.toString()}
-                onChangeText={(text) =>
+                onChangeText={text =>
                   updateInvoiceItem(
                     item.id,
                     'rate',
                     parseFloat(text) || 0,
-                    'material'
+                    'material',
                   )
                 }
                 keyboardType="numeric"
@@ -2292,7 +2282,7 @@ const InvoiceManagementScreen = ({
             <TextInput
               style={styles.input}
               value={item.item}
-              onChangeText={(text) =>
+              onChangeText={text =>
                 updateInvoiceItem(item.id, 'item', text, 'material')
               }
               placeholder="Material name"
@@ -2304,7 +2294,7 @@ const InvoiceManagementScreen = ({
             <TextInput
               style={[styles.input, styles.textArea]}
               value={item.description}
-              onChangeText={(text) =>
+              onChangeText={text =>
                 updateInvoiceItem(item.id, 'description', text, 'material')
               }
               placeholder="Material specifications"
@@ -2323,8 +2313,7 @@ const InvoiceManagementScreen = ({
 
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => addNewItem('material')}
-      >
+        onPress={() => addNewItem('material')}>
         <Ionicons name="add-circle" size={20} color={COLORS.success} />
         <Text style={styles.addButtonText}>Add Material Item</Text>
       </TouchableOpacity>
@@ -2347,9 +2336,7 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={invoice.invoiceNumber}
-                onChangeText={(text) =>
-                  updateInvoiceField('invoiceNumber', text)
-                }
+                onChangeText={text => updateInvoiceField('invoiceNumber', text)}
                 placeholder="Invoice #"
               />
             </View>
@@ -2358,7 +2345,7 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={invoice.date}
-                onChangeText={(text) => updateInvoiceField('date', text)}
+                onChangeText={text => updateInvoiceField('date', text)}
                 placeholder="YYYY-MM-DD"
               />
             </View>
@@ -2369,7 +2356,7 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={invoice.dueDate}
-                onChangeText={(text) => updateInvoiceField('dueDate', text)}
+                onChangeText={text => updateInvoiceField('dueDate', text)}
                 placeholder="YYYY-MM-DD"
               />
             </View>
@@ -2378,7 +2365,7 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={invoice.poNumber}
-                onChangeText={(text) => updateInvoiceField('poNumber', text)}
+                onChangeText={text => updateInvoiceField('poNumber', text)}
                 placeholder="P.O. Number"
               />
             </View>
@@ -2388,7 +2375,7 @@ const InvoiceManagementScreen = ({
             <TextInput
               style={styles.input}
               value={invoice.project}
-              onChangeText={(text) => updateInvoiceField('project', text)}
+              onChangeText={text => updateInvoiceField('project', text)}
               placeholder="Project description"
             />
           </View>
@@ -2407,7 +2394,7 @@ const InvoiceManagementScreen = ({
             <TextInput
               style={styles.input}
               value={invoice.billTo.name}
-              onChangeText={(text) => updateInvoiceField('billTo.name', text)}
+              onChangeText={text => updateInvoiceField('billTo.name', text)}
               placeholder="Customer name"
             />
           </View>
@@ -2416,9 +2403,7 @@ const InvoiceManagementScreen = ({
             <TextInput
               style={styles.input}
               value={invoice.billTo.address}
-              onChangeText={(text) =>
-                updateInvoiceField('billTo.address', text)
-              }
+              onChangeText={text => updateInvoiceField('billTo.address', text)}
               placeholder="Street address"
             />
           </View>
@@ -2428,7 +2413,7 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={invoice.billTo.city}
-                onChangeText={(text) => updateInvoiceField('billTo.city', text)}
+                onChangeText={text => updateInvoiceField('billTo.city', text)}
                 placeholder="City"
               />
             </View>
@@ -2437,9 +2422,7 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={invoice.billTo.state}
-                onChangeText={(text) =>
-                  updateInvoiceField('billTo.state', text)
-                }
+                onChangeText={text => updateInvoiceField('billTo.state', text)}
                 placeholder="State"
               />
             </View>
@@ -2448,7 +2431,7 @@ const InvoiceManagementScreen = ({
               <TextInput
                 style={styles.input}
                 value={invoice.billTo.zip}
-                onChangeText={(text) => updateInvoiceField('billTo.zip', text)}
+                onChangeText={text => updateInvoiceField('billTo.zip', text)}
                 placeholder="ZIP"
               />
             </View>
@@ -2466,12 +2449,8 @@ const InvoiceManagementScreen = ({
         {/* Tab Navigation */}
         <View style={styles.tabContainer}>
           <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === 'labor' && styles.tabActive,
-            ]}
-            onPress={() => setActiveTab('labor')}
-          >
+            style={[styles.tab, activeTab === 'labor' && styles.tabActive]}
+            onPress={() => setActiveTab('labor')}>
             <Ionicons
               name="time"
               size={16}
@@ -2481,18 +2460,13 @@ const InvoiceManagementScreen = ({
               style={[
                 styles.tabText,
                 activeTab === 'labor' && styles.tabTextActive,
-              ]}
-            >
+              ]}>
               Labor ({invoice.laborItems.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === 'material' && styles.tabActive,
-            ]}
-            onPress={() => setActiveTab('material')}
-          >
+            style={[styles.tab, activeTab === 'material' && styles.tabActive]}
+            onPress={() => setActiveTab('material')}>
             <Ionicons
               name="cube"
               size={16}
@@ -2502,8 +2476,7 @@ const InvoiceManagementScreen = ({
               style={[
                 styles.tabText,
                 activeTab === 'material' && styles.tabTextActive,
-              ]}
-            >
+              ]}>
               Materials ({invoice.materialItems.length})
             </Text>
           </TouchableOpacity>
@@ -2527,7 +2500,7 @@ const InvoiceManagementScreen = ({
             <TextInput
               style={styles.input}
               value={invoice.paymentsCredits.toString()}
-              onChangeText={(text) =>
+              onChangeText={text =>
                 updateInvoiceField('paymentsCredits', parseFloat(text) || 0)
               }
               keyboardType="numeric"
@@ -2539,7 +2512,7 @@ const InvoiceManagementScreen = ({
             <TextInput
               style={[styles.input, styles.textArea]}
               value={invoice.notes}
-              onChangeText={(text) => updateInvoiceField('notes', text)}
+              onChangeText={text => updateInvoiceField('notes', text)}
               placeholder="Additional notes or terms"
               multiline
               numberOfLines={3}
@@ -2600,7 +2573,18 @@ const InvoiceManagementScreen = ({
 
         {/* Invoice Header */}
         <View style={styles.previewHeader}>
-          <Text style={styles.companyName}>JDP Electrics</Text>
+          <Image
+            source={MAIN_LOGO_IMAGE}
+            style={{
+              width: '30%',
+              height:
+                Platform.OS === 'android'
+                  ? heightPercentageToDP(5.5)
+                  : heightPercentageToDP(5.5),
+              resizeMode: 'contain',
+            }}
+          />
+          {/* <Text style={styles.companyName}>JDP Electrics</Text> */}
           <Text style={styles.invoiceNumber}>#{invoice.invoiceNumber}</Text>
         </View>
 
@@ -2728,9 +2712,10 @@ const InvoiceManagementScreen = ({
         <TouchableOpacity
           style={styles.backButton}
           onPress={
-            currentStep === 1 ? () => navigation.navigate('HomeScreen') : goBackToEdit
-          }
-        >
+            currentStep === 1
+              ? () => navigation.navigate('HomeScreen')
+              : goBackToEdit
+          }>
           <Ionicons name="arrow-back" size={24} color={COLORS.black} />
         </TouchableOpacity>
 
@@ -2749,8 +2734,7 @@ const InvoiceManagementScreen = ({
 
       <KeyboardAvoidingView
         style={styles.flex1}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         {currentStep === 1 ? renderDataEntry() : renderPreview()}
 
         {/* Bottom Action Bar */}
@@ -2758,8 +2742,7 @@ const InvoiceManagementScreen = ({
           {currentStep === 1 ? (
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={proceedToPreview}
-            >
+              onPress={proceedToPreview}>
               <Text style={styles.primaryButtonText}>Continue to Preview</Text>
               <Ionicons name="chevron-forward" size={20} color={COLORS.white} />
             </TouchableOpacity>
@@ -2767,8 +2750,7 @@ const InvoiceManagementScreen = ({
             <View style={styles.previewActions}>
               <TouchableOpacity
                 style={styles.secondaryButton}
-                onPress={handleDownloadInvoice}
-              >
+                onPress={handleDownloadInvoice}>
                 <Ionicons name="download" size={18} color={COLORS.primary} />
                 <Text style={styles.secondaryButtonText}>Download</Text>
               </TouchableOpacity>
@@ -2779,8 +2761,7 @@ const InvoiceManagementScreen = ({
                   loading && styles.disabledButton,
                 ]}
                 onPress={handleSendInvoice}
-                disabled={loading}
-              >
+                disabled={loading}>
                 {loading ? (
                   <Text style={styles.primaryButtonText}>Sending...</Text>
                 ) : (
@@ -2813,7 +2794,7 @@ const styles = {
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  
+
   backButton: {
     padding: 8,
   },
@@ -2904,7 +2885,7 @@ const styles = {
   dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: COLORS.gray300,
     borderRadius: 8,
@@ -2965,7 +2946,7 @@ const styles = {
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
@@ -2982,7 +2963,7 @@ const styles = {
   workerOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
@@ -3079,7 +3060,7 @@ const styles = {
   },
   itemHeader: {
     flexDirection: 'row',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -3104,7 +3085,7 @@ const styles = {
   },
   laborSummaryRow: {
     flexDirection: 'row',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
   },
   laborSummaryLabel: {
     fontSize: 14,
@@ -3162,7 +3143,7 @@ const styles = {
   },
   summaryRow: {
     flexDirection: 'row',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 6,
   },
@@ -3193,7 +3174,7 @@ const styles = {
   },
   summaryValueTotal: {
     fontSize: 18,
-    fontWeight:'700',
+    fontWeight: '700',
     color: COLORS.primary,
   },
   previewCard: {
@@ -3212,14 +3193,14 @@ const styles = {
   },
   previewTitle: {
     fontSize: 20,
-    fontWeight:'700',
+    fontWeight: '700',
     color: COLORS.gray900,
     textAlign: 'center',
     marginBottom: 20,
   },
   previewHeader: {
     flexDirection: 'row',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
     paddingBottom: 16,
@@ -3228,7 +3209,7 @@ const styles = {
   },
   companyName: {
     fontSize: 24,
-    fontWeight:'700',
+    fontWeight: '700',
     color: COLORS.primary,
   },
   invoiceNumber: {
@@ -3283,7 +3264,7 @@ const styles = {
   },
   previewItemDetails: {
     flexDirection: 'row',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   previewItemDetail: {
@@ -3308,7 +3289,7 @@ const styles = {
   },
   previewTotalRow: {
     flexDirection: 'row',
-    justifyContent:'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 4,
   },
@@ -3334,7 +3315,7 @@ const styles = {
   },
   previewTotalValueFinal: {
     fontSize: 18,
-    fontWeight:'700',
+    fontWeight: '700',
     color: COLORS.primary,
   },
   bottomBar: {

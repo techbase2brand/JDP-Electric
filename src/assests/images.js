@@ -28,3 +28,7 @@ export const JOB_ICON = require('./tab_assests/home_icon/job.png');
 export const REPORT_ICON = require('./tab_assests/home_icon/report.png');
 export const SUPPORT_ICON = require('./tab_assests/home_icon/support.png');
 export const WARRENTY_ICON = require('./tab_assests/home_icon/warrenty.png');
+
+export const PERFORMANCE = require('./tab_assests/home_icon/performance.png');
+export const GROUP_PEOPLE = require('./tab_assests/home_icon/group_people.png');
+export const COMPLETED = require('./tab_assests/home_icon/completed.png');
