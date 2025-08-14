@@ -84,12 +84,24 @@ import { NavigationContainer } from '@react-navigation/native';
 import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './src/redux/store';
+import FloatingTimer from './src/components/FloatingTimer';
+import { startBackgroundTimer, stopBackgroundTimer } from './src/NotificationService';
 
 const { flex } = BaseStyle;
 
 const AppContent = () => {
   const userData = useSelector(state => state.user.userData);
-console.log("userDatauserData,",userData);
+const { isRunning } = useSelector((state: any) => state.timer);
+
+useEffect(() => {
+  if (isRunning) {
+    console.log("Starting background timer",isRunning);
+    startBackgroundTimer(); // will run only in foreground on iOS simulator
+  } else {
+    console.log("Stopping background timer");
+    stopBackgroundTimer();
+  }
+}, [isRunning]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -126,6 +138,7 @@ console.log("userDatauserData,",userData);
           ) : (
             <AuthStack />
           )}
+             <FloatingTimer />
         </NavigationContainer>
       </KeyboardAvoidingView>
     </SafeAreaView>

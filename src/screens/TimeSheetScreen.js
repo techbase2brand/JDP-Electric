@@ -16,6 +16,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import {tabColor} from '../constants/Color';
+import {widthPercentageToDP} from '../utils';
 
 const TimesheetScreen = ({navigation, user, jobs}) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -235,9 +236,8 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       case 'draft':
         return '🕐';
       case 'submitted':
-        return (
-          <MaterialIcons name="warning-amber" size={24} color="#f1c206ff" />
-        );
+        return '';
+      // <MaterialIcons name="warning-amber" size={24} color="#f1c206ff" />
 
       case 'approved':
         return <FontAwesome name="check-circle" size={18} color="#166534" />;
@@ -623,7 +623,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                           color="#dc2626"
                         />
                       </View>
-                      <View>
+                      <View style={{width: widthPercentageToDP(70)}}>
                         <Text
                           style={[
                             styles.statusInfoText,

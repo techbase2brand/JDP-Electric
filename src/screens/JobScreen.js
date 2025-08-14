@@ -9,8 +9,12 @@ import {
   SafeAreaView,
   Linking,
   Alert,
+  Modal,
+  Button,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {widthPercentageToDP} from '../utils';
 
 // JDP Electrics Colors
@@ -45,8 +49,19 @@ const COLORS = {
 const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
   const [jobs, setJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState('all');
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
+  const [showStartPicker, setShowStartPicker] = useState(true);
+  const [showEndPicker, setShowEndPicker] = useState(true);
+
+  const applyFilter = () => {
+    console.log('Start Date:', startDate);
+    console.log('End Date:', endDate);
+    setModalVisible(false); // modal close
+  };
   // Load mock job data
   useEffect(() => {
     const mockJobs = [
@@ -178,6 +193,11 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
   // Tab configuration
   const tabs = [
     {
+      key: 'all',
+      label: 'All',
+      count: jobs.length,
+    },
+    {
       key: 'active',
       label: 'Active',
       count: jobs.filter(j => j.status === 'active').length,
@@ -201,7 +221,8 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
 
   // Filter jobs based on active tab and search query
   const filteredJobs = jobs.filter(job => {
-    const matchesTab = job.status === activeTab;
+    const matchesTab = activeTab === 'all' || job.status === activeTab;
+
     const matchesSearch =
       searchQuery === '' ||
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -255,7 +276,7 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
 
   // Handle start timer
   const handleStartTimer = job => {
-    navigation.navigate('TimerScreen')
+    navigation.navigate('TimerScreen');
     // if (onStartTimer) {
     //   onStartTimer(job);
     // } else {
@@ -492,7 +513,87 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
 
       {renderHeader()}
-      {renderSearchBar()}
+      <View
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+        }}>
+        <View style={{width: widthPercentageToDP(80)}}>
+          {renderSearchBar()}
+        </View>
+        <View style={styles.container}>
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Icon name="filter-list" size={28} color="#000" />
+          </TouchableOpacity>
+
+          <Modal
+            transparent={true}
+            visible={modalVisible}
+            animationType="slide"
+            onRequestClose={() => setModalVisible(false)}>
+            <View style={styles.modalBackground}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.label}>Start Date</Text>
+                <TouchableOpacity
+                  onPress={() => setShowStartPicker(true)}
+                  style={styles.dateButton}>
+                  <Text>{startDate.toDateString()}</Text>
+                </TouchableOpacity>
+                {showStartPicker && (
+                  <DateTimePicker
+                    value={startDate}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowStartPicker(false);
+                      if (selectedDate) setStartDate(selectedDate);
+                    }}
+                  />
+                )}
+
+                <Text style={styles.label}>End Date</Text>
+                <TouchableOpacity
+                  onPress={() => setShowEndPicker(true)}
+                  style={styles.dateButton}>
+                  <Text>{endDate.toDateString()}</Text>
+                </TouchableOpacity>
+                {showEndPicker && (
+                  <DateTimePicker
+                    value={endDate}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowEndPicker(false);
+                      if (selectedDate) setEndDate(selectedDate);
+                    }}
+                  />
+                )}
+                <TouchableOpacity
+                  onPress={applyFilter}
+                  style={{
+                    marginTop: 20,
+                    backgroundColor: 'blue',
+                    padding: 10,
+                    borderRadius: 5,
+                    alignItems: 'center',
+                  }}>
+                  <Text style={{color: 'white', fontWeight: 'bold'}}>
+                    Apply Filter
+                  </Text>
+                </TouchableOpacity>
+                <Button
+                  title="Cancel"
+                  color="red"
+                  onPress={() => setModalVisible(false)}
+                />
+              </View>
+            </View>
+          </Modal>
+        </View>
+      </View>
       {renderTabs()}
 
       <ScrollView
@@ -555,7 +656,7 @@ const styles = {
   },
   searchContainer: {
     backgroundColor: COLORS.white,
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 8,
   },
@@ -774,13 +875,14 @@ const styles = {
     justifyContent: 'space-around',
     borderTopWidth: 1,
     borderTopColor: COLORS.gray200,
-    paddingTop: 16,
+    // paddingTop: 16,
   },
   actionButton: {
     alignItems: 'center',
-    paddingVertical:6,
+    paddingTop: 16,
+    paddingBottom: 8,
     gap: 4,
-    width:widthPercentageToDP(20),
+    width: widthPercentageToDP(27),
   },
   actionText: {
     fontSize: 12,
@@ -809,6 +911,29 @@ const styles = {
     color: COLORS.gray600,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContainer: {
+    margin: 20,
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+  },
+  label: {
+    marginTop: 10,
+    marginBottom: 5,
+    fontWeight: 'bold',
+  },
+  dateButton: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginBottom: 15,
   },
 };
 

@@ -56,7 +56,7 @@ const ActivitySummaryScreen = ({navigation, route}) => {
       jobId: 'JDP-2024-001',
       title: 'Electrical Panel Upgrade',
       customer: 'ABC Manufacturing',
-      date: '2024-01-15',
+      date: '2025-08-14',
       actualTimeSpent: 8.5,
       updatedTimeSpent: 8.0,
       assignedTo: ['Mike Wilson', 'David Chen'],
@@ -203,6 +203,9 @@ const ActivitySummaryScreen = ({navigation, route}) => {
       const cutoffDate = new Date();
 
       switch (filterPeriod) {
+         case 'today':
+          cutoffDate.setDate(now.getDate() - 7);
+          break;
         case 'week':
           cutoffDate.setDate(now.getDate() - 7);
           break;
@@ -348,7 +351,7 @@ const ActivitySummaryScreen = ({navigation, route}) => {
         showsVerticalScrollIndicator={false}>
         {/* Filter Tabs - exact match with web version */}
         <View style={styles.filterContainer}>
-          {['week', 'month', 'year'].map(period => (
+          {['today','week', 'month', 'year'].map(period => (
             <TouchableOpacity
               key={period}
               style={[

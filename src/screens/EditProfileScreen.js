@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 // import { useAuth } from '../utils/AuthContext';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EditProfileScreen = ({navigation}) => {
   // const { user, updateUser } = useAuth();
@@ -36,6 +37,37 @@ const EditProfileScreen = ({navigation}) => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const [skills, setSkills] = useState([]);
+  const [newSkill, setNewSkill] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    // Load skills from AsyncStorage on mount
+    const loadSkills = async () => {
+      const storedSkills = await AsyncStorage.getItem('skills');
+      if (storedSkills) setSkills(JSON.parse(storedSkills));
+    };
+    loadSkills();
+  }, []);
+
+  const saveSkills = async updatedSkills => {
+    setSkills(updatedSkills);
+    await AsyncStorage.setItem('skills', JSON.stringify(updatedSkills));
+  };
+
+  const addSkill = () => {
+    if (newSkill.trim() === '') return;
+    const updatedSkills = [...skills, newSkill.trim()];
+    saveSkills(updatedSkills);
+    setNewSkill('');
+    setIsAdding(false);
+  };
+
+  const deleteSkill = index => {
+    const updatedSkills = skills.filter((_, i) => i !== index);
+    saveSkills(updatedSkills);
+  };
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -291,7 +323,7 @@ const EditProfileScreen = ({navigation}) => {
         </View>
 
         {/* Skills Section */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Skills & Certifications</Text>
           <View style={styles.skillsContainer}>
             {[
@@ -312,8 +344,46 @@ const EditProfileScreen = ({navigation}) => {
               <Text style={styles.addSkillText}>Add Skill</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View> */}
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Skills & Certifications</Text>
+          <View style={styles.skillsContainer}>
+            {skills.map((skill, index) => (
+              <View key={index} style={styles.skillChip}>
+                <Text style={styles.skillText}>{skill}</Text>
+                <TouchableOpacity onPress={() => deleteSkill(index)}>
+                  <Icon name="close" size={16} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+            ))}
+
+            {isAdding ? (
+              <View style={styles.addSkillInputContainer}>
+                <TextInput
+                  style={styles.addSkillInput}
+                  placeholder="Enter skill"
+                  value={newSkill}
+                  onChangeText={setNewSkill}
+                  onSubmitEditing={addSkill}
+                  autoFocus
+                />
+                <TouchableOpacity
+                  onPress={addSkill}
+                  style={styles.addSkillConfirm}>
+                  <Icon name="check" size={20} color="#2563eb" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.addSkillButton}
+                onPress={() => setIsAdding(true)}>
+                <Icon name="add" size={16} color="#2563eb" />
+                <Text style={styles.addSkillText}>Add Skill</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
         <View style={{height: 40}} />
       </ScrollView>
     </View>

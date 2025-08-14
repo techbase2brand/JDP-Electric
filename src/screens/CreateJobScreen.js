@@ -209,13 +209,8 @@ const CreateJobScreen = ({onCreateJob, route}) => {
 
   const validateStep = step => {
     switch (step) {
+      
       case 1:
-        if (!formData.jobType) {
-          showToast('Validation Error', 'Please select a job type', 'error');
-          return false;
-        }
-        break;
-      case 2:
         if (!formData.title.trim()) {
           showToast('Validation Error', 'Please enter a job title', 'error');
           return false;
@@ -245,7 +240,7 @@ const CreateJobScreen = ({onCreateJob, route}) => {
           return false;
         }
         break;
-      case 3:
+      case 2:
         if (!formData.dueDate) {
           showToast('Validation Error', 'Please select a due date', 'error');
           return false;
@@ -267,7 +262,7 @@ const CreateJobScreen = ({onCreateJob, route}) => {
           return false;
         }
         break;
-      case 4:
+      case 3:
         // Materials are optional, so no validation needed
         break;
     }
@@ -1147,7 +1142,7 @@ const CreateJobScreen = ({onCreateJob, route}) => {
           </TouchableOpacity>
         )}
 
-        {currentStep < 4 ? (
+        {currentStep < 3 ? (
           <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
             <Text style={styles.nextButtonText}>Next</Text>
             <Icon name="arrow-forward" size={20} color={Colors.white} />
@@ -1176,7 +1171,7 @@ const CreateJobScreen = ({onCreateJob, route}) => {
         {currentStep === 1 && renderStep2()}
         {currentStep === 2 && renderStep3()}
         {/* {currentStep === 4 && renderStep4()} */}
-        {currentStep === 4 && renderStep4()}
+        {currentStep === 3 && renderStep4()}
       </View>
 
       {renderFooter()}
