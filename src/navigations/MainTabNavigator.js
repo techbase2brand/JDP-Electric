@@ -27,7 +27,7 @@ const Tab = createBottomTabNavigator();
 export default function MainTabNavigator() {
   const icons = {
     Home: {focused: HOME_ICON_FOCUSED, unfocused: HOME_ICON},
-    TimeSheet: {focused: TIMESHEET_ICON_FOCUSED, unfocused: TIMESHEET_ICON},
+    BlueSheet: {focused: TIMESHEET_ICON_FOCUSED, unfocused: TIMESHEET_ICON},
     Jobs: {focused: JOBS_ICON_FOCUSED, unfocused: JOBS_ICON},
     Activity: {focused: REPORTS_ICON_FOCUSED, unfocused: REPORTS_ICON},
     Profile: {focused: PROFILE_ICON_FOCUSED, unfocused: PROFILE_ICON},
@@ -40,7 +40,7 @@ export default function MainTabNavigator() {
         headerShown: false,
       }}>
       <Tab.Screen name="Home" component={HomeStack} />
-      <Tab.Screen name="TimeSheet" component={TimeSheetStack} />
+      <Tab.Screen name="BlueSheet" component={TimeSheetStack} />
       <Tab.Screen name="Jobs" component={JobStack} />
       <Tab.Screen name="Activity" component={ActivitySummaryStack} />
       <Tab.Screen name="Profile" component={ProfileStack} />

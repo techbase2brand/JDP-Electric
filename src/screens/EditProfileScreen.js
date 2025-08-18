@@ -215,6 +215,7 @@ const EditProfileScreen = ({navigation}) => {
             onChangeText={text => setFormData({...formData, email: text})}
             placeholder="Enter your email"
             keyboardType="email-address"
+            editable={false}
           />
 
           <InputField
@@ -223,6 +224,7 @@ const EditProfileScreen = ({navigation}) => {
             onChangeText={text => setFormData({...formData, phone: text})}
             placeholder="Enter your phone number"
             keyboardType="phone-pad"
+            editable={false}
           />
         </View>
 
@@ -286,6 +288,7 @@ const EditProfileScreen = ({navigation}) => {
             }
             placeholder="Emergency contact phone"
             keyboardType="phone-pad"
+            editable={false}
           />
         </View>
 

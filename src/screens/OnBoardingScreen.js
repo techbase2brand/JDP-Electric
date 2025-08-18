@@ -201,9 +201,7 @@
 //   },
 // });
 
-
-
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -212,45 +210,57 @@ import {
   ScrollView,
   Dimensions,
   StatusBar,
+  Image,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import {
+  ELECTRICIAN_1_IMAGE,
+  ELECTRICIAN_2_IMAGE,
+  ELECTRICIAN_3_IMAGE,
+} from '../assests/images';
 
-const { width } = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
 const onboardingData = [
   {
     id: 1,
     title: 'Smart Job Management',
-    description: 'Efficiently manage and track all your electrical jobs in one place. View assignments, update status, and stay organized with our intelligent system.',
+    description:
+      'Efficiently manage and track all your electrical jobs in one place. View assignments, update status, and stay organized with our intelligent system.',
     color: '#8B5CF6',
+    image: ELECTRICIAN_1_IMAGE,
   },
   {
     id: 2,
     title: 'Precise Time Tracking',
-    description: 'Track your work hours with precision using GPS-enabled timers. Start, pause, and complete job timers with automatic location verification.',
+    description:
+      'Track your work hours with precision using GPS-enabled timers. Start, pause, and complete job timers with automatic location verification.',
     color: '#10B981',
+    image: ELECTRICIAN_2_IMAGE,
   },
   {
     id: 3,
     title: 'Team Collaboration',
-    description: 'Collaborate seamlessly with your team members, share job updates, and communicate effectively through integrated messaging.',
+    description:
+      'Collaborate seamlessly with your team members, share job updates, and communicate effectively through integrated messaging.',
     color: '#06B6D4',
+    image: ELECTRICIAN_3_IMAGE,
   },
-  {
-    id: 4,
-    title: 'Real-time Reports',
-    description: 'Generate comprehensive reports instantly. Track performance, analyze productivity, and make data-driven decisions.',
-    color: '#F59E0B',
-  },
-  {
-    id: 5,
-    title: 'Mobile Workforce',
-    description: 'Access everything you need from anywhere. Complete job management, time tracking, and reporting on the go.',
-    color: '#EF4444',
-  },
+  // {
+  //   id: 4,
+  //   title: 'Real-time Reports',
+  //   description: 'Generate comprehensive reports instantly. Track performance, analyze productivity, and make data-driven decisions.',
+  //   color: '#F59E0B',
+  // },
+  // {
+  //   id: 5,
+  //   title: 'Mobile Workforce',
+  //   description: 'Access everything you need from anywhere. Complete job management, time tracking, and reporting on the go.',
+  //   color: '#EF4444',
+  // },
 ];
 
-const OnBoardingScreen = ({ navigation }) => {
+const OnBoardingScreen = ({navigation}) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleNext = () => {
@@ -270,11 +280,12 @@ const OnBoardingScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
-      
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => setCurrentIndex(Math.max(0, currentIndex - 1))}>
-          <Text style={styles.backText}>Back</Text>
+        <TouchableOpacity
+          onPress={() => setCurrentIndex(Math.max(0, currentIndex - 1))}>
+          {/* <Text style={styles.backText}>Back</Text> */}
         </TouchableOpacity>
         <TouchableOpacity onPress={handleSkip}>
           <Text style={styles.skipText}>Skip</Text>
@@ -289,7 +300,8 @@ const OnBoardingScreen = ({ navigation }) => {
             style={[
               styles.progressDot,
               {
-                backgroundColor: index === currentIndex ? currentData.color : '#E5E7EB',
+                backgroundColor:
+                  index === currentIndex ? currentData.color : '#E5E7EB',
                 width: index === currentIndex ? 24 : 8,
               },
             ]}
@@ -299,9 +311,17 @@ const OnBoardingScreen = ({ navigation }) => {
 
       {/* Content */}
       <View style={styles.content}>
-        <View style={[styles.illustration, { backgroundColor: currentData.color + '40' }]}>
+        <Image
+          source={currentData?.image}
+          style={{
+            width: '100%',
+            height: '50%',
+            resizeMode: 'cover',
+          }}
+        />
+        {/* <View style={[styles.illustration, { backgroundColor: currentData.color + '40' }]}>
           <View style={[styles.circle, { backgroundColor: currentData.color }]} />
-        </View>
+        </View> */}
 
         <Text style={styles.title}>{currentData.title}</Text>
         <Text style={styles.description}>{currentData.description}</Text>
@@ -311,11 +331,12 @@ const OnBoardingScreen = ({ navigation }) => {
       <View style={styles.bottomContainer}>
         <LinearGradient
           colors={[currentData.color, currentData.color + 'CC']}
-          style={styles.nextButton}
-        >
+          style={styles.nextButton}>
           <TouchableOpacity onPress={handleNext} style={styles.nextButtonInner}>
             <Text style={styles.nextButtonText}>
-              {currentIndex === onboardingData.length - 1 ? 'Get Started ⚡' : 'Next'}
+              {currentIndex === onboardingData.length - 1
+                ? 'Get Started ⚡'
+                : 'Next'}
             </Text>
           </TouchableOpacity>
         </LinearGradient>
@@ -348,7 +369,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingTop: 10,
     gap: 8,
   },
   progressDot: {
@@ -381,7 +402,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 16,
+    marginVertical: 16,
   },
   description: {
     fontSize: 16,
@@ -409,4 +430,3 @@ const styles = StyleSheet.create({
 });
 
 export default OnBoardingScreen;
-

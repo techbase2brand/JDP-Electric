@@ -614,7 +614,7 @@ const JobTimesheet = ({
             </Text>
           </View>
 
-          {timeEntries.length === 0 ? (
+          {timeEntries?.length === 0 ? (
             <View style={styles.emptyState}>
               <Icon name="schedule" size={64} color={Colors.textLight} />
               <Text style={styles.emptyStateTitle}>No time entries</Text>
@@ -628,14 +628,14 @@ const JobTimesheet = ({
               </TouchableOpacity>
             </View>
           ) : (
-            timeEntries.map(renderTimeEntry)
+            timeEntries?.map(renderTimeEntry)
           )}
         </View>
 
         {/* <View style={{height: 100}} /> */}
       </ScrollView>
       {/* Quick Actions */}
-      {timeEntries.length > 0 && (
+      {timeEntries?.length > 0 && (
         <View style={styles.actionsSection}>
           <Text style={styles.sectionTitle}></Text>
 
@@ -665,7 +665,7 @@ const JobTimesheet = ({
               onPress={handleSubmitTimesheet}>
               <Icon name="send" size={20} color={Colors.white} />
               <Text style={[styles.actionButtonText, styles.submitActionText]}>
-                Submit to JDP
+                Submit For Approval
               </Text>
               <Icon name="chevron-right" size={20} color={Colors.white} />
             </TouchableOpacity>

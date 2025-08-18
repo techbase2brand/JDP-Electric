@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   signInButton: {
-    backgroundColor: 'rgb(2, 162, 231)',
+    backgroundColor: '#3B82F6',
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   forgotPasswordText: {
-    color: 'rgb(2, 162, 231)',
+    color: '#3B82F6',
     fontSize: 16,
   },
   demoSection: {
