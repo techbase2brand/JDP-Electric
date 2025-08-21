@@ -51,6 +51,8 @@ export default function CustomTabBar({state, descriptors, navigation, icons}) {
     'TermsConditions',
     'PrivacyPolicy',
     'JobTimesheet',
+    'JobActivityLogScreen',
+    'SupplierSelectionScreen'
   ];
 
   
@@ -67,6 +69,8 @@ export default function CustomTabBar({state, descriptors, navigation, icons}) {
     'CheckoutScreen',
     'CreateJobScreen',
     'JobTimesheet',
+    "JobActivityLogScreen",
+    'SupplierSelectionScreen'
   ];
 
   const profileHideOnScreens = [

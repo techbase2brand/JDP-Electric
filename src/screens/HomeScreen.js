@@ -26,6 +26,7 @@ import {
   INVOICE_ICON,
   JOB_ICON,
   JOBS_ICON,
+  ORDER_HISTORY,
   PERFORMANCE,
   REPORT_ICON,
   REPORTS_ICON,
@@ -57,13 +58,7 @@ const HomeScreen = ({navigation}) => {
       title: 'This Week',
       value: '24',
       subtitle: 'Total assigned',
-      icon: (
-        <MaterialIcons
-          name="assignment-turned-in"
-          size={24}
-          color={whiteColor}
-        />
-      ),
+      icon: <MaterialIcons name="assignment" size={24} color={whiteColor} />,
     },
   ];
 
@@ -78,9 +73,14 @@ const HomeScreen = ({navigation}) => {
       icon: REPORT_ICON,
       color: '#0D542B',
     },
+    // {
+    //   title: 'Generate Invoice',
+    //   icon: INVOICE_ICON,
+    //   color: '#6E11B0',
+    // },
     {
-      title: 'Generate Invoice',
-      icon: INVOICE_ICON,
+      title: 'Order History',
+      icon: ORDER_HISTORY,
       color: '#6E11B0',
     },
     // {
@@ -108,7 +108,7 @@ const HomeScreen = ({navigation}) => {
       status: 'In Progress',
       priority: 'HIGH',
       technician: 'David Thompson',
-      time: '08:00 (8h est.)',
+      time: '08:00 est.',
       location: '1234 Oak Street, Houston, TX 77001',
       statusColor: '#193CB8',
       priorityColor: '#9F0712',
@@ -122,7 +122,7 @@ const HomeScreen = ({navigation}) => {
       status: 'Scheduled',
       priority: 'MEDIUM',
       technician: 'TechCorp Office',
-      time: '14:00 (6h est.)',
+      time: '14:00 est.',
       location: '1500 Corporate Blvd, Houston, TX 77002',
       statusColor: '#016630',
       priorityColor: '#894B00',
@@ -148,8 +148,8 @@ const HomeScreen = ({navigation}) => {
       navigation.navigate('CreateJobScreen'); // replace 'CreateJob' with your actual screen name
     } else if (title == 'View Activity') {
       navigation.navigate('ActivitySummaryScreen');
-    } else if (title == 'Generate Invoice') {
-      navigation.navigate('InvoiceScreen');
+    } else if (title == 'Order History') {
+      navigation.navigate('OrderHistoryScreen');
     } else if (title == 'Check Warranty') {
       navigation.navigate('WarrantyChecker');
     }
@@ -270,7 +270,35 @@ const HomeScreen = ({navigation}) => {
         </View>
       </View>
       <Text style={styles.upcomingJobTitle}>{item.title}</Text>
-      <View style={styles.upcomingJobDetails}>
+      <Text style={styles.jobDescription}>
+        Upgrade main electrical panel from 100A to 200A service
+      </Text>
+      <View style={styles.jobDetails}>
+        <View style={{display: 'flex', flexDirection: 'row', gap: 10}}>
+          <View style={styles.jobDetailRow}>
+            <Text style={styles.jobDetailIcon}>
+              {' '}
+              <Feather name="user" size={18} color={tabColor} />{' '}
+            </Text>
+            <Text style={styles.jobDetailText}>TechCorp Office</Text>
+          </View>
+          <View style={styles.jobDetailRow}>
+            <Text style={styles.jobDetailIcon}>
+              <Ionicons name="timer-outline" size={18} color={tabColor} />
+            </Text>
+            <Text style={styles.jobDetailText}>14:00 est.</Text>
+          </View>
+        </View>
+        <View style={styles.jobDetailRow}>
+          <Text style={styles.jobDetailIcon}>
+            <Feather name="map-pin" size={18} color={tabColor} />
+          </Text>
+          <Text style={styles.jobDetailText}>
+            {'1500 Corporate Blvd, Houston, TX 77002'}
+          </Text>
+        </View>
+      </View>
+      {/* <View style={styles.upcomingJobDetails}>
         <View style={styles.jobDetailRow}>
           <Text style={styles.jobDetailIcon}>
             <Feather name="map-pin" size={18} color={tabColor} />
@@ -284,7 +312,7 @@ const HomeScreen = ({navigation}) => {
           </Text>
           <Text style={styles.jobDetailText}> {item.duration}</Text>
         </View>
-      </View>
+      </View> */}
     </View>
   );
 
@@ -311,7 +339,7 @@ const HomeScreen = ({navigation}) => {
                 <View style={styles.roleBadge}>
                   <Text style={styles.roleText}>Lead Labor</Text>
                 </View>
-                <Text style={styles.dateText}>• Tuesday, Jul 29</Text>
+                <Text style={[styles.dateText, {color:"#fff"}]}>• Tuesday, Jul 29</Text>
               </View>
             </View>
             <View style={styles.headerRight}>
@@ -360,9 +388,13 @@ const HomeScreen = ({navigation}) => {
           {/* Quick Actions */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <MaterialIcons name="electric-bolt" size={24} color={tabColor} />
+              <Ionicons name="flash-outline" size={24} color={tabColor} />
               <Text style={styles.sectionTitle}>Quick Actions</Text>
-              <View style={styles.accessBadge}>
+              <View
+                style={[
+                  styles.accessBadge,
+                  {marginLeft: widthPercentageToDP(35)},
+                ]}>
                 <Text style={styles.accessText}>Lead Access</Text>
               </View>
             </View>
@@ -381,7 +413,9 @@ const HomeScreen = ({navigation}) => {
               <View style={styles.countBadge}>
                 <Text style={styles.countText}>2</Text>
               </View>
-              <TouchableOpacity onPress={() => navigation.navigate('JobStack')}>
+              <TouchableOpacity
+                style={{marginLeft: widthPercentageToDP(35)}}
+                onPress={() => navigation.navigate('JobStack')}>
                 <Text style={styles.viewAllText}>View All →</Text>
               </TouchableOpacity>
             </View>
@@ -398,7 +432,7 @@ const HomeScreen = ({navigation}) => {
               <View style={[styles.countBadge, {backgroundColor: '#F0FDF4'}]}>
                 <Text style={[styles.countText, {color: '#008236'}]}>1</Text>
               </View>
-              <TouchableOpacity>
+              <TouchableOpacity style={{marginLeft: widthPercentageToDP(30)}}>
                 <Text style={styles.viewAllText}>View All →</Text>
               </TouchableOpacity>
             </View>
@@ -520,7 +554,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   dateText: {
-    color: 'rgba(255,255,255,0.8)',
+    color: '#000',
     fontSize: 11,
   },
   headerRight: {
@@ -645,7 +679,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: '#101828',
-    flex: 1,
+    // flex: 1,
   },
   accessBadge: {
     backgroundColor: '#EFF6FF',
@@ -668,6 +702,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#BEDBFF',
     marginRight: 8,
+    marginLeft: 10,
   },
   countText: {
     color: '#1447E6',
@@ -678,6 +713,7 @@ const styles = StyleSheet.create({
     color: '#155DFC',
     fontSize: 12,
     fontWeight: '500',
+    alignSelf: 'flex-end',
   },
   quickActionsGrid: {
     flexDirection: 'row',

@@ -819,9 +819,7 @@
 
 // export default CheckoutScreen;
 
-
-
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -834,7 +832,7 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
 // Embedded Colors
 const Colors = {
@@ -874,15 +872,14 @@ const BorderRadius = {
 const Shadows = {
   md: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
   },
 };
 
-
-const CheckoutScreen = ({ onBack, onNavigate, route }) => {
+const CheckoutScreen = ({onBack, onNavigate, route}) => {
   const navigation = useNavigation();
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [showOrderSummary, setShowOrderSummary] = useState(false);
@@ -894,37 +891,33 @@ const CheckoutScreen = ({ onBack, onNavigate, route }) => {
       name: 'Electrical Panel - 200A',
       sku: 'EP-200A-001',
       quantity: 2,
-      supplier: 'ElectricPro Supply'
+      supplier: 'ElectricPro Supply',
     },
     {
       id: '2',
       name: 'Circuit Breaker - 20A',
       sku: 'CB-20A-002',
       quantity: 8,
-      supplier: 'ElectricPro Supply'
+      supplier: 'ElectricPro Supply',
     },
     {
       id: '4',
       name: 'Conduit - 1/2 inch EMT',
       sku: 'EMT-12-004',
       quantity: 15,
-      supplier: 'Conduit Corp'
-    }
+      supplier: 'Conduit Corp',
+    },
   ];
-
-
-
-
 
   const handlePlaceOrder = () => {
     // Mock order placement
-    Alert.alert('Success', 'Order placed successfully!');
+    // Alert.alert('Success', 'Order placed successfully!');
     setTimeout(() => {
       handleNavigate('OrderConfirmationScreen');
     }, 1500);
   };
 
-  const handleNavigate = (screen) => {
+  const handleNavigate = screen => {
     if (onNavigate) {
       onNavigate(screen);
     } else {
@@ -945,48 +938,58 @@ const CheckoutScreen = ({ onBack, onNavigate, route }) => {
       visible={showOrderSummary}
       transparent={true}
       animationType="slide"
-      onRequestClose={() => setShowOrderSummary(false)}
-    >
+      onRequestClose={() => setShowOrderSummary(false)}>
       <View style={styles.modalOverlay}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalBackdrop}
           activeOpacity={1}
-          onPress={() => setShowOrderSummary(false)}
-        >
+          onPress={() => setShowOrderSummary(false)}>
           <View style={styles.orderSummaryModal}>
             <View style={styles.modalHandle} />
-            
+
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Order Summary</Text>
             </View>
 
-            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-              {cartItems.map((item) => (
+            <ScrollView
+              style={styles.modalContent}
+              showsVerticalScrollIndicator={false}>
+              {cartItems.map(item => (
                 <View key={item.id} style={styles.summaryItem}>
                   <View style={styles.summaryItemInfo}>
                     <Text style={styles.summaryItemName}>{item.name}</Text>
                     <Text style={styles.summaryItemSku}>SKU: {item.sku}</Text>
-                    <Text style={styles.summaryItemSupplier}>Supplier: {item.supplier}</Text>
+                    <Text style={styles.summaryItemSupplier}>
+                      Supplier: {item.supplier}
+                    </Text>
                   </View>
                   <View style={styles.summaryItemQuantity}>
-                    <Text style={styles.summaryQuantityText}>Qty: {item.quantity}</Text>
+                    <Text style={styles.summaryQuantityText}>
+                      Qty: {item.quantity}
+                    </Text>
                   </View>
                 </View>
               ))}
-              
-              <View style={styles.summaryTotals}>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Items ({cartItems.reduce((sum, item) => sum + item.quantity, 0)})</Text>
-                  <Text style={styles.summaryValue}>Quote on Request</Text>
-                </View>
+            </ScrollView>
+              <View style={{}}>
+                <View style={styles.summaryTotals}>
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>
+                      Items (
+                      {cartItems.reduce((sum, item) => sum + item.quantity, 0)})
+                    </Text>
+                    <Text style={styles.summaryValue}>Quote on Request</Text>
+                  </View>
 
-                <View style={styles.summaryDivider} />
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryTotalLabel}>Total</Text>
-                  <Text style={styles.summaryTotalValue}>Quote on Request</Text>
+                  <View style={styles.summaryDivider} />
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryTotalLabel}>Total</Text>
+                    <Text style={styles.summaryTotalValue}>
+                      Quote on Request
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </ScrollView>
           </View>
         </TouchableOpacity>
       </View>
@@ -996,19 +999,18 @@ const CheckoutScreen = ({ onBack, onNavigate, route }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Icon name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
-        
+
         <Text style={styles.headerTitle}>Checkout</Text>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.summaryButton}
-          onPress={() => setShowOrderSummary(true)}
-        >
+          onPress={() => setShowOrderSummary(true)}>
           <Text style={styles.summaryButtonText}>Summary</Text>
         </TouchableOpacity>
       </View>
@@ -1020,44 +1022,46 @@ const CheckoutScreen = ({ onBack, onNavigate, route }) => {
             <Icon name="inventory" size={20} color={Colors.primary} />
             <Text style={styles.cardTitle}>Order Summary</Text>
           </View>
-          
+
           <View style={styles.cardContent}>
-            {cartItems.slice(0, 2).map((item) => (
+            {cartItems.slice(0, 2).map(item => (
               <View key={item.id} style={styles.orderItem}>
                 <View style={styles.orderItemInfo}>
                   <Text style={styles.orderItemName}>{item.name}</Text>
-                  <Text style={styles.orderItemQuantity}>Qty: {item.quantity}</Text>
+                  <Text style={styles.orderItemQuantity}>
+                    Qty: {item.quantity}
+                  </Text>
                 </View>
               </View>
             ))}
-            
+
             {cartItems.length > 2 && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.viewMoreButton}
-                onPress={() => setShowOrderSummary(true)}
-              >
-                <Text style={styles.viewMoreText}>View {cartItems.length - 2} more items</Text>
+                onPress={() => setShowOrderSummary(true)}>
+                <Text style={styles.viewMoreText}>
+                  View {cartItems.length - 2} more items
+                </Text>
               </TouchableOpacity>
             )}
-            
+
             <View style={styles.orderSummaryDivider} />
             <View style={styles.orderSummaryTotal}>
-              <Text style={styles.totalItemsText}>Total Items: {cartItems.reduce((sum, item) => sum + item.quantity, 0)}</Text>
+              <Text style={styles.totalItemsText}>
+                Total Items:{' '}
+                {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+              </Text>
               <Text style={styles.totalValueText}>Quote on Request</Text>
             </View>
           </View>
         </View>
-
-
-
-
 
         {/* Special Instructions */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Special Instructions</Text>
           </View>
-          
+
           <View style={styles.cardContent}>
             <TextInput
               style={styles.textAreaInput}
@@ -1079,21 +1083,21 @@ const CheckoutScreen = ({ onBack, onNavigate, route }) => {
             <View style={styles.noticeText}>
               <Text style={styles.noticeTitle}>Quote Required</Text>
               <Text style={styles.noticeDescription}>
-                Product pricing will be provided via quote based on current market rates and availability.
+                Product pricing will be provided via quote based on current
+                market rates and availability.
               </Text>
             </View>
           </View>
         </View>
-        
-        <View style={{ height: 100 }} />
+
+        <View style={{height: 100}} />
       </ScrollView>
 
       {/* Bottom Action */}
       <View style={styles.bottomAction}>
         <TouchableOpacity
           style={styles.placeOrderButton}
-          onPress={handlePlaceOrder}
-        >
+          onPress={handlePlaceOrder}>
           <Text style={styles.placeOrderText}>Place Order</Text>
         </TouchableOpacity>
       </View>
@@ -1263,8 +1267,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
 
-
-
   // Notice Card
   noticeCard: {
     backgroundColor: Colors.warningLight,
@@ -1300,7 +1302,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     padding: Spacing.md,
-    paddingBottom:50
+    paddingBottom: 50,
   },
   placeOrderButton: {
     backgroundColor: Colors.primary,
@@ -1330,7 +1332,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: BorderRadius.xl,
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xl,
-    maxHeight: '80%',
+    height: '80%',
   },
   modalHandle: {
     width: 40,

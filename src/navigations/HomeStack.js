@@ -24,6 +24,9 @@ import OrderHistoryScreen from '../screens/OrderHistoryScreen';
 import JobsScreen from '../screens/JobScreen';
 import ActivitySummaryScreen from '../screens/ActivitySummaryScreen';
 import JobTimesheet from '../screens/JobTimeSheet';
+import SupplierSelectionScreen from '../screens/SupplierSelectionScreen';
+import JobActivityLogScreen from '../screens/JobActivityLogScreen';
+import TimeSheetStack from './TimeSheetStack';
 
 const Stack = createStackNavigator();
 
@@ -42,8 +45,12 @@ export default function HomeStack() {
       <Stack.Screen name="MapScreen" component={MapScreen} />
       <Stack.Screen name="BluesheetSubmission" component={BluesheetSubmission} />
       <Stack.Screen name="OrderProducts" component={OrderProducts} />
+      <Stack.Screen name="JobActivityLogScreen" component={JobActivityLogScreen} />
+      <Stack.Screen name="SupplierSelectionScreen" component={SupplierSelectionScreen} />
       <Stack.Screen name="OrderConfirmationScreen" component={OrderConfirmationScreen} />
       <Stack.Screen name="OrderHistoryScreen" component={OrderHistoryScreen} />
+        <Stack.Screen name="TimeSheetStack" component={TimeSheetStack} />
+
       <Stack.Screen name="CartScreen" component={CartScreen} />
       <Stack.Screen name="TimerScreen" component={TimerScreen} />
       <Stack.Screen name="InvoiceScreen" component={InvoiceScreen} />

@@ -1216,12 +1216,409 @@ import {
   SafeAreaView,
   Modal,
   Switch,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {tabColor} from '../constants/Color';
 import Feather from 'react-native-vector-icons/Feather';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
+const LabourModal = ({
+  visible,
+  setShowAddLabour,
+  editingLabour,
+  setEditingLabour,
+  tempLabourData,
+  setTempLabourData,
+  handleSaveLabour,
+}) => (
+  <Modal
+    visible={visible}
+    animationType="slide"
+    transparent
+    onRequestClose={() => {
+      setShowAddLabour(false);
+      setEditingLabour(null);
+      setTempLabourData({});
+    }}>
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        {/* ✅ KeyboardAvoidingView Added */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
+          <ScrollView
+            contentContainerStyle={styles.modalBody}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editingLabour ? 'Edit Labour Entry' : 'Add Labour Entry'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowAddLabour(false);
+                  setEditingLabour(null);
+                  setTempLabourData({});
+                }}>
+                <Text style={styles.modalCloseButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Form Fields */}
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Employee Name</Text>
+              <TextInput
+                style={styles.formInput}
+                value={tempLabourData.employeeName || ''}
+                onChangeText={text =>
+                  setTempLabourData(prev => ({...prev, employeeName: text}))
+                }
+                placeholder="Enter employee name"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Employee ID</Text>
+              <TextInput
+                style={styles.formInput}
+                value={tempLabourData.employeeId || ''}
+                onChangeText={text =>
+                  setTempLabourData(prev => ({...prev, employeeId: text}))
+                }
+                placeholder="Enter employee ID"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Regular Hours</Text>
+              <TextInput
+                style={styles.formInput}
+                value={tempLabourData.regularHours?.toString() || ''}
+                onChangeText={text =>
+                  setTempLabourData(prev => ({
+                    ...prev,
+                    regularHours: text === '' ? '' : parseFloat(text) || 0,
+                  }))
+                }
+                placeholder="0"
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Overtime Hours</Text>
+              <TextInput
+                style={styles.formInput}
+                value={tempLabourData.overtimeHours?.toString() || ''}
+                onChangeText={text =>
+                  setTempLabourData(prev => ({
+                    ...prev,
+                    overtimeHours: text === '' ? '' : parseFloat(text) || 0,
+                  }))
+                }
+                placeholder="0"
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Notes</Text>
+              <TextInput
+                style={[styles.formInput, styles.textArea]}
+                value={tempLabourData.notes || ''}
+                onChangeText={text =>
+                  setTempLabourData(prev => ({...prev, notes: text}))
+                }
+                placeholder="Enter notes"
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+          </ScrollView>
+
+          {/* Footer Buttons */}
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonSecondary]}
+              onPress={() => {
+                setShowAddLabour(false);
+                setEditingLabour(null);
+                setTempLabourData({});
+              }}>
+              <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonPrimary]}
+              onPress={handleSaveLabour}>
+              <Text style={styles.modalButtonTextPrimary}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </View>
+    </View>
+  </Modal>
+);
+
+const MaterialModal = ({
+  visible,
+  onClose,
+  tempMaterialData,
+  setTempMaterialData,
+  editingMaterial,
+  setEditingMaterial,
+  handleSaveMaterial,
+}) => (
+  <Modal visible={visible} animationType="slide" transparent>
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>
+            {editingMaterial ? 'Edit Material Entry' : 'Add Material Entry'}
+          </Text>
+          <TouchableOpacity onPress={onClose}>
+            <Text style={styles.modalCloseButton}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.modalBody}>
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Material Name</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempMaterialData.name || ''}
+              onChangeText={text =>
+                setTempMaterialData(prev => ({...prev, name: text}))
+              }
+              placeholder="Enter material name"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Unit</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempMaterialData.unit || ''}
+              onChangeText={text =>
+                setTempMaterialData(prev => ({...prev, unit: text}))
+              }
+              placeholder="pieces, feet, etc."
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Total Ordered</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempMaterialData.totalOrdered?.toString() || ''}
+              onChangeText={text =>
+                setTempMaterialData(prev => ({
+                  ...prev,
+                  totalOrdered: parseFloat(text) || 0,
+                }))
+              }
+              placeholder="0"
+              keyboardType="numeric"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Material Used</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempMaterialData.amountUsed?.toString() || ''}
+              onChangeText={text =>
+                setTempMaterialData(prev => ({
+                  ...prev,
+                  amountUsed: parseFloat(text) || 0,
+                }))
+              }
+              placeholder="0"
+              keyboardType="numeric"
+            />
+          </View>
+
+          {/* <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Unit Cost ($)</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempMaterialData.unitCost?.toString() || ''}
+              onChangeText={text =>
+                setTempMaterialData(prev => ({
+                  ...prev,
+                  unitCost: parseFloat(text) || 0,
+                }))
+              }
+              placeholder="0.00"
+              keyboardType="numeric"
+            />
+          </View> */}
+
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Supplier Order ID</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempMaterialData.supplierOrderId || ''}
+              onChangeText={text =>
+                setTempMaterialData(prev => ({
+                  ...prev,
+                  supplierOrderId: text,
+                }))
+              }
+              placeholder="Enter order ID"
+            />
+          </View>
+
+          <View style={styles.switchGroup}>
+            <Text style={styles.formLabel}>Return to Warehouse</Text>
+            <Switch
+              value={tempMaterialData.returnToWarehouse || false}
+              onValueChange={value =>
+                setTempMaterialData(prev => ({
+                  ...prev,
+                  returnToWarehouse: value,
+                }))
+              }
+              trackColor={{false: '#e5e7eb', true: '#3B82F6'}}
+              thumbColor={
+                tempMaterialData.returnToWarehouse ? '#ffffff' : '#f4f3f4'
+              }
+            />
+          </View>
+        </ScrollView>
+
+        <View style={styles.modalFooter}>
+          <TouchableOpacity
+            style={[styles.modalButton, styles.modalButtonSecondary]}
+            onPress={() => {
+              setShowAddMaterial(false);
+              setEditingMaterial(null);
+              setTempMaterialData({});
+            }}>
+            <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modalButton, styles.modalButtonPrimary]}
+            onPress={handleSaveMaterial}>
+            <Text style={styles.modalButtonTextPrimary}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+);
+
+const ChargeModal = ({
+  visible,
+  onClose,
+  tempChargeData,
+  setTempChargeData,
+  editingCharge,
+  setEditingCharge,
+  handleSaveCharge,
+}) => (
+  <Modal visible={visible} animationType="slide" transparent>
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>
+            {editingCharge ? 'Edit Additional Charge' : 'Add Additional Charge'}
+          </Text>
+          <TouchableOpacity onPress={onClose}>
+            <Text style={styles.modalCloseButton}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.modalBody}>
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Description</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempChargeData.description || ''}
+              onChangeText={text =>
+                setTempChargeData(prev => ({...prev, description: text}))
+              }
+              placeholder="Enter charge description"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Category</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempChargeData.category || ''}
+              onChangeText={text =>
+                setTempChargeData(prev => ({...prev, category: text}))
+              }
+              placeholder="Equipment, Travel, Permits, etc."
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Amount ($)</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempChargeData.amount?.toString() || ''}
+              onChangeText={text =>
+                setTempChargeData(prev => ({
+                  ...prev,
+                  amount: parseFloat(text) || 0,
+                }))
+              }
+              placeholder="0.00"
+              keyboardType="numeric"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Receipt ID</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempChargeData.receipt || ''}
+              onChangeText={text =>
+                setTempChargeData(prev => ({...prev, receipt: text}))
+              }
+              placeholder="Enter receipt ID"
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Notes</Text>
+            <TextInput
+              style={[styles.formInput, styles.textArea]}
+              value={tempChargeData.notes || ''}
+              onChangeText={text =>
+                setTempChargeData(prev => ({...prev, notes: text}))
+              }
+              placeholder="Enter notes"
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+        </ScrollView>
+
+        <View style={styles.modalFooter}>
+          <TouchableOpacity
+            style={[styles.modalButton, styles.modalButtonSecondary]}
+            onPress={() => {
+              setShowAddCharge(false);
+              setEditingCharge(null);
+              setTempChargeData({});
+            }}>
+            <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modalButton, styles.modalButtonPrimary]}
+            onPress={handleSaveCharge}>
+            <Text style={styles.modalButtonTextPrimary}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+);
 const TimesheetScreen = ({navigation, route, user, job}) => {
   const {timesheet} = route?.params || {};
 
@@ -1357,7 +1754,6 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
       ],
     };
   });
-
   // Temporary form state for editing
   const [tempLabourData, setTempLabourData] = useState({});
   const [tempMaterialData, setTempMaterialData] = useState({});
@@ -1697,370 +2093,6 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
   };
 
   // Modal components
-  const LabourModal = () => (
-    <Modal visible={showAddLabour} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingLabour ? 'Edit Labour Entry' : 'Add Labour Entry'}
-            </Text>
-            <TouchableOpacity
-              onPress={() => {
-                setShowAddLabour(false);
-                setEditingLabour(null);
-                setTempLabourData({});
-              }}>
-              <Text style={styles.modalCloseButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalBody}>
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Employee Name</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempLabourData.employeeName || ''}
-                onChangeText={text =>
-                  setTempLabourData(prev => ({...prev, employeeName: text}))
-                }
-                placeholder="Enter employee name"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Employee ID</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempLabourData.employeeId || ''}
-                onChangeText={text =>
-                  setTempLabourData(prev => ({...prev, employeeId: text}))
-                }
-                placeholder="Enter employee ID"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Regular Hours</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempLabourData.regularHours?.toString() || ''}
-                onChangeText={text =>
-                  setTempLabourData(prev => ({
-                    ...prev,
-                    regularHours: parseFloat(text) || 0,
-                  }))
-                }
-                placeholder="0"
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Overtime Hours</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempLabourData.overtimeHours?.toString() || ''}
-                onChangeText={text =>
-                  setTempLabourData(prev => ({
-                    ...prev,
-                    overtimeHours: parseFloat(text) || 0,
-                  }))
-                }
-                placeholder="0"
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Notes</Text>
-              <TextInput
-                style={[styles.formInput, styles.textArea]}
-                value={tempLabourData.notes || ''}
-                onChangeText={text =>
-                  setTempLabourData(prev => ({...prev, notes: text}))
-                }
-                placeholder="Enter notes"
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-          </ScrollView>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonSecondary]}
-              onPress={() => {
-                setShowAddLabour(false);
-                setEditingLabour(null);
-                setTempLabourData({});
-              }}>
-              <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonPrimary]}
-              onPress={handleSaveLabour}>
-              <Text style={styles.modalButtonTextPrimary}>Save</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const MaterialModal = () => (
-    <Modal visible={showAddMaterial} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingMaterial ? 'Edit Material Entry' : 'Add Material Entry'}
-            </Text>
-            <TouchableOpacity
-              onPress={() => {
-                setShowAddMaterial(false);
-                setEditingMaterial(null);
-                setTempMaterialData({});
-              }}>
-              <Text style={styles.modalCloseButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalBody}>
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Material Name</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempMaterialData.name || ''}
-                onChangeText={text =>
-                  setTempMaterialData(prev => ({...prev, name: text}))
-                }
-                placeholder="Enter material name"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Unit</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempMaterialData.unit || ''}
-                onChangeText={text =>
-                  setTempMaterialData(prev => ({...prev, unit: text}))
-                }
-                placeholder="pieces, feet, etc."
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Total Ordered</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempMaterialData.totalOrdered?.toString() || ''}
-                onChangeText={text =>
-                  setTempMaterialData(prev => ({
-                    ...prev,
-                    totalOrdered: parseFloat(text) || 0,
-                  }))
-                }
-                placeholder="0"
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Amount Used</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempMaterialData.amountUsed?.toString() || ''}
-                onChangeText={text =>
-                  setTempMaterialData(prev => ({
-                    ...prev,
-                    amountUsed: parseFloat(text) || 0,
-                  }))
-                }
-                placeholder="0"
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Unit Cost ($)</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempMaterialData.unitCost?.toString() || ''}
-                onChangeText={text =>
-                  setTempMaterialData(prev => ({
-                    ...prev,
-                    unitCost: parseFloat(text) || 0,
-                  }))
-                }
-                placeholder="0.00"
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Supplier Order ID</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempMaterialData.supplierOrderId || ''}
-                onChangeText={text =>
-                  setTempMaterialData(prev => ({
-                    ...prev,
-                    supplierOrderId: text,
-                  }))
-                }
-                placeholder="Enter order ID"
-              />
-            </View>
-
-            <View style={styles.switchGroup}>
-              <Text style={styles.formLabel}>Return to Warehouse</Text>
-              <Switch
-                value={tempMaterialData.returnToWarehouse || false}
-                onValueChange={value =>
-                  setTempMaterialData(prev => ({
-                    ...prev,
-                    returnToWarehouse: value,
-                  }))
-                }
-                trackColor={{false: '#e5e7eb', true: '#3B82F6'}}
-                thumbColor={
-                  tempMaterialData.returnToWarehouse ? '#ffffff' : '#f4f3f4'
-                }
-              />
-            </View>
-          </ScrollView>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonSecondary]}
-              onPress={() => {
-                setShowAddMaterial(false);
-                setEditingMaterial(null);
-                setTempMaterialData({});
-              }}>
-              <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonPrimary]}
-              onPress={handleSaveMaterial}>
-              <Text style={styles.modalButtonTextPrimary}>Save</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const ChargeModal = () => (
-    <Modal visible={showAddCharge} animationType="slide" transparent>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingCharge
-                ? 'Edit Additional Charge'
-                : 'Add Additional Charge'}
-            </Text>
-            <TouchableOpacity
-              onPress={() => {
-                setShowAddCharge(false);
-                setEditingCharge(null);
-                setTempChargeData({});
-              }}>
-              <Text style={styles.modalCloseButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalBody}>
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Description</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempChargeData.description || ''}
-                onChangeText={text =>
-                  setTempChargeData(prev => ({...prev, description: text}))
-                }
-                placeholder="Enter charge description"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Category</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempChargeData.category || ''}
-                onChangeText={text =>
-                  setTempChargeData(prev => ({...prev, category: text}))
-                }
-                placeholder="Equipment, Travel, Permits, etc."
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Amount ($)</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempChargeData.amount?.toString() || ''}
-                onChangeText={text =>
-                  setTempChargeData(prev => ({
-                    ...prev,
-                    amount: parseFloat(text) || 0,
-                  }))
-                }
-                placeholder="0.00"
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Receipt ID</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempChargeData.receipt || ''}
-                onChangeText={text =>
-                  setTempChargeData(prev => ({...prev, receipt: text}))
-                }
-                placeholder="Enter receipt ID"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Notes</Text>
-              <TextInput
-                style={[styles.formInput, styles.textArea]}
-                value={tempChargeData.notes || ''}
-                onChangeText={text =>
-                  setTempChargeData(prev => ({...prev, notes: text}))
-                }
-                placeholder="Enter notes"
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-          </ScrollView>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonSecondary]}
-              onPress={() => {
-                setShowAddCharge(false);
-                setEditingCharge(null);
-                setTempChargeData({});
-              }}>
-              <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonPrimary]}
-              onPress={handleSaveCharge}>
-              <Text style={styles.modalButtonTextPrimary}>Save</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -2305,14 +2337,14 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
               </View>
 
               <View style={styles.materialFooter}>
-                <View style={styles.materialCost}>
+                {/* <View style={styles.materialCost}>
                   <Text style={styles.entryLabel}>Cost:</Text>
                   <Text style={styles.entryValue}>
                     ${material.totalCost.toFixed(2)}
                   </Text>
-                </View>
+                </View> */}
 
-                {material.amountRemaining > 0 && (
+                {/* {material.amountRemaining > 0 && (
                   <View style={styles.returnStatus}>
                     <Text
                       style={[
@@ -2326,15 +2358,16 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
                         : '🚛 Keep on Site'}
                     </Text>
                   </View>
-                )}
+                )} */}
               </View>
             </View>
           ))}
 
           <View style={styles.sectionTotal}>
             <Text style={styles.sectionTotalLabel}>Total Material Cost:</Text>
-            <Text style={styles.sectionTotalValue}>
-              ${totals.materials.toFixed(2)}
+            <Text style={[styles.sectionTotalValue, {fontSize: 20}]}>
+              Qutation
+              {/* ${totals.materials.toFixed(2)} */}
             </Text>
           </View>
         </View>
@@ -2482,7 +2515,7 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
                   onPress={handleSubmitForApproval}>
                   <Text style={styles.submitButtonText}>
                     {timesheetData.status === 'rejected'
-                      ? '🔄 Resubmit for Approval'
+                      ? 'Resubmit for Approval'
                       : '✓ Submit for Approval'}
                   </Text>
                 </TouchableOpacity>
@@ -2497,8 +2530,16 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
                 <Text style={styles.submittedStatusDetails}>
                   Submitted on{' '}
                   {timesheetData.submittedAt
-                    ? new Date(timesheetData.submittedAt).toLocaleDateString()
-                    : 'Unknown'}
+                    ? new Date(timesheetData.submittedAt).toLocaleDateString(
+                        'en-US',
+                        {
+                          month: 'numeric', // "August"
+                          day: 'numeric',
+                          year: 'numeric',
+                        },
+                      )
+                    : // new Date(timesheetData.submittedAt).toLocaleDateString()
+                      'Unknown'}
                 </Text>
                 {user?.role === 'Lead Labor' && (
                   <View style={styles.leadActions}>
@@ -2550,9 +2591,34 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
       </ScrollView>
 
       {/* Modals */}
-      <LabourModal />
-      <MaterialModal />
-      <ChargeModal />
+      <LabourModal
+        visible={showAddLabour}
+        setShowAddLabour={setShowAddLabour}
+        editingLabour={editingLabour}
+        setEditingLabour={setEditingLabour}
+        tempLabourData={tempLabourData}
+        setTempLabourData={setTempLabourData}
+        handleSaveLabour={handleSaveLabour}
+      />
+      <MaterialModal
+        visible={showAddMaterial}
+        onClose={() => setShowAddMaterial(false)}
+        tempMaterialData={tempMaterialData}
+        setTempMaterialData={setTempMaterialData}
+        editingMaterial={editingMaterial}
+        setEditingMaterial={setEditingMaterial}
+        handleSaveMaterial={handleSaveMaterial}
+      />
+
+      <ChargeModal
+        visible={showAddCharge}
+        onClose={() => setShowAddCharge(false)}
+        tempChargeData={tempChargeData}
+        setTempChargeData={setTempChargeData}
+        editingCharge={editingCharge}
+        setEditingCharge={setEditingCharge}
+        handleSaveCharge={handleSaveCharge}
+      />
     </SafeAreaView>
   );
 };
@@ -2561,6 +2627,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
+    marginBottom: 70,
   },
   header: {
     backgroundColor: '#3B82F6',
@@ -3043,7 +3110,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   bottomSpacing: {
-    height: 24,
+    height: 28,
   },
   // Modal styles
   modalOverlay: {

@@ -476,7 +476,7 @@ const Colors = {
   warning: '#F59E0B',
   warningLight: '#FEF3C7',
   error: '#EF4444',
-  errorLight: '#FEE2E2',
+  errorLight: '#f4dcdcff',
   purple: '#8B5CF6',
   purpleLight: '#F3E8FF',
   indigo: '#6366F1',
@@ -558,7 +558,7 @@ const JobDetailScreen = ({
     jobInfo: {
       description: 'Upgrade main electrical panel from 100A to 200A service',
       estimatedTime: '8 hours',
-      scheduledDate: '11/08/2025',
+      scheduledDate: '8/21/2025',
       assignedTo: 'Sarah Johnson',
     },
     customer: {
@@ -737,7 +737,7 @@ const JobDetailScreen = ({
         return {
           color: Colors.backgroundLight,
           textColor: Colors.textLight,
-          label: 'Normal',
+          label: 'High Priority',
         };
     }
   };
@@ -827,7 +827,7 @@ const JobDetailScreen = ({
     // if (onNavigate) {
     //   navigation.navigate(screen, jobData);
     // } else {
-      navigation.navigate(screen, jobData ? {job: jobData} : undefined);
+    navigation.navigate(screen, jobData ? {job: jobData} : undefined);
     // }
   };
 
@@ -844,7 +844,7 @@ const JobDetailScreen = ({
       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
 
       {/* Header */}
-      
+
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Icon name="arrow-back" size={24} color={Colors.white} />
@@ -858,13 +858,13 @@ const JobDetailScreen = ({
         <TouchableOpacity
           style={styles.editButton}
           onPress={() => handleNavigate('JobStack')}>
-          <Icon name="edit" size={20} color={Colors.white} />
+          {/* <Icon name="edit" size={20} color={Colors.white} /> */}
         </TouchableOpacity>
       </View>
 
       {/* Status and Priority Badges */}
       <View style={styles.badgesContainer}>
-        <View style={[styles.badge, {backgroundColor: statusConfig.color}]}>
+        {/* <View style={[styles.badge, {backgroundColor: statusConfig.color}]}>
           <Icon
             name={statusConfig.icon}
             size={16}
@@ -873,10 +873,10 @@ const JobDetailScreen = ({
           <Text style={[styles.badgeText, {color: statusConfig.textColor}]}>
             {statusConfig.label}
           </Text>
-        </View>
-        <View style={[styles.badge, {backgroundColor: priorityConfig.color}]}>
-          <Icon name="star" size={16} color={priorityConfig.textColor} />
-          <Text style={[styles.badgeText, {color: priorityConfig.textColor}]}>
+        </View> */}
+        <View style={[styles.badge, {backgroundColor: Colors.errorLight}]}>
+          <Icon name="star" size={16} color={ Colors.error} />
+          <Text style={[styles.badgeText, {color: Colors.error}]}>
             {priorityConfig.label}
           </Text>
         </View>
@@ -986,7 +986,7 @@ const JobDetailScreen = ({
                     color={Colors.textSecondary}
                   />
                   <Text style={styles.infoText}>
-                    {job.jobInfo.estimatedTime || 'N/A'} hours
+                    {job.jobInfo.estimatedTime || 'N/A'}
                   </Text>
                 </View>
               </View>
@@ -1121,7 +1121,7 @@ const JobDetailScreen = ({
             ))}
             <TouchableOpacity
               style={styles.outlineButton}
-              onPress={() => handleNavigate('OrderProducts', job)}>
+              onPress={() => handleNavigate('SupplierSelectionScreen', job)}>
               <Icon name="shopping-cart" size={20} color={Colors.primary} />
               <Text style={styles.outlineButtonText}>Order Materials</Text>
             </TouchableOpacity>
@@ -1162,14 +1162,14 @@ const JobDetailScreen = ({
                     : handleNavigate('JobTimesheet')
                 }>
                 <Icon name="schedule" size={20} color={Colors.text} />
-                <Text style={styles.gridActionText}>Timesheet</Text>
+                <Text style={styles.gridActionText}>Bluesheet</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.gridActionButton}
-                onPress={() => navigation.navigate('ReportsScreen')}>
+                onPress={() => navigation.navigate('JobActivityLogScreen')}>
                 <Icon name="bar-chart" size={20} color={Colors.text} />
-                <Text style={styles.gridActionText}>Reports</Text>
+                <Text style={styles.gridActionText}>Job Activity</Text>
               </TouchableOpacity>
               {/*               
               {hasLeadAccess(currentUser.role) && (
@@ -1325,6 +1325,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: Spacing.md,
+    marginTop:20
   },
 
   // Cards
@@ -1344,7 +1345,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.md,
   },
   cardTitle: {
     fontSize: 16,
@@ -1355,7 +1356,6 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     paddingTop: 0,
   },
-
   // Buttons
   primaryButton: {
     backgroundColor: Colors.primary,

@@ -23,6 +23,8 @@ export const PROFILE_ICON_FOCUSED = require('./tab_assests/bold/Profile.png');
 
 
 export const CREATE_JOB = require('./tab_assests/home_icon/create_job.png');
+export const ORDER_HISTORY = require('./tab_assests/home_icon/orderhistory.png');
+
 export const INVOICE_ICON = require('./tab_assests/home_icon/invoice.png');
 export const JOB_ICON = require('./tab_assests/home_icon/job.png');
 export const REPORT_ICON = require('./tab_assests/home_icon/report.png');

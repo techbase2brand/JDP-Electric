@@ -114,7 +114,7 @@ const OrderHistoryScreen = ({
       totalAmount: 156.48,
       orderDate: new Date('2024-01-15'),
       orderedBy: user.name,
-      poNumber: 'PO-648291',
+      poNumber: '123 Main Street, Houston, TX 77001',
       customerName: 'JDP Electrics',
       customerAddress: '123 Main Street, Houston, TX 77001',
       customerPhone: '(555) 123-4567',
@@ -131,12 +131,12 @@ const OrderHistoryScreen = ({
       totalAmount: 89.75,
       orderDate: new Date('2024-01-20'),
       orderedBy: user.name,
-      poNumber: 'PO-648292',
+      poNumber: '456 Oak Avenue, Houston, TX 77002',
       customerName: 'JDP Electrics',
       customerAddress: '456 Oak Avenue, Houston, TX 77002',
       customerPhone: '(555) 123-4568',
       items: [
-        { name: 'Circuit Breaker', sku: 'CB-20A', price: 28.50, cartQuantity: 3 },
+        { name: 'Circuit Breaker', sku: 'CB-20A', price: "Quote Required", cartQuantity: 3 },
         { name: 'Wire Nuts', sku: 'WN-12', price: 8.75, cartQuantity: 10 }
       ]
     },
@@ -148,7 +148,7 @@ const OrderHistoryScreen = ({
       totalAmount: 234.99,
       orderDate: new Date('2024-01-25'),
       orderedBy: user.name,
-      poNumber: 'PO-648293',
+      poNumber: '789 Pine Street, Houston, TX 77003',
       customerName: 'JDP Electrics',
       customerAddress: '789 Pine Street, Houston, TX 77003',
       customerPhone: '(555) 123-4569',
@@ -348,8 +348,8 @@ const OrderHistoryScreen = ({
               <Text style={styles.customerDetailValue}>{order.customerPhone}</Text>
             </View>
             <View style={styles.customerDetailColumn}>
-              <Text style={styles.customerDetailLabel}>Address:</Text>
-              <Text style={styles.customerDetailValueMultiline}>{order.customerAddress}</Text>
+              {/* <Text style={styles.customerDetailLabel}>Address:</Text> */}
+              {/* <Text style={styles.customerDetailValueMultiline}>{order.customerAddress}</Text> */}
             </View>
           </View>
         </View>
@@ -421,7 +421,7 @@ const OrderHistoryScreen = ({
           </View>
           
           <TouchableOpacity style={styles.downloadButton}>
-            <Icon name="download" size={20} color={Colors.white} />
+            {/* <Icon name="download" size={20} color={Colors.white} /> */}
           </TouchableOpacity>
         </View>
 
@@ -448,8 +448,8 @@ const OrderHistoryScreen = ({
             <Text style={styles.statLabel}>Pending</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>${totalOrderValue.toFixed(0)}</Text>
-            <Text style={styles.statLabel}>Value</Text>
+            <Text style={styles.statValue}>{totalOrderValue.toFixed(0)}</Text>
+            <Text style={styles.statLabel}>Received</Text>
           </View>
         </View>
       </View>
@@ -530,8 +530,8 @@ const OrderHistoryScreen = ({
                       <Text style={styles.customerInfoValue}>{selectedOrder.customerPhone}</Text>
                     </View>
                     <View style={styles.customerInfoItem}>
-                      <Text style={styles.customerInfoLabel}>Address:</Text>
-                      <Text style={styles.customerInfoValue}>{selectedOrder.customerAddress}</Text>
+                      {/* <Text style={styles.customerInfoLabel}>Address:</Text> */}
+                      {/* <Text style={styles.customerInfoValue}>{selectedOrder.customerAddress}</Text> */}
                     </View>
                   </View>
                 </View>
@@ -548,10 +548,10 @@ const OrderHistoryScreen = ({
                       </View>
                       <View style={styles.orderItemDetailPrice}>
                         <Text style={styles.orderItemDetailPriceText}>
-                          ${(item.price * item.cartQuantity).toFixed(2)}
+                          {/* ${(item.price * item.cartQuantity).toFixed(2)} */}
                         </Text>
                         <Text style={styles.orderItemDetailPriceUnit}>
-                          ${item.price.toFixed(2)} each
+                          {/* ${item.price.toFixed(2)} each */}
                         </Text>
                       </View>
                     </View>
@@ -573,16 +573,16 @@ const OrderHistoryScreen = ({
                       <Text style={styles.orderSummaryLabel}>Job ID:</Text>
                       <Text style={styles.orderSummaryValue}>{selectedOrder.jobId}</Text>
                     </View>
-                    <View style={styles.orderSummaryDivider} />
+                    {/* <View style={styles.orderSummaryDivider} />
                     <View style={styles.orderSummaryTotal}>
                       <Text style={styles.orderSummaryTotalLabel}>Total Amount:</Text>
                       <Text style={styles.orderSummaryTotalValue}>${selectedOrder.totalAmount.toFixed(2)}</Text>
-                    </View>
+                    </View> */}
                   </View>
                 </View>
 
                 {/* Lead Actions */}
-                {hasLeadAccess && (
+                {/* {hasLeadAccess && (
                   <View style={styles.modalSection}>
                     <View style={styles.leadActionsContainer}>
                       <Text style={styles.leadActionsTitle}>Lead Actions</Text>
@@ -600,7 +600,7 @@ const OrderHistoryScreen = ({
                       </TouchableOpacity>
                     </View>
                   </View>
-                )}
+                )} */}
               </ScrollView>
             </View>
           </View>
@@ -1001,7 +1001,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
-    maxHeight: '90%',
+    height: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1105,7 +1105,7 @@ const styles = StyleSheet.create({
 
   // Order Summary Grid
   orderSummaryGrid: {
-    backgroundColor: Colors.backgroundLight,
+ backgroundColor: Colors.warningLight,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
   },

@@ -239,8 +239,7 @@
 //   },
 // });
 
-
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -255,30 +254,28 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  MAIN_LOGO_IMAGE,
-} from '../assests/images';
+import {MAIN_LOGO_IMAGE} from '../assests/images';
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from '../utils';
 import {useDispatch} from 'react-redux';
 import {setUser} from '../redux/userSlice';
 const demoAccounts = [
-    {
-      title: 'Lead Labor',
-      email: 'lead@jdpelectric.com',
-      password: 'password123',
-      role: 'Lead Labor',
-      name: 'Sarah Johnson',
-    },
-    {
-      title: 'Labor',
-      email: 'tech@jdpelectric.com',
-      password: 'password123',
-      role: 'Labor',
-      name: 'Mike Wilson',
-    },
-  ];
-const LoginScreen = ({ navigation }) => {
-    const dispatch = useDispatch();
+  {
+    title: 'Lead Labor',
+    email: 'lead@jdpelectric.com',
+    password: 'password123',
+    role: 'Lead Labor',
+    name: 'Sarah Johnson',
+  },
+  {
+    title: 'Labor',
+    email: 'tech@jdpelectric.com',
+    password: 'password123',
+    role: 'Labor',
+    name: 'Mike Wilson',
+  },
+];
+const LoginScreen = ({navigation}) => {
+  const dispatch = useDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -287,8 +284,7 @@ const LoginScreen = ({ navigation }) => {
   const [passwordError, setPasswordError] = useState('');
   const [loginError, setLoginError] = useState('');
 
-
-   const validateEmail = email => {
+  const validateEmail = email => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
@@ -298,10 +294,10 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleLogin = async () => {
-      console.log('Login success:',);
+    console.log('Login success:');
 
     let isValid = true;
- console.log('Login success888:',);
+    console.log('Login success888:');
 
     // Reset previous errors
     setEmailError('');
@@ -328,7 +324,7 @@ const LoginScreen = ({ navigation }) => {
       // Alert.alert("Login Successful", `Welcome back, ${email}`);
     }
   };
-  const fillDemoAccount = (account) => {
+  const fillDemoAccount = account => {
     setEmail(account.email);
     setPassword(account.password);
   };
@@ -340,13 +336,13 @@ const LoginScreen = ({ navigation }) => {
         {/* Logo Section */}
         <View style={styles.logoSection}>
           <Image
-          source={MAIN_LOGO_IMAGE}
-          style={{
-            width: '100%',
-            height: Platform.OS === 'android' ? hp(5.5) : hp(5.5),
-            resizeMode: 'contain',
-          }}
-        />
+            source={MAIN_LOGO_IMAGE}
+            style={{
+              width: '100%',
+              height: Platform.OS === 'android' ? hp(5.5) : hp(5.5),
+              resizeMode: 'contain',
+            }}
+          />
           {/* <Text style={styles.companyName}>JDP Electrics</Text> */}
           <Text style={styles.subtitle}>Mobile Workforce Management</Text>
         </View>
@@ -356,7 +352,12 @@ const LoginScreen = ({ navigation }) => {
           {/* Email Input */}
           <Text style={styles.label}>Email</Text>
           <View style={styles.inputContainer}>
-            <Icon name="email" size={20} color="#9CA3AF" style={styles.inputIcon} />
+            <Icon
+              name="email"
+              size={20}
+              color="#9CA3AF"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="your.email@jdpelectric.com"
@@ -366,12 +367,19 @@ const LoginScreen = ({ navigation }) => {
               autoCapitalize="none"
             />
           </View>
-          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
+          {emailError ? (
+            <Text style={styles.errorText}>{emailError}</Text>
+          ) : null}
 
           {/* Password Input */}
           <Text style={styles.label}>Password</Text>
           <View style={styles.inputContainer}>
-            <Icon name="lock" size={20} color="#9CA3AF" style={styles.inputIcon} />
+            <Icon
+              name="lock"
+              size={20}
+              color="#9CA3AF"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Enter your password"
@@ -381,8 +389,7 @@ const LoginScreen = ({ navigation }) => {
             />
             <TouchableOpacity
               onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeIcon}
-            >
+              style={styles.eyeIcon}>
               <Icon
                 name={showPassword ? 'visibility' : 'visibility-off'}
                 size={20}
@@ -390,9 +397,12 @@ const LoginScreen = ({ navigation }) => {
               />
             </TouchableOpacity>
           </View>
-          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
-          {loginError ? <Text style={styles.errorTextCenter}>{loginError}</Text> : null}
-
+          {passwordError ? (
+            <Text style={styles.errorText}>{passwordError}</Text>
+          ) : null}
+          {loginError ? (
+            <Text style={styles.errorTextCenter}>{loginError}</Text>
+          ) : null}
 
           {/* Sign In Button */}
           <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
@@ -402,8 +412,7 @@ const LoginScreen = ({ navigation }) => {
           {/* Forgot Password */}
           <TouchableOpacity
             onPress={() => navigation.navigate('ForgotPassword')}
-            style={styles.forgotPasswordContainer}
-          >
+            style={styles.forgotPasswordContainer}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
@@ -415,8 +424,7 @@ const LoginScreen = ({ navigation }) => {
             <TouchableOpacity
               key={index}
               style={styles.demoAccount}
-              onPress={() => fillDemoAccount(account)}
-            >
+              onPress={() => fillDemoAccount(account)}>
               <View style={styles.demoAccountContent}>
                 <Text style={styles.demoAccountTitle}>{account.title}</Text>
                 <Text style={styles.demoAccountEmail}>{account.email}</Text>
@@ -425,7 +433,6 @@ const LoginScreen = ({ navigation }) => {
             </TouchableOpacity>
           ))}
         </View>
-
       </ScrollView>
     </View>
   );
@@ -458,7 +465,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#6B7280',
-    marginTop:20
+    marginTop: 20,
   },
   formSection: {
     backgroundColor: '#ffffff',
@@ -555,19 +562,18 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   errorText: {
-  color: '#dc2626', // red-600
-  fontSize: 14,
-  marginTop: 4,
-  marginLeft: 4,
-},
+    color: '#dc2626', // red-600
+    fontSize: 14,
+    marginTop: 4,
+    marginLeft: 4,
+  },
 
-errorTextCenter: {
-  color: '#dc2626',
-  fontSize: 14,
-  marginTop: 12,
-  textAlign: 'center',
-}
+  errorTextCenter: {
+    color: '#dc2626',
+    fontSize: 14,
+    marginTop: 12,
+    textAlign: 'center',
+  },
 });
 
 export default LoginScreen;
-

@@ -416,15 +416,15 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
             <View style={styles.statCard}>
               <View style={[styles.statIcon, {backgroundColor: '#e0e7ff'}]}>
                 <MaterialIcons
-                  name="attach-money"
+                  name="work-outline"
                   size={24}
                   color="#0c40edff"
                 />
               </View>
               <Text style={styles.statValue}>
-                ${summaryStats.totalCost.toLocaleString()}
+               79
               </Text>
-              <Text style={styles.statLabel}>Total Value</Text>
+              <Text style={styles.statLabel}>Total Job</Text>
             </View>
           </View>
         </View>
@@ -567,7 +567,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                 </View>
 
                 {/* Cost Breakdown */}
-                <View style={styles.costBreakdown}>
+                {/* <View style={styles.costBreakdown}>
                   <View style={styles.costRow}>
                     <View style={styles.costItem}>
                       <Text style={styles.costLabel}>Labour</Text>
@@ -593,7 +593,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                       Total: ${timesheet.totalCost.toLocaleString()}
                     </Text>
                   </View>
-                </View>
+                </View> */}
 
                 {/* Status-specific information */}
                 {timesheet.status === 'approved' && timesheet.approvedAt && (

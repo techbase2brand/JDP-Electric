@@ -453,9 +453,7 @@
 //   },
 // });
 
-
-
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -468,7 +466,7 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
 // Embedded Colors
 const Colors = {
@@ -508,22 +506,21 @@ const BorderRadius = {
 const Shadows = {
   md: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
   },
 };
 
-
-
-
-const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
+const OrderProductsScreen = ({onBack, onNavigate, route}) => {
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cart, setCart] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [stockFilter, setStockFilter] = useState('all');
 
   // Mock products data (removed price and rating)
   const products = [
@@ -536,7 +533,8 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
       inStock: true,
       stockLevel: 15,
       supplier: 'ElectricPro Supply',
-      image: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=300&h=300&fit=crop'
+      image:
+        'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=300&h=300&fit=crop',
     },
     {
       id: '2',
@@ -546,7 +544,7 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
       sku: 'CB-20A-002',
       inStock: true,
       stockLevel: 45,
-      supplier: 'ElectricPro Supply'
+      supplier: 'ElectricPro Supply',
     },
     {
       id: '3',
@@ -556,7 +554,7 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
       sku: 'THHN-12-003',
       inStock: false,
       stockLevel: 0,
-      supplier: 'Wire Solutions Inc'
+      supplier: 'Wire Solutions Inc',
     },
     {
       id: '4',
@@ -566,7 +564,7 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
       sku: 'EMT-12-004',
       inStock: true,
       stockLevel: 28,
-      supplier: 'Conduit Corp'
+      supplier: 'Conduit Corp',
     },
     {
       id: '5',
@@ -576,7 +574,7 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
       sku: 'JB-4X4-005',
       inStock: true,
       stockLevel: 120,
-      supplier: 'ElectricPro Supply'
+      supplier: 'ElectricPro Supply',
     },
     {
       id: '6',
@@ -586,52 +584,83 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
       sku: 'GFCI-20A-006',
       inStock: true,
       stockLevel: 32,
-      supplier: 'Safety Electric Co'
-    }
+      supplier: 'Safety Electric Co',
+    },
   ];
 
   const categories = [
-    { id: 'all', name: 'All Products' },
-    { id: 'panels', name: 'Panels' },
-    { id: 'breakers', name: 'Breakers' },
-    { id: 'wire', name: 'Wire & Cable' },
-    { id: 'conduit', name: 'Conduit' },
-    { id: 'boxes', name: 'Boxes' },
-    { id: 'outlets', name: 'Outlets & Switches' }
+    {id: 'all', name: 'All Products'},
+    {id: 'panels', name: 'Panels'},
+    {id: 'breakers', name: 'Breakers'},
+    {id: 'wire', name: 'Wire & Cable'},
+    {id: 'conduit', name: 'Conduit'},
+    {id: 'boxes', name: 'Boxes'},
+    {id: 'outlets', name: 'Outlets & Switches'},
   ];
 
+  // const filteredProducts = products.filter(product => {
+  //   const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //                        product.sku.toLowerCase().includes(searchQuery.toLowerCase());
+  //   const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+  //   return matchesSearch && matchesCategory;
+  // });
+  // const filteredProducts = products.filter(product => {
+  //   const matchesSearch =
+  //     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     product.sku.toLowerCase().includes(searchQuery.toLowerCase());
+
+  //   const matchesCategory =
+  //     selectedCategory === 'all' || product.category === selectedCategory;
+
+  //   let matchesStock = true;
+  //   if (stockFilter === 'inStock') matchesStock = product.inStock;
+  //   if (stockFilter === 'outOfStock') matchesStock = !product.inStock;
+
+  //   return matchesSearch && matchesCategory && matchesStock;
+  // });
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.sku.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesCategory =
+      selectedCategory === 'all' || product.category === selectedCategory;
+
+    let matchesStock = true;
+    if (stockFilter === 'inStock') matchesStock = product.inStock;
+    if (stockFilter === 'outOfStock') matchesStock = !product.inStock;
+
+    return matchesSearch && matchesCategory && matchesStock;
   });
 
-  const addToCart = (product) => {
+  const addToCart = product => {
     const existingItem = cart.find(item => item.id === product.id);
-    
+
     if (existingItem) {
-      setCart(cart.map(item =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
+      // Agar product pehle se hai, sirf quantity badhao
+      setCart(
+        cart.map(item =>
+          item.id === product.id
+            ? {...item, quantity: item.quantity + 1}
+            : item,
+        ),
+      );
     } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+      // Agar product pehli baar add ho raha hai
+      setCart([...cart, {...product, quantity: 1}]);
+      // Alert.alert('Success', `${product.name} added to cart`);
     }
-    
-    Alert.alert('Success', `${product.name} added to cart`);
   };
 
   const updateQuantity = (productId, newQuantity) => {
     if (newQuantity === 0) {
       setCart(cart.filter(item => item.id !== productId));
     } else {
-      setCart(cart.map(item =>
-        item.id === productId
-          ? { ...item, quantity: newQuantity }
-          : item
-      ));
+      setCart(
+        cart.map(item =>
+          item.id === productId ? {...item, quantity: newQuantity} : item,
+        ),
+      );
     }
   };
 
@@ -639,12 +668,12 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const getItemQuantity = (productId) => {
+  const getItemQuantity = productId => {
     const item = cart.find(item => item.id === productId);
     return item ? item.quantity : 0;
   };
 
-  const handleNavigate = (screen) => {
+  const handleNavigate = screen => {
     if (onNavigate) {
       onNavigate(screen);
     } else {
@@ -665,57 +694,101 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
       visible={showFilters}
       transparent={true}
       animationType="slide"
-      onRequestClose={() => setShowFilters(false)}
-    >
+      onRequestClose={() => setShowFilters(false)}>
       <View style={styles.modalOverlay}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalBackdrop}
           activeOpacity={1}
-          onPress={() => setShowFilters(false)}
-        >
+          onPress={() => setShowFilters(false)}>
           <View style={styles.filtersModal}>
             <View style={styles.modalHandle} />
-            
+
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Filter Products</Text>
             </View>
 
-            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={styles.modalContent}
+              showsVerticalScrollIndicator={false}>
               <View style={styles.filterSection}>
                 <Text style={styles.filterSectionTitle}>Category</Text>
                 <View style={styles.categoryGrid}>
-                  {categories?.map((category) => (
+                  {categories?.map(category => (
                     <TouchableOpacity
                       key={category.id}
                       style={[
                         styles.categoryOption,
-                        selectedCategory === category.id && styles.selectedCategoryOption
+                        selectedCategory === category.id &&
+                          styles.selectedCategoryOption,
                       ]}
                       onPress={() => {
                         setSelectedCategory(category.id);
                         setShowFilters(false);
-                      }}
-                    >
+                      }}>
                       <Text
                         style={[
                           styles.categoryOptionText,
-                          selectedCategory === category.id && styles.selectedCategoryOptionText
-                        ]}
-                      >
+                          selectedCategory === category.id &&
+                            styles.selectedCategoryOptionText,
+                        ]}>
                         {category.name}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
               </View>
-              
+
               <View style={styles.filterSection}>
                 <Text style={styles.filterSectionTitle}>Availability</Text>
-                <TouchableOpacity style={styles.availabilityOption}>
-                  <Text style={styles.availabilityOptionText}>In Stock Only</Text>
+                {/* <TouchableOpacity
+                  style={styles.availabilityOption}
+                  onPress={() => {
+                    setInStockOnly(true), setShowFilters(false);
+                  }}>
+                  <Text style={styles.availabilityOptionText}>
+                    In Stock Only
+                  </Text>
+                </TouchableOpacity> */}
+                <TouchableOpacity
+                  style={[
+                    styles.availabilityOption,
+                    stockFilter === 'inStock' && {backgroundColor: '#4CAF50'}, // highlight
+                  ]}
+                  onPress={() => {
+                    setStockFilter(
+                      stockFilter === 'inStock' ? 'all' : 'inStock',
+                    ),
+                      setShowFilters(false);
+                  }}>
+                  <Text style={styles.availabilityOptionText}>In Stock</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.availabilityOption}>
-                  <Text style={styles.availabilityOptionText}>All Products</Text>
+
+                {/* Out of Stock */}
+                <TouchableOpacity
+                  style={[
+                    styles.availabilityOption,
+                    stockFilter === 'outOfStock' && {
+                      backgroundColor: '#F44336',
+                    }, // highlight
+                  ]}
+                  onPress={() => {
+                    setStockFilter(
+                      stockFilter === 'outOfStock' ? 'all' : 'outOfStock',
+                    ),
+                      setShowFilters(false);
+                  }}>
+                  <Text style={styles.availabilityOptionText}>
+                    Out of Stock
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.availabilityOption}
+                  onPress={() => {
+                    setStockFilter('all'), setShowFilters(false);
+                  }}>
+                  <Text style={styles.availabilityOptionText}>
+                    All Products
+                  </Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -728,20 +801,19 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Icon name="arrow-back" size={24} color={Colors.text} />
           </TouchableOpacity>
-          
+
           <Text style={styles.headerTitle}>Order Products</Text>
-          
+
           <TouchableOpacity
             style={styles.cartButton}
-            onPress={() => handleNavigate('CartScreen')}
-          >
+            onPress={() => handleNavigate('CartScreen')}>
             <Icon name="shopping-cart" size={24} color={Colors.text} />
             {getCartItemCount() > 0 && (
               <View style={styles.cartBadge}>
@@ -754,7 +826,12 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
         {/* Search and Filter */}
         <View style={styles.searchContainer}>
           <View style={styles.searchInputContainer}>
-            <Icon name="search" size={20} color={Colors.textSecondary} style={styles.searchIcon} />
+            <Icon
+              name="search"
+              size={20}
+              color={Colors.textSecondary}
+              style={styles.searchIcon}
+            />
             <TextInput
               style={styles.searchInput}
               placeholder="Search products..."
@@ -765,8 +842,7 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
           </View>
           <TouchableOpacity
             style={styles.filterButton}
-            onPress={() => setShowFilters(true)}
-          >
+            onPress={() => setShowFilters(true)}>
             <Icon name="filter-list" size={20} color={Colors.text} />
           </TouchableOpacity>
         </View>
@@ -775,21 +851,20 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
       {/* Category Tabs */}
       <View style={styles.categoryTabs}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {categories.slice(0, 4).map((category) => (
+          {categories.slice(0, 4).map(category => (
             <TouchableOpacity
               key={category.id}
               style={[
                 styles.categoryTab,
-                selectedCategory === category.id && styles.selectedCategoryTab
+                selectedCategory === category.id && styles.selectedCategoryTab,
               ]}
-              onPress={() => setSelectedCategory(category.id)}
-            >
+              onPress={() => setSelectedCategory(category.id)}>
               <Text
                 style={[
                   styles.categoryTabText,
-                  selectedCategory === category.id && styles.selectedCategoryTabText
-                ]}
-              >
+                  selectedCategory === category.id &&
+                    styles.selectedCategoryTabText,
+                ]}>
                 {category.name}
               </Text>
             </TouchableOpacity>
@@ -798,10 +873,12 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
       </View>
 
       {/* Products List */}
-      <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
-        {filteredProducts.map((product) => {
+      <ScrollView
+        style={styles.productsList}
+        showsVerticalScrollIndicator={false}>
+        {filteredProducts.map(product => {
           const quantity = getItemQuantity(product.id);
-          
+
           return (
             <View key={product.id} style={styles.productCard}>
               <View style={styles.productContent}>
@@ -813,28 +890,42 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
                 {/* Product Info */}
                 <View style={styles.productInfo}>
                   <View style={styles.productHeader}>
-                    <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
-                    <View style={[
-                      styles.stockBadge,
-                      product.inStock ? styles.inStockBadge : styles.outOfStockBadge
-                    ]}>
-                      <Text style={[
-                        styles.stockBadgeText,
-                        product.inStock ? styles.inStockText : styles.outOfStockText
+                    <Text style={styles.productName} numberOfLines={1}>
+                      {product.name}
+                    </Text>
+                    <View
+                      style={[
+                        styles.stockBadge,
+                        product.inStock
+                          ? styles.inStockBadge
+                          : styles.outOfStockBadge,
                       ]}>
+                      <Text
+                        style={[
+                          styles.stockBadgeText,
+                          product.inStock
+                            ? styles.inStockText
+                            : styles.outOfStockText,
+                        ]}>
                         {product.inStock ? 'In Stock' : 'Out of Stock'}
                       </Text>
                     </View>
                   </View>
-                  
-                  <Text style={styles.productDescription} numberOfLines={2}>{product.description}</Text>
-                  
+
+                  <Text style={styles.productDescription} numberOfLines={2}>
+                    {product.description}
+                  </Text>
+
                   <View style={styles.productDetails}>
                     <Text style={styles.productSku}>SKU: {product.sku}</Text>
-                    <Text style={styles.productStock}>Stock: {product.stockLevel}</Text>
+                    <Text style={styles.productStock}>
+                      Stock: {product.stockLevel}
+                    </Text>
                   </View>
 
-                  <Text style={styles.productSupplier}>Supplier: {product.supplier}</Text>
+                  <Text style={styles.productSupplier}>
+                    Supplier: {product.supplier}
+                  </Text>
 
                   {/* Add to Cart Controls */}
                   {product.inStock && (
@@ -842,8 +933,7 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
                       {quantity === 0 ? (
                         <TouchableOpacity
                           style={styles.addToCartButton}
-                          onPress={() => addToCart(product)}
-                        >
+                          onPress={() => addToCart(product)}>
                           <Icon name="add" size={16} color={Colors.white} />
                           <Text style={styles.addToCartText}>Add to Cart</Text>
                         </TouchableOpacity>
@@ -851,15 +941,17 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
                         <View style={styles.quantityControls}>
                           <TouchableOpacity
                             style={styles.quantityButton}
-                            onPress={() => updateQuantity(product.id, quantity - 1)}
-                          >
+                            onPress={() =>
+                              updateQuantity(product.id, quantity - 1)
+                            }>
                             <Icon name="remove" size={16} color={Colors.text} />
                           </TouchableOpacity>
                           <Text style={styles.quantityText}>{quantity}</Text>
                           <TouchableOpacity
                             style={styles.quantityButton}
-                            onPress={() => updateQuantity(product.id, quantity + 1)}
-                          >
+                            onPress={() =>
+                              updateQuantity(product.id, quantity + 1)
+                            }>
                             <Icon name="add" size={16} color={Colors.text} />
                           </TouchableOpacity>
                         </View>
@@ -876,11 +968,13 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
           <View style={styles.emptyState}>
             <Icon name="inventory" size={64} color={Colors.textLight} />
             <Text style={styles.emptyStateTitle}>No products found</Text>
-            <Text style={styles.emptyStateSubtitle}>Try adjusting your search or filters</Text>
+            <Text style={styles.emptyStateSubtitle}>
+              Try adjusting your search or filters
+            </Text>
           </View>
         )}
-        
-        <View style={{ height: 100 }} />
+
+        <View style={{height: 100}} />
       </ScrollView>
 
       {/* Bottom Cart Summary */}
@@ -888,9 +982,10 @@ const OrderProductsScreen = ({ onBack, onNavigate, route }) => {
         <View style={styles.bottomCartSummary}>
           <TouchableOpacity
             style={styles.cartSummaryButton}
-            onPress={() => handleNavigate('CartScreen')}
-          >
-            <Text style={styles.cartSummaryText}>View Cart ({getCartItemCount()} items)</Text>
+            onPress={() => handleNavigate('CartScreen')}>
+            <Text style={styles.cartSummaryText}>
+              View Cart ({getCartItemCount()} items)
+            </Text>
             <Icon name="shopping-cart" size={20} color={Colors.white} />
           </TouchableOpacity>
         </View>
@@ -906,7 +1001,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.backgroundLight,
-    paddingBottom:60
+    paddingBottom: 60,
   },
 
   // Header

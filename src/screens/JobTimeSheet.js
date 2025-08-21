@@ -9,6 +9,8 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -444,113 +446,121 @@ const JobTimesheet = ({
               <Icon name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
           </View>
-
-          <ScrollView
-            style={styles.modalContent}
-            showsVerticalScrollIndicator={false}>
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>Activity *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={newEntry.activity}
-                onChangeText={text =>
-                  setNewEntry(prev => ({...prev, activity: text}))
-                }
-                placeholder="Enter activity name"
-                placeholderTextColor={Colors.textLight}
-              />
-            </View>
-
-            <View style={styles.timeInputRow}>
-              <View
-                style={[styles.formField, {flex: 1, marginRight: Spacing.sm}]}>
-                <Text style={styles.fieldLabel}>Start Time *</Text>
+          {/* ✅ KeyboardAvoidingView Wrap */}
+          <KeyboardAvoidingView
+            style={{flex: 1}}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
+            <ScrollView
+              style={styles.modalContent}
+              showsVerticalScrollIndicator={false}>
+              <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Activity *</Text>
                 <TextInput
                   style={styles.textInput}
-                  value={newEntry.startTime}
+                  value={newEntry.activity}
                   onChangeText={text =>
-                    setNewEntry(prev => ({...prev, startTime: text}))
+                    setNewEntry(prev => ({...prev, activity: text}))
                   }
-                  placeholder="09:00 AM"
+                  placeholder="Enter activity name"
                   placeholderTextColor={Colors.textLight}
                 />
               </View>
 
-              <View
-                style={[styles.formField, {flex: 1, marginLeft: Spacing.sm}]}>
-                <Text style={styles.fieldLabel}>End Time *</Text>
+              <View style={styles.timeInputRow}>
+                <View
+                  style={[
+                    styles.formField,
+                    {flex: 1, marginRight: Spacing.sm},
+                  ]}>
+                  <Text style={styles.fieldLabel}>Start Time *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={newEntry.startTime}
+                    onChangeText={text =>
+                      setNewEntry(prev => ({...prev, startTime: text}))
+                    }
+                    placeholder="09:00 AM"
+                    placeholderTextColor={Colors.textLight}
+                  />
+                </View>
+
+                <View
+                  style={[styles.formField, {flex: 1, marginLeft: Spacing.sm}]}>
+                  <Text style={styles.fieldLabel}>End Time *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={newEntry.endTime}
+                    onChangeText={text =>
+                      setNewEntry(prev => ({...prev, endTime: text}))
+                    }
+                    placeholder="05:00 PM"
+                    placeholderTextColor={Colors.textLight}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Location</Text>
                 <TextInput
                   style={styles.textInput}
-                  value={newEntry.endTime}
+                  value={newEntry.location}
                   onChangeText={text =>
-                    setNewEntry(prev => ({...prev, endTime: text}))
+                    setNewEntry(prev => ({...prev, location: text}))
                   }
-                  placeholder="05:00 PM"
+                  placeholder="Work location"
                   placeholderTextColor={Colors.textLight}
                 />
               </View>
-            </View>
 
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>Location</Text>
-              <TextInput
-                style={styles.textInput}
-                value={newEntry.location}
-                onChangeText={text =>
-                  setNewEntry(prev => ({...prev, location: text}))
-                }
-                placeholder="Work location"
-                placeholderTextColor={Colors.textLight}
-              />
-            </View>
+              <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Worker</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={newEntry.worker}
+                  onChangeText={text =>
+                    setNewEntry(prev => ({...prev, worker: text}))
+                  }
+                  placeholder="Worker name"
+                  placeholderTextColor={Colors.textLight}
+                />
+              </View>
 
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>Worker</Text>
-              <TextInput
-                style={styles.textInput}
-                value={newEntry.worker}
-                onChangeText={text =>
-                  setNewEntry(prev => ({...prev, worker: text}))
-                }
-                placeholder="Worker name"
-                placeholderTextColor={Colors.textLight}
-              />
-            </View>
+              <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Description</Text>
+                <TextInput
+                  style={[styles.textInput, styles.textArea]}
+                  value={newEntry.description}
+                  onChangeText={text =>
+                    setNewEntry(prev => ({...prev, description: text}))
+                  }
+                  placeholder="Description of work performed"
+                  placeholderTextColor={Colors.textLight}
+                  multiline={true}
+                  numberOfLines={3}
+                />
+              </View>
 
-            <View style={styles.formField}>
-              <Text style={styles.fieldLabel}>Description</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                value={newEntry.description}
-                onChangeText={text =>
-                  setNewEntry(prev => ({...prev, description: text}))
-                }
-                placeholder="Description of work performed"
-                placeholderTextColor={Colors.textLight}
-                multiline={true}
-                numberOfLines={3}
-              />
-            </View>
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowAddEntryModal(false);
+                    setEditingEntry(null);
+                  }}>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
 
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => {
-                  setShowAddEntryModal(false);
-                  setEditingEntry(null);
-                }}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={editingEntry ? handleUpdateEntry : handleAddEntry}>
-                <Text style={styles.saveButtonText}>
-                  {editingEntry ? 'Update' : 'Add Entry'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={editingEntry ? handleUpdateEntry : handleAddEntry}>
+                  <Text style={styles.saveButtonText}>
+                    {editingEntry ? 'Update' : 'Add Entry'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </View>
     </Modal>
@@ -958,7 +968,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     // maxHeight: '90%',
-    height: heightPercentageToDP(80),
+    height: heightPercentageToDP(90),
   },
   modalHeader: {
     flexDirection: 'row',

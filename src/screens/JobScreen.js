@@ -11,6 +11,7 @@ import {
   Alert,
   Modal,
   Button,
+  Platform,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -406,22 +407,23 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
           </View>
         </View>
       </View>
-
       {/* Job Title */}
       <Text style={styles.jobTitle}>{job.title}</Text>
-
       {/* Customer Info */}
       <View style={styles.customerSection}>
         <Text style={styles.customerName}>{job.customer.name}</Text>
         <Text style={styles.customerAddress}>{job.customer.address}</Text>
       </View>
-
       {/* Schedule Info */}
       <View style={styles.scheduleSection}>
         <View style={styles.scheduleItem}>
           <Ionicons name="calendar" size={16} color={COLORS.gray500} />
           <Text style={styles.scheduleText}>
-            {new Date(job.scheduledDate).toLocaleDateString()}
+            {new Date(job.scheduledDate).toLocaleDateString('en-US', {
+              month: 'numeric', // "August"
+              day: 'numeric',
+              year: 'numeric',
+            })}
           </Text>
         </View>
         <View style={styles.scheduleItem}>
@@ -430,10 +432,9 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
         </View>
         <View style={styles.scheduleItem}>
           <Ionicons name="hourglass" size={16} color={COLORS.gray500} />
-          <Text style={styles.scheduleText}>{job.estimatedHours}h</Text>
+          <Text style={styles.scheduleText}>{job.estimatedHours}h est.</Text>
         </View>
       </View>
-
       {/* Assigned To */}
       <View style={styles.assignedSection}>
         <Ionicons name="people" size={16} color={COLORS.gray500} />
@@ -441,9 +442,8 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
           Assigned to: {job.assignedTo.join(', ')}
         </Text>
       </View>
-
       {/* Special Instructions */}
-      {job.specialInstructions && (
+      {/* {job.specialInstructions && (
         <View style={styles.instructionsSection}>
           <Ionicons
             name="information-circle"
@@ -453,9 +453,8 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
           <Text style={styles.instructionsText}>{job.specialInstructions}</Text>
         </View>
       )}
-
-      {/* Tags */}
-      <View style={styles.tagsSection}>
+      Tags */}
+      {/* <View style={styles.tagsSection}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.tagsContainer}>
             {job.tags.map((tag, index) => (
@@ -465,8 +464,7 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
             ))}
           </View>
         </ScrollView>
-      </View>
-
+      </View> */}
       {/* Action Icons */}
       <View style={styles.actionsSection}>
         <TouchableOpacity
@@ -479,15 +477,15 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() => handleNavigate(job)}>
-          <Ionicons name="navigate" size={20} color={COLORS.primary} />
-          <Text style={styles.actionText}>Navigate</Text>
+          <Ionicons name="navigate" size={20} color={'#10B981'} />
+          <Text style={[styles.actionText, {color: '#10B981'}]}>Navigate</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() => handleStartTimer(job)}>
-          <Ionicons name="timer" size={20} color={COLORS.primary} />
-          <Text style={styles.actionText}>Timer</Text>
+          <Icon name="timer" size={20} color={COLORS.danger} />
+          <Text style={[styles.actionText, {color: COLORS.danger}]}>Timer</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -534,14 +532,18 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
             visible={modalVisible}
             animationType="slide"
             onRequestClose={() => setModalVisible(false)}>
+            {' '}
             <View style={styles.modalBackground}>
+              {' '}
               <View style={styles.modalContainer}>
-                <Text style={styles.label}>Start Date</Text>
+                {' '}
+                <Text style={styles.label}>Start Date</Text>{' '}
                 <TouchableOpacity
                   onPress={() => setShowStartPicker(true)}
                   style={styles.dateButton}>
-                  <Text>{startDate.toDateString()}</Text>
-                </TouchableOpacity>
+                  {' '}
+                  <Text>{startDate.toDateString()}</Text>{' '}
+                </TouchableOpacity>{' '}
                 {showStartPicker && (
                   <DateTimePicker
                     value={startDate}
@@ -552,14 +554,14 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
                       if (selectedDate) setStartDate(selectedDate);
                     }}
                   />
-                )}
-
-                <Text style={styles.label}>End Date</Text>
+                )}{' '}
+                <Text style={styles.label}>End Date</Text>{' '}
                 <TouchableOpacity
                   onPress={() => setShowEndPicker(true)}
                   style={styles.dateButton}>
-                  <Text>{endDate.toDateString()}</Text>
-                </TouchableOpacity>
+                  {' '}
+                  <Text>{endDate.toDateString()}</Text>{' '}
+                </TouchableOpacity>{' '}
                 {showEndPicker && (
                   <DateTimePicker
                     value={endDate}
@@ -570,27 +572,29 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
                       if (selectedDate) setEndDate(selectedDate);
                     }}
                   />
-                )}
+                )}{' '}
                 <TouchableOpacity
                   onPress={applyFilter}
                   style={{
                     marginTop: 20,
-                    backgroundColor: 'blue',
+                    backgroundColor: '#3B82F6',
                     padding: 10,
-                    borderRadius: 5,
+                    borderRadius: 10,
                     alignItems: 'center',
                   }}>
+                  {' '}
                   <Text style={{color: 'white', fontWeight: 'bold'}}>
-                    Apply Filter
-                  </Text>
-                </TouchableOpacity>
+                    {' '}
+                    Apply Filter{' '}
+                  </Text>{' '}
+                </TouchableOpacity>{' '}
                 <Button
                   title="Cancel"
                   color="red"
                   onPress={() => setModalVisible(false)}
-                />
-              </View>
-            </View>
+                />{' '}
+              </View>{' '}
+            </View>{' '}
           </Modal>
         </View>
       </View>
@@ -636,6 +640,13 @@ const styles = {
     alignItems: 'center',
     marginHorizontal: 16,
   },
+  dateTimeRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  dateTimeItem: {
+    flex: 1,
+  },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -673,6 +684,42 @@ const styles = {
     fontSize: 16,
     color: COLORS.gray900,
     marginLeft: 8,
+  },
+  formGroup: {
+    marginBottom: 20,
+  },
+  formLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  inputContainer: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    minHeight: 48,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  inputContainerError: {
+    borderColor: '#ef4444',
+  },
+  formInput: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#111827',
+    flex: 1,
+  },
+  inputWithIcon: {
+    paddingLeft: 48,
+  },
+  inputIcon: {
+    position: 'absolute',
+    left: 16,
+    top: 14,
   },
   tabsContainer: {
     backgroundColor: COLORS.white,
@@ -872,20 +919,25 @@ const styles = {
   },
   actionsSection: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: COLORS.gray200,
     // paddingTop: 16,
   },
   actionButton: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingTop: 16,
     paddingBottom: 8,
+
     gap: 4,
-    width: widthPercentageToDP(27),
+    width: widthPercentageToDP(28),
   },
   actionText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
     color: COLORS.primary,
   },

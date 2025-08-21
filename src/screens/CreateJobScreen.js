@@ -209,7 +209,7 @@
 
 //   // const validateStep = step => {
 //   //   switch (step) {
-      
+
 //   //     case 1:
 //   //       if (!formData.title.trim()) {
 //   //         showToast('Validation Error', 'Please enter a job title', 'error');
@@ -1874,7 +1874,7 @@
 // });
 
 // export default CreateJobScreen;
-import React, { useState, useCallback, useEffect } from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {
   View,
   Text,
@@ -1889,30 +1889,33 @@ import {
   Modal,
   Dimensions,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { widthPercentageToDP } from '../utils';
+import {heightPercentageToDP, widthPercentageToDP} from '../utils';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
-const { width: screenWidth } = Dimensions.get('window');
-
+const {width: screenWidth} = Dimensions.get('window');
 
 const customers = [
-  { id: "1", name: "John Smith" },
-  { id: "2", name: "Emily Johnson" },
-  { id: "3", name: "Michael Brown" },
-  { id: "4", name: "Olivia Davis" },
-  { id: "5", name: "William Miller" },
+  {id: '1', name: 'John Smith'},
+  {id: '2', name: 'Emily Johnson'},
+  {id: '3', name: 'Michael Brown'},
+  {id: '4', name: 'Olivia Davis'},
+  {id: '5', name: 'William Miller'},
 ];
 
-
-  
-const CreateJobScreen = ({ navigation, user, onCreateJob }) => {
+const CreateJobScreen = ({navigation, user, onCreateJob}) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
-   const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showDueDatePicker, setShowDueDatePicker] = useState(false);
   // Dropdown states
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const [showTimeDropdown, setShowTimeDropdown] = useState(false);
@@ -1920,12 +1923,16 @@ const CreateJobScreen = ({ navigation, user, onCreateJob }) => {
   // Location autocomplete states
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [citySuggestions, setCitySuggestions] = useState([]);
-  const [billingLocationSuggestions, setBillingLocationSuggestions] = useState([]);
+  const [billingLocationSuggestions, setBillingLocationSuggestions] = useState(
+    [],
+  );
   const [billingCitySuggestions, setBillingCitySuggestions] = useState([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
-  const [showBillingLocationSuggestions, setShowBillingLocationSuggestions] = useState(false);
-  const [showBillingCitySuggestions, setShowBillingCitySuggestions] = useState(false);
+  const [showBillingLocationSuggestions, setShowBillingLocationSuggestions] =
+    useState(false);
+  const [showBillingCitySuggestions, setShowBillingCitySuggestions] =
+    useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -1938,7 +1945,9 @@ const CreateJobScreen = ({ navigation, user, onCreateJob }) => {
     priority: 'medium',
     scheduledDate: new Date().toISOString().split('T')[0],
     scheduledTime: '09:00',
-    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0],
     billingName: '',
     billingPhone: '',
     billingEmail: '',
@@ -1947,34 +1956,90 @@ const CreateJobScreen = ({ navigation, user, onCreateJob }) => {
     sameAsCustomer: true,
     assignedTo: [user?.id || '1'],
     estimatedHours: 8,
-    notes: ''
+    notes: '',
   });
-const handleSelect = (customer) => {
-    updateFormData("customerName", customer.name);
+  const handleSelect = customer => {
+    updateFormData('customerName', customer.name);
     setModalVisible(false);
   };
   // Mock team members for assignment
   const teamMembers = [
-    { id: '1', name: 'Sarah Johnson', role: 'Lead Labor' },
-    { id: '2', name: 'Mike Wilson', role: 'Labor' },
-    { id: '3', name: 'Lisa Rodriguez', role: 'Labor' },
-    { id: '4', name: 'David Chen', role: 'Labor' },
-    { id: '5', name: 'Tom Anderson', role: 'Labor' },
-    { id: '6', name: 'James Mitchell', role: 'Labor' }
+    {id: '1', name: 'Sarah Johnson', role: 'Lead Labor'},
+    {id: '2', name: 'Mike Wilson', role: 'Labor'},
+    {id: '3', name: 'Lisa Rodriguez', role: 'Labor'},
+    {id: '4', name: 'David Chen', role: 'Labor'},
+    {id: '5', name: 'Tom Anderson', role: 'Labor'},
+    {id: '6', name: 'James Mitchell', role: 'Labor'},
   ];
 
   const priorityOptions = [
-    { value: 'low', label: 'Low Priority', color: '#10b981', icon: 'trending-down' },
-    { value: 'medium', label: 'Medium Priority', color: '#f59e0b', icon: 'trending-flat' },
-    { value: 'high', label: 'High Priority', color: '#ef4444', icon: 'trending-up' }
+    {
+      value: 'low',
+      label: 'Low Priority',
+      color: '#10b981',
+      icon: 'trending-down',
+    },
+    {
+      value: 'medium',
+      label: 'Medium Priority',
+      color: '#f59e0b',
+      icon: 'trending-flat',
+    },
+    {
+      value: 'high',
+      label: 'High Priority',
+      color: '#ef4444',
+      icon: 'trending-up',
+    },
   ];
 
   const timeSlots = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00', '17:30'
+    '08:00',
+    '08:30',
+    '09:00',
+    '09:30',
+    '10:00',
+    '10:30',
+    '11:00',
+    '11:30',
+    '12:00',
+    '12:30',
+    '13:00',
+    '13:30',
+    '14:00',
+    '14:30',
+    '15:00',
+    '15:30',
+    '16:00',
+    '16:30',
+    '17:00',
+    '17:30',
   ];
-
+  const onChange = (event, selectedDate, type) => {
+    if (type === 'scheduledDate') {
+      setShowDatePicker(false);
+      if (selectedDate) {
+        updateFormData(
+          'scheduledDate',
+          selectedDate.toISOString().split('T')[0],
+        );
+      }
+    } else if (type === 'scheduledTime') {
+      setShowTimePicker(false);
+      if (selectedDate) {
+        let time = selectedDate.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        updateFormData('scheduledTime', time);
+      }
+    } else if (type === 'dueDate') {
+      setShowDueDatePicker(false);
+      if (selectedDate) {
+        updateFormData('dueDate', selectedDate.toISOString().split('T')[0]);
+      }
+    }
+  };
   // Google Places API integration (mock implementation)
   const searchPlaces = useCallback(async (query, type) => {
     if (!query || query.length < 3) return [];
@@ -1982,15 +2047,15 @@ const handleSelect = (customer) => {
     try {
       // Mock API response for demo
       const mockSuggestions = [
-        { description: `${query} Street, Houston, TX`, place_id: 'mock1' },
-        { description: `${query} Avenue, Houston, TX`, place_id: 'mock2' },
-        { description: `${query} Boulevard, Houston, TX`, place_id: 'mock3' }
+        {description: `${query} Street, Houston, TX`, place_id: 'mock1'},
+        {description: `${query} Avenue, Houston, TX`, place_id: 'mock2'},
+        {description: `${query} Boulevard, Houston, TX`, place_id: 'mock3'},
       ];
 
       if (type === 'city') {
         return [
-          { description: `${query}, TX`, place_id: 'city1' },
-          { description: `${query}, TX, USA`, place_id: 'city2' }
+          {description: `${query}, TX`, place_id: 'city1'},
+          {description: `${query}, TX, USA`, place_id: 'city2'},
         ];
       } else {
         return mockSuggestions;
@@ -2005,7 +2070,10 @@ const handleSelect = (customer) => {
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       if (formData.customerAddress.length >= 3) {
-        const suggestions = await searchPlaces(formData.customerAddress, 'address');
+        const suggestions = await searchPlaces(
+          formData.customerAddress,
+          'address',
+        );
         setLocationSuggestions(suggestions);
       }
     }, 300);
@@ -2025,7 +2093,10 @@ const handleSelect = (customer) => {
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       if (formData.billingAddress.length >= 3 && !formData.sameAsCustomer) {
-        const suggestions = await searchPlaces(formData.billingAddress, 'address');
+        const suggestions = await searchPlaces(
+          formData.billingAddress,
+          'address',
+        );
         setBillingLocationSuggestions(suggestions);
       }
     }, 300);
@@ -2044,8 +2115,8 @@ const handleSelect = (customer) => {
 
   const updateFormData = (field, value) => {
     setFormData(prev => {
-      const updated = { ...prev, [field]: value };
-      
+      const updated = {...prev, [field]: value};
+
       // Auto-sync billing address when "Same as Customer" is enabled
       if (field === 'sameAsCustomer' && value === true) {
         updated.billingName = prev.customerName;
@@ -2054,15 +2125,16 @@ const handleSelect = (customer) => {
         updated.billingAddress = prev.customerAddress;
         updated.billingCity = prev.city;
       }
-      
+
       // Auto-sync when customer info changes and "Same as Customer" is enabled
-      if (prev.sameAsCustomer && (
-        field === 'customerName' || 
-        field === 'customerPhone' || 
-        field === 'customerEmail' || 
-        field === 'customerAddress' || 
-        field === 'city'
-      )) {
+      if (
+        prev.sameAsCustomer &&
+        (field === 'customerName' ||
+          field === 'customerPhone' ||
+          field === 'customerEmail' ||
+          field === 'customerAddress' ||
+          field === 'city')
+      ) {
         switch (field) {
           case 'customerName':
             updated.billingName = value;
@@ -2081,70 +2153,98 @@ const handleSelect = (customer) => {
             break;
         }
       }
-      
+
       return updated;
     });
 
     // Clear validation error when user starts typing
     if (validationErrors[field]) {
-      setValidationErrors(prev => ({ ...prev, [field]: '' }));
+      setValidationErrors(prev => ({...prev, [field]: ''}));
     }
   };
 
-  const validateStep = (step) => {
+  const validateStep = step => {
     const errors = {};
 
     switch (step) {
       case 1: // Job Details
         if (!formData.title.trim()) errors.title = 'Job title is required';
-        if (!formData.description.trim()) errors.description = 'Job description is required';
-        if (!formData.customerName.trim()) errors.customerName = 'Customer name is required';
-        if (!formData.customerPhone.trim()) errors.customerPhone = 'Customer phone is required';
-        if (!formData.customerAddress.trim()) errors.customerAddress = 'Customer address is required';
+        if (!formData.description.trim())
+          errors.description = 'Job description is required';
+        if (!formData.customerName.trim())
+          errors.customerName = 'Customer name is required';
+        if (!formData.customerPhone.trim())
+          errors.customerPhone = 'Customer phone is required';
+        if (!formData.customerAddress.trim())
+          errors.customerAddress = 'Customer address is required';
         if (!formData.city.trim()) errors.city = 'City is required';
-        if (!formData.scheduledDate) errors.scheduledDate = 'Scheduled date is required';
-        if (!formData.scheduledTime) errors.scheduledTime = 'Scheduled time is required';
+        if (!formData.scheduledDate)
+          errors.scheduledDate = 'Scheduled date is required';
+        if (!formData.scheduledTime)
+          errors.scheduledTime = 'Scheduled time is required';
 
         // Validate billing address if not same as customer
         if (!formData.sameAsCustomer) {
-          if (!formData.billingName.trim()) errors.billingName = 'Billing name is required';
-          if (!formData.billingPhone.trim()) errors.billingPhone = 'Billing phone is required';
-          if (!formData.billingAddress.trim()) errors.billingAddress = 'Billing address is required';
-          if (!formData.billingCity.trim()) errors.billingCity = 'Billing city is required';
+          if (!formData.billingName.trim())
+            errors.billingName = 'Billing name is required';
+          if (!formData.billingPhone.trim())
+            errors.billingPhone = 'Billing phone is required';
+          if (!formData.billingAddress.trim())
+            errors.billingAddress = 'Billing address is required';
+          if (!formData.billingCity.trim())
+            errors.billingCity = 'Billing city is required';
         }
 
         // Validate phone format
-        const phoneRegex = /^\+?1?[-.\s]?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$/;
-        if (formData.customerPhone && !phoneRegex.test(formData.customerPhone)) {
+        const phoneRegex =
+          /^\+?1?[-.\s]?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$/;
+        if (
+          formData.customerPhone &&
+          !phoneRegex.test(formData.customerPhone)
+        ) {
           errors.customerPhone = 'Please enter a valid phone number';
         }
-        if (!formData.sameAsCustomer && formData.billingPhone && !phoneRegex.test(formData.billingPhone)) {
+        if (
+          !formData.sameAsCustomer &&
+          formData.billingPhone &&
+          !phoneRegex.test(formData.billingPhone)
+        ) {
           errors.billingPhone = 'Please enter a valid phone number';
         }
 
         // Validate email format if provided
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (formData.customerEmail && !emailRegex.test(formData.customerEmail)) {
+        if (
+          formData.customerEmail &&
+          !emailRegex.test(formData.customerEmail)
+        ) {
           errors.customerEmail = 'Please enter a valid email address';
         }
-        if (!formData.sameAsCustomer && formData.billingEmail && !emailRegex.test(formData.billingEmail)) {
+        if (
+          !formData.sameAsCustomer &&
+          formData.billingEmail &&
+          !emailRegex.test(formData.billingEmail)
+        ) {
           errors.billingEmail = 'Please enter a valid email address';
         }
 
         // Validate dates
-        const today = new Date().toISOString().split('T')[0];
-        if (formData.scheduledDate < today) {
-          errors.scheduledDate = 'Scheduled date cannot be in the past';
-        }
-        if (formData.dueDate < formData.scheduledDate) {
-          errors.dueDate = 'Due date must be after scheduled date';
-        }
+        // const today = new Date().toISOString().split('T')[0];
+        // if (formData.scheduledDate < today) {
+        //   errors.scheduledDate = 'Scheduled date cannot be in the past';
+        // }
+        // if (formData.dueDate < formData.scheduledDate) {
+        //   errors.dueDate = 'Due date must be after scheduled date';
+        // }
         break;
 
       case 2: // Resources
-        if (formData.assignedTo.length === 0) errors.assignedTo = 'At least one team member must be assigned';
-        if (formData.estimatedHours <= 0) errors.estimatedHours = 'Estimated hours must be greater than 0';
-        if (formData.estimatedHours > 100) errors.estimatedHours = 'Estimated hours seems too high (max 100)';
+        if (formData.assignedTo.length === 0)
+          errors.assignedTo = 'At least one team member must be assigned';
+        if (formData.estimatedHours <= 0)
+          errors.estimatedHours = 'Estimated hours must be greater than 0';
+        if (formData.estimatedHours > 100)
+          errors.estimatedHours = 'Estimated hours seems too high (max 100)';
         break;
 
       case 3: // Review
@@ -2181,21 +2281,23 @@ const handleSelect = (customer) => {
           name: formData.customerName.trim(),
           phone: formData.customerPhone.trim(),
           email: formData.customerEmail.trim(),
-          address: formData.customerAddress.trim()
-        },
-        billingAddress: formData.sameAsCustomer ? {
-          name: formData.customerName.trim(),
-          phone: formData.customerPhone.trim(),
-          email: formData.customerEmail.trim(),
           address: formData.customerAddress.trim(),
-          city: formData.city.trim()
-        } : {
-          name: formData.billingName.trim(),
-          phone: formData.billingPhone.trim(),
-          email: formData.billingEmail.trim(),
-          address: formData.billingAddress.trim(),
-          city: formData.billingCity.trim()
         },
+        billingAddress: formData.sameAsCustomer
+          ? {
+              name: formData.customerName.trim(),
+              phone: formData.customerPhone.trim(),
+              email: formData.customerEmail.trim(),
+              address: formData.customerAddress.trim(),
+              city: formData.city.trim(),
+            }
+          : {
+              name: formData.billingName.trim(),
+              phone: formData.billingPhone.trim(),
+              email: formData.billingEmail.trim(),
+              address: formData.billingAddress.trim(),
+              city: formData.billingCity.trim(),
+            },
         assignedTo: formData.assignedTo,
         status: 'pending',
         priority: formData.priority,
@@ -2206,18 +2308,18 @@ const handleSelect = (customer) => {
         dueDate: formData.dueDate,
         location: {
           address: formData.customerAddress.trim(),
-          city: formData.city.trim()
+          city: formData.city.trim(),
         },
         materials: [], // No materials section
         notes: formData.notes.trim(),
         createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0]
+        updatedAt: new Date().toISOString().split('T')[0],
       };
 
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
       // onCreateJob(jobData);
       Alert.alert('Success', 'Job created successfully!', [
-        { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
+        {text: 'OK', onPress: () => navigation.navigate('HomeScreen')},
       ]);
     } catch (error) {
       console.error('Failed to create job:', error);
@@ -2229,31 +2331,33 @@ const handleSelect = (customer) => {
 
   const renderProgressIndicator = () => (
     <View style={styles.progressContainer}>
-      {[1, 2, 3].map((step) => (
+      {[1, 2, 3].map(step => (
         <React.Fragment key={step}>
           <View
             style={[
               styles.progressStep,
               step === currentStep && styles.progressStepActive,
-              step < currentStep && styles.progressStepCompleted
-            ]}
-          >
+              step < currentStep && styles.progressStepCompleted,
+            ]}>
             {step < currentStep ? (
               <Icon name="check" size={16} color="white" />
             ) : (
-              <Text style={[
-                styles.progressStepText,
-                step === currentStep && styles.progressStepTextActive
-              ]}>
+              <Text
+                style={[
+                  styles.progressStepText,
+                  step === currentStep && styles.progressStepTextActive,
+                ]}>
                 {step}
               </Text>
             )}
           </View>
           {step < 3 && (
-            <View style={[
-              styles.progressLine,
-              step < currentStep && styles.progressLineCompleted
-            ]} />
+            <View
+              style={[
+                styles.progressLine,
+                step < currentStep && styles.progressLineCompleted,
+              ]}
+            />
           )}
         </React.Fragment>
       ))}
@@ -2261,7 +2365,7 @@ const handleSelect = (customer) => {
   );
 
   const renderStepTitle = () => {
-    const titles = { 1: 'Job Details', 2: 'Resources', 3: 'Review' };
+    const titles = {1: 'Job Details', 2: 'Resources', 3: 'Review'};
     return (
       <View style={styles.stepTitleContainer}>
         <Text style={styles.stepTitle}>{titles[currentStep]}</Text>
@@ -2277,46 +2381,52 @@ const handleSelect = (customer) => {
     isVisible,
     onToggle,
     placeholder,
-    renderValue
+    renderValue,
   ) => (
     <View style={styles.dropdownContainer}>
       <TouchableOpacity style={styles.dropdownButton} onPress={onToggle}>
         <View style={styles.dropdownButtonContent}>
-          {renderValue ? renderValue(options.find(opt => opt.value === value)) : (
+          {renderValue ? (
+            renderValue(options.find(opt => opt.value === value))
+          ) : (
             <Text style={styles.dropdownButtonText}>
               {options.find(opt => opt.value === value)?.label || placeholder}
             </Text>
           )}
         </View>
-        <Icon name={isVisible ? "keyboard-arrow-up" : "keyboard-arrow-down"} size={24} color="#6b7280" />
+        <Icon
+          name={isVisible ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+          size={24}
+          color="#6b7280"
+        />
       </TouchableOpacity>
-      
+
       <Modal visible={isVisible} transparent animationType="fade">
-        <TouchableOpacity 
-          style={styles.dropdownOverlay} 
-          activeOpacity={1} 
-          onPress={onToggle}
-        >
+        <TouchableOpacity
+          style={styles.dropdownOverlay}
+          activeOpacity={1}
+          onPress={onToggle}>
           <View style={styles.dropdownMenu}>
-            {options.map((option) => (
+            {options.map(option => (
               <TouchableOpacity
                 key={option.value}
                 style={[
                   styles.dropdownMenuItem,
-                  value === option.value && styles.dropdownMenuItemSelected
+                  value === option.value && styles.dropdownMenuItemSelected,
                 ]}
                 onPress={() => {
                   onSelect(option.value);
                   onToggle();
-                }}
-              >
+                }}>
                 {/* {option.icon && option.color && (
                   <Icon name={option.icon} size={20} color={option.color} style={styles.dropdownMenuItemIcon} />
                 )} */}
-                <Text style={[
-                  styles.dropdownMenuItemText,
-                  value === option.value && styles.dropdownMenuItemTextSelected
-                ]}>
+                <Text
+                  style={[
+                    styles.dropdownMenuItemText,
+                    value === option.value &&
+                      styles.dropdownMenuItemTextSelected,
+                  ]}>
                   {option.label}
                 </Text>
                 {value === option.value && (
@@ -2330,22 +2440,22 @@ const handleSelect = (customer) => {
     </View>
   );
 
-  const renderSuggestions = (
-    suggestions,
-    visible,
-    onSelect
-  ) => {
+  const renderSuggestions = (suggestions, visible, onSelect) => {
     if (!visible || suggestions.length === 0) return null;
 
     return (
       <View style={styles.suggestionsContainer}>
-        {suggestions.map((suggestion) => (
+        {suggestions.map(suggestion => (
           <TouchableOpacity
             key={suggestion.place_id}
             style={styles.suggestionItem}
-            onPress={() => onSelect(suggestion)}
-          >
-            <Icon name="place" size={16} color="#9ca3af" style={styles.suggestionIcon} />
+            onPress={() => onSelect(suggestion)}>
+            <Icon
+              name="place"
+              size={16}
+              color="#9ca3af"
+              style={styles.suggestionIcon}
+            />
             <Text style={styles.suggestionText}>{suggestion.description}</Text>
           </TouchableOpacity>
         ))}
@@ -2364,11 +2474,15 @@ const handleSelect = (customer) => {
 
         <View style={styles.formGroup}>
           <Text style={styles.formLabel}>Job Title *</Text>
-          <View style={[styles.inputContainer, validationErrors.title && styles.inputContainerError]}>
+          <View
+            style={[
+              styles.inputContainer,
+              validationErrors.title && styles.inputContainerError,
+            ]}>
             <TextInput
               style={styles.formInput}
               value={formData.title}
-              onChangeText={(text) => updateFormData('title', text)}
+              onChangeText={text => updateFormData('title', text)}
               placeholder="Enter job title"
               placeholderTextColor="#9ca3af"
             />
@@ -2383,11 +2497,15 @@ const handleSelect = (customer) => {
 
         <View style={styles.formGroup}>
           <Text style={styles.formLabel}>Job Description *</Text>
-          <View style={[styles.inputContainer, validationErrors.description && styles.inputContainerError]}>
+          <View
+            style={[
+              styles.inputContainer,
+              validationErrors.description && styles.inputContainerError,
+            ]}>
             <TextInput
               style={[styles.formInput, styles.textArea]}
               value={formData.description}
-              onChangeText={(text) => updateFormData('description', text)}
+              onChangeText={text => updateFormData('description', text)}
               placeholder="Describe the work to be performed"
               placeholderTextColor="#9ca3af"
               multiline
@@ -2398,7 +2516,9 @@ const handleSelect = (customer) => {
           {validationErrors.description && (
             <View style={styles.errorContainer}>
               <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>{validationErrors.description}</Text>
+              <Text style={styles.errorText}>
+                {validationErrors.description}
+              </Text>
             </View>
           )}
         </View>
@@ -2408,16 +2528,17 @@ const handleSelect = (customer) => {
           {renderDropdown(
             formData.priority,
             priorityOptions,
-            (value) => updateFormData('priority', value),
+            value => updateFormData('priority', value),
             showPriorityDropdown,
             () => setShowPriorityDropdown(!showPriorityDropdown),
             'Select priority',
-            (option) => option && (
-              <View style={styles.priorityDisplayContainer}>
-                {/* <Icon name={option.icon} size={20} color={option.color} /> */}
-                <Text style={styles.dropdownButtonText}>{option.label}</Text>
-              </View>
-            )
+            option =>
+              option && (
+                <View style={styles.priorityDisplayContainer}>
+                  {/* <Icon name={option.icon} size={20} color={option.color} /> */}
+                  <Text style={styles.dropdownButtonText}>{option.label}</Text>
+                </View>
+              ),
           )}
         </View>
       </View>
@@ -2428,85 +2549,81 @@ const handleSelect = (customer) => {
           <Icon name="person" size={24} color="#3B82F6" />
           <Text style={styles.sectionTitle}>Customer Information</Text>
         </View>
-
-        {/* <View style={styles.formGroup}>
+        <View style={styles.formGroup}>
           <Text style={styles.formLabel}>Customer Name *</Text>
-          <View style={[styles.inputContainer, validationErrors.customerName && styles.inputContainerError]}>
-            <TextInput
-              style={styles.formInput}
-              value={formData.customerName}
-              onChangeText={(text) => updateFormData('customerName', text)}
-              placeholder="Enter customer name"
-              placeholderTextColor="#9ca3af"
-            />
-          </View>
+
+          {/* Touchable field instead of TextInput */}
+          <TouchableOpacity
+            style={[
+              styles.inputContainer,
+              validationErrors.customerName && styles.inputContainerError,
+            ]}
+            onPress={() => setModalVisible(true)}>
+            <Text
+              style={{
+                color: formData.customerName ? '#000' : '#9ca3af',
+                paddingLeft: 20,
+              }}>
+              {formData.customerName || 'Select Customer'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Validation Error */}
           {validationErrors.customerName && (
             <View style={styles.errorContainer}>
               <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>{validationErrors.customerName}</Text>
+              <Text style={styles.errorText}>
+                {validationErrors.customerName}
+              </Text>
             </View>
           )}
-        </View> */}
-         <View style={styles.formGroup}>
-      <Text style={styles.formLabel}>Customer Name *</Text>
 
-      {/* Touchable field instead of TextInput */}
-      <TouchableOpacity 
-        style={[
-          styles.inputContainer, 
-          validationErrors.customerName && styles.inputContainerError
-        ]}
-        onPress={() => setModalVisible(true)}
-      >
-        <Text style={{ color: formData.customerName ? "#000" : "#9ca3af" , paddingLeft:20}}>
-          {formData.customerName || "Select Customer"}
-        </Text>
-      </TouchableOpacity>
-
-      {/* Validation Error */}
-      {validationErrors.customerName && (
-        <View style={styles.errorContainer}>
-          <Icon name="error" size={16} color="#ef4444" />
-          <Text style={styles.errorText}>{validationErrors.customerName}</Text>
-        </View>
-      )}
-
-      {/* Modal with FlatList */}
-      <Modal visible={modalVisible} transparent={true} animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Select Customer</Text>
-            <FlatList
-              data={customers}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity 
-                  style={styles.customerItem} 
-                  onPress={() => handleSelect(item)}
-                >
-                  <Text style={styles.customerText}>{item.name}</Text>
+          {/* Modal with FlatList */}
+          <Modal
+            visible={modalVisible}
+            transparent={true}
+            animationType="slide">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalBox}>
+                <Text style={styles.modalTitle}>Select Customer</Text>
+                <FlatList
+                  data={customers}
+                  keyExtractor={item => item.id}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      style={styles.customerItem}
+                      onPress={() => handleSelect(item)}>
+                      <Text style={styles.customerText}>{item.name}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+                <TouchableOpacity
+                  style={styles.closeBtn}
+                  onPress={() => setModalVisible(false)}>
+                  <Text style={styles.closeBtnText}>Cancel</Text>
                 </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity 
-              style={styles.closeBtn} 
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeBtnText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
+              </View>
+            </View>
+          </Modal>
         </View>
-      </Modal>
-    </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.formLabel}>Phone Number *</Text>
-          <View style={[styles.inputContainer, validationErrors.customerPhone && styles.inputContainerError]}>
-            <Icon name="phone" size={20} color="#9ca3af" style={styles.inputIcon} />
+          <View
+            style={[
+              styles.inputContainer,
+              validationErrors.customerPhone && styles.inputContainerError,
+            ]}>
+            <Icon
+              name="phone"
+              size={20}
+              color="#9ca3af"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={[styles.formInput, styles.inputWithIcon]}
               value={formData.customerPhone}
-              onChangeText={(text) => updateFormData('customerPhone', text)}
+              onChangeText={text => updateFormData('customerPhone', text)}
               placeholder="(555) 123-4567"
               placeholderTextColor="#9ca3af"
               keyboardType="phone-pad"
@@ -2515,19 +2632,30 @@ const handleSelect = (customer) => {
           {validationErrors.customerPhone && (
             <View style={styles.errorContainer}>
               <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>{validationErrors.customerPhone}</Text>
+              <Text style={styles.errorText}>
+                {validationErrors.customerPhone}
+              </Text>
             </View>
           )}
         </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.formLabel}>Email Address</Text>
-          <View style={[styles.inputContainer, validationErrors.customerEmail && styles.inputContainerError]}>
-            <Icon name="email" size={20} color="#9ca3af" style={styles.inputIcon} />
+          <View
+            style={[
+              styles.inputContainer,
+              validationErrors.customerEmail && styles.inputContainerError,
+            ]}>
+            <Icon
+              name="email"
+              size={20}
+              color="#9ca3af"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={[styles.formInput, styles.inputWithIcon]}
               value={formData.customerEmail}
-              onChangeText={(text) => updateFormData('customerEmail', text)}
+              onChangeText={text => updateFormData('customerEmail', text)}
               placeholder="customer@email.com"
               placeholderTextColor="#9ca3af"
               keyboardType="email-address"
@@ -2537,19 +2665,30 @@ const handleSelect = (customer) => {
           {validationErrors.customerEmail && (
             <View style={styles.errorContainer}>
               <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>{validationErrors.customerEmail}</Text>
+              <Text style={styles.errorText}>
+                {validationErrors.customerEmail}
+              </Text>
             </View>
           )}
         </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.formLabel}>Address *</Text>
-          <View style={[styles.inputContainer, validationErrors.customerAddress && styles.inputContainerError]}>
-            <Icon name="place" size={20} color="#9ca3af" style={styles.inputIcon} />
+          <View
+            style={[
+              styles.inputContainer,
+              validationErrors.customerAddress && styles.inputContainerError,
+            ]}>
+            <Icon
+              name="place"
+              size={20}
+              color="#9ca3af"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={[styles.formInput, styles.inputWithIcon]}
               value={formData.customerAddress}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 updateFormData('customerAddress', text);
                 setShowLocationSuggestions(true);
               }}
@@ -2561,27 +2700,38 @@ const handleSelect = (customer) => {
           {renderSuggestions(
             locationSuggestions,
             showLocationSuggestions,
-            (suggestion) => {
+            suggestion => {
               updateFormData('customerAddress', suggestion.description);
               setShowLocationSuggestions(false);
-            }
+            },
           )}
           {validationErrors.customerAddress && (
             <View style={styles.errorContainer}>
               <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>{validationErrors.customerAddress}</Text>
+              <Text style={styles.errorText}>
+                {validationErrors.customerAddress}
+              </Text>
             </View>
           )}
         </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.formLabel}>City *</Text>
-          <View style={[styles.inputContainer, validationErrors.city && styles.inputContainerError]}>
-            <Icon name="location-city" size={20} color="#9ca3af" style={styles.inputIcon} />
+          <View
+            style={[
+              styles.inputContainer,
+              validationErrors.city && styles.inputContainerError,
+            ]}>
+            <Icon
+              name="location-city"
+              size={20}
+              color="#9ca3af"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={[styles.formInput, styles.inputWithIcon]}
               value={formData.city}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 updateFormData('city', text);
                 setShowCitySuggestions(true);
               }}
@@ -2593,10 +2743,10 @@ const handleSelect = (customer) => {
           {renderSuggestions(
             citySuggestions,
             showCitySuggestions,
-            (suggestion) => {
+            suggestion => {
               updateFormData('city', suggestion.description);
               setShowCitySuggestions(false);
-            }
+            },
           )}
           {validationErrors.city && (
             <View style={styles.errorContainer}>
@@ -2615,11 +2765,13 @@ const handleSelect = (customer) => {
             <Text style={styles.sectionTitle}>Billing Address</Text>
           </View>
           <View style={styles.toggleContainer}>
-            <Text style={styles.toggleLabel}>Same as Customer</Text>
+            <Text style={[styles.toggleLabel, {fontSize: 13}]}>
+              Same as Customer
+            </Text>
             <Switch
               value={formData.sameAsCustomer}
-              onValueChange={(value) => updateFormData('sameAsCustomer', value)}
-              trackColor={{ false: '#e5e7eb', true: '#3B82F6' }}
+              onValueChange={value => updateFormData('sameAsCustomer', value)}
+              trackColor={{false: '#e5e7eb', true: '#3B82F6'}}
               thumbColor={formData.sameAsCustomer ? '#ffffff' : '#f4f3f4'}
               ios_backgroundColor="#e5e7eb"
             />
@@ -2630,11 +2782,15 @@ const handleSelect = (customer) => {
           <>
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Billing Contact Name *</Text>
-              <View style={[styles.inputContainer, validationErrors.billingName && styles.inputContainerError]}>
+              <View
+                style={[
+                  styles.inputContainer,
+                  validationErrors.billingName && styles.inputContainerError,
+                ]}>
                 <TextInput
                   style={styles.formInput}
                   value={formData.billingName}
-                  onChangeText={(text) => updateFormData('billingName', text)}
+                  onChangeText={text => updateFormData('billingName', text)}
                   placeholder="Enter billing contact name"
                   placeholderTextColor="#9ca3af"
                 />
@@ -2642,19 +2798,30 @@ const handleSelect = (customer) => {
               {validationErrors.billingName && (
                 <View style={styles.errorContainer}>
                   <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>{validationErrors.billingName}</Text>
+                  <Text style={styles.errorText}>
+                    {validationErrors.billingName}
+                  </Text>
                 </View>
               )}
             </View>
 
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Billing Phone Number *</Text>
-              <View style={[styles.inputContainer, validationErrors.billingPhone && styles.inputContainerError]}>
-                <Icon name="phone" size={20} color="#9ca3af" style={styles.inputIcon} />
+              <View
+                style={[
+                  styles.inputContainer,
+                  validationErrors.billingPhone && styles.inputContainerError,
+                ]}>
+                <Icon
+                  name="phone"
+                  size={20}
+                  color="#9ca3af"
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={[styles.formInput, styles.inputWithIcon]}
                   value={formData.billingPhone}
-                  onChangeText={(text) => updateFormData('billingPhone', text)}
+                  onChangeText={text => updateFormData('billingPhone', text)}
                   placeholder="(555) 123-4567"
                   placeholderTextColor="#9ca3af"
                   keyboardType="phone-pad"
@@ -2663,19 +2830,30 @@ const handleSelect = (customer) => {
               {validationErrors.billingPhone && (
                 <View style={styles.errorContainer}>
                   <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>{validationErrors.billingPhone}</Text>
+                  <Text style={styles.errorText}>
+                    {validationErrors.billingPhone}
+                  </Text>
                 </View>
               )}
             </View>
 
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Billing Email Address</Text>
-              <View style={[styles.inputContainer, validationErrors.billingEmail && styles.inputContainerError]}>
-                <Icon name="email" size={20} color="#9ca3af" style={styles.inputIcon} />
+              <View
+                style={[
+                  styles.inputContainer,
+                  validationErrors.billingEmail && styles.inputContainerError,
+                ]}>
+                <Icon
+                  name="email"
+                  size={20}
+                  color="#9ca3af"
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={[styles.formInput, styles.inputWithIcon]}
                   value={formData.billingEmail}
-                  onChangeText={(text) => updateFormData('billingEmail', text)}
+                  onChangeText={text => updateFormData('billingEmail', text)}
                   placeholder="billing@company.com"
                   placeholderTextColor="#9ca3af"
                   keyboardType="email-address"
@@ -2685,19 +2863,30 @@ const handleSelect = (customer) => {
               {validationErrors.billingEmail && (
                 <View style={styles.errorContainer}>
                   <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>{validationErrors.billingEmail}</Text>
+                  <Text style={styles.errorText}>
+                    {validationErrors.billingEmail}
+                  </Text>
                 </View>
               )}
             </View>
 
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Billing Address *</Text>
-              <View style={[styles.inputContainer, validationErrors.billingAddress && styles.inputContainerError]}>
-                <Icon name="place" size={20} color="#9ca3af" style={styles.inputIcon} />
+              <View
+                style={[
+                  styles.inputContainer,
+                  validationErrors.billingAddress && styles.inputContainerError,
+                ]}>
+                <Icon
+                  name="place"
+                  size={20}
+                  color="#9ca3af"
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={[styles.formInput, styles.inputWithIcon]}
                   value={formData.billingAddress}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     updateFormData('billingAddress', text);
                     setShowBillingLocationSuggestions(true);
                   }}
@@ -2709,27 +2898,38 @@ const handleSelect = (customer) => {
               {renderSuggestions(
                 billingLocationSuggestions,
                 showBillingLocationSuggestions,
-                (suggestion) => {
+                suggestion => {
                   updateFormData('billingAddress', suggestion.description);
                   setShowBillingLocationSuggestions(false);
-                }
+                },
               )}
               {validationErrors.billingAddress && (
                 <View style={styles.errorContainer}>
                   <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>{validationErrors.billingAddress}</Text>
+                  <Text style={styles.errorText}>
+                    {validationErrors.billingAddress}
+                  </Text>
                 </View>
               )}
             </View>
 
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Billing City *</Text>
-              <View style={[styles.inputContainer, validationErrors.billingCity && styles.inputContainerError]}>
-                <Icon name="location-city" size={20} color="#9ca3af" style={styles.inputIcon} />
+              <View
+                style={[
+                  styles.inputContainer,
+                  validationErrors.billingCity && styles.inputContainerError,
+                ]}>
+                <Icon
+                  name="location-city"
+                  size={20}
+                  color="#9ca3af"
+                  style={styles.inputIcon}
+                />
                 <TextInput
                   style={[styles.formInput, styles.inputWithIcon]}
                   value={formData.billingCity}
-                  onChangeText={(text) => {
+                  onChangeText={text => {
                     updateFormData('billingCity', text);
                     setShowBillingCitySuggestions(true);
                   }}
@@ -2741,15 +2941,17 @@ const handleSelect = (customer) => {
               {renderSuggestions(
                 billingCitySuggestions,
                 showBillingCitySuggestions,
-                (suggestion) => {
+                suggestion => {
                   updateFormData('billingCity', suggestion.description);
                   setShowBillingCitySuggestions(false);
-                }
+                },
               )}
               {validationErrors.billingCity && (
                 <View style={styles.errorContainer}>
                   <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>{validationErrors.billingCity}</Text>
+                  <Text style={styles.errorText}>
+                    {validationErrors.billingCity}
+                  </Text>
                 </View>
               )}
             </View>
@@ -2771,63 +2973,104 @@ const handleSelect = (customer) => {
           <Text style={styles.sectionTitle}>Scheduling</Text>
         </View>
 
+        {/* Scheduled Date */}
         <View style={styles.dateTimeRow}>
           <View style={styles.dateTimeItem}>
-            <Text style={styles.formLabel}>Scheduled Date *</Text>
-            <View style={[styles.inputContainer, validationErrors.scheduledDate && styles.inputContainerError]}>
-              <Icon name="event" size={20} color="#9ca3af" style={styles.inputIcon} />
-              <TextInput
-                style={[styles.formInput, styles.inputWithIcon]}
-                value={formData.scheduledDate}
-                onChangeText={(text) => updateFormData('scheduledDate', text)}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#9ca3af"
+            <Text style={styles.formLabel}>Scheduled Date</Text>
+            <TouchableOpacity
+              style={[
+                styles.inputContainer,
+                validationErrors.scheduledDate && styles.inputContainerError,
+              ]}
+              onPress={() => {
+                setShowDatePicker(true),
+                  setShowTimePicker(false),
+                  setShowDueDatePicker(false);
+              }}>
+              <Icon
+                name="event"
+                size={20}
+                color="#9ca3af"
+                style={styles.inputIcon}
               />
-            </View>
-            {validationErrors.scheduledDate && (
-              <View style={styles.errorContainer}>
-                <Icon name="error" size={16} color="#ef4444" />
-                <Text style={styles.errorText}>{validationErrors.scheduledDate}</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.dateTimeItem}>
-            <Text style={styles.formLabel}>Time *</Text>
-            {renderDropdown(
-              formData.scheduledTime,
-              timeSlots.map(time => ({ value: time, label: time })),
-              (value) => updateFormData('scheduledTime', value),
-              showTimeDropdown,
-              () => setShowTimeDropdown(!showTimeDropdown),
-              'Select time'
-            )}
-            {validationErrors.scheduledTime && (
-              <View style={styles.errorContainer}>
-                <Icon name="error" size={16} color="#ef4444" />
-                <Text style={styles.errorText}>{validationErrors.scheduledTime}</Text>
-              </View>
+              <Text style={[styles.formInput, styles.inputWithIcon]}>
+                {formData.scheduledDate || 'Select Date'}
+              </Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event, date) =>
+                  onChange(event, date, 'scheduledDate')
+                }
+              />
             )}
           </View>
         </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Due Date *</Text>
-          <View style={[styles.inputContainer, validationErrors.dueDate && styles.inputContainerError]}>
-            <Icon name="event" size={20} color="#9ca3af" style={styles.inputIcon} />
-            <TextInput
-              style={[styles.formInput, styles.inputWithIcon]}
-              value={formData.dueDate}
-              onChangeText={(text) => updateFormData('dueDate', text)}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor="#9ca3af"
+        {/* Scheduled Time */}
+        <View style={[styles.dateTimeItem, {marginVertical: 10}]}>
+          <Text style={styles.formLabel}>Time</Text>
+          <TouchableOpacity
+            style={[
+              styles.inputContainer,
+              validationErrors.scheduledTime && styles.inputContainerError,
+            ]}
+            onPress={() => {
+              setShowTimePicker(true),
+                setShowDatePicker(false),
+                setShowDueDatePicker(false);
+            }}>
+            <Icon
+              name="access-time"
+              size={20}
+              color="#9ca3af"
+              style={styles.inputIcon}
             />
-          </View>
-          {validationErrors.dueDate && (
-            <View style={styles.errorContainer}>
-              <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>{validationErrors.dueDate}</Text>
-            </View>
+            <Text style={[styles.formInput, styles.inputWithIcon]}>
+              {formData.scheduledTime || 'Select Time'}
+            </Text>
+          </TouchableOpacity>
+          {showTimePicker && (
+            <DateTimePicker
+              value={new Date()}
+              mode="time"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, date) => onChange(event, date, 'scheduledTime')}
+            />
+          )}
+        </View>
+        {/* Due Date */}
+        <View style={styles.formGroup}>
+          <Text style={styles.formLabel}>Due Date</Text>
+          <TouchableOpacity
+            style={[
+              styles.inputContainer,
+              validationErrors.dueDate && styles.inputContainerError,
+            ]}
+            onPress={() => {
+              setShowDueDatePicker(true),
+                setShowTimePicker(false),
+                setShowDatePicker(false);
+            }}>
+            <Icon
+              name="event"
+              size={20}
+              color="#9ca3af"
+              style={styles.inputIcon}
+            />
+            <Text style={[styles.formInput, styles.inputWithIcon]}>
+              {formData.dueDate || 'Select Due Date'}
+            </Text>
+          </TouchableOpacity>
+          {showDueDatePicker && (
+            <DateTimePicker
+              value={new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={(event, date) => onChange(event, date, 'dueDate')}
+            />
           )}
         </View>
       </View>
@@ -2845,23 +3088,30 @@ const handleSelect = (customer) => {
 
         <Text style={styles.formLabel}>Assigned Team Members *</Text>
         <View style={styles.teamMembersList}>
-          {teamMembers.map((member) => (
+          {teamMembers.map(member => (
             <TouchableOpacity
               key={member.id}
               style={styles.teamMemberItem}
               onPress={() => {
                 const isSelected = formData.assignedTo.includes(member.id);
                 if (isSelected) {
-                  updateFormData('assignedTo', formData.assignedTo.filter(id => id !== member.id));
+                  updateFormData(
+                    'assignedTo',
+                    formData.assignedTo.filter(id => id !== member.id),
+                  );
                 } else {
-                  updateFormData('assignedTo', [...formData.assignedTo, member.id]);
+                  updateFormData('assignedTo', [
+                    ...formData.assignedTo,
+                    member.id,
+                  ]);
                 }
-              }}
-            >
-              <View style={[
-                styles.checkbox,
-                formData.assignedTo.includes(member.id) && styles.checkboxChecked
-              ]}>
+              }}>
+              <View
+                style={[
+                  styles.checkbox,
+                  formData.assignedTo.includes(member.id) &&
+                    styles.checkboxChecked,
+                ]}>
                 {formData.assignedTo.includes(member.id) && (
                   <Icon name="check" size={16} color="white" />
                 )}
@@ -2895,12 +3145,23 @@ const handleSelect = (customer) => {
 
         <View style={styles.formGroup}>
           <Text style={styles.formLabel}>Estimated Hours *</Text>
-          <View style={[styles.inputContainer, validationErrors.estimatedHours && styles.inputContainerError]}>
-            <Icon name="access-time" size={20} color="#9ca3af" style={styles.inputIcon} />
+          <View
+            style={[
+              styles.inputContainer,
+              validationErrors.estimatedHours && styles.inputContainerError,
+            ]}>
+            <Icon
+              name="access-time"
+              size={20}
+              color="#9ca3af"
+              style={styles.inputIcon}
+            />
             <TextInput
               style={[styles.formInput, styles.inputWithIcon]}
               value={formData.estimatedHours.toString()}
-              onChangeText={(text) => updateFormData('estimatedHours', parseFloat(text) || 0)}
+              onChangeText={text =>
+                updateFormData('estimatedHours', parseFloat(text) || 0)
+              }
               placeholder="8"
               placeholderTextColor="#9ca3af"
               keyboardType="numeric"
@@ -2909,10 +3170,14 @@ const handleSelect = (customer) => {
           {validationErrors.estimatedHours && (
             <View style={styles.errorContainer}>
               <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>{validationErrors.estimatedHours}</Text>
+              <Text style={styles.errorText}>
+                {validationErrors.estimatedHours}
+              </Text>
             </View>
           )}
-          <Text style={styles.helpText}>Estimated total hours for completion</Text>
+          <Text style={styles.helpText}>
+            Estimated total hours for completion
+          </Text>
         </View>
       </View>
 
@@ -2929,7 +3194,7 @@ const handleSelect = (customer) => {
             <TextInput
               style={[styles.formInput, styles.textArea]}
               value={formData.notes}
-              onChangeText={(text) => updateFormData('notes', text)}
+              onChangeText={text => updateFormData('notes', text)}
               placeholder="Any special instructions, safety requirements, or additional notes..."
               placeholderTextColor="#9ca3af"
               multiline
@@ -2943,27 +3208,35 @@ const handleSelect = (customer) => {
   );
 
   const renderReviewStep = () => {
-    const assignedMembers = teamMembers.filter(member => formData.assignedTo.includes(member.id));
-    const billingInfo = formData.sameAsCustomer ? {
-      name: formData.customerName,
-      phone: formData.customerPhone,
-      email: formData.customerEmail,
-      address: formData.customerAddress,
-      city: formData.city
-    } : {
-      name: formData.billingName,
-      phone: formData.billingPhone,  
-      email: formData.billingEmail,
-      address: formData.billingAddress,
-      city: formData.billingCity
-    };
+    const assignedMembers = teamMembers.filter(member =>
+      formData.assignedTo.includes(member.id),
+    );
+    const billingInfo = formData.sameAsCustomer
+      ? {
+          name: formData.customerName,
+          phone: formData.customerPhone,
+          email: formData.customerEmail,
+          address: formData.customerAddress,
+          city: formData.city,
+        }
+      : {
+          name: formData.billingName,
+          phone: formData.billingPhone,
+          email: formData.billingEmail,
+          address: formData.billingAddress,
+          city: formData.billingCity,
+        };
 
     return (
-      <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.stepContent}
+        showsVerticalScrollIndicator={false}>
         {validationErrors.general && (
           <View style={styles.generalErrorContainer}>
             <Icon name="error" size={24} color="#ef4444" />
-            <Text style={styles.generalErrorText}>{validationErrors.general}</Text>
+            <Text style={styles.generalErrorText}>
+              {validationErrors.general}
+            </Text>
           </View>
         )}
 
@@ -2976,8 +3249,7 @@ const handleSelect = (customer) => {
             </View>
             <TouchableOpacity
               style={styles.editButton}
-              onPress={() => setCurrentStep(1)}
-            >
+              onPress={() => setCurrentStep(1)}>
               <Icon name="edit" size={16} color="#6b7280" />
               <Text style={styles.editButtonText}>Edit</Text>
             </TouchableOpacity>
@@ -2986,15 +3258,23 @@ const handleSelect = (customer) => {
           <View style={styles.reviewContent}>
             <Text style={styles.reviewTitle}>{formData.title}</Text>
             <Text style={styles.reviewDescription}>{formData.description}</Text>
-            
+
             <View style={styles.priorityBadge}>
-              <Icon 
-                name={priorityOptions.find(p => p.value === formData.priority)?.icon || 'trending-flat'} 
-                size={16} 
-                color={priorityOptions.find(p => p.value === formData.priority)?.color || '#f59e0b'} 
+              <Icon
+                name={
+                  priorityOptions.find(p => p.value === formData.priority)
+                    ?.icon || 'trending-flat'
+                }
+                size={16}
+                color={
+                  priorityOptions.find(p => p.value === formData.priority)
+                    ?.color || '#f59e0b'
+                }
               />
               <Text style={styles.priorityBadgeText}>
-                {formData.priority.charAt(0).toUpperCase() + formData.priority.slice(1)} Priority
+                {formData.priority.charAt(0).toUpperCase() +
+                  formData.priority.slice(1)}{' '}
+                Priority
               </Text>
             </View>
 
@@ -3004,24 +3284,34 @@ const handleSelect = (customer) => {
                 <Text style={styles.reviewValue}>{formData.customerName}</Text>
                 <Text style={styles.reviewValue}>{formData.customerPhone}</Text>
                 {formData.customerEmail && (
-                  <Text style={styles.reviewValue}>{formData.customerEmail}</Text>
+                  <Text style={styles.reviewValue}>
+                    {formData.customerEmail}
+                  </Text>
                 )}
-                <Text style={styles.reviewValue}>{formData.customerAddress}</Text>
+                <Text style={styles.reviewValue}>
+                  {formData.customerAddress}
+                </Text>
                 <Text style={styles.reviewValue}>{formData.city}</Text>
               </View>
 
               <View style={styles.reviewSection}>
                 <Text style={styles.reviewLabel}>Billing Address</Text>
                 {formData.sameAsCustomer ? (
-                  <Text style={styles.sameAddressText}>Same as customer address</Text>
+                  <Text style={styles.sameAddressText}>
+                    Same as customer address
+                  </Text>
                 ) : (
                   <>
                     <Text style={styles.reviewValue}>{billingInfo.name}</Text>
                     <Text style={styles.reviewValue}>{billingInfo.phone}</Text>
                     {billingInfo.email && (
-                      <Text style={styles.reviewValue}>{billingInfo.email}</Text>
+                      <Text style={styles.reviewValue}>
+                        {billingInfo.email}
+                      </Text>
                     )}
-                    <Text style={styles.reviewValue}>{billingInfo.address}</Text>
+                    <Text style={styles.reviewValue}>
+                      {billingInfo.address}
+                    </Text>
                     <Text style={styles.reviewValue}>{billingInfo.city}</Text>
                   </>
                 )}
@@ -3032,12 +3322,26 @@ const handleSelect = (customer) => {
               <View style={styles.reviewSection}>
                 <Text style={styles.reviewLabel}>Scheduled</Text>
                 <Text style={styles.reviewValue}>
-                  {new Date(formData.scheduledDate).toLocaleDateString()} at {formData.scheduledTime}
+                  {new Date(formData.scheduledDate).toLocaleDateString(
+                    'en-US',
+                    {
+                      month: 'numeric', // "August"
+                      day: 'numeric',
+                      year: 'numeric',
+                    },
+                  )}{' '}
+                  at {formData.scheduledTime}
                 </Text>
               </View>
               <View style={styles.reviewSection}>
                 <Text style={styles.reviewLabel}>Due Date</Text>
-                <Text style={styles.reviewValue}>{new Date(formData.dueDate).toLocaleDateString()}</Text>
+                <Text style={styles.reviewValue}>
+                  {new Date(formData.dueDate).toLocaleDateString('en-US', {
+                    month: 'numeric', // "August"
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </Text>
               </View>
             </View>
           </View>
@@ -3052,8 +3356,7 @@ const handleSelect = (customer) => {
             </View>
             <TouchableOpacity
               style={styles.editButton}
-              onPress={() => setCurrentStep(2)}
-            >
+              onPress={() => setCurrentStep(2)}>
               <Icon name="edit" size={16} color="#6b7280" />
               <Text style={styles.editButtonText}>Edit</Text>
             </TouchableOpacity>
@@ -3061,7 +3364,9 @@ const handleSelect = (customer) => {
 
           <View style={styles.reviewContent}>
             <View style={styles.teamSummary}>
-              <Text style={styles.reviewLabel}>Assigned Team ({assignedMembers.length})</Text>
+              <Text style={styles.reviewLabel}>
+                Assigned Team ({assignedMembers.length})
+              </Text>
               {assignedMembers.map(member => (
                 <View key={member.id} style={styles.memberSummary}>
                   <Text style={styles.memberSummaryName}>{member.name}</Text>
@@ -3072,7 +3377,9 @@ const handleSelect = (customer) => {
 
             <View style={styles.timeSummary}>
               <Text style={styles.reviewLabel}>Estimated Time</Text>
-              <Text style={styles.reviewValue}>{formData.estimatedHours} hours</Text>
+              <Text style={styles.reviewValue}>
+                {formData.estimatedHours} hours
+              </Text>
             </View>
 
             {formData.notes && (
@@ -3090,28 +3397,28 @@ const handleSelect = (customer) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+          onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        
+
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Create New Job</Text>
           <Text style={styles.headerSubtitle}>JDP Electrics</Text>
         </View>
-        
+
         <View style={styles.headerSpacer} />
       </View>
-
+      {/* <KeyboardAvoidingView
+        style={{height: heightPercentageToDP(86), backgroundColor:"red"}}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}> */}
       <View style={styles.content}>
         {renderProgressIndicator()}
         {renderStepTitle()}
-
         {currentStep === 1 && renderJobDetailsStep()}
         {currentStep === 2 && renderResourcesStep()}
         {currentStep === 3 && renderReviewStep()}
@@ -3119,10 +3426,13 @@ const handleSelect = (customer) => {
         {/* Navigation Buttons */}
         <View style={styles.navigationButtons}>
           <TouchableOpacity
-            style={[styles.navButton, styles.prevButton, currentStep === 1 && styles.disabledButton]}
+            style={[
+              styles.navButton,
+              styles.prevButton,
+              currentStep === 1 && styles.disabledButton,
+            ]}
             onPress={prevStep}
-            disabled={currentStep === 1}
-          >
+            disabled={currentStep === 1}>
             <Icon name="chevron-left" size={20} color="#6b7280" />
             <Text style={styles.prevButtonText}>Previous</Text>
           </TouchableOpacity>
@@ -3130,8 +3440,7 @@ const handleSelect = (customer) => {
           {currentStep < 3 ? (
             <TouchableOpacity
               style={[styles.navButton, styles.nextButton]}
-              onPress={nextStep}
-            >
+              onPress={nextStep}>
               <Text style={styles.nextButtonText}>Next</Text>
               <Icon name="chevron-right" size={20} color="white" />
             </TouchableOpacity>
@@ -3139,8 +3448,7 @@ const handleSelect = (customer) => {
             <TouchableOpacity
               style={[styles.navButton, styles.submitButton]}
               onPress={submitJob}
-              disabled={isSubmitting}
-            >
+              disabled={isSubmitting}>
               <Icon name="check" size={20} color="white" />
               <Text style={styles.submitButtonText}>
                 {isSubmitting ? 'Creating...' : 'Create Job'}
@@ -3166,7 +3474,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
@@ -3199,11 +3507,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingVertical: 10,
   },
   progressStep: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
     borderRadius: 20,
     backgroundColor: 'white',
     borderWidth: 2,
@@ -3239,10 +3547,10 @@ const styles = StyleSheet.create({
   stepTitleContainer: {
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingBottom: 15,
   },
   stepTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
     color: '#111827',
     marginBottom: 4,
@@ -3261,7 +3569,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 6,
@@ -3389,11 +3697,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     maxHeight: 300,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 8,
-    width:widthPercentageToDP(60)
+    width: widthPercentageToDP(60),
   },
   dropdownMenuItem: {
     flexDirection: 'row',
@@ -3428,7 +3736,7 @@ const styles = StyleSheet.create({
     borderColor: '#d1d5db',
     borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
@@ -3646,9 +3954,7 @@ const styles = StyleSheet.create({
   navigationButtons: {
     flexDirection: 'row',
     gap: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    paddingBottom: 32,
+    padding: 16,
   },
   navButton: {
     flex: 1,
@@ -3690,19 +3996,23 @@ const styles = StyleSheet.create({
   },
 
   modalOverlay: {
-    flex: 1, backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center", alignItems: "center"
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalBox: {
-    width: "80%", backgroundColor: "#fff", borderRadius: 10,
-    padding: 15, maxHeight: "70%"
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    maxHeight: '70%',
   },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 10 },
-  customerItem: { padding: 12, borderBottomWidth: 1, borderColor: "#ddd" },
-  customerText: { fontSize: 16 },
-  closeBtn: { marginTop: 10, alignSelf: "flex-end" },
-  closeBtnText: { color: "#ef4444", fontSize: 16 }
-
+  modalTitle: {fontSize: 18, fontWeight: 'bold', marginBottom: 10},
+  customerItem: {padding: 12, borderBottomWidth: 1, borderColor: '#ddd'},
+  customerText: {fontSize: 16},
+  closeBtn: {marginTop: 10, alignSelf: 'flex-end'},
+  closeBtnText: {color: '#ef4444', fontSize: 16},
 });
 
 export default CreateJobScreen;

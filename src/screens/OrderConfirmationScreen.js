@@ -231,8 +231,21 @@ const OrderConfirmationScreen = ({
         {/* Order Summary Card */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Icon name="receipt" size={20} color={Colors.primary} />
-            <Text style={styles.cardTitle}>Order Summary</Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: Spacing.sm,
+                paddingBottom: Spacing.md,
+              }}>
+              <Icon name="receipt" size={20} color={Colors.primary} />
+              <Text style={styles.cardTitle}>Order Summary</Text>
+            </View>
+
+            <View style={styles.statusBadge}>
+              <Icon name="check-circle" size={16} color={Colors.successDark} />
+              <Text style={styles.statusText}>Confirmed</Text>
+            </View>
           </View>
 
           <View style={styles.cardContent}>
@@ -253,11 +266,6 @@ const OrderConfirmationScreen = ({
                   Quote on Request
                 </Text>
               </View>
-            </View>
-
-            <View style={styles.statusBadge}>
-              <Icon name="check-circle" size={16} color={Colors.successDark} />
-              <Text style={styles.statusText}>Confirmed</Text>
             </View>
           </View>
         </View>
@@ -299,7 +307,7 @@ const OrderConfirmationScreen = ({
               </View>
               <View style={styles.deliveryDetailInfo}>
                 <Text style={styles.deliveryDetailLabel}>PO Number</Text>
-                <Text style={styles.deliveryDetailValue}>PO-{orderNumber}</Text>
+                <Text style={styles.deliveryDetailValue}>123 Main Street, Houston, TX 77001</Text>
               </View>
             </View>
 
@@ -314,15 +322,15 @@ const OrderConfirmationScreen = ({
             </View>
 
             <View style={styles.deliveryDetail}>
-              <View style={styles.deliveryDetailIcon}>
+              {/* <View style={styles.deliveryDetailIcon}>
                 <Icon name="place" size={20} color={Colors.textSecondary} />
-              </View>
-              <View style={styles.deliveryDetailInfo}>
+              </View> */}
+              {/* <View style={styles.deliveryDetailInfo}>
                 <Text style={styles.deliveryDetailLabel}>Customer Address</Text>
                 <Text style={styles.deliveryDetailValue}>
                   123 Main Street, Houston, TX 77001
                 </Text>
-              </View>
+              </View> */}
             </View>
 
             <View style={styles.deliveryDetail}>
@@ -480,6 +488,7 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent:"space-between",
     gap: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,

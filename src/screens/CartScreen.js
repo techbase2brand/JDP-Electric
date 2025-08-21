@@ -793,14 +793,14 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
     setCartItems(cartItems.filter(item => item.id !== itemId));
     
     if (item) {
-      Alert.alert('Success', `${item.name} removed from cart`);
+      // Alert.alert('Success', `${item.name} removed from cart`);
     }
   };
 
   const clearCart = () => {
     setCartItems([]);
     setShowClearConfirm(false);
-    Alert.alert('Success', 'Cart cleared');
+    // Alert.alert('Success', 'Cart cleared');
   };
 
   const getTotalItems = () => {
@@ -895,7 +895,7 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
           </Text>
           <TouchableOpacity
             style={styles.browseButton}
-            onPress={() => handleNavigate('OrderProductsScreen')}
+            onPress={() => navigation.navigate('OrderProducts')}
           >
             <Icon name="inventory" size={20} color={Colors.white} />
             <Text style={styles.browseButtonText}>Browse Products</Text>

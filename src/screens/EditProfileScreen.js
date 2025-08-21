@@ -8,6 +8,8 @@ import {
   TextInput,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -172,161 +174,164 @@ const EditProfileScreen = ({navigation}) => {
           </TouchableOpacity>
         </View>
       </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Picture Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              {avatarUri ? (
-                <Image source={{uri: avatarUri}} style={styles.avatarImage} />
-              ) : (
-                <Text style={styles.avatarText}>
-                  {formData.name
-                    .split(' ')
-                    .map(n => n[0])
-                    .join('')}
-                </Text>
-              )}
-            </View>
-            <TouchableOpacity
-              style={styles.changePhotoButton}
-              onPress={handleImagePicker}>
-              <Icon name="camera-alt" size={20} color="#2563eb" />
-              <Text style={styles.changePhotoText}>Change Photo</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Personal Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
-
-          <InputField
-            label="Full Name"
-            value={formData.name}
-            onChangeText={text => setFormData({...formData, name: text})}
-            placeholder="Enter your full name"
-          />
-
-          <InputField
-            label="Email Address"
-            value={formData.email}
-            onChangeText={text => setFormData({...formData, email: text})}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-            editable={false}
-          />
-
-          <InputField
-            label="Phone Number"
-            value={formData.phone}
-            onChangeText={text => setFormData({...formData, phone: text})}
-            placeholder="Enter your phone number"
-            keyboardType="phone-pad"
-            editable={false}
-          />
-        </View>
-
-        {/* Address Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Address Information</Text>
-
-          <InputField
-            label="Street Address"
-            value={formData.address}
-            onChangeText={text => setFormData({...formData, address: text})}
-            placeholder="Enter your address"
-          />
-
-          <View style={styles.row}>
-            <View style={styles.halfWidth}>
-              <InputField
-                label="City"
-                value={formData.city}
-                onChangeText={text => setFormData({...formData, city: text})}
-                placeholder="City"
-              />
-            </View>
-            <View style={styles.halfWidth}>
-              <InputField
-                label="State"
-                value={formData.state}
-                onChangeText={text => setFormData({...formData, state: text})}
-                placeholder="State"
-              />
+      {/* <KeyboardAvoidingView
+        style={{flex: 1}}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}> */}
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Profile Picture Section */}
+          <View style={styles.profileSection}>
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatar}>
+                {avatarUri ? (
+                  <Image source={{uri: avatarUri}} style={styles.avatarImage} />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    {formData.name
+                      .split(' ')
+                      .map(n => n[0])
+                      .join('')}
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity
+                style={styles.changePhotoButton}
+                onPress={handleImagePicker}>
+                <Icon name="camera-alt" size={20} color="#2563eb" />
+                <Text style={styles.changePhotoText}>Change Photo</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
-          <InputField
-            label="ZIP Code"
-            value={formData.zipCode}
-            onChangeText={text => setFormData({...formData, zipCode: text})}
-            placeholder="ZIP Code"
-            keyboardType="numeric"
-          />
-        </View>
+          {/* Personal Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Personal Information</Text>
 
-        {/* Emergency Contact */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Emergency Contact</Text>
+            <InputField
+              label="Full Name"
+              value={formData.name}
+              onChangeText={text => setFormData({...formData, name: text})}
+              placeholder="Enter your full name"
+            />
 
-          <InputField
-            label="Contact Name"
-            value={formData.emergencyContact}
-            onChangeText={text =>
-              setFormData({...formData, emergencyContact: text})
-            }
-            placeholder="Emergency contact name"
-          />
+            <InputField
+              label="Email Address"
+              value={formData.email}
+              onChangeText={text => setFormData({...formData, email: text})}
+              placeholder="Enter your email"
+              keyboardType="email-address"
+              editable={false}
+            />
 
-          <InputField
-            label="Contact Phone"
-            value={formData.emergencyPhone}
-            onChangeText={text =>
-              setFormData({...formData, emergencyPhone: text})
-            }
-            placeholder="Emergency contact phone"
-            keyboardType="phone-pad"
-            editable={false}
-          />
-        </View>
+            <InputField
+              label="Phone Number"
+              value={formData.phone}
+              onChangeText={text => setFormData({...formData, phone: text})}
+              placeholder="Enter your phone number"
+              keyboardType="phone-pad"
+              editable={false}
+            />
+          </View>
 
-        {/* Work Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work Information</Text>
+          {/* Address Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Address Information</Text>
 
-          <InputField
-            label="Employee ID"
-            value={formData.employeeId}
-            placeholder="Employee ID"
-            editable={false}
-          />
+            <InputField
+              label="Street Address"
+              value={formData.address}
+              onChangeText={text => setFormData({...formData, address: text})}
+              placeholder="Enter your address"
+            />
 
-          <InputField
-            label="Department"
-            value={formData.department}
-            placeholder="Department"
-            editable={false}
-          />
+            <View style={styles.row}>
+              <View style={styles.halfWidth}>
+                <InputField
+                  label="City"
+                  value={formData.city}
+                  onChangeText={text => setFormData({...formData, city: text})}
+                  placeholder="City"
+                />
+              </View>
+              <View style={styles.halfWidth}>
+                <InputField
+                  label="State"
+                  value={formData.state}
+                  onChangeText={text => setFormData({...formData, state: text})}
+                  placeholder="State"
+                />
+              </View>
+            </View>
 
-          <InputField
-            label="Position"
-            value={formData.position}
-            placeholder="Position"
-            editable={false}
-          />
+            <InputField
+              label="ZIP Code"
+              value={formData.zipCode}
+              onChangeText={text => setFormData({...formData, zipCode: text})}
+              placeholder="ZIP Code"
+              keyboardType="numeric"
+            />
+          </View>
 
-          <InputField
-            label="Hire Date"
-            value={formData.hireDate}
-            placeholder="Hire Date"
-            editable={false}
-          />
-        </View>
+          {/* Emergency Contact */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Emergency Contact</Text>
 
-        {/* Skills Section */}
-        {/* <View style={styles.section}>
+            <InputField
+              label="Contact Name"
+              value={formData.emergencyContact}
+              onChangeText={text =>
+                setFormData({...formData, emergencyContact: text})
+              }
+              placeholder="Emergency contact name"
+            />
+
+            <InputField
+              label="Contact Phone"
+              value={formData.emergencyPhone}
+              onChangeText={text =>
+                setFormData({...formData, emergencyPhone: text})
+              }
+              placeholder="Emergency contact phone"
+              keyboardType="phone-pad"
+              editable={false}
+            />
+          </View>
+
+          {/* Work Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Work Information</Text>
+
+            <InputField
+              label="Employee ID"
+              value={formData.employeeId}
+              placeholder="Employee ID"
+              editable={false}
+            />
+
+            <InputField
+              label="Department"
+              value={formData.department}
+              placeholder="Department"
+              editable={false}
+            />
+
+            <InputField
+              label="Position"
+              value={formData.position}
+              placeholder="Position"
+              editable={false}
+            />
+
+            <InputField
+              label="Hire Date"
+              value={formData.hireDate}
+              placeholder="Hire Date"
+              editable={false}
+            />
+          </View>
+
+          {/* Skills Section */}
+          {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Skills & Certifications</Text>
           <View style={styles.skillsContainer}>
             {[
@@ -349,46 +354,47 @@ const EditProfileScreen = ({navigation}) => {
           </View>
         </View> */}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Skills & Certifications</Text>
-          <View style={styles.skillsContainer}>
-            {skills.map((skill, index) => (
-              <View key={index} style={styles.skillChip}>
-                <Text style={styles.skillText}>{skill}</Text>
-                <TouchableOpacity onPress={() => deleteSkill(index)}>
-                  <Icon name="close" size={16} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
-            ))}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Skills & Certifications</Text>
+            <View style={styles.skillsContainer}>
+              {skills.map((skill, index) => (
+                <View key={index} style={styles.skillChip}>
+                  <Text style={styles.skillText}>{skill}</Text>
+                  <TouchableOpacity onPress={() => deleteSkill(index)}>
+                    <Icon name="close" size={16} color="#6b7280" />
+                  </TouchableOpacity>
+                </View>
+              ))}
 
-            {isAdding ? (
-              <View style={styles.addSkillInputContainer}>
-                <TextInput
-                  style={styles.addSkillInput}
-                  placeholder="Enter skill"
-                  value={newSkill}
-                  onChangeText={setNewSkill}
-                  onSubmitEditing={addSkill}
-                  autoFocus
-                />
+              {isAdding ? (
+                <View style={styles.addSkillInputContainer}>
+                  <TextInput
+                    style={styles.addSkillInput}
+                    placeholder="Enter skill"
+                    value={newSkill}
+                    onChangeText={setNewSkill}
+                    onSubmitEditing={addSkill}
+                    autoFocus
+                  />
+                  <TouchableOpacity
+                    onPress={addSkill}
+                    style={styles.addSkillConfirm}>
+                    <Icon name="check" size={20} color="#2563eb" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
                 <TouchableOpacity
-                  onPress={addSkill}
-                  style={styles.addSkillConfirm}>
-                  <Icon name="check" size={20} color="#2563eb" />
+                  style={styles.addSkillButton}
+                  onPress={() => setIsAdding(true)}>
+                  <Icon name="add" size={16} color="#2563eb" />
+                  <Text style={styles.addSkillText}>Add Skill</Text>
                 </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.addSkillButton}
-                onPress={() => setIsAdding(true)}>
-                <Icon name="add" size={16} color="#2563eb" />
-                <Text style={styles.addSkillText}>Add Skill</Text>
-              </TouchableOpacity>
-            )}
+              )}
+            </View>
           </View>
-        </View>
-        <View style={{height: 40}} />
-      </ScrollView>
+          <View style={{height: 40}} />
+        </ScrollView>
+      {/* </KeyboardAvoidingView> */}
     </View>
   );
 };
