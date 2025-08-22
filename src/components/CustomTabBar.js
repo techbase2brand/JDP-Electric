@@ -26,9 +26,8 @@ const INACTIVE_BG = 'transparent';
 export default function CustomTabBar({state, descriptors, navigation, icons}) {
   const homeIndex = state.routes.findIndex(r => r.name === 'Home');
   const jobIndex = state.routes.findIndex(r => r.name === 'Jobs');
-  const ProfileIndex = state.routes.findIndex(r => r.name === 'Profile'); 
+  const ProfileIndex = state.routes.findIndex(r => r.name === 'Profile');
 
- 
   const homeHideOnScreens = [
     'JobStack',
     'CreateJobScreen',
@@ -52,10 +51,9 @@ export default function CustomTabBar({state, descriptors, navigation, icons}) {
     'PrivacyPolicy',
     'JobTimesheet',
     'JobActivityLogScreen',
-    'SupplierSelectionScreen'
+    'SupplierSelectionScreen',
   ];
 
-  
   const jobHideOnScreens = [
     'JobDetailsScreen',
     'JobDetail',
@@ -69,8 +67,8 @@ export default function CustomTabBar({state, descriptors, navigation, icons}) {
     'CheckoutScreen',
     'CreateJobScreen',
     'JobTimesheet',
-    "JobActivityLogScreen",
-    'SupplierSelectionScreen'
+    'JobActivityLogScreen',
+    'SupplierSelectionScreen',
   ];
 
   const profileHideOnScreens = [

@@ -677,9 +677,12 @@ import {
   Modal,
   Image,
   Alert,
+  Linking,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+
 
 // Embedded Colors
 const Colors = {
@@ -744,7 +747,7 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
       sku: 'EP-200A-001',
       quantity: 2,
       supplier: 'ElectricPro Supply',
-      image: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=300&h=300&fit=crop'
+      // image: 'https://images.unsplash.cxssom/photo-1558618047-3c8c76ca7d13?w=300&h=300&fit=crop'
     },
     {
       id: '2',
@@ -806,7 +809,9 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
   const getTotalItems = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
-
+ const handleCall = phoneNumber => {
+    Linking.openURL(`tel:${6184738399}`);
+  };
   const handleNavigate = (screen) => {
     if (onNavigate) {
       onNavigate(screen);
@@ -963,7 +968,7 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
                 <View style={styles.productDetails}>
                   <Text style={styles.productSku}>SKU: {item.sku}</Text>
                   <View style={styles.supplierBadge}>
-                    <Text style={styles.supplierText}>{item.supplier}</Text>
+                    {/* <Text style={styles.supplierText}>{item.supplier}</Text> */}
                   </View>
                 </View>
 
@@ -988,7 +993,7 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
                   </View>
                   
                   <View style={styles.priceSection}>
-                    <Text style={styles.priceText}>Quote Required</Text>
+                    {/* <Text style={styles.priceText}>Quote Required</Text> */}
                   </View>
                 </View>
               </View>
@@ -1012,18 +1017,18 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
               <Text style={styles.summaryValue}>{cartItems.length}</Text>
             </View>
             <View style={styles.summaryDivider} />
-            <View style={styles.summaryRow}>
+            {/* <View style={styles.summaryRow}>
               <Text style={styles.summaryTotalLabel}>Total</Text>
               <Text style={styles.summaryTotalValue}>Quote on Request</Text>
-            </View>
+            </View> */}
           </View>
 
-          <View style={styles.summaryNotice}>
+          {/* <View style={styles.summaryNotice}>
             <Text style={styles.noticeTitle}>📋 Note about pricing:</Text>
             <Text style={styles.noticeText}>
               Product pricing will be provided via custom quote based on current market rates and your company's pricing agreement.
             </Text>
-          </View>
+          </View> */}
         </View>
         
         <View style={{ height: 120 }} />
@@ -1033,10 +1038,12 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
       <View style={styles.bottomActions}>
         <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={styles.continueButton}
-            onPress={() => handleNavigate('OrderProducts')}
+            style={[styles.continueButton, {backgroundColor:"#10B981"}]}
+              onPress={() => handleCall()}
+            // onPress={() => handleNavigate('OrderProducts')}
           >
-            <Text style={styles.continueButtonText}>Continue Shopping</Text>
+            {/* <Ionicons name="call" size={20} color={"#fff"} /> */}
+            <Text style={[styles.continueButtonText,{color:"#fff"}]}>Call & Verify</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.checkoutButton}

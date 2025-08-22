@@ -378,8 +378,46 @@ import {
   stopTimerWithBackground,
 } from '../redux/timerSlice';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {widthPercentageToDP} from '../utils';
+import Feather from 'react-native-vector-icons/Feather';
 
+import {widthPercentageToDP} from '../utils';
+const Shadows = {
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+};
+const CustomButton = ({label, onPress, color, disabled, widthbtn}) => (
+  <TouchableOpacity
+    disabled={disabled}
+    style={[
+      styles.btn,
+      {
+        backgroundColor: disabled ? '#ccc' : color,
+        width: widthbtn && widthPercentageToDP(40),
+      },
+    ]}
+    onPress={onPress}>
+    <Text style={styles.btnText}>{label}</Text>
+  </TouchableOpacity>
+);
 export default function TimerScreen({navigation}) {
   const {isRunning, elapsedTime} = useSelector(state => state.timer);
   const dispatch = useDispatch();
@@ -420,15 +458,6 @@ export default function TimerScreen({navigation}) {
       },
     ]);
   };
-
-  const CustomButton = ({label, onPress, color, disabled}) => (
-    <TouchableOpacity
-      disabled={disabled}
-      style={[styles.btn, {backgroundColor: disabled ? '#ccc' : color}]}
-      onPress={onPress}>
-      <Text style={styles.btnText}>{label}</Text>
-    </TouchableOpacity>
-  );
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -501,6 +530,7 @@ export default function TimerScreen({navigation}) {
               dispatch(startTimerWithBackground());
               addActivity('Work Started', {color: '#4CAF50'});
             }}
+            widthbtn={true}
           />
         )}
 
@@ -511,11 +541,13 @@ export default function TimerScreen({navigation}) {
               label="Pause"
               color="#FF9800"
               onPress={() => setPauseModal(true)}
+              widthbtn={true}
             />
             <CustomButton
               label="Complete"
               color="#F44336"
               onPress={() => setCompleteModal(true)}
+              widthbtn={true}
             />
           </View>
         )}
@@ -535,11 +567,13 @@ export default function TimerScreen({navigation}) {
                 }
                 addActivity('Work Resumed', {color: '#4CAF50'});
               }}
+              widthbtn={true}
             />
             <CustomButton
               label="Complete"
               color="#F44336"
               onPress={() => setCompleteModal(true)}
+              widthbtn={true}
             />
           </View>
         )}
@@ -557,6 +591,14 @@ export default function TimerScreen({navigation}) {
                 {item.title}
               </Text>
               <Text style={styles.logTime}>{formatTime(item.duration)}</Text>
+            </View>
+          )}
+          ListEmptyComponent={() => (
+            <View style={{alignItems: 'center', padding: 20}}>
+              <Feather name="activity" size={40} color="#9ca3af" />
+              <Text style={{marginTop: 10, fontSize: 16, color: '#6b7280'}}>
+                No activity found
+              </Text>
             </View>
           )}
         />
@@ -621,7 +663,7 @@ export default function TimerScreen({navigation}) {
       </Modal>
 
       {/* ✅ Complete Job Modal */}
-      <Modal visible={completeModal} transparent animationType="fade">
+      {/* <Modal visible={completeModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>✅ Complete Job</Text>
@@ -653,6 +695,160 @@ export default function TimerScreen({navigation}) {
             </View>
           </View>
         </View>
+      </Modal> */}
+      {/* ✅ Complete Job Modal */}
+      <Modal visible={completeModal} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <View
+            style={{
+              backgroundColor: '#fff',
+              borderRadius: 10,
+              padding: 20,
+              width: '85%',
+            }}>
+            {/* Title */}
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: '600',
+                marginBottom: 5,
+                color: '#000',
+              }}>
+              Complete Job
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: '#555',
+                marginBottom: 15,
+              }}>
+              You are about to complete this job. Please review the time summary
+              below before confirming.
+            </Text>
+
+            {/* Success Icon */}
+            {/* <View
+              style={{
+                backgroundColor: '#E8F5E9',
+                borderRadius: 50,
+                padding: 15,
+                marginBottom: 10,
+              }}>
+              <Text style={{fontSize: 28, color: '#4CAF50'}}>✔️</Text>
+            </View> */}
+            <View style={styles.successIcon}>
+              <Icon name="check-circle" size={60} color={'#10B981'} />
+            </View>
+
+            {/* Confirmation Text */}
+            <Text
+              style={{
+                textAlign: 'center',
+                fontSize: 14,
+                color: '#444',
+                marginBottom: 15,
+              }}>
+              Are you sure you want to complete this job? This action cannot be
+              undone.
+            </Text>
+
+            {/* Summary List */}
+            <View
+              style={{
+                backgroundColor: '#F5F5F5',
+                borderRadius: 8,
+                padding: 10,
+                width: '100%',
+                marginBottom: 20,
+              }}>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
+                  Total Time:
+                </Text>
+                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
+                  {formatTime(elapsedTime + breakTime)}
+                </Text>
+              </View>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  marginVertical: 10,
+                }}>
+                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
+                  Work Time:
+                </Text>
+                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
+                  {formatTime(elapsedTime)}
+                </Text>
+              </View>
+              <View
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
+                  Activities:
+                </Text>
+                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
+                  {activityLog.length}
+                </Text>
+              </View>
+            </View>
+            {/* Buttons */}
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                width: '100%',
+              }}>
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  paddingVertical: 10,
+                  borderRadius: 6,
+                  alignItems: 'center',
+                  marginHorizontal: 5,
+                  backgroundColor: '#E0E0E0',
+                }}
+                onPress={() => setCompleteModal(false)}>
+                <Text style={{fontSize: 14, fontWeight: '600'}}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  paddingVertical: 10,
+                  borderRadius: 6,
+                  alignItems: 'center',
+                  marginHorizontal: 5,
+                  backgroundColor: '#4CAF50',
+                }}
+                onPress={() => {
+                  dispatch(stopTimerWithBackground());
+                  addActivity('Work Completed', {color: '#2196F3'});
+                  setCompleteModal(false);
+                }}>
+                <Text style={{fontSize: 14, fontWeight: '600', color: '#fff'}}>
+                  Complete Job
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -660,7 +856,6 @@ export default function TimerScreen({navigation}) {
 
 const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: '#F4F6FA', padding: 20},
-
   // Header
   header: {
     paddingTop: Platform.OS === 'ios' ? 10 : 10,
@@ -674,6 +869,15 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  successIcon: {
+    // width: 80,
+    // height: 80,
+    borderRadius: 40,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   headerContent: {alignItems: 'center'},
   headerTitle: {fontSize: 18, fontWeight: 'bold', color: '#000'},
@@ -715,7 +919,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
     marginVertical: 4,
-    width: widthPercentageToDP(40),
+    // width: widthPercentageToDP(40),
     alignItems: 'center',
   },
   btnText: {color: '#fff', fontWeight: 'bold', fontSize: 16},

@@ -12,12 +12,19 @@ import {
   Modal,
   Button,
   Platform,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {widthPercentageToDP} from '../utils';
 
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
 // JDP Electrics Colors
 const COLORS = {
   primary: '#3B82F6',
@@ -47,7 +54,14 @@ const COLORS = {
   red100: '#FEE2E2',
 };
 
-const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
+const JobListingScreen = ({
+  user,
+  onNavigate,
+  onStartTimer,
+  navigation,
+  route,
+}) => {
+  const {status} = route?.params || {};
   const [jobs, setJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -55,8 +69,9 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [showStartPicker, setShowStartPicker] = useState(true);
-  const [showEndPicker, setShowEndPicker] = useState(true);
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [expandedJobId, setExpandedJobId] = useState(null);
 
   const applyFilter = () => {
     console.log('Start Date:', startDate);
@@ -90,6 +105,7 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
         },
         estimatedHours: 8,
       },
+
       {
         id: '2',
         jobId: 'JDP-2024-002',
@@ -186,10 +202,41 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
         },
         estimatedHours: 12,
       },
+      {
+        id: '6',
+        jobId: 'JDP-2024-001',
+        title: 'Electrical Panel Upgrade',
+        customer: {
+          name: 'ABC Manufacturing',
+          address: '1234 Industrial Blvd, Houston, TX 77001',
+          phone: '+1 (555) 0101',
+        },
+        status: 'upcoming',
+        priority: 'low',
+        scheduledDate: '2024-01-15',
+        scheduledTime: '08:00 AM',
+        assignedTo: ['Sarah Johnson', 'Mike Wilson'],
+        specialInstructions:
+          'Customer prefers work to be done during off-hours. Main power shutdown required.',
+        tags: ['Electrical', 'Panel Upgrade', 'High Priority'],
+        location: {
+          latitude: 29.7604,
+          longitude: -95.3698,
+          address: '1234 Industrial Blvd, Houston, TX 77001',
+        },
+        estimatedHours: 8,
+      },
     ];
 
     setJobs(mockJobs);
   }, []);
+
+  // loadfilter
+  useEffect(() => {
+    if (status) {
+      setActiveTab(status);
+    }
+  }, [status]);
 
   // Tab configuration
   const tabs = [
@@ -207,6 +254,11 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
       key: 'assigned',
       label: 'Assigned',
       count: jobs.filter(j => j.status === 'assigned').length,
+    },
+    {
+      key: 'upcoming',
+      label: 'Upcoming',
+      count: jobs.filter(j => j.status === 'upcoming').length,
     },
     {
       key: 'pending',
@@ -232,7 +284,10 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
 
     return matchesTab && matchesSearch;
   });
-
+  const toggleJobExpansion = jobId => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedJobId(expandedJobId === jobId ? null : jobId);
+  };
   // Get status color
   const getStatusColor = status => {
     switch (status) {
@@ -377,73 +432,91 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
   );
 
   // Render job card
-  const renderJobCard = job => (
-    <TouchableOpacity
-      key={job.id}
-      style={styles.jobCard}
-      onPress={() => navigation.navigate('JobDetail', job)}>
-      {/* Job Header */}
-      <View style={styles.jobCardHeader}>
-        <View style={styles.jobCardTitleSection}>
-          <Text style={styles.jobId}>{job.jobId}</Text>
-          <View style={styles.jobStatusPriority}>
-            <View
-              style={[
-                styles.statusBadge,
-                {backgroundColor: getStatusColor(job.status)},
-              ]}>
-              <Text style={styles.statusText}>{job.status.toUpperCase()}</Text>
-            </View>
-            <View
-              style={[
-                styles.priorityBadge,
-                {backgroundColor: getPriorityColor(job.priority)},
-              ]}>
-              <Ionicons name="flag" size={10} color={COLORS.white} />
-              <Text style={styles.priorityText}>
-                {job.priority.toUpperCase()}
-              </Text>
+  const renderJobCard = job => {
+    const isExpanded = expandedJobId === job.id;
+
+    return (
+      <TouchableOpacity
+        key={job.id}
+        style={styles.jobCard}
+        onPress={() => navigation.navigate('JobDetail', job)}>
+        {/* Job Header */}
+        <View style={styles.jobCardHeader}>
+          <View style={styles.jobCardTitleSection}>
+            <Text style={styles.jobId}>{job.jobId}</Text>
+            <View style={styles.jobStatusPriority}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {backgroundColor: getStatusColor(job.status)},
+                ]}>
+                <Text style={styles.statusText}>
+                  {job.status.toUpperCase()}
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.priorityBadge,
+                  {backgroundColor: getPriorityColor(job.priority)},
+                ]}>
+                <Ionicons name="flag" size={10} color={COLORS.white} />
+                <Text style={styles.priorityText}>
+                  {job.priority.toUpperCase()}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
-      </View>
-      {/* Job Title */}
-      <Text style={styles.jobTitle}>{job.title}</Text>
-      {/* Customer Info */}
-      <View style={styles.customerSection}>
-        <Text style={styles.customerName}>{job.customer.name}</Text>
-        <Text style={styles.customerAddress}>{job.customer.address}</Text>
-      </View>
-      {/* Schedule Info */}
-      <View style={styles.scheduleSection}>
-        <View style={styles.scheduleItem}>
-          <Ionicons name="calendar" size={16} color={COLORS.gray500} />
-          <Text style={styles.scheduleText}>
-            {new Date(job.scheduledDate).toLocaleDateString('en-US', {
-              month: 'numeric', // "August"
-              day: 'numeric',
-              year: 'numeric',
-            })}
+        {/* Job Title */}
+        <View style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+          <Text style={styles.jobTitle}>{job.title}</Text>
+          <TouchableOpacity onPress={() => toggleJobExpansion(job.id)}>
+            <Icon
+              name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+              size={28}
+              color="#6B7280"
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.scheduleSection}>
+          <View style={styles.scheduleItem}>
+            <Ionicons name="calendar" size={16} color={COLORS.gray500} />
+            <Text style={[styles.scheduleText, {fontWeight:"600"}]}>
+              {new Date(job.scheduledDate).toLocaleDateString('en-US', {
+                month: 'numeric', // "August"
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </Text>
+          </View>
+          <View style={styles.scheduleItem}>
+            <Ionicons name="time" size={16} color={COLORS.gray500} />
+            <Text style={styles.scheduleText}>{job.scheduledTime}</Text>
+          </View>
+          <View style={styles.scheduleItem}>
+            <Ionicons name="hourglass" size={16} color={COLORS.gray500} />
+            <Text style={styles.scheduleText}>{job.estimatedHours}h est.</Text>
+          </View>
+        </View>
+        {/* Customer Info */}
+        {isExpanded && <View>
+
+        <View style={styles.customerSection}>
+          <Text style={styles.customerName}>{job.customer.name}</Text>
+          <Text style={styles.customerAddress}>{job.customer.address}</Text>
+        </View>
+        {/* Schedule Info */}
+        
+        {/* Assigned To */}
+        <View style={styles.assignedSection}>
+          <Ionicons name="people" size={16} color={COLORS.gray500} />
+          <Text style={styles.assignedText}>
+            Assigned to: {job.assignedTo.join(', ')}
           </Text>
         </View>
-        <View style={styles.scheduleItem}>
-          <Ionicons name="time" size={16} color={COLORS.gray500} />
-          <Text style={styles.scheduleText}>{job.scheduledTime}</Text>
-        </View>
-        <View style={styles.scheduleItem}>
-          <Ionicons name="hourglass" size={16} color={COLORS.gray500} />
-          <Text style={styles.scheduleText}>{job.estimatedHours}h est.</Text>
-        </View>
-      </View>
-      {/* Assigned To */}
-      <View style={styles.assignedSection}>
-        <Ionicons name="people" size={16} color={COLORS.gray500} />
-        <Text style={styles.assignedText}>
-          Assigned to: {job.assignedTo.join(', ')}
-        </Text>
-      </View>
-      {/* Special Instructions */}
-      {/* {job.specialInstructions && (
+        </View>}
+        {/* Special Instructions */}
+        {/* {job.specialInstructions && (
         <View style={styles.instructionsSection}>
           <Ionicons
             name="information-circle"
@@ -454,7 +527,7 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
         </View>
       )}
       Tags */}
-      {/* <View style={styles.tagsSection}>
+        {/* <View style={styles.tagsSection}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.tagsContainer}>
             {job.tags.map((tag, index) => (
@@ -465,32 +538,36 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
           </View>
         </ScrollView>
       </View> */}
-      {/* Action Icons */}
-      <View style={styles.actionsSection}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => handleCall(job.customer.phone)}>
-          <Ionicons name="call" size={20} color={COLORS.primary} />
-          <Text style={styles.actionText}>Call</Text>
-        </TouchableOpacity>
+        {/* Action Icons */}
+        <View style={styles.actionsSection}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleCall(job.customer.phone)}>
+            <Ionicons name="call" size={20} color={COLORS.primary} />
+            <Text style={styles.actionText}>Call</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => handleNavigate(job)}>
-          <Ionicons name="navigate" size={20} color={'#10B981'} />
-          <Text style={[styles.actionText, {color: '#10B981'}]}>Navigate</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleNavigate(job)}>
+            <Ionicons name="navigate" size={20} color={'#10B981'} />
+            <Text style={[styles.actionText, {color: '#10B981'}]}>
+              Navigate
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => handleStartTimer(job)}>
-          <Icon name="timer" size={20} color={COLORS.danger} />
-          <Text style={[styles.actionText, {color: COLORS.danger}]}>Timer</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleStartTimer(job)}>
+            <Icon name="timer" size={20} color={COLORS.danger} />
+            <Text style={[styles.actionText, {color: COLORS.danger}]}>
+              Timer
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
   // Render empty state
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -532,47 +609,42 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
             visible={modalVisible}
             animationType="slide"
             onRequestClose={() => setModalVisible(false)}>
-            {' '}
             <View style={styles.modalBackground}>
-              {' '}
               <View style={styles.modalContainer}>
-                {' '}
-                <Text style={styles.label}>Start Date</Text>{' '}
+                <Text style={styles.label}>Start Date</Text>
                 <TouchableOpacity
-                  onPress={() => setShowStartPicker(true)}
+                  onPress={() => {setShowStartPicker(true),setShowEndPicker(false)}}
                   style={styles.dateButton}>
-                  {' '}
-                  <Text>{startDate.toDateString()}</Text>{' '}
-                </TouchableOpacity>{' '}
+                  <Text>{startDate.toDateString()}</Text>
+                </TouchableOpacity>
                 {showStartPicker && (
                   <DateTimePicker
                     value={startDate}
                     mode="date"
-                    display="default"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={(event, selectedDate) => {
                       setShowStartPicker(false);
                       if (selectedDate) setStartDate(selectedDate);
                     }}
                   />
-                )}{' '}
-                <Text style={styles.label}>End Date</Text>{' '}
+                )}
+                <Text style={styles.label}>End Date</Text>
                 <TouchableOpacity
-                  onPress={() => setShowEndPicker(true)}
+                  onPress={() => {setShowEndPicker(true),setShowStartPicker(false)}}
                   style={styles.dateButton}>
-                  {' '}
-                  <Text>{endDate.toDateString()}</Text>{' '}
-                </TouchableOpacity>{' '}
+                  <Text>{endDate.toDateString()}</Text>
+                </TouchableOpacity>
                 {showEndPicker && (
                   <DateTimePicker
                     value={endDate}
                     mode="date"
-                    display="default"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={(event, selectedDate) => {
                       setShowEndPicker(false);
                       if (selectedDate) setEndDate(selectedDate);
                     }}
                   />
-                )}{' '}
+                )}
                 <TouchableOpacity
                   onPress={applyFilter}
                   style={{
@@ -582,19 +654,17 @@ const JobListingScreen = ({user, onNavigate, onStartTimer, navigation}) => {
                     borderRadius: 10,
                     alignItems: 'center',
                   }}>
-                  {' '}
                   <Text style={{color: 'white', fontWeight: 'bold'}}>
-                    {' '}
-                    Apply Filter{' '}
-                  </Text>{' '}
-                </TouchableOpacity>{' '}
+                    Apply Filter
+                  </Text>
+                </TouchableOpacity>
                 <Button
                   title="Cancel"
                   color="red"
                   onPress={() => setModalVisible(false)}
-                />{' '}
-              </View>{' '}
-            </View>{' '}
+                />
+              </View>
+            </View>
           </Modal>
         </View>
       </View>
@@ -619,6 +689,7 @@ const styles = {
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.white,
+    marginBottom: 100,
   },
   header: {
     flexDirection: 'row',

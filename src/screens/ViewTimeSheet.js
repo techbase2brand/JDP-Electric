@@ -2106,7 +2106,7 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
 
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>
-            {timesheet ? 'Timesheet Details' : 'Daily Timesheet'}
+            {timesheet ? 'Bluesheet Details' : 'Daily Timesheet'}
           </Text>
           <Text style={styles.headerSubtitle}>
             {timesheet ? timesheet.jobTitle : job?.title || 'Unknown Job'} •{' '}
@@ -2577,7 +2577,7 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
             {timesheet && (
               <TouchableOpacity
                 style={styles.backToListButton}
-                onPress={() => navigation.navigate('TimesheetListingScreen')}>
+                onPress={() => navigation.navigate('TimeSheetScreen')}>
                 <Text style={styles.backToListButtonText}>
                   Back to All Timesheets
                 </Text>

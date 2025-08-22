@@ -951,7 +951,7 @@ const JobDetailScreen = ({
                 style={styles.actionButton}
                 onPress={() => handleNavigate('TimerScreen', job)}>
                 <Icon name="timer" size={20} color={Colors.text} />
-                <Text style={styles.actionButtonText}>Timer Screen</Text>
+                <Text style={styles.actionButtonText}>Start Timer</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

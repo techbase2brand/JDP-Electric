@@ -359,25 +359,25 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>All Timesheets</Text>
+          <Text style={styles.headerTitle}>All Bluesheets</Text>
           <Text style={styles.headerSubtitle}>
             {filteredTimesheets.length} of {allTimesheets.length} timesheets
           </Text>
         </View>
 
-        <View style={styles.headerSpacer} />
+        {/* <View style={styles.headerSpacer} /> */}
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Summary Statistics */}
-        <View style={styles.statsContainer}>
+        {/* <View style={styles.statsContainer}>
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <View style={[styles.statIcon, {backgroundColor: '#dbeafe'}]}>
@@ -427,13 +427,13 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
               <Text style={styles.statLabel}>Total Job</Text>
             </View>
           </View>
-        </View>
+        </View> */}
 
         {/* Filters and Search */}
         <View style={styles.filtersCard}>
           {/* Search */}
           <View style={styles.searchContainer}>
-            <Text style={styles.searchIcon}>🔍</Text>
+            <Feather name="search" size={20} color={'#6b7280'} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search by job ID, title, customer, or employee..."
@@ -695,6 +695,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     paddingTop: 20,
+    justifyContent:"center"
   },
   backButton: {
     padding: 8,
@@ -798,6 +799,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: '#111827',
+    marginLeft: 8,
   },
   filtersRow: {
     flexDirection: 'row',

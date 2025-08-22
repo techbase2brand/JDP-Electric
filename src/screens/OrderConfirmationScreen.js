@@ -260,12 +260,12 @@ const OrderConfirmationScreen = ({
                   {formatDate(new Date())}
                 </Text>
               </View>
-              <View style={styles.orderInfoRow}>
+              {/* <View style={styles.orderInfoRow}>
                 <Text style={styles.orderInfoLabel}>Total Amount</Text>
                 <Text style={[styles.orderInfoValue, styles.totalAmount]}>
                   Quote on Request
                 </Text>
-              </View>
+              </View> */}
             </View>
           </View>
         </View>
@@ -287,7 +287,7 @@ const OrderConfirmationScreen = ({
                     Quantity: {item.quantity}
                   </Text>
                 </View>
-                <Text style={styles.itemPrice}>Quote on Request</Text>
+                {/* <Text style={styles.itemPrice}>Quote on Request</Text> */}
               </View>
             ))}
           </View>
@@ -307,7 +307,9 @@ const OrderConfirmationScreen = ({
               </View>
               <View style={styles.deliveryDetailInfo}>
                 <Text style={styles.deliveryDetailLabel}>PO Number</Text>
-                <Text style={styles.deliveryDetailValue}>123 Main Street, Houston, TX 77001</Text>
+                <Text style={styles.deliveryDetailValue}>
+                  123 Main Street, Houston, TX 77001
+                </Text>
               </View>
             </View>
 
@@ -392,12 +394,12 @@ const OrderConfirmationScreen = ({
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.primaryActionButton}
           onPress={() => handleNavigate('OrderHistoryScreen')}>
           <Icon name="history" size={20} color={Colors.white} />
           <Text style={styles.primaryActionText}>View Order History</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           style={styles.secondaryActionButton}
@@ -488,7 +490,7 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:"space-between",
+    justifyContent: 'space-between',
     gap: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,

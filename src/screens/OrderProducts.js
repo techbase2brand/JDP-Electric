@@ -840,11 +840,11 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
               onChangeText={setSearchQuery}
             />
           </View>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.filterButton}
             onPress={() => setShowFilters(true)}>
             <Icon name="filter-list" size={20} color={Colors.text} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
 
@@ -992,7 +992,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       )}
 
       {/* Filters Modal */}
-      {renderFiltersModal()}
+      {/* {renderFiltersModal()} */}
     </View>
   );
 };

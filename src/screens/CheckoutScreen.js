@@ -978,16 +978,16 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
                       Items (
                       {cartItems.reduce((sum, item) => sum + item.quantity, 0)})
                     </Text>
-                    <Text style={styles.summaryValue}>Quote on Request</Text>
+                    {/* <Text style={styles.summaryValue}>Quote on Request</Text> */}
                   </View>
 
                   <View style={styles.summaryDivider} />
-                  <View style={styles.summaryRow}>
+                  {/* <View style={styles.summaryRow}>
                     <Text style={styles.summaryTotalLabel}>Total</Text>
                     <Text style={styles.summaryTotalValue}>
                       Quote on Request
                     </Text>
-                  </View>
+                  </View> */}
                 </View>
               </View>
           </View>
@@ -1051,7 +1051,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
                 Total Items:{' '}
                 {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
               </Text>
-              <Text style={styles.totalValueText}>Quote on Request</Text>
+              {/* <Text style={styles.totalValueText}>Quote on Request</Text> */}
             </View>
           </View>
         </View>
@@ -1077,7 +1077,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
         </View>
 
         {/* Important Notice */}
-        <View style={styles.noticeCard}>
+        {/* <View style={styles.noticeCard}>
           <View style={styles.noticeContent}>
             <Icon name="info" size={20} color={Colors.warning} />
             <View style={styles.noticeText}>
@@ -1088,7 +1088,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
               </Text>
             </View>
           </View>
-        </View>
+        </View> */}
 
         <View style={{height: 100}} />
       </ScrollView>
@@ -1210,7 +1210,7 @@ const styles = StyleSheet.create({
   },
   orderSummaryTotal: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: "flex-end",
     alignItems: 'center',
   },
   totalItemsText: {

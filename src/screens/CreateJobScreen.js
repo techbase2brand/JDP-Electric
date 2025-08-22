@@ -1896,6 +1896,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -1958,10 +1959,72 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
     estimatedHours: 8,
     notes: '',
   });
-  const handleSelect = customer => {
-    updateFormData('customerName', customer.name);
-    setModalVisible(false);
+
+  const [customers, setCustomers] = useState([]);
+  const [search, setSearch] = useState('');
+  const [filtered, setFiltered] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // ✅ Load from AsyncStorage on mount
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
+  const loadCustomers = async () => {
+    try {
+      const data = await AsyncStorage.getItem('customers');
+      if (data) {
+        setCustomers(JSON.parse(data));
+      }
+    } catch (e) {
+      console.log('Error loading customers:', e);
+    }
   };
+
+  const saveCustomers = async newList => {
+    try {
+      await AsyncStorage.setItem('customers', JSON.stringify(newList));
+      setCustomers(newList);
+    } catch (e) {
+      console.log('Error saving customers:', e);
+    }
+  };
+
+  const handleChange = text => {
+    setSearch(text);
+    setFormData({...formData, customerName: text});
+
+    if (text.length > 0) {
+      const matches = customers.filter(c =>
+        c.toLowerCase().includes(text.toLowerCase()),
+      );
+      setFiltered(matches);
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+    }
+  };
+
+  const handleSelect = name => {
+    setSearch(name);
+    setFormData({...formData, customerName: name});
+    setShowDropdown(false);
+  };
+
+  const handleAddIfNotExist = async () => {
+    if (search.trim().length === 0) return;
+
+    if (!customers.includes(search)) {
+      const newList = [...customers, search];
+      await saveCustomers(newList);
+    }
+    setFormData({...formData, customerName: search});
+    setShowDropdown(false);
+  };
+  // const handleSelect = customer => {
+  //   updateFormData('customerName', customer.name);
+  //   setModalVisible(false);
+  // };
   // Mock team members for assignment
   const teamMembers = [
     {id: '1', name: 'Sarah Johnson', role: 'Lead Labor'},
@@ -2445,7 +2508,7 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
 
     return (
       <View style={styles.suggestionsContainer}>
-        {suggestions.map(suggestion => (
+        {suggestions?.map(suggestion => (
           <TouchableOpacity
             key={suggestion.place_id}
             style={styles.suggestionItem}
@@ -2552,59 +2615,41 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
         <View style={styles.formGroup}>
           <Text style={styles.formLabel}>Customer Name *</Text>
 
-          {/* Touchable field instead of TextInput */}
-          <TouchableOpacity
+          <TextInput
             style={[
               styles.inputContainer,
               validationErrors.customerName && styles.inputContainerError,
             ]}
-            onPress={() => setModalVisible(true)}>
-            <Text
-              style={{
-                color: formData.customerName ? '#000' : '#9ca3af',
-                paddingLeft: 20,
-              }}>
-              {formData.customerName || 'Select Customer'}
-            </Text>
-          </TouchableOpacity>
+            placeholder="Enter Customer"
+            value={search}
+            onChangeText={handleChange}
+            onBlur={handleAddIfNotExist} // ✅ jab field se bahar nikle to add
+          />
 
           {/* Validation Error */}
           {validationErrors.customerName && (
             <View style={styles.errorContainer}>
-              <Icon name="error" size={16} color="#ef4444" />
               <Text style={styles.errorText}>
                 {validationErrors.customerName}
               </Text>
             </View>
           )}
 
-          {/* Modal with FlatList */}
-          <Modal
-            visible={modalVisible}
-            transparent={true}
-            animationType="slide">
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalBox}>
-                <Text style={styles.modalTitle}>Select Customer</Text>
-                <FlatList
-                  data={customers}
-                  keyExtractor={item => item.id}
-                  renderItem={({item}) => (
-                    <TouchableOpacity
-                      style={styles.customerItem}
-                      onPress={() => handleSelect(item)}>
-                      <Text style={styles.customerText}>{item.name}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-                <TouchableOpacity
-                  style={styles.closeBtn}
-                  onPress={() => setModalVisible(false)}>
-                  <Text style={styles.closeBtnText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
+          {showDropdown && filtered.length > 0 && (
+            <View style={styles.dropdownWrapper}>
+              <FlatList
+                data={filtered}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({item}) => (
+                  <TouchableOpacity
+                    style={styles.customerItem}
+                    onPress={() => handleSelect(item)}>
+                    <Text style={styles.customerText}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+              />
             </View>
-          </Modal>
+          )}
         </View>
 
         <View style={styles.formGroup}>
@@ -3622,6 +3667,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
     position: 'relative',
+    paddingHorizontal: 20,
   },
   inputContainerError: {
     borderColor: '#ef4444',
@@ -3727,10 +3773,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   suggestionsContainer: {
-    position: 'absolute',
-    top: 52,
-    left: 0,
-    right: 0,
+    position: 'relative',
+    // top: 52,
+    // left: 0,
+    // right: 0,
     backgroundColor: 'white',
     borderWidth: 1,
     borderColor: '#d1d5db',
@@ -3740,7 +3786,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    zIndex: 1000,
+    zIndex: 99999,
     maxHeight: 200,
   },
   suggestionItem: {
@@ -4013,6 +4059,19 @@ const styles = StyleSheet.create({
   customerText: {fontSize: 16},
   closeBtn: {marginTop: 10, alignSelf: 'flex-end'},
   closeBtnText: {color: '#ef4444', fontSize: 16},
+  dropdownWrapper: {
+    position: 'absolute',
+    top: 70, // 👈 input height ke hisaab se adjust karo
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    maxHeight: 150,
+    zIndex: 1000, // dropdown upar aaye
+    elevation: 5, // android shadow
+  },
 });
 
 export default CreateJobScreen;

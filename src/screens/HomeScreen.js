@@ -37,24 +37,28 @@ import {
 const HomeScreen = ({navigation}) => {
   const statsData = [
     {
+      key: 'active',
       title: 'Active Jobs',
       value: '2',
       subtitle: "Today's schedule",
       icon: <Feather name="activity" size={24} color={whiteColor} />,
     },
     {
+      key: 'pending',
       title: 'In Progress',
       value: '1',
       subtitle: 'Currently working',
       icon: <AntDesign name="sync" size={20} color={whiteColor} />,
     },
     {
+      key: 'upcoming',
       title: 'Upcoming',
       value: '1',
       subtitle: 'Next 3 days',
       icon: <Feather name="calendar" size={24} color={whiteColor} />,
     },
     {
+      key: 'thisWeek',
       title: 'This Week',
       value: '24',
       subtitle: 'Total assigned',
@@ -78,11 +82,11 @@ const HomeScreen = ({navigation}) => {
     //   icon: INVOICE_ICON,
     //   color: '#6E11B0',
     // },
-    {
-      title: 'Order History',
-      icon: ORDER_HISTORY,
-      color: '#6E11B0',
-    },
+    // {
+    //   title: 'Order History',
+    //   icon: ORDER_HISTORY,
+    //   color: '#6E11B0',
+    // },
     // {
     //   title: 'Check Warranty',
     //   icon: WARRENTY_ICON,
@@ -91,7 +95,7 @@ const HomeScreen = ({navigation}) => {
     {
       title: 'Create Job',
       icon: CREATE_JOB,
-      color: '#005F5A',
+      color: '#9F2D00',
     },
     // {
     //   title: 'Support Center',
@@ -162,26 +166,43 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
-  const renderStatsCard = (item, index) => (
-    <View key={index} style={styles.statsCard}>
-      {/* <View style={[styles.headerCircle, styles.topRightCircle, {overflow:"hidden"}]} /> */}
+  const renderStatsCard = (item, index) => {
+    const handlePress = () => {
+      if (item.key === 'thisWeek') {
+        return;
+      }
+      navigation.navigate('JobStack', {status: item.key});
+    };
+    return (
+      <TouchableOpacity
+        key={index}
+        style={styles.statsCard}
+        activeOpacity={0.7}
+        onPress={handlePress}>
+        {/* <View style={[styles.headerCircle, styles.topRightCircle, {overflow:"hidden"}]} /> */}
 
-      <View
-        style={[
-          styles.statsIconContainer,
-          {display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8},
-        ]}>
-        <Text style={styles.statsIcon}>{item.icon}</Text>
-        <Text style={[styles.statsTitle, {fontSize: 16, fontWeight: 700}]}>
-          {item.title}
-        </Text>
-      </View>
-      <View style={styles.statsContent}>
-        <Text style={styles.statsValue}>{item.value}</Text>
-        <Text style={styles.statsSubtitle}>{item.subtitle}</Text>
-      </View>
-    </View>
-  );
+        <View
+          style={[
+            styles.statsIconContainer,
+            {
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+            },
+          ]}>
+          <Text style={styles.statsIcon}>{item.icon}</Text>
+          <Text style={[styles.statsTitle, {fontSize: 16, fontWeight: 700}]}>
+            {item.title}
+          </Text>
+        </View>
+        <View style={styles.statsContent}>
+          <Text style={styles.statsValue}>{item.value}</Text>
+          <Text style={styles.statsSubtitle}>{item.subtitle}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderQuickAction = (item, index) => (
     <TouchableOpacity
@@ -339,7 +360,9 @@ const HomeScreen = ({navigation}) => {
                 <View style={styles.roleBadge}>
                   <Text style={styles.roleText}>Lead Labor</Text>
                 </View>
-                <Text style={[styles.dateText, {color:"#fff"}]}>• Tuesday, Jul 29</Text>
+                <Text style={[styles.dateText, {color: '#fff'}]}>
+                  • Tuesday, Jul 29
+                </Text>
               </View>
             </View>
             <View style={styles.headerRight}>
@@ -432,7 +455,9 @@ const HomeScreen = ({navigation}) => {
               <View style={[styles.countBadge, {backgroundColor: '#F0FDF4'}]}>
                 <Text style={[styles.countText, {color: '#008236'}]}>1</Text>
               </View>
-              <TouchableOpacity style={{marginLeft: widthPercentageToDP(30)}}>
+              <TouchableOpacity
+                style={{marginLeft: widthPercentageToDP(30)}}
+                onPress={() => navigation.navigate('JobStack')}>
                 <Text style={styles.viewAllText}>View All →</Text>
               </TouchableOpacity>
             </View>
