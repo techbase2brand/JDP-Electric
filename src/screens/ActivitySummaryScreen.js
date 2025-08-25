@@ -1500,13 +1500,13 @@ const ActivitySummaryScreen = ({navigation, route}) => {
             </View>
 
             {/* Pay Rate */}
-            <View style={styles.expandedItem}>
+            {/* <View style={styles.expandedItem}>
               <Icon name="attach-money" size={16} color="#6B7280" />
               <Text style={styles.expandedLabel}>Pay Rate:</Text>
               <Text style={styles.expandedValue}>
                 ${report.payRate.toFixed(2)}/hour
               </Text>
-            </View>
+            </View> */}
 
             {/* Scheduled Time */}
             <View style={styles.expandedItem}>
@@ -1908,7 +1908,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   expandedLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: '#6B7280',
     width: 70,

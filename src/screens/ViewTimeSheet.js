@@ -1081,8 +1081,7 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
                 <View style={styles.entryInfo}>
                   <Text style={styles.entryName}>{material.name}</Text>
                   <Text style={styles.entryDetails}>
-                    Order ID: {material.supplierOrderId} • ${material.unitCost}/
-                    {material.unit}
+                    Order ID: {material.supplierOrderId}
                   </Text>
                 </View>
                 {canEdit() && !isReadOnly() && (
