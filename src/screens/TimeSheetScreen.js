@@ -9,6 +9,9 @@ import {
   Alert,
   StatusBar,
   SafeAreaView,
+  Platform,
+  UIManager,
+  LayoutAnimation,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -18,12 +21,18 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {tabColor} from '../constants/Color';
 import {widthPercentageToDP} from '../utils';
 
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
 const TimesheetScreen = ({navigation, user, jobs}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [expandedJobId, setExpandedJobId] = useState(null);
 
   // Mock comprehensive timesheet data across all jobs
   const allTimesheets = [
@@ -43,7 +52,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       additionalCharges: 75.0,
       totalCost: 1205.0,
       assignedTo: ['Mike Wilson', 'David Chen'],
-      submittedBy: 'Mike Wilson',
+      submittedBy: 'Sarah Johnson',
       employeeId: 'JDP002',
       location: '1234 Oak Street, Houston, TX',
       priority: 'high',
@@ -62,7 +71,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       additionalCharges: 25.0,
       totalCost: 825.0,
       assignedTo: ['Lisa Rodriguez', 'James Mitchell'],
-      submittedBy: 'Lisa Rodriguez',
+      submittedBy: 'Sarah Johnson',
       employeeId: 'JDP003',
       location: '567 Corporate Dr, Houston, TX',
       priority: 'medium',
@@ -83,7 +92,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       additionalCharges: 50.0,
       totalCost: 680.0,
       assignedTo: ['Tom Anderson'],
-      submittedBy: 'Tom Anderson',
+      submittedBy: 'Sarah Johnson',
       employeeId: 'JDP004',
       location: '890 Medical Center Blvd, Houston, TX',
       priority: 'high',
@@ -101,33 +110,33 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       materialCost: 280.0,
       additionalCharges: 40.0,
       totalCost: 880.0,
-      assignedTo: ['Lisa Rodriguez', 'David Chen'],
-      submittedBy: 'David Chen',
+      assignedTo: ['Sarah Johnson', 'David Chen'],
+      submittedBy: 'Sarah Johnson',
       employeeId: 'JDP005',
       location: '777 Shopping Center Dr, Houston, TX',
       priority: 'medium',
     },
-    {
-      id: 'TS-2024-005',
-      jobId: 'JDP-2024-005',
-      jobTitle: 'Office Building Rewiring',
-      customer: 'Downtown Business Center',
-      date: '2024-01-10',
-      submittedAt: '2024-01-10T17:30:00Z',
-      status: 'rejected',
-      rejectionReason:
-        'Material costs seem excessive. Please review and resubmit with detailed breakdown.',
-      labourHours: 12.0,
-      labourCost: 960.0,
-      materialCost: 800.0,
-      additionalCharges: 120.0,
-      totalCost: 1880.0,
-      assignedTo: ['Mike Wilson', 'Tom Anderson', 'James Mitchell'],
-      submittedBy: 'Mike Wilson',
-      employeeId: 'JDP002',
-      location: '456 Business Ave, Houston, TX',
-      priority: 'low',
-    },
+    // {
+    //   id: 'TS-2024-005',
+    //   jobId: 'JDP-2024-005',
+    //   jobTitle: 'Office Building Rewiring',
+    //   customer: 'Downtown Business Center',
+    //   date: '2024-01-10',
+    //   submittedAt: '2024-01-10T17:30:00Z',
+    //   status: 'rejected',
+    //   rejectionReason:
+    //     'Material costs seem excessive. Please review and resubmit with detailed breakdown.',
+    //   labourHours: 12.0,
+    //   labourCost: 960.0,
+    //   materialCost: 800.0,
+    //   additionalCharges: 120.0,
+    //   totalCost: 1880.0,
+    //   assignedTo: ['Mike Wilson', 'Tom Anderson', 'James Mitchell'],
+    //   submittedBy: 'Sarah Johnson',
+    //   employeeId: 'JDP002',
+    //   location: '456 Business Ave, Houston, TX',
+    //   priority: 'low',
+    // },
     {
       id: 'TS-2024-006',
       jobId: 'JDP-2024-006',
@@ -141,7 +150,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       materialCost: 950.0,
       additionalCharges: 200.0,
       totalCost: 2430.0,
-      assignedTo: ['Sarah Johnson', 'Mike Wilson', 'David Chen'],
+      assignedTo: ['Sarah Johnson', 'Sarah Johnsonn', 'David Chen'],
       submittedBy: 'Sarah Johnson',
       employeeId: 'JDP001',
       location: '999 Tech Park Dr, Houston, TX',
@@ -194,6 +203,10 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
     return filtered;
   }, [allTimesheets, statusFilter, searchQuery, sortBy]);
 
+  const toggleJobExpansion = jobId => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedJobId(expandedJobId === jobId ? null : jobId);
+  };
   // Calculate summary statistics
   const summaryStats = useMemo(() => {
     const total = allTimesheets.length;
@@ -488,86 +501,113 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
               </Text>
             </View>
           ) : (
-            filteredTimesheets.map(timesheet => (
-              <View key={timesheet.id} style={styles.timesheetCard}>
-                {/* Header */}
-                <View style={styles.timesheetHeader}>
-                  <View style={styles.timesheetTitleContainer}>
-                    <View style={styles.timesheetBadges}>
-                      <Text style={styles.timesheetId}>{timesheet.jobId}</Text>
-                      <View
-                        style={[
-                          styles.statusBadge,
-                          getStatusColor(timesheet.status),
-                        ]}>
-                        <Text style={styles.statusIcon}>
-                          {getStatusIcon(timesheet.status)}
+            filteredTimesheets.map(timesheet => {
+              const isExpanded = expandedJobId === timesheet.id;
+              return (
+                <View key={timesheet.id} style={styles.timesheetCard}>
+                  {/* Header */}
+                  <View style={styles.timesheetHeader}>
+                    <View style={styles.timesheetTitleContainer}>
+                      <View style={styles.timesheetBadges}>
+                        <Text style={styles.timesheetId}>
+                          {timesheet.jobId}
                         </Text>
-                        <Text
+                        <View
                           style={[
-                            styles.statusBadgeText,
-                            {color: getStatusColor(timesheet.status).color},
+                            styles.statusBadge,
+                            getStatusColor(timesheet.status),
                           ]}>
-                          {timesheet.status.replace('-', ' ').toUpperCase()}
-                        </Text>
-                      </View>
-                      <View
-                        style={[
-                          styles.priorityBadge,
-                          getPriorityColor(timesheet.priority),
-                        ]}>
-                        <Text
+                          <Text style={styles.statusIcon}>
+                            {getStatusIcon(timesheet.status)}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.statusBadgeText,
+                              {color: getStatusColor(timesheet.status).color},
+                            ]}>
+                            {timesheet.status.replace('-', ' ').toUpperCase()}
+                          </Text>
+                        </View>
+                        <View
                           style={[
-                            styles.priorityBadgeText,
-                            {color: getPriorityColor(timesheet.priority).color},
+                            styles.priorityBadge,
+                            getPriorityColor(timesheet.priority),
                           ]}>
-                          {timesheet.priority.toUpperCase()}
+                          <Text
+                            style={[
+                              styles.priorityBadgeText,
+                              {
+                                color: getPriorityColor(timesheet.priority)
+                                  .color,
+                              },
+                            ]}>
+                            {timesheet.priority.toUpperCase()}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.timesheetTitle}>
+                        {timesheet.jobTitle}
+                      </Text>
+                      <View style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                        <Text style={styles.timesheetCustomer}>
+                          {timesheet.customer}
                         </Text>
+                        <TouchableOpacity
+                          onPress={() => toggleJobExpansion(timesheet.id)}>
+                          <MaterialIcons
+                            name={
+                              isExpanded
+                                ? 'keyboard-arrow-up'
+                                : 'keyboard-arrow-down'
+                            }
+                            size={28}
+                            color="#6B7280"
+                          />
+                        </TouchableOpacity>
                       </View>
                     </View>
-                    <Text style={styles.timesheetTitle}>
-                      {timesheet.jobTitle}
-                    </Text>
-                    <Text style={styles.timesheetCustomer}>
-                      {timesheet.customer}
-                    </Text>
                   </View>
-                </View>
 
-                {/* Details Grid */}
-                <View style={styles.detailsGrid}>
-                  <View style={styles.detailRow}>
-                    <View style={styles.detailItem}>
-                      <AntDesign name="calendar" size={18} color={tabColor} />
-                      <Text style={styles.detailText}>
-                        Job Date: {formatDate(timesheet.date)}
-                      </Text>
+                  {/* Details Grid */}
+                  {isExpanded && (
+                    <View style={styles.detailsGrid}>
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailItem}>
+                          <AntDesign
+                            name="calendar"
+                            size={18}
+                            color={tabColor}
+                          />
+                          <Text style={styles.detailText}>
+                            Job Date: {formatDate(timesheet.date)}
+                          </Text>
+                        </View>
+                        <View style={styles.detailItem}>
+                          <Feather name="clock" size={20} color={tabColor} />
+                          <Text style={styles.detailText}>
+                            Hours: {timesheet.labourHours}h
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <View style={styles.detailItem}>
+                          <Feather name="user" size={20} color={tabColor} />
+                          <Text style={styles.detailText}>
+                            By: {timesheet.submittedBy}
+                          </Text>
+                        </View>
+                        <View style={styles.detailItem}>
+                          <Feather name="users" size={20} color={tabColor} />
+                          <Text style={styles.detailText}>
+                            Team: {timesheet.assignedTo.length}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
-                    <View style={styles.detailItem}>
-                      <Feather name="clock" size={20} color={tabColor} />
-                      <Text style={styles.detailText}>
-                        Hours: {timesheet.labourHours}h
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <View style={styles.detailItem}>
-                      <Feather name="user" size={20} color={tabColor} />
-                      <Text style={styles.detailText}>
-                        By: {timesheet.submittedBy}
-                      </Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                      <Feather name="users" size={20} color={tabColor} />
-                      <Text style={styles.detailText}>
-                        Team: {timesheet.assignedTo.length}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
+                  )}
 
-                {/* Cost Breakdown */}
-                {/* <View style={styles.costBreakdown}>
+                  {/* Cost Breakdown */}
+                  {/* <View style={styles.costBreakdown}>
                   <View style={styles.costRow}>
                     <View style={styles.costItem}>
                       <Text style={styles.costLabel}>Labour</Text>
@@ -595,83 +635,87 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                   </View>
                 </View> */}
 
-                {/* Status-specific information */}
-                {timesheet.status === 'approved' && timesheet.approvedAt && (
-                  <View style={styles.statusInfo}>
-                    <View style={styles.statusInfoIcon}>
-                      <FontAwesome
-                        name="check-circle"
-                        size={18}
-                        color="#166534"
-                      />
-                    </View>
-                    <Text style={styles.statusInfoText}>
-                      Approved by {timesheet.approvedBy} on{' '}
-                      {formatDateTime(timesheet.approvedAt)}
-                    </Text>
-                  </View>
-                )}
-
-                {timesheet.status === 'rejected' &&
-                  timesheet.rejectionReason && (
-                    <View
-                      style={[styles.statusInfo, {backgroundColor: '#fee2e2'}]}>
+                  {/* Status-specific information */}
+                  {timesheet.status === 'approved' && timesheet.approvedAt && (
+                    <View style={styles.statusInfo}>
                       <View style={styles.statusInfoIcon}>
-                        <MaterialIcons
-                          name="warning-amber"
-                          size={24}
-                          color="#dc2626"
+                        <FontAwesome
+                          name="check-circle"
+                          size={18}
+                          color="#166534"
                         />
                       </View>
-                      <View style={{width: widthPercentageToDP(70)}}>
-                        <Text
-                          style={[
-                            styles.statusInfoText,
-                            {color: '#dc2626', fontWeight: '600'},
-                          ]}>
-                          Rejected
-                        </Text>
-                        <Text
-                          style={[styles.statusInfoText, {color: '#dc2626'}]}>
-                          {timesheet.rejectionReason}
-                        </Text>
-                      </View>
+                      <Text style={styles.statusInfoText}>
+                        Approved by {timesheet.approvedBy} on{' '}
+                        {formatDateTime(timesheet.approvedAt)}
+                      </Text>
                     </View>
                   )}
 
-                {/* Footer */}
-                <View style={styles.timesheetFooter}>
-                  <Text style={styles.submittedText}>
-                    Submitted {formatDateTime(timesheet.submittedAt)}
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.viewButton,
-                      canEditTimesheet(timesheet)
-                        ? styles.viewButtonPrimary
-                        : styles.viewButtonSecondary,
-                    ]}
-                    onPress={() => handleViewTimesheet(timesheet)}>
-                    <Feather
-                      name="eye"
-                      size={20}
-                      color={canEditTimesheet(timesheet) ? '#fff' : tabColor}
-                    />
-                    <Text
-                      style={[
-                        styles.viewButtonText,
-                        canEditTimesheet(timesheet)
-                          ? styles.viewButtonTextPrimary
-                          : styles.viewButtonTextSecondary,
-                      ]}>
-                      {canEditTimesheet(timesheet)
-                        ? 'View Details'
-                        : 'View (Read-only)'}
+                  {timesheet.status === 'rejected' &&
+                    timesheet.rejectionReason && (
+                      <View
+                        style={[
+                          styles.statusInfo,
+                          {backgroundColor: '#fee2e2'},
+                        ]}>
+                        <View style={styles.statusInfoIcon}>
+                          <MaterialIcons
+                            name="warning-amber"
+                            size={24}
+                            color="#dc2626"
+                          />
+                        </View>
+                        <View style={{width: widthPercentageToDP(70)}}>
+                          <Text
+                            style={[
+                              styles.statusInfoText,
+                              {color: '#dc2626', fontWeight: '600'},
+                            ]}>
+                            Rejected
+                          </Text>
+                          <Text
+                            style={[styles.statusInfoText, {color: '#dc2626'}]}>
+                            {timesheet.rejectionReason}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+
+                  {/* Footer */}
+                  <View style={styles.timesheetFooter}>
+                    <Text style={styles.submittedText}>
+                      Submitted {formatDateTime(timesheet.submittedAt)}
                     </Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.viewButton,
+                        canEditTimesheet(timesheet)
+                          ? styles.viewButtonPrimary
+                          : styles.viewButtonSecondary,
+                      ]}
+                      onPress={() => handleViewTimesheet(timesheet)}>
+                      <Feather
+                        name="eye"
+                        size={20}
+                        color={canEditTimesheet(timesheet) ? '#fff' : tabColor}
+                      />
+                      <Text
+                        style={[
+                          styles.viewButtonText,
+                          canEditTimesheet(timesheet)
+                            ? styles.viewButtonTextPrimary
+                            : styles.viewButtonTextSecondary,
+                        ]}>
+                        {canEditTimesheet(timesheet)
+                          ? 'View Details'
+                          : 'View (Read-only)'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
-            ))
+              );
+            })
           )}
         </View>
 
@@ -695,7 +739,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     paddingTop: 20,
-    justifyContent:"center"
+    justifyContent: 'center',
   },
   backButton: {
     padding: 8,

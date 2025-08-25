@@ -428,6 +428,7 @@ export default function TimerScreen({navigation}) {
   // Modals
   const [pauseModal, setPauseModal] = useState(false);
   const [completeModal, setCompleteModal] = useState(false);
+console.log("activityLogactivityLog",activityLog);
 
   // Pause Handling
   const [pauseReason, setPauseReason] = useState('');
@@ -507,15 +508,16 @@ export default function TimerScreen({navigation}) {
             <Text style={{color: '#2E7D32'}}>Work Time</Text>
             <Text style={styles.summaryTime}>{formatTime(elapsedTime)}</Text>
           </View>
-          <View style={[styles.summaryBox, {backgroundColor: '#FFF3E0'}]}>
+          {/* <View style={[styles.summaryBox, {backgroundColor: '#FFF3E0'}]}>
             <Text style={{color: '#E65100'}}>Break Time</Text>
             <Text style={styles.summaryTime}>{formatTime(breakTime)}</Text>
-          </View>
+          </View> */}
         </View>
       </View>
 
       {/* Timer Card */}
-      <View style={styles.timerCard}>
+     
+     {!activityLog.some(item => item.title === 'Work Completed') && <View style={styles.timerCard}>
         <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
         <Text style={styles.statusText}>
           {isRunning ? 'Running' : 'Paused'}
@@ -577,8 +579,14 @@ export default function TimerScreen({navigation}) {
             />
           </View>
         )}
-      </View>
-
+      </View>}
+ {activityLog.some(item => item.title === 'Work Completed') && (
+    <View style={styles.timerCard}>
+      <Text style={{color: '#2196F3', fontWeight: 'bold'}}>
+        Work Completed
+      </Text>
+    </View>
+  )}
       {/* Activity Log */}
       <View style={styles.logCard}>
         <Text style={styles.sectionTitle}>Activity Log</Text>
@@ -767,7 +775,7 @@ export default function TimerScreen({navigation}) {
                 width: '100%',
                 marginBottom: 20,
               }}>
-              <View
+              {/* <View
                 style={{
                   display: 'flex',
                   flexDirection: 'row',
@@ -779,7 +787,7 @@ export default function TimerScreen({navigation}) {
                 <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
                   {formatTime(elapsedTime + breakTime)}
                 </Text>
-              </View>
+              </View> */}
               <View
                 style={{
                   display: 'flex',

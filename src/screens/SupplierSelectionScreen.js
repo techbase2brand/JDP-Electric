@@ -486,18 +486,18 @@ const SupplierSelectionScreen = ({navigation, user}) => {
 
             {/* Action Buttons */}
             <View style={styles.actionButtons}>
-              {/* <TouchableOpacity
+              <TouchableOpacity
                 style={styles.actionButton}
                 onPress={() => handleCall(supplier.phone)}>
                 <Icon name="phone" size={24} color="#3B82F6" />
-              </TouchableOpacity> */}
+              </TouchableOpacity>
 
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={styles.actionButton}
                 onPress={() => handleEmail(supplier.email)}>
                 <Icon name="email" size={24} color="#3B82F6" />
-                {/* <Text style={styles.actionButtonText}>Email</Text> */}
-              </TouchableOpacity>
+                <Text style={styles.actionButtonText}>Email</Text>
+              </TouchableOpacity> */}
 
               <TouchableOpacity
                 style={styles.actionButton}

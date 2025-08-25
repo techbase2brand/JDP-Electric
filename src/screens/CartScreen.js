@@ -64,8 +64,6 @@
 //   Alert.alert(title, message);
 // };
 
-
-
 // const CartScreen = () => {
 //   const navigation = useNavigation();
 //   const [cartItems, setCartItems] = useState([]);
@@ -82,7 +80,7 @@
 //     try {
 //       // Simulate API call
 //       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
 //       const mockCartItems = [
 //         {
 //           id: '1',
@@ -129,7 +127,7 @@
 //           inStock: true,
 //         },
 //       ];
-      
+
 //       setCartItems(mockCartItems);
 //     } catch (error) {
 //       showErrorToast('Error', 'Failed to load cart items');
@@ -150,9 +148,9 @@
 //       return;
 //     }
 
-//     setCartItems(prev => 
-//       prev.map(item => 
-//         item.id === itemId 
+//     setCartItems(prev =>
+//       prev.map(item =>
+//         item.id === itemId
 //           ? { ...item, quantity: newQuantity }
 //           : item
 //       )
@@ -258,11 +256,11 @@
 //           >
 //             <Icon name="remove" size={16} color={Colors.primary} />
 //           </TouchableOpacity>
-          
+
 //           <Text style={styles.quantityText}>
 //             {item.quantity} {item.unit}
 //           </Text>
-          
+
 //           <TouchableOpacity
 //             style={styles.quantityButton}
 //             onPress={() => updateQuantity(item.id, item.quantity + 1)}
@@ -309,22 +307,22 @@
 //   const renderHeader = () => (
 //     <View style={styles.header}>
 //       <View style={styles.headerTop}>
-//         <TouchableOpacity 
+//         <TouchableOpacity
 //           style={styles.backButton}
 //           onPress={() => navigation.goBack()}
 //         >
 //           <Icon name="arrow-back" size={24} color={Colors.text} />
 //         </TouchableOpacity>
-        
+
 //         <Text style={styles.headerTitle}>Shopping Cart</Text>
-        
+
 //         {cartItems.length > 0 && (
 //           <TouchableOpacity style={styles.clearButton} onPress={clearCart}>
 //             <Text style={styles.clearButtonText}>Clear</Text>
 //           </TouchableOpacity>
 //         )}
 //       </View>
-      
+
 //       {cartItems.length > 0 && (
 //         <Text style={styles.itemCount}>
 //           {getTotalItems()} item{getTotalItems() !== 1 ? 's' : ''} in cart
@@ -337,9 +335,8 @@
 //     <View style={styles.container}>
 //       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
 
-      
 //       {renderHeader()}
-      
+
 //       {cartItems?.length === 0 ? (
 //         renderEmptyCart()
 //       ) : (
@@ -454,7 +451,7 @@
 //   // Scroll Container
 //   scrollContainer: {
 //     flex: 1,
-    
+
 //   },
 //   scrollContent: {
 //     paddingBottom: Spacing.xl,
@@ -665,8 +662,7 @@
 
 // export default CartScreen;
 
-
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -678,11 +674,14 @@ import {
   Image,
   Alert,
   Linking,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
+import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 
 // Embedded Colors
 const Colors = {
@@ -722,21 +721,42 @@ const BorderRadius = {
 const Shadows = {
   md: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
   },
 };
 
-
-
-
-
-const CartScreen = ({ onBack, onNavigate, route }) => {
+const CartScreen = ({onBack, onNavigate, route}) => {
+  const statusOptions = [
+    {label: 'Feet', value: 'Feet'},
+    {label: 'Pieces', value: 'Pieces'},
+    {label: 'Meters', value: 'Meters'},
+    {label: 'Boxes', value: 'Boxes'},
+    {label: 'Rolls', value: 'Rolls'},
+    {label: 'Gallons', value: 'Gallons'},
+    {label: 'Pounds', value: 'Pounds'},
+  ];
   const navigation = useNavigation();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  
+  const [showAddEntryModal, setShowAddEntryModal] = useState(false);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('date');
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [newEntry, setNewEntry] = useState({
+    activity: '',
+    startTime: '',
+    endTime: '',
+    description: '',
+    location: '',
+    worker: '',
+    isManual: true,
+  });
+  const [timeEntries, setTimeEntries] = useState([]);
+
   // Mock cart data (removed pricing)
   const [cartItems, setCartItems] = useState([
     {
@@ -756,7 +776,7 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
       description: 'Standard 20 amp circuit breaker',
       sku: 'CB-20A-002',
       quantity: 8,
-      supplier: 'ElectricPro Supply'
+      supplier: 'ElectricPro Supply',
     },
     {
       id: '4',
@@ -765,7 +785,7 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
       description: 'Electrical metallic tubing, 10ft length',
       sku: 'EMT-12-004',
       quantity: 15,
-      supplier: 'Conduit Corp'
+      supplier: 'Conduit Corp',
     },
     {
       id: '6',
@@ -774,8 +794,8 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
       description: 'Ground fault circuit interrupter outlet',
       sku: 'GFCI-20A-006',
       quantity: 4,
-      supplier: 'Safety Electric Co'
-    }
+      supplier: 'Safety Electric Co',
+    },
   ]);
 
   const updateQuantity = (itemId, newQuantity) => {
@@ -784,17 +804,17 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
       return;
     }
 
-    setCartItems(cartItems.map(item =>
-      item.id === itemId
-        ? { ...item, quantity: newQuantity }
-        : item
-    ));
+    setCartItems(
+      cartItems.map(item =>
+        item.id === itemId ? {...item, quantity: newQuantity} : item,
+      ),
+    );
   };
 
-  const removeItem = (itemId) => {
+  const removeItem = itemId => {
     const item = cartItems.find(item => item.id === itemId);
     setCartItems(cartItems.filter(item => item.id !== itemId));
-    
+
     if (item) {
       // Alert.alert('Success', `${item.name} removed from cart`);
     }
@@ -809,10 +829,10 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
   const getTotalItems = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
- const handleCall = phoneNumber => {
+  const handleCall = phoneNumber => {
     Linking.openURL(`tel:${6184738399}`);
   };
-  const handleNavigate = (screen) => {
+  const handleNavigate = screen => {
     if (onNavigate) {
       onNavigate(screen);
     } else {
@@ -833,38 +853,35 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
       visible={showClearConfirm}
       transparent={true}
       animationType="slide"
-      onRequestClose={() => setShowClearConfirm(false)}
-    >
+      onRequestClose={() => setShowClearConfirm(false)}>
       <View style={styles.modalOverlay}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalBackdrop}
           activeOpacity={1}
-          onPress={() => setShowClearConfirm(false)}
-        >
+          onPress={() => setShowClearConfirm(false)}>
           <View style={styles.clearModal}>
             <View style={styles.modalHandle} />
-            
+
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Clear Cart</Text>
             </View>
 
             <View style={styles.modalContent}>
               <Text style={styles.modalDescription}>
-                Are you sure you want to remove all items from your cart? This action cannot be undone.
+                Are you sure you want to remove all items from your cart? This
+                action cannot be undone.
               </Text>
-              
+
               <View style={styles.modalActions}>
                 <TouchableOpacity
                   style={styles.cancelButton}
-                  onPress={() => setShowClearConfirm(false)}
-                >
+                  onPress={() => setShowClearConfirm(false)}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity
                   style={styles.clearButton}
-                  onPress={clearCart}
-                >
+                  onPress={clearCart}>
                   <Text style={styles.clearButtonText}>Clear Cart</Text>
                 </TouchableOpacity>
               </View>
@@ -879,15 +896,15 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-        
+
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Icon name="arrow-back" size={24} color={Colors.text} />
           </TouchableOpacity>
-          
+
           <Text style={styles.headerTitle}>Cart</Text>
-          
+
           <View style={styles.headerSpacer} />
         </View>
 
@@ -900,8 +917,7 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
           </Text>
           <TouchableOpacity
             style={styles.browseButton}
-            onPress={() => navigation.navigate('OrderProducts')}
-          >
+            onPress={() => navigation.navigate('OrderProducts')}>
             <Icon name="inventory" size={20} color={Colors.white} />
             <Text style={styles.browseButtonText}>Browse Products</Text>
           </TouchableOpacity>
@@ -909,40 +925,324 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
       </View>
     );
   }
+  const calculateDuration = (startTime, endTime) => {
+    // Simple duration calculation (would use proper time parsing in real app)
+    const start = new Date(`2024-01-01 ${startTime}`);
+    const end = new Date(`2024-01-01 ${endTime}`);
+    return Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60));
+  };
+  const handleAddEntry = () => {
+    if (!newEntry.activity || !newEntry.startTime || !newEntry.endTime) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
 
+    const duration = calculateDuration(newEntry.startTime, newEntry.endTime);
+    const entry = {
+      id: Date.now().toString(),
+      activity: newEntry.activity,
+      startTime: newEntry.startTime,
+      endTime: newEntry.endTime,
+      duration,
+      description: newEntry.description || '',
+      location: newEntry.location || '',
+      worker: newEntry.worker || '',
+      isManual: true,
+      jobId: newEntry.jobId,
+    };
+
+    setTimeEntries(prev => [...prev, entry]);
+    setNewEntry({
+      activity: '',
+      startTime: '',
+      endTime: '',
+      description: '',
+      location: '',
+      worker: '',
+      isManual: true,
+    });
+    setShowAddEntryModal(false);
+  };
+
+  const renderAddEntryModal = () => (
+    <Modal
+      visible={showAddEntryModal}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => {
+        setShowAddEntryModal(false);
+        setEditingEntry(null);
+        setNewEntry({
+          activity: '',
+          startTime: '',
+          endTime: '',
+          description: '',
+          location: '',
+          worker: '',
+          isManual: true,
+        });
+      }}>
+      <View style={styles.modalOverlay1}>
+        <View style={styles.addEntryModal}>
+          <View style={styles.modalHeader1}>
+            <Text style={styles.modalTitle1}>{'Add Custom Material'}</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                setShowAddEntryModal(false);
+                setEditingEntry(null);
+              }}>
+              <Icon name="close" size={24} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+          {/* ✅ KeyboardAvoidingView Wrap */}
+          <KeyboardAvoidingView
+            style={{flex: 1}}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
+            <ScrollView
+              style={styles.modalContent1}
+              showsVerticalScrollIndicator={false}>
+              <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Material Name *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={newEntry.activity}
+                  onChangeText={text =>
+                    setNewEntry(prev => ({...prev, activity: text}))
+                  }
+                  placeholder="Enter material name"
+                  placeholderTextColor={Colors.textLight}
+                />
+              </View>
+               <Text style={styles.fieldLabel}>Unit *</Text>
+              <View style={styles.filtersRow}>
+                {renderDropdown(
+                  statusOptions,
+                  statusFilter,
+                  setStatusFilter,
+                  showStatusDropdown,
+                  () => {
+                    setShowStatusDropdown(!showStatusDropdown);
+                    setShowSortDropdown(false);
+                  },
+                  'Select Unit',
+                )}
+              </View>
+              <View style={styles.timeInputRow}>
+                <View
+                  style={[
+                    styles.formField,
+                    {flex: 1, marginRight: Spacing.sm},
+                  ]}>
+                  <Text style={styles.fieldLabel}>Total Orders *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={newEntry.startTime}
+                    onChangeText={text =>
+                      setNewEntry(prev => ({...prev, startTime: text}))
+                    }
+                    placeholder="Orders"
+                    placeholderTextColor={Colors.textLight}
+                  />
+                </View>
+
+                <View
+                  style={[styles.formField, {flex: 1, marginLeft: Spacing.sm}]}>
+                  <Text style={styles.fieldLabel}>Amount Used *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={newEntry.endTime}
+                    onChangeText={text =>
+                      setNewEntry(prev => ({...prev, endTime: text}))
+                    }
+                    placeholder="Amount"
+                    placeholderTextColor={Colors.textLight}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Supplier Order ID</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={newEntry.location}
+                  onChangeText={text =>
+                    setNewEntry(prev => ({...prev, location: text}))
+                  }
+                  placeholder="e.g.  ORD-2024-19"
+                  placeholderTextColor={Colors.textLight}
+                />
+              </View>
+
+              {/* <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Worker</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={newEntry.worker}
+                  onChangeText={text =>
+                    setNewEntry(prev => ({...prev, worker: text}))
+                  }
+                  placeholder="Worker name"
+                  placeholderTextColor={Colors.textLight}
+                />
+              </View> */}
+{/* 
+              <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Description</Text>
+                <TextInput
+                  style={[styles.textInput, styles.textArea]}
+                  value={newEntry.description}
+                  onChangeText={text =>
+                    setNewEntry(prev => ({...prev, description: text}))
+                  }
+                  placeholder="Description of work performed"
+                  placeholderTextColor={Colors.textLight}
+                  multiline={true}
+                  numberOfLines={3}
+                />
+              </View> */}
+
+             
+            </ScrollView>
+             <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowAddEntryModal(false);
+                    setEditingEntry(null);
+                  }}>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={handleAddEntry}>
+                  <Text style={styles.saveButtonText}>{'Add Material'}</Text>
+                </TouchableOpacity>
+              </View>
+          </KeyboardAvoidingView>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const renderDropdown = (
+    options,
+    selectedValue,
+    onSelect,
+    isVisible,
+    onToggle,
+    placeholder,
+  ) => (
+    <View style={styles.dropdownContainer}>
+      <TouchableOpacity style={styles.dropdownButton} onPress={onToggle}>
+        <Text style={styles.dropdownButtonText}>
+          {options.find(opt => opt.value === selectedValue)?.label ||
+            placeholder}
+        </Text>
+        <Text style={styles.dropdownArrow}>{isVisible ? '▲' : '▼'}</Text>
+      </TouchableOpacity>
+
+      {isVisible && (
+        <View style={styles.dropdownMenu}>
+          {options.map(option => (
+            <TouchableOpacity
+              key={option.value}
+              style={[
+                styles.dropdownMenuItem,
+                selectedValue === option.value &&
+                  styles.dropdownMenuItemSelected,
+              ]}
+              onPress={() => {
+                onSelect(option.value);
+                onToggle();
+              }}>
+              <Text
+                style={[
+                  styles.dropdownMenuItemText,
+                  selectedValue === option.value &&
+                    styles.dropdownMenuItemTextSelected,
+                ]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Icon name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
-        
+
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Cart</Text>
           <Text style={styles.headerSubtitle}>{getTotalItems()} items</Text>
         </View>
-        
-        <TouchableOpacity
+
+        {/* <TouchableOpacity
           style={styles.clearButton1}
-          onPress={() => setShowClearConfirm(true)}
-        >
+        
+          onPress={() => setShowClearConfirm(true)}> 
           <Icon name="delete" size={24} color={Colors.error} />
+        </TouchableOpacity> */}
+        <TouchableOpacity
+          style={[
+            styles.addButton,
+            {
+              width: widthPercentageToDP(8),
+              height: heightPercentageToDP(3),
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: '#3B82F6',
+              alignSelf: 'flex-end',
+              marginHorizontal: 16,
+              marginTop: 10,
+              borderRadius: 10,
+            },
+          ]}
+          onPress={() => setShowAddEntryModal(true)}>
+          <Icon name="add" size={24} color={'#fff'} />
         </TouchableOpacity>
       </View>
 
       {/* Cart Items */}
+      {/* <TouchableOpacity
+        style={[
+          styles.addButton,
+          {
+            width: widthPercentageToDP(8),
+            height: heightPercentageToDP(3),
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: '#3B82F6',
+            alignSelf: 'flex-end',
+            marginHorizontal: 16,
+            marginTop: 10,
+            borderRadius: 10,
+          },
+        ]}
+        onPress={() => setShowAddEntryModal(true)}>
+        <Icon name="add" size={24} color={'#fff'} />
+      </TouchableOpacity> */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {cartItems.map((item) => (
+        {cartItems.map(item => (
           <View key={item.id} style={styles.cartItem}>
             <View style={styles.cartItemContent}>
               {/* Product Image */}
               <View style={styles.productImageContainer}>
                 {item.image ? (
                   <Image
-                    source={{ uri: item.image }}
+                    source={{uri: item.image}}
                     style={styles.productImage}
                   />
                 ) : (
@@ -955,12 +1255,13 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
                 <View style={styles.productHeader}>
                   <View style={styles.productTitleContainer}>
                     <Text style={styles.productName}>{item.name}</Text>
-                    <Text style={styles.productDescription}>{item.description}</Text>
+                    <Text style={styles.productDescription}>
+                      {item.description}
+                    </Text>
                   </View>
                   <TouchableOpacity
                     style={styles.removeButton}
-                    onPress={() => removeItem(item.id)}
-                  >
+                    onPress={() => removeItem(item.id)}>
                     <Icon name="delete" size={20} color={Colors.error} />
                   </TouchableOpacity>
                 </View>
@@ -977,8 +1278,9 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
                   <View style={styles.quantitySection}>
                     <TouchableOpacity
                       style={styles.quantityButton}
-                      onPress={() => updateQuantity(item.id, item.quantity - 1)}
-                    >
+                      onPress={() =>
+                        updateQuantity(item.id, item.quantity - 1)
+                      }>
                       <Icon name="remove" size={20} color={Colors.text} />
                     </TouchableOpacity>
                     <View style={styles.quantityDisplay}>
@@ -986,12 +1288,13 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
                     </View>
                     <TouchableOpacity
                       style={styles.quantityButton}
-                      onPress={() => updateQuantity(item.id, item.quantity + 1)}
-                    >
+                      onPress={() =>
+                        updateQuantity(item.id, item.quantity + 1)
+                      }>
                       <Icon name="add" size={20} color={Colors.text} />
                     </TouchableOpacity>
                   </View>
-                  
+
                   <View style={styles.priceSection}>
                     {/* <Text style={styles.priceText}>Quote Required</Text> */}
                   </View>
@@ -1006,7 +1309,7 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
           <View style={styles.summaryHeader}>
             <Text style={styles.summaryTitle}>Order Summary</Text>
           </View>
-          
+
           <View style={styles.summaryContent}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Total Items</Text>
@@ -1030,25 +1333,26 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
             </Text>
           </View> */}
         </View>
-        
-        <View style={{ height: 120 }} />
+
+        <View style={{height: 120}} />
       </ScrollView>
 
       {/* Bottom Actions */}
       <View style={styles.bottomActions}>
         <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={[styles.continueButton, {backgroundColor:"#10B981"}]}
-              onPress={() => handleCall()}
+            style={[styles.continueButton, {backgroundColor: '#10B981'}]}
+            onPress={() => handleCall()}
             // onPress={() => handleNavigate('OrderProducts')}
           >
             {/* <Ionicons name="call" size={20} color={"#fff"} /> */}
-            <Text style={[styles.continueButtonText,{color:"#fff"}]}>Call & Verify</Text>
+            <Text style={[styles.continueButtonText, {color: '#fff'}]}>
+              Call & Verify
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.checkoutButton}
-            onPress={() => handleNavigate('CheckoutScreen')}
-          >
+            onPress={() => handleNavigate('CheckoutScreen')}>
             <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
           </TouchableOpacity>
         </View>
@@ -1056,6 +1360,7 @@ const CartScreen = ({ onBack, onNavigate, route }) => {
 
       {/* Clear Confirmation Modal */}
       {renderClearConfirmModal()}
+      {renderAddEntryModal()}
     </View>
   );
 };
@@ -1105,7 +1410,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
 
   // Cart Items
@@ -1335,7 +1640,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     padding: Spacing.md,
-    paddingBottom:40,
+    paddingBottom: 40,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -1417,6 +1722,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.md,
     width: '100%',
+    paddingHorizontal:16,
+    marginBottom:20
+    
   },
   cancelButton: {
     flex: 1,
@@ -1442,6 +1750,161 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.white,
     fontWeight: '600',
+  },
+
+  // Modal
+  modalOverlay1: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  addEntryModal: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    // maxHeight: '90%',
+    height: heightPercentageToDP(90),
+  },
+  modalHeader1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  modalTitle1: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  closeButton: {
+    padding: Spacing.sm,
+  },
+  modalContent1: {
+    flex: 1,
+    padding: Spacing.lg,
+  },
+
+  // Form Fields
+  formField: {
+    marginBottom: Spacing.lg,
+  },
+  fieldLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text,
+    marginBottom: Spacing.sm,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    fontSize: 16,
+    color: Colors.text,
+    backgroundColor: Colors.white,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  timeInputRow: {
+    flexDirection: 'row',
+  },
+
+  // Modal Actions
+  modalActions1: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginTop: Spacing.lg,
+  },
+  cancelButton1: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  cancelButtonText1: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+  },
+  saveButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  filtersRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  dropdownContainer: {
+    flex: 1,
+    position: 'relative',
+    zIndex: 1000,
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: 'white',
+  },
+  dropdownButtonText: {
+    fontSize: 14,
+    color: '#111827',
+    flex: 1,
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 48,
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 2000,
+  },
+  dropdownMenuItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  dropdownMenuItemSelected: {
+    backgroundColor: '#3B82F6',
+  },
+  dropdownMenuItemText: {
+    fontSize: 14,
+    color: '#111827',
+  },
+  dropdownMenuItemTextSelected: {
+    color: 'white',
   },
 });
 

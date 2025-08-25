@@ -1067,7 +1067,7 @@ const JobDetailScreen = ({
               </View>
             )}
 
-            {job.customer?.email && (
+            {/* {job.customer?.email && (
               <View style={styles.customerContactItem}>
                 <View style={styles.contactInfo}>
                   <Text style={styles.infoLabel}>Email</Text>
@@ -1080,7 +1080,7 @@ const JobDetailScreen = ({
                   <Text style={styles.emailButtonText}>Email</Text>
                 </TouchableOpacity>
               </View>
-            )}
+            )} */}
           </View>
         </View>
 

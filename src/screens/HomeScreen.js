@@ -437,7 +437,7 @@ const HomeScreen = ({navigation}) => {
                 <Text style={styles.countText}>2</Text>
               </View>
               <TouchableOpacity
-                style={{marginLeft: widthPercentageToDP(35)}}
+                style={{marginLeft: widthPercentageToDP(32)}}
                 onPress={() => navigation.navigate('JobStack')}>
                 <Text style={styles.viewAllText}>View All →</Text>
               </TouchableOpacity>
@@ -456,7 +456,7 @@ const HomeScreen = ({navigation}) => {
                 <Text style={[styles.countText, {color: '#008236'}]}>1</Text>
               </View>
               <TouchableOpacity
-                style={{marginLeft: widthPercentageToDP(30)}}
+                style={{marginLeft: widthPercentageToDP(28)}}
                 onPress={() => navigation.navigate('JobStack')}>
                 <Text style={styles.viewAllText}>View All →</Text>
               </TouchableOpacity>
