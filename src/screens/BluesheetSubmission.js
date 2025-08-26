@@ -9,8 +9,6 @@ import {
   Alert,
 } from 'react-native';
 
-
-
 export default function BluesheetSubmission({
   selectedJob,
   onNavigate,
