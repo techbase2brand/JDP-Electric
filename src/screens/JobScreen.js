@@ -19,6 +19,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {widthPercentageToDP} from '../utils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -73,6 +74,28 @@ const JobListingScreen = ({
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [expandedJobId, setExpandedJobId] = useState(null);
 
+  const [activeJobId, setActiveJobId] = useState(null);
+
+  useEffect(() => {
+    const getJobId = async () => {
+      try {
+        const id = await AsyncStorage.getItem('activeJobId');
+        if (id) {
+          setActiveJobId(id);
+          console.log('Active Job ID:', id);
+        } else {
+          console.log('No active job found');
+        }
+      } catch (error) {
+        console.log('Error getting jobId:', error);
+      }
+    };
+
+    getJobId();
+  }, []);
+
+  console.log('activeJobIdactiveJobId', activeJobId);
+
   const applyFilter = () => {
     console.log('Start Date:', startDate);
     console.log('End Date:', endDate);
@@ -85,6 +108,7 @@ const JobListingScreen = ({
         id: '1',
         jobId: 'JDP-2024-001',
         title: 'Electrical Panel Upgrade',
+        description: 'Upgrade main electrical panel from 100A to 200A service',
         customer: {
           name: 'ABC Manufacturing',
           address: '1234 Industrial Blvd, Houston, TX 77001',
@@ -110,6 +134,7 @@ const JobListingScreen = ({
         id: '2',
         jobId: 'JDP-2024-002',
         title: 'Outlet Installation Project',
+        description: 'Upgrade main electrical panel from 100A to 200A service',
         customer: {
           name: 'XYZ Office Complex',
           address: '5678 Business Dr, Dallas, TX 75201',
@@ -134,6 +159,7 @@ const JobListingScreen = ({
         id: '3',
         jobId: 'JDP-2024-003',
         title: 'Emergency Lighting Repair',
+        description: 'Upgrade main electrical panel from 100A to 200A service',
         customer: {
           name: 'DEF Hospital',
           address: '9876 Medical Center Dr, Austin, TX 78701',
@@ -158,6 +184,7 @@ const JobListingScreen = ({
         id: '4',
         jobId: 'JDP-2024-004',
         title: 'LED Lighting Installation',
+        description: 'Upgrade main electrical panel from 100A to 200A service',
         customer: {
           name: 'GHI Retail Store',
           address: '2468 Shopping Center, San Antonio, TX 78201',
@@ -182,6 +209,7 @@ const JobListingScreen = ({
         id: '5',
         jobId: 'JDP-2024-005',
         title: 'Generator Installation',
+        description: 'Upgrade main electrical panel from 100A to 200A service',
         customer: {
           name: 'JKL Data Center',
           address: '1357 Technology Pkwy, Houston, TX 77002',
@@ -206,6 +234,7 @@ const JobListingScreen = ({
         id: '6',
         jobId: 'JDP-2024-001',
         title: 'Electrical Panel Upgrade',
+        description: 'Upgrade main electrical panel from 100A to 200A service',
         customer: {
           name: 'ABC Manufacturing',
           address: '1234 Industrial Blvd, Houston, TX 77001',
@@ -330,9 +359,37 @@ const JobListingScreen = ({
     Linking.openURL(url);
   };
 
+  const handleNavigateTimer = async job => {
+    try {
+      const activeJobId = await AsyncStorage.getItem('activeJobId');
+      const currentJobId = job?.jobId?.toString();
+
+      console.log('🔍 Active Job ID:', activeJobId, 'Current:', currentJobId);
+
+      if (!activeJobId) {
+        // No active job → allow navigation
+        navigation.navigate('TimerScreen', {job});
+        return;
+      }
+
+      if (activeJobId === currentJobId) {
+        // Same job → allow navigation
+        navigation.navigate('TimerScreen', {job});
+      } else {
+        // Different job already running → block
+        Alert.alert(
+          'Active Job Running',
+          `Another job (ID: ${activeJobId}) is already running. Please complete it first.`,
+          [{text: 'OK'}],
+        );
+      }
+    } catch (error) {
+      console.log('❌ Error checking jobId:', error);
+    }
+  };
   // Handle start timer
   const handleStartTimer = job => {
-    navigation.navigate('TimerScreen');
+    navigation.navigate('TimerScreen', {job});
     // if (onStartTimer) {
     //   onStartTimer(job);
     // } else {
@@ -439,7 +496,7 @@ const JobListingScreen = ({
       <TouchableOpacity
         key={job.id}
         style={styles.jobCard}
-        onPress={() => navigation.navigate('JobDetail', job)}>
+        onPress={() => navigation.navigate('JobDetail', {job})}>
         {/* Job Header */}
         <View style={styles.jobCardHeader}>
           <View style={styles.jobCardTitleSection}>
@@ -468,7 +525,12 @@ const JobListingScreen = ({
           </View>
         </View>
         {/* Job Title */}
-        <View style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          }}>
           <Text style={styles.jobTitle}>{job.title}</Text>
           <TouchableOpacity onPress={() => toggleJobExpansion(job.id)}>
             <Icon
@@ -481,7 +543,7 @@ const JobListingScreen = ({
         <View style={styles.scheduleSection}>
           <View style={styles.scheduleItem}>
             <Ionicons name="calendar" size={16} color={COLORS.gray500} />
-            <Text style={[styles.scheduleText, {fontWeight:"600"}]}>
+            <Text style={[styles.scheduleText, {fontWeight: '600'}]}>
               {new Date(job.scheduledDate).toLocaleDateString('en-US', {
                 month: 'numeric', // "August"
                 day: 'numeric',
@@ -499,22 +561,23 @@ const JobListingScreen = ({
           </View>
         </View>
         {/* Customer Info */}
-        {isExpanded && <View>
+        {isExpanded && (
+          <View>
+            <View style={styles.customerSection}>
+              <Text style={styles.customerName}>{job.customer.name}</Text>
+              <Text style={styles.customerAddress}>{job.customer.address}</Text>
+            </View>
+            {/* Schedule Info */}
 
-        <View style={styles.customerSection}>
-          <Text style={styles.customerName}>{job.customer.name}</Text>
-          <Text style={styles.customerAddress}>{job.customer.address}</Text>
-        </View>
-        {/* Schedule Info */}
-        
-        {/* Assigned To */}
-        <View style={styles.assignedSection}>
-          <Ionicons name="people" size={16} color={COLORS.gray500} />
-          <Text style={styles.assignedText}>
-            Assigned to: {job.assignedTo.join(', ')}
-          </Text>
-        </View>
-        </View>}
+            {/* Assigned To */}
+            <View style={styles.assignedSection}>
+              <Ionicons name="people" size={16} color={COLORS.gray500} />
+              <Text style={styles.assignedText}>
+                Assigned to: {job.assignedTo.join(', ')}
+              </Text>
+            </View>
+          </View>
+        )}
         {/* Special Instructions */}
         {/* {job.specialInstructions && (
         <View style={styles.instructionsSection}>
@@ -549,7 +612,8 @@ const JobListingScreen = ({
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => handleNavigate(job)}>
+             onPress={() => navigation.navigate('MapScreen', job)}>
+            {/* onPress={() => handleNavigate(job)}> */}
             <Ionicons name="navigate" size={20} color={'#10B981'} />
             <Text style={[styles.actionText, {color: '#10B981'}]}>
               Navigate
@@ -558,7 +622,9 @@ const JobListingScreen = ({
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => handleStartTimer(job)}>
+            onPress={() => handleNavigateTimer(job)}
+            // onPress={() => navigation.navigate('TimerScreen', {job})}
+          >
             <Icon name="timer" size={20} color={COLORS.danger} />
             <Text style={[styles.actionText, {color: COLORS.danger}]}>
               Timer
@@ -613,7 +679,9 @@ const JobListingScreen = ({
               <View style={styles.modalContainer}>
                 <Text style={styles.label}>Start Date</Text>
                 <TouchableOpacity
-                  onPress={() => {setShowStartPicker(true),setShowEndPicker(false)}}
+                  onPress={() => {
+                    setShowStartPicker(true), setShowEndPicker(false);
+                  }}
                   style={styles.dateButton}>
                   <Text>{startDate.toDateString()}</Text>
                 </TouchableOpacity>
@@ -630,7 +698,9 @@ const JobListingScreen = ({
                 )}
                 <Text style={styles.label}>End Date</Text>
                 <TouchableOpacity
-                  onPress={() => {setShowEndPicker(true),setShowStartPicker(false)}}
+                  onPress={() => {
+                    setShowEndPicker(true), setShowStartPicker(false);
+                  }}
                   style={styles.dateButton}>
                   <Text>{endDate.toDateString()}</Text>
                 </TouchableOpacity>

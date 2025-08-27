@@ -1454,6 +1454,17 @@ const ChargeModal = ({
 
         <ScrollView style={styles.modalBody}>
           <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Title</Text>
+            <TextInput
+              style={styles.formInput}
+              value={tempChargeData.title || ''}
+              onChangeText={text =>
+                setTempChargeData(prev => ({...prev, title: text}))
+              }
+              placeholder="Title"
+            />
+          </View>
+          <View style={styles.formGroup}>
             <Text style={styles.formLabel}>Description</Text>
             <TextInput
               style={styles.formInput}
@@ -1493,7 +1504,7 @@ const ChargeModal = ({
             />
           </View>
 
-          <View style={styles.formGroup}>
+          {/* <View style={styles.formGroup}>
             <Text style={styles.formLabel}>Receipt ID</Text>
             <TextInput
               style={styles.formInput}
@@ -1503,7 +1514,7 @@ const ChargeModal = ({
               }
               placeholder="Enter receipt ID"
             />
-          </View>
+          </View> */}
 
           <View style={styles.formGroup}>
             <Text style={styles.formLabel}>Notes</Text>
@@ -1631,6 +1642,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
         additionalCharges: [
           {
             id: '1',
+            title: 'Additional Items ABC',
             description: 'Additional Items',
             category: 'Other',
             amount:
@@ -1669,7 +1681,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
       materialEntries: [
         {
           id: '1',
-          name: 'Electrical Wire 12AWG',
+          name: 'Electrical Wire 12AW',
           unit: 'feet',
           totalOrdered: 500,
           amountUsed: 350,
@@ -1695,6 +1707,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
       additionalCharges: [
         {
           id: '1',
+          title: 'ABC',
           description: 'Parking permit for downtown work site',
           category: 'Permits',
           amount: 15.0,
@@ -1702,6 +1715,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
         },
         {
           id: '2',
+          title: 'XYZ',
           description: 'Equipment rental - lift',
           category: 'Equipment',
           amount: 125.0,
@@ -2006,8 +2020,8 @@ const JobTimesheet = ({navigation, route, user, job}) => {
 
     const message =
       timesheetData.status === 'rejected'
-        ? 'Timesheet resubmitted for approval'
-        : 'Timesheet submitted for approval';
+        ? 'Bluesheet resubmitted for approval'
+        : 'Bluesheet submitted for approval';
     Alert.alert('Success', message);
   };
 
@@ -2019,12 +2033,12 @@ const JobTimesheet = ({navigation, route, user, job}) => {
       approvedAt: new Date().toISOString(),
       approvedBy: user?.name || 'Management',
     }));
-    Alert.alert('Success', 'Timesheet approved');
+    Alert.alert('Success', 'Bluesheet approved');
   };
 
   const handleReject = () => {
     Alert.prompt(
-      'Reject Timesheet',
+      'Reject Bluesheet',
       'Please provide a reason for rejection:',
       reason => {
         if (reason) {
@@ -2033,7 +2047,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             status: 'rejected',
             rejectionReason: reason,
           }));
-          Alert.alert('Success', 'Timesheet rejected');
+          Alert.alert('Success', 'Bluesheet rejected');
         }
       },
     );
@@ -2083,7 +2097,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
 
           <View style={styles.headerCenter}>
             {' '}
-            <Text style={styles.headerTitle}>Job Timesheet</Text>
+            <Text style={styles.headerTitle}>Job Bluesheet</Text>
             <Text style={styles.headerSubtitle}>
               {' '}
               {formatDate(selectedDate)}{' '}
@@ -2097,7 +2111,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
         </View>
       </View>
       {/* Summary Cards */}
-      <View style={styles.summaryContainer}>
+      {/* <View style={styles.summaryContainer}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryValue}>
             {7}h {50}m
@@ -2118,7 +2132,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             Auto Tracked
           </Text>
         </View>
-      </View>
+      </View> */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Status and Job Info */}
         <View style={styles.statusCard}>
@@ -2166,7 +2180,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
               <View style={styles.rejectionInfo}>
                 <Text style={styles.rejectionIcon}>⚠️</Text>
                 <View style={styles.rejectionText}>
-                  <Text style={styles.rejectionTitle}>Timesheet Rejected</Text>
+                  <Text style={styles.rejectionTitle}>Bluesheet Rejected</Text>
                   <Text style={styles.rejectionReason}>
                     {timesheetData.rejectionReason}
                   </Text>
@@ -2178,7 +2192,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             <View style={styles.approvalInfo}>
               <Text style={styles.approvalIcon}>✅</Text>
               <View style={styles.approvalText}>
-                <Text style={styles.approvalTitle}>Timesheet Approved</Text>
+                <Text style={styles.approvalTitle}>Bluesheet Approved</Text>
                 <Text style={styles.approvalDetails}>
                   Approved by {timesheetData.approvedBy || 'Management'} on{' '}
                   {new Date(timesheetData.approvedAt).toLocaleDateString()}
@@ -2202,11 +2216,13 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             )}
           </View>
 
-          {timesheetData.labourEntries.map(entry => (
+          {/* {timesheetData.labourEntries.map(entry => (
             <View key={entry.id} style={styles.entryCard}>
               <View style={styles.entryHeader}>
                 <View style={styles.entryInfo}>
-                  <Text style={styles.entryName}>{ "Sarah Johnson"}</Text>
+                  <Text style={styles.entryName}>
+                    {entry?.employeeName || 'Sarah Johnson'}
+                  </Text>
                   <Text style={styles.entryDetails}>
                     {entry.role} • {entry.employeeId}
                   </Text>
@@ -2238,35 +2254,70 @@ const JobTimesheet = ({navigation, route, user, job}) => {
               <View style={styles.entryDetails}>
                 <View style={styles.entryRow}>
                   <Text style={styles.entryLabel}>Regular Hours:</Text>
-                  <Text style={styles.entryValue}>
-                    {entry.regularHours}h 
-                  </Text>
+                  <Text style={styles.entryValue}>{entry.regularHours}h</Text>
                 </View>
                 <View style={styles.entryRow}>
                   <Text style={styles.entryLabel}>Overtime Hours:</Text>
-                  <Text style={styles.entryValue}>
-                    {entry.overtimeHours}h
-                  </Text>
+                  <Text style={styles.entryValue}>{entry.overtimeHours}h</Text>
                 </View>
-                {/* <View style={styles.entryCostRow}>
-                  <Text style={styles.entryCostLabel}>Total Labour Cost:</Text>
-                  <Text style={styles.entryCostValue}>
-                    ${entry.totalCost.toFixed(2)}
-                  </Text>
-                </View> */}
                 {entry.notes && (
                   <Text style={styles.entryNotes}>{entry.notes}</Text>
                 )}
               </View>
             </View>
-          ))}
+          ))} */}
+          <View style={styles.tableContainer}>
+            {/* Table Header */}
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderText, {flex: 2}]}>Employee</Text>
+              <Text style={[styles.tableHeaderText, {flex: 1}]}>Role</Text>
+              <Text style={[styles.tableHeaderText, {flex: 1}]}>Reg.hrs</Text>
+              {/* <Text style={[styles.tableHeaderText, {flex: 1}]}>OT Hrs</Text> */}
+              {canEdit() && !isReadOnly() && (
+                <Text style={[styles.tableHeaderText, {flex: 1}]}>Actions</Text>
+              )}
+            </View>
 
-          {/* <View style={styles.sectionTotal}>
-            <Text style={styles.sectionTotalLabel}>Total Labour Cost:</Text>
-            <Text style={styles.sectionTotalValue}>
-              ${totals.labour.toFixed(2)}
-            </Text>
-          </View> */}
+            {/* Table Rows */}
+            {timesheetData.labourEntries.map(entry => (
+              <View key={entry.id} style={styles.tableRow}>
+                <Text style={[styles.tableCell, {flex: 2}]}>
+                  {entry?.employeeName || 'Sarah Johnson'}
+                </Text>
+                <Text style={[styles.tableCell, {flex: 1}]}>{entry.role}</Text>
+                <Text style={[styles.tableCell, {flex: 1}]}>
+                  {entry.regularHours}h
+                </Text>
+                {/* <Text style={[styles.tableCell, {flex: 1}]}>
+                  {entry.overtimeHours}h
+                </Text> */}
+
+                {canEdit() && !isReadOnly() && (
+                  <View
+                    style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
+                    <TouchableOpacity
+                      style={styles.editButton}
+                      onPress={() => {
+                        setTempLabourData(entry);
+                        setEditingLabour(entry.id);
+                        setShowAddLabour(true);
+                      }}>
+                      <MaterialIcons name="edit" size={20} color={tabColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => handleDeleteLabour(entry.id)}>
+                      <MaterialIcons
+                        name="delete"
+                        size={20}
+                        color={'#dc2626'}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
         </View>
 
         {/* Materials Section */}
@@ -2283,7 +2334,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             )}
           </View>
 
-          {timesheetData.materialEntries.map(material => (
+          {/* {timesheetData.materialEntries.map(material => (
             <View key={material.id} style={styles.entryCard}>
               <View style={styles.entryHeader}>
                 <View style={styles.entryInfo}>
@@ -2338,39 +2389,65 @@ const JobTimesheet = ({navigation, route, user, job}) => {
                 </View>
               </View>
 
-              <View style={styles.materialFooter}>
-                {/* <View style={styles.materialCost}>
-                  <Text style={styles.entryLabel}>Cost:</Text>
-                  <Text style={styles.entryValue}>
-                    ${material.totalCost.toFixed(2)}
-                  </Text>
-                </View> */}
-
-                {/* {material.amountRemaining > 0 && (
-                  <View style={styles.returnStatus}>
-                    <Text
-                      style={[
-                        styles.returnStatusText,
-                        material.returnToWarehouse
-                          ? styles.returnStatusWarehouse
-                          : styles.returnStatusSite,
-                      ]}>
-                      {material.returnToWarehouse
-                        ? '🏢 Return to Warehouse'
-                        : '🚛 Keep on Site'}
-                    </Text>
-                  </View>
-                )} */}
-              </View>
+              
             </View>
-          ))}
-          {/* 
-          <View style={styles.sectionTotal}>
-            <Text style={styles.sectionTotalLabel}>Total Material Cost:</Text>
-            <Text style={[styles.sectionTotalValue, {fontSize: 20}]}>
-              ${totals.materials.toFixed(2)}
-            </Text>
-          </View> */}
+          ))} */}
+          <View style={styles.tableContainer}>
+            {/* Table Header */}
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderText, {flex: 2}]}>Title</Text>
+              <Text style={[styles.tableHeaderText, {flex: 1}]}>Qty</Text>
+              <Text style={[styles.tableHeaderText, {flex: 1}]}>Used</Text>
+              {canEdit() && !isReadOnly() && (
+                <Text style={[styles.tableHeaderText, {flex: 1}]}>Actions</Text>
+              )}
+            </View>
+
+            {/* Table Rows */}
+            {timesheetData.materialEntries.map(material => (
+              <View key={material.id} style={styles.tableRow}>
+                {/* Title */}
+                <Text style={[styles.tableCell, {flex: 2}]}>
+                  {material.name}
+                </Text>
+
+                {/* Qty (ordered + unit) */}
+                <Text style={[styles.tableCell, {flex: 1}]}>
+                  {material.totalOrdered} {material.unit}
+                </Text>
+
+                {/* Used */}
+                <Text style={[styles.tableCell, {flex: 1}]}>
+                  {material.amountUsed} {material.unit}
+                </Text>
+
+                {/* Actions */}
+                {canEdit() && !isReadOnly() && (
+                  <View
+                    style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
+                    <TouchableOpacity
+                      style={styles.editButton}
+                      onPress={() => {
+                        setTempMaterialData(material);
+                        setEditingMaterial(material.id);
+                        setShowAddMaterial(true);
+                      }}>
+                      <MaterialIcons name="edit" size={20} color={tabColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => handleDeleteMaterial(material.id)}>
+                      <MaterialIcons
+                        name="delete"
+                        size={20}
+                        color={'#dc2626'}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
         </View>
 
         {/* Additional Charges Section */}
@@ -2387,7 +2464,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             )}
           </View>
 
-          {timesheetData.additionalCharges.map(charge => (
+          {/* {timesheetData.additionalCharges.map(charge => (
             <View key={charge.id} style={styles.entryCard}>
               <View style={styles.entryHeader}>
                 <View style={styles.entryInfo}>
@@ -2429,16 +2506,78 @@ const JobTimesheet = ({navigation, route, user, job}) => {
                 <Text style={styles.entryNotes}>{charge.notes}</Text>
               )}
             </View>
-          ))}
+          ))} */}
 
-          {/* <View style={styles.sectionTotal}>
-            <Text style={styles.sectionTotalLabel}>
-              Total Additional Charges:
-            </Text>
-            <Text style={styles.sectionTotalValue}>
-              ${totals.charges.toFixed(2)}
-            </Text>
-          </View> */}
+          <View style={styles.tableContainer}>
+            {/* Table Header */}
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderText, {flex: 2}]}>Title</Text>
+              <Text style={[styles.tableHeaderText, {flex: 1}]}>Qty</Text>
+              <Text style={[styles.tableHeaderText, {flex: 1}]}>Amount</Text>
+              {canEdit() && !isReadOnly() && (
+                <Text style={[styles.tableHeaderText, {flex: 1}]}>Actions</Text>
+              )}
+            </View>
+
+            {/* Table Rows */}
+            {timesheetData.additionalCharges.map(charge => (
+              <View key={charge.id} style={styles.tableRow}>
+                {/* Title */}
+                <View style={{flex: 2}}>
+                  <Text style={styles.tableCell}>{charge.title}</Text>
+                  <Text
+                    style={[styles.tableCell, {fontSize: 12, color: '#666'}]}>
+                    {charge.description}
+                  </Text>
+                  {/* {charge.receipt && (
+          <Text style={[styles.tableCell, {fontSize: 12, color: '#666'}]}>
+            Receipt: {charge.receipt}
+          </Text>
+        )}
+        {charge.notes && (
+          <Text style={[styles.tableCell, {fontSize: 12, fontStyle: 'italic'}]}>
+            {charge.notes}
+          </Text>
+        )} */}
+                </View>
+
+                {/* Qty */}
+                <Text style={[styles.tableCell, {flex: 1}]}>
+                  {charge.quantity || 1}
+                </Text>
+
+                {/* Amount */}
+                <Text style={[styles.tableCell, {flex: 1}]}>
+                  ${charge.amount?.toFixed(2) || '0.00'}
+                </Text>
+
+                {/* Actions */}
+                {canEdit() && !isReadOnly() && (
+                  <View
+                    style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
+                    <TouchableOpacity
+                      style={styles.editButton}
+                      onPress={() => {
+                        setTempChargeData(charge);
+                        setEditingCharge(charge.id);
+                        setShowAddCharge(true);
+                      }}>
+                      <MaterialIcons name="edit" size={20} color={tabColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => handleDeleteCharge(charge.id)}>
+                      <MaterialIcons
+                        name="delete"
+                        size={20}
+                        color={'#dc2626'}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
         </View>
 
         {/* Notes Section */}
@@ -2524,7 +2663,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             {timesheetData.status === 'submitted' && (
               <View style={styles.submittedStatus}>
                 <Text style={styles.submittedStatusTitle}>
-                  Timesheet submitted for approval
+                  Bluesheet submitted for approval
                 </Text>
                 <Text style={styles.submittedStatusDetails}>
                   Submitted on{' '}
@@ -2561,7 +2700,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             {timesheetData.status === 'approved' && (
               <View style={styles.approvedStatus}>
                 <Text style={styles.approvedStatusTitle}>
-                  Timesheet approved
+                  Bluesheet approved
                 </Text>
                 <Text style={styles.approvedStatusDetails}>
                   Approved by {timesheetData.approvedBy || 'Management'} on{' '}
@@ -2632,9 +2771,9 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: Colors.primary,
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.sm,
     // paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    // paddingBottom: Spacing.sm,
   },
   headerTop: {
     flexDirection: 'row',
@@ -3227,6 +3366,36 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     fontSize: 16,
     fontWeight: '600',
+  },
+  tableContainer: {
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+  },
+  tableHeaderText: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    color: '#111',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderColor: '#eee',
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+  },
+  tableCell: {
+    fontSize: 14,
+    color: '#333',
   },
 });
 

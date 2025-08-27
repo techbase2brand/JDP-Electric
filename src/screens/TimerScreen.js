@@ -359,7 +359,7 @@
 //   },
 // });
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -381,6 +381,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import {NativeModules} from 'react-native';
 import {widthPercentageToDP} from '../utils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const Shadows = {
   sm: {
     shadowColor: '#000',
@@ -418,11 +419,10 @@ const CustomButton = ({label, onPress, color, disabled, widthbtn}) => (
     <Text style={styles.btnText}>{label}</Text>
   </TouchableOpacity>
 );
-export default function TimerScreen({navigation}) {
+export default function TimerScreen({navigation, route}) {
   const {isRunning, elapsedTime} = useSelector(state => state.timer);
   const dispatch = useDispatch();
-  const {LiveActivity} = NativeModules;
-  console.log('NativeModulesNativeModules', LiveActivity);
+  const job = route?.params?.job;
 
   // Activity Log
   const [activityLog, setActivityLog] = useState([]);
@@ -439,7 +439,44 @@ export default function TimerScreen({navigation}) {
 
   // Break Tracking
   const [breakTime, setBreakTime] = useState(0);
+  const [storedJobId, setStoredJobId] = useState(null);
 
+  // Check AsyncStorage on mount
+  useEffect(() => {
+    const checkJobId = async () => {
+      try {
+        const id = await AsyncStorage.getItem('activeJobId');
+        if (id) {
+          setStoredJobId(id);
+          console.log('Found running job in storage:', id);
+        }
+      } catch (error) {
+        console.log('Error reading jobId:', error);
+      }
+    };
+
+    checkJobId();
+  }, []);
+  const handleStart = async () => {
+  
+      await AsyncStorage.setItem('activeJobId', job?.job?.jobId || job?.jobId);
+      setStoredJobId(job?.job?.jobId);
+      dispatch(startTimerWithBackground());
+      addActivity('Work Started', {color: '#4CAF50'});
+   
+  };
+
+  const handleComplete = async () => {
+    try {
+      // remove jobId from AsyncStorage
+      await AsyncStorage.removeItem('activeJobId');
+      dispatch(stopTimerWithBackground());
+      addActivity('Work Completed', {color: '#2196F3'});
+      setCompleteModal(false);
+    } catch (err) {
+      console.log('Error removing jobId', err);
+    }
+  };
   const formatTime = ms => {
     const sec = Math.floor(ms / 1000);
     const h = Math.floor(sec / 3600);
@@ -531,10 +568,11 @@ export default function TimerScreen({navigation}) {
             <CustomButton
               label="Start Work"
               color="#4CAF50"
-              onPress={() => {
-                dispatch(startTimerWithBackground());
-                addActivity('Work Started', {color: '#4CAF50'});
-              }}
+              // onPress={() => {
+              //   dispatch(startTimerWithBackground());
+              //   addActivity('Work Started', {color: '#4CAF50'});
+              // }}
+              onPress={handleStart}
               widthbtn={true}
             />
           )}
@@ -849,11 +887,12 @@ export default function TimerScreen({navigation}) {
                   marginHorizontal: 5,
                   backgroundColor: '#4CAF50',
                 }}
-                onPress={() => {
-                  dispatch(stopTimerWithBackground());
-                  addActivity('Work Completed', {color: '#2196F3'});
-                  setCompleteModal(false);
-                }}>
+                // onPress={() => {
+                //   dispatch(stopTimerWithBackground());
+                //   addActivity('Work Completed', {color: '#2196F3'});
+                //   setCompleteModal(false);
+                // }}
+                onPress={handleComplete}>
                 <Text style={{fontSize: 14, fontWeight: '600', color: '#fff'}}>
                   Complete Job
                 </Text>
