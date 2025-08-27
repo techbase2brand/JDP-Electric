@@ -379,7 +379,7 @@ import {
 } from '../redux/timerSlice';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
-
+import {NativeModules} from 'react-native';
 import {widthPercentageToDP} from '../utils';
 const Shadows = {
   sm: {
@@ -421,6 +421,8 @@ const CustomButton = ({label, onPress, color, disabled, widthbtn}) => (
 export default function TimerScreen({navigation}) {
   const {isRunning, elapsedTime} = useSelector(state => state.timer);
   const dispatch = useDispatch();
+  const {LiveActivity} = NativeModules;
+  console.log('NativeModulesNativeModules', LiveActivity);
 
   // Activity Log
   const [activityLog, setActivityLog] = useState([]);
@@ -428,7 +430,7 @@ export default function TimerScreen({navigation}) {
   // Modals
   const [pauseModal, setPauseModal] = useState(false);
   const [completeModal, setCompleteModal] = useState(false);
-console.log("activityLogactivityLog",activityLog);
+  // console.log("activityLogactivityLog",activityLog);
 
   // Pause Handling
   const [pauseReason, setPauseReason] = useState('');
@@ -516,77 +518,79 @@ console.log("activityLogactivityLog",activityLog);
       </View>
 
       {/* Timer Card */}
-     
-     {!activityLog.some(item => item.title === 'Work Completed') && <View style={styles.timerCard}>
-        <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
-        <Text style={styles.statusText}>
-          {isRunning ? 'Running' : 'Paused'}
-        </Text>
 
-        {/* Start Button */}
-        {elapsedTime === 0 && !isRunning && (
-          <CustomButton
-            label="Start Work"
-            color="#4CAF50"
-            onPress={() => {
-              dispatch(startTimerWithBackground());
-              addActivity('Work Started', {color: '#4CAF50'});
-            }}
-            widthbtn={true}
-          />
-        )}
+      {!activityLog.some(item => item.title === 'Work Completed') && (
+        <View style={styles.timerCard}>
+          <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
+          <Text style={styles.statusText}>
+            {isRunning ? 'Running' : 'Paused'}
+          </Text>
 
-        {/* Running state */}
-        {isRunning && (
-          <View style={styles.buttonRow}>
+          {/* Start Button */}
+          {elapsedTime === 0 && !isRunning && (
             <CustomButton
-              label="Pause"
-              color="#FF9800"
-              onPress={() => setPauseModal(true)}
-              widthbtn={true}
-            />
-            <CustomButton
-              label="Complete"
-              color="#F44336"
-              onPress={() => setCompleteModal(true)}
-              widthbtn={true}
-            />
-          </View>
-        )}
-
-        {/* Paused state */}
-        {!isRunning && elapsedTime > 0 && (
-          <View style={styles.buttonRow}>
-            <CustomButton
-              label="Resume"
+              label="Start Work"
               color="#4CAF50"
               onPress={() => {
-                dispatch(resumeTimerWithBackground());
-                if (lastPauseTime && pauseReason === 'Break') {
-                  const breakDuration = Date.now() - lastPauseTime;
-                  setBreakTime(prev => prev + breakDuration);
-                  setLastPauseTime(null);
-                }
-                addActivity('Work Resumed', {color: '#4CAF50'});
+                dispatch(startTimerWithBackground());
+                addActivity('Work Started', {color: '#4CAF50'});
               }}
               widthbtn={true}
             />
-            <CustomButton
-              label="Complete"
-              color="#F44336"
-              onPress={() => setCompleteModal(true)}
-              widthbtn={true}
-            />
-          </View>
-        )}
-      </View>}
- {activityLog.some(item => item.title === 'Work Completed') && (
-    <View style={styles.timerCard}>
-      <Text style={{color: '#2196F3', fontWeight: 'bold'}}>
-        Work Completed
-      </Text>
-    </View>
-  )}
+          )}
+
+          {/* Running state */}
+          {isRunning && (
+            <View style={styles.buttonRow}>
+              <CustomButton
+                label="Pause"
+                color="#FF9800"
+                onPress={() => setPauseModal(true)}
+                widthbtn={true}
+              />
+              <CustomButton
+                label="Complete"
+                color="#F44336"
+                onPress={() => setCompleteModal(true)}
+                widthbtn={true}
+              />
+            </View>
+          )}
+
+          {/* Paused state */}
+          {!isRunning && elapsedTime > 0 && (
+            <View style={styles.buttonRow}>
+              <CustomButton
+                label="Resume"
+                color="#4CAF50"
+                onPress={() => {
+                  dispatch(resumeTimerWithBackground());
+                  if (lastPauseTime && pauseReason === 'Break') {
+                    const breakDuration = Date.now() - lastPauseTime;
+                    setBreakTime(prev => prev + breakDuration);
+                    setLastPauseTime(null);
+                  }
+                  addActivity('Work Resumed', {color: '#4CAF50'});
+                }}
+                widthbtn={true}
+              />
+              <CustomButton
+                label="Complete"
+                color="#F44336"
+                onPress={() => setCompleteModal(true)}
+                widthbtn={true}
+              />
+            </View>
+          )}
+        </View>
+      )}
+      {activityLog.some(item => item.title === 'Work Completed') && (
+        <View style={styles.timerCard}>
+          <Text style={{color: '#2196F3', fontWeight: 'bold'}}>
+            Work Completed
+          </Text>
+        </View>
+      )}
       {/* Activity Log */}
       <View style={styles.logCard}>
         <Text style={styles.sectionTitle}>Activity Log</Text>

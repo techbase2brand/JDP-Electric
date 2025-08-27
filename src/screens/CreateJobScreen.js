@@ -2336,7 +2336,7 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
 
     setIsSubmitting(true);
     try {
-      const jobData = {
+      const job = {
         id: `job-${Date.now()}`,
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -2379,10 +2379,11 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
         updatedAt: new Date().toISOString().split('T')[0],
       };
 
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Simulate API call
       // onCreateJob(jobData);
       Alert.alert('Success', 'Job created successfully!', [
-        {text: 'OK', onPress: () => navigation.navigate('HomeScreen')},
+        {text: 'OK', onPress: () => navigation.navigate('JobDetail', job)},
       ]);
     } catch (error) {
       console.error('Failed to create job:', error);
@@ -2810,7 +2811,7 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
             <Text style={styles.sectionTitle}>Billing Address</Text>
           </View>
           <View style={styles.toggleContainer}>
-            <Text style={[styles.toggleLabel, {fontSize: 13}]}>
+            <Text style={[styles.toggleLabel, {fontSize: 12}]}>
               Same as Customer
             </Text>
             <Switch
@@ -3021,7 +3022,7 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
         {/* Scheduled Date */}
         <View style={styles.dateTimeRow}>
           <View style={styles.dateTimeItem}>
-            <Text style={styles.formLabel}>Scheduled Date</Text>
+            <Text style={styles.formLabel}>Want to Schedule Date</Text>
             <TouchableOpacity
               style={[
                 styles.inputContainer,
@@ -3478,7 +3479,7 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
             ]}
             onPress={prevStep}
             disabled={currentStep === 1}>
-            <Icon name="chevron-left" size={20} color="#6b7280" />
+            <Icon name="chevron-left" size={24} color="#6b7280" />
             <Text style={styles.prevButtonText}>Previous</Text>
           </TouchableOpacity>
 
@@ -3487,7 +3488,7 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
               style={[styles.navButton, styles.nextButton]}
               onPress={nextStep}>
               <Text style={styles.nextButtonText}>Next</Text>
-              <Icon name="chevron-right" size={20} color="white" />
+              <Icon name="chevron-right" size={24} color="white" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -3635,7 +3636,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#111827',
     marginLeft: 12,

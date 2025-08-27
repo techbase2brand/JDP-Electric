@@ -680,7 +680,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 
 // Embedded Colors
@@ -831,6 +831,25 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   };
   const handleCall = phoneNumber => {
     Linking.openURL(`tel:${6184738399}`);
+  };
+  const handleEmail = email => {
+    Linking.openURL(`mailto:${'orders@circuitcity.com'}`);
+  };
+
+  const openWhatsApp = (phone, message) => {
+    let url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(
+      message,
+    )}`;
+
+    Linking.canOpenURL(url)
+      .then(supported => {
+        if (!supported) {
+          Alert.alert('WhatsApp is not installed');
+        } else {
+          return Linking.openURL(url);
+        }
+      })
+      .catch(err => console.error('Error', err));
   };
   const handleNavigate = screen => {
     if (onNavigate) {
@@ -985,7 +1004,9 @@ const CartScreen = ({onBack, onNavigate, route}) => {
       <View style={styles.modalOverlay1}>
         <View style={styles.addEntryModal}>
           <View style={styles.modalHeader1}>
-            <Text style={styles.modalTitle1}>{'Add Custom Material'}</Text>
+            <Text style={styles.modalTitle1}>
+              {'Add miscellaneous material'}
+            </Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => {
@@ -1015,7 +1036,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                   placeholderTextColor={Colors.textLight}
                 />
               </View>
-               <Text style={styles.fieldLabel}>Unit *</Text>
+              <Text style={styles.fieldLabel}>Unit *</Text>
               <View style={styles.filtersRow}>
                 {renderDropdown(
                   statusOptions,
@@ -1087,7 +1108,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                   placeholderTextColor={Colors.textLight}
                 />
               </View> */}
-{/* 
+              {/* 
               <View style={styles.formField}>
                 <Text style={styles.fieldLabel}>Description</Text>
                 <TextInput
@@ -1102,25 +1123,23 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                   numberOfLines={3}
                 />
               </View> */}
-
-             
             </ScrollView>
-             <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => {
-                    setShowAddEntryModal(false);
-                    setEditingEntry(null);
-                  }}>
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => {
+                  setShowAddEntryModal(false);
+                  setEditingEntry(null);
+                }}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.saveButton}
-                  onPress={handleAddEntry}>
-                  <Text style={styles.saveButtonText}>{'Add Material'}</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleAddEntry}>
+                <Text style={styles.saveButtonText}>{'Add Material'}</Text>
+              </TouchableOpacity>
+            </View>
           </KeyboardAvoidingView>
         </View>
       </View>
@@ -1341,19 +1360,31 @@ const CartScreen = ({onBack, onNavigate, route}) => {
       <View style={styles.bottomActions}>
         <View style={styles.actionButtons}>
           <TouchableOpacity
-            style={[styles.continueButton, {backgroundColor: '#10B981'}]}
+            style={[styles.continueButton, {backgroundColor: '#f3f4f6'}]}
             onPress={() => handleCall()}
             // onPress={() => handleNavigate('OrderProducts')}
           >
             {/* <Ionicons name="call" size={20} color={"#fff"} /> */}
-            <Text style={[styles.continueButtonText, {color: '#fff'}]}>
-              Call & Verify
-            </Text>
+            <Icon name="phone" size={22} color="#3B82F6" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.continueButton, {backgroundColor: '#f3f4f6'}]}
+            onPress={() =>
+              openWhatsApp('+911234567890', 'Hello! This is a test message.')
+            }>
+            <FontAwesome name="whatsapp" size={22} color="#3B82F6" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.continueButton, {backgroundColor: '#f3f4f6'}]}
+            onPress={() => handleEmail()}
+            // onPress={() => handleNavigate('OrderProducts')}
+          >
+            <Icon name="email" size={22} color="#3B82F6" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.checkoutButton}
             onPress={() => handleNavigate('CheckoutScreen')}>
-            <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+            <Text style={styles.checkoutButtonText}>Checkout</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1667,9 +1698,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkoutButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     color: Colors.white,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 
   // Modal
@@ -1722,9 +1753,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.md,
     width: '100%',
-    paddingHorizontal:16,
-    marginBottom:20
-    
+    paddingHorizontal: 16,
+    marginBottom: 20,
   },
   cancelButton: {
     flex: 1,

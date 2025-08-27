@@ -922,7 +922,7 @@ const ActivitySummaryScreen = ({navigation, route}) => {
       jobId: 'JDP-2024-002',
       jobTitle: 'Residential Rewiring',
       customer: 'Johnson Family',
-      date: '2025-08-21',
+      date: '2025-08-25',
       actualHours: 6.5,
       location: '5678 Oak Street, Houston, TX',
       payRate: 42.0,
@@ -1230,12 +1230,31 @@ const ActivitySummaryScreen = ({navigation, route}) => {
   };
 
   // Date formatting helpers
+  // const formatDate = dateString => {
+  //   return new Date(dateString).toLocaleDateString('en-US', {
+  //     weekday: 'short',
+  //     month: 'short',
+  //     day: 'numeric',
+  //     year: 'numeric',
+  //   });
+  // };
   const formatDate = dateString => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
+    const date = new Date(dateString);
+
+    const options = {
+      weekday: 'short',
       day: 'numeric',
+      month: 'short',
       year: 'numeric',
-    });
+    };
+    const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(date);
+
+    const weekday = parts.find(p => p.type === 'weekday').value;
+    const day = parts.find(p => p.type === 'day').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const year = parts.find(p => p.type === 'year').value;
+
+    return `${weekday}, ${day} ${month} ${year}`;
   };
 
   const formatDateForInput = dateString => {
@@ -1468,9 +1487,20 @@ const ActivitySummaryScreen = ({navigation, route}) => {
           onPress={() => toggleJobExpansion(report.id)}>
           <View style={styles.jobCardMain}>
             <View style={styles.jobCardInfo}>
-              <Text style={styles.jobTitle}>{report.jobTitle}</Text>
-              <Text style={styles.jobCustomer}>{report.customer}</Text>
-              <Text style={styles.jobDate}>{formatDate(report.date)}</Text>
+              <View></View>
+              <View>
+                <Text
+                  style={[
+                    styles.jobDate,
+                    {fontSize: 16, color: '#3B82F6', fontWeight: '700'},
+                  ]}>
+                  {formatDate(report.date)}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.jobTitle}>{report.jobTitle}</Text>
+                <Text style={styles.jobCustomer}>{report.customer}</Text>
+              </View>
             </View>
             <View style={styles.jobCardRight}>
               <View style={styles.hoursContainer}>
@@ -1555,8 +1585,7 @@ const ActivitySummaryScreen = ({navigation, route}) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+          onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
 
@@ -1859,7 +1888,7 @@ const styles = StyleSheet.create({
   },
   jobTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#1F2937',
     marginBottom: 4,
   },
