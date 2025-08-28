@@ -1874,7 +1874,7 @@
 // });
 
 // export default CreateJobScreen;
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useCallback, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -1891,6 +1891,8 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  findNodeHandle,
+  UIManager,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -1909,6 +1911,8 @@ const customers = [
 ];
 
 const CreateJobScreen = ({navigation, user, onCreateJob}) => {
+  const scrollRef = useRef(null);
+  const fieldPositions = useRef({});
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
@@ -1934,6 +1938,22 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
     useState(false);
   const [showBillingCitySuggestions, setShowBillingCitySuggestions] =
     useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleDropdown = () => setIsOpen(!isOpen);
+
+  const handleSelect = member => {
+    const isSelected = formData.assignedTo.includes(member.name);
+
+    if (isSelected) {
+      updateFormData(
+        'assignedTo',
+        formData.assignedTo.filter(name => name !== member.name),
+      );
+    } else {
+      updateFormData('assignedTo', [...formData.assignedTo, member.name]);
+    }
+  };
 
   const [formData, setFormData] = useState({
     title: '',
@@ -1955,17 +1975,16 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
     billingAddress: '',
     billingCity: '',
     sameAsCustomer: true,
-    assignedTo: [user?.id || '1'],
+    assignedTo: [],
     estimatedHours: 8,
     notes: '',
   });
-
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState('');
   const [filtered, setFiltered] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // ✅ Load from AsyncStorage on mount
+  //  Load from AsyncStorage on mount
   useEffect(() => {
     loadCustomers();
   }, []);
@@ -2005,11 +2024,11 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
     }
   };
 
-  const handleSelect = name => {
-    setSearch(name);
-    setFormData({...formData, customerName: name});
-    setShowDropdown(false);
-  };
+  // const handleSelect = name => {
+  //   setSearch(name);
+  //   setFormData({...formData, customerName: name});
+  //   setShowDropdown(false);
+  // };
 
   const handleAddIfNotExist = async () => {
     if (search.trim().length === 0) return;
@@ -2331,6 +2350,33 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  useEffect(() => {
+    const firstErrorField = Object.keys(validationErrors)[0];
+    if (firstErrorField && fieldPositions.current[firstErrorField]) {
+      const handle = findNodeHandle(fieldPositions.current[firstErrorField]);
+      if (handle) {
+        UIManager.measureLayout(
+          handle,
+          findNodeHandle(scrollRef.current),
+          () => {},
+          (x, y) => {
+            scrollRef.current.scrollTo({y: y - 50, animated: true});
+          },
+        );
+      }
+    }
+  }, [validationErrors]);
+  // 🔥 whenever validationErrors change, scroll to first error field
+  // useEffect(() => {
+  //   const firstErrorField = Object.keys(validationErrors)[0];
+  //   if (firstErrorField && fieldPositions.current[firstErrorField] !== undefined) {
+  //     scrollRef.current.scrollTo({
+  //       y: fieldPositions.current[firstErrorField] - 20,
+  //       animated: true,
+  //     });
+  //   }
+  // }, [validationErrors]);
+
   const submitJob = async () => {
     if (!validateStep(3)) return;
 
@@ -2338,6 +2384,7 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
     try {
       const job = {
         id: `job-${Date.now()}`,
+        jobId: `job-${Date.now()}`,
         title: formData.title.trim(),
         description: formData.description.trim(),
         customer: {
@@ -2382,8 +2429,10 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
       await new Promise(resolve => setTimeout(resolve, 1500));
       // Simulate API call
       // onCreateJob(jobData);
+      console.log('jobjob>>', job);
+
       Alert.alert('Success', 'Job created successfully!', [
-        {text: 'OK', onPress: () => navigation.navigate('JobDetail', job)},
+        {text: 'OK', onPress: () => navigation.navigate('JobDetail', {job})},
       ]);
     } catch (error) {
       console.error('Failed to create job:', error);
@@ -2527,511 +2576,599 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
     );
   };
 
-  const renderJobDetailsStep = () => (
-    <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
-      {/* Basic Information */}
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Icon name="work" size={24} color="#3B82F6" />
-          <Text style={styles.sectionTitle}>Basic Information</Text>
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Job Title *</Text>
-          <View
-            style={[
-              styles.inputContainer,
-              validationErrors.title && styles.inputContainerError,
-            ]}>
-            <TextInput
-              style={styles.formInput}
-              value={formData.title}
-              onChangeText={text => updateFormData('title', text)}
-              placeholder="Enter job title"
-              placeholderTextColor="#9ca3af"
-            />
+  const renderJobDetailsStep = () => {
+    return (
+      <ScrollView
+        ref={scrollRef}
+        style={styles.stepContent}
+        showsVerticalScrollIndicator={false}>
+        {/* Basic Information */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Icon name="work" size={24} color="#3B82F6" />
+            <Text style={styles.sectionTitle}>Basic Information</Text>
           </View>
-          {validationErrors.title && (
-            <View style={styles.errorContainer}>
-              <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>{validationErrors.title}</Text>
-            </View>
-          )}
-        </View>
 
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Job Description *</Text>
           <View
-            style={[
-              styles.inputContainer,
-              validationErrors.description && styles.inputContainerError,
-            ]}>
-            <TextInput
-              style={[styles.formInput, styles.textArea]}
-              value={formData.description}
-              onChangeText={text => updateFormData('description', text)}
-              placeholder="Describe the work to be performed"
-              placeholderTextColor="#9ca3af"
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-          </View>
-          {validationErrors.description && (
-            <View style={styles.errorContainer}>
-              <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>
-                {validationErrors.description}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Priority Level</Text>
-          {renderDropdown(
-            formData.priority,
-            priorityOptions,
-            value => updateFormData('priority', value),
-            showPriorityDropdown,
-            () => setShowPriorityDropdown(!showPriorityDropdown),
-            'Select priority',
-            option =>
-              option && (
-                <View style={styles.priorityDisplayContainer}>
-                  {/* <Icon name={option.icon} size={20} color={option.color} /> */}
-                  <Text style={styles.dropdownButtonText}>{option.label}</Text>
-                </View>
-              ),
-          )}
-        </View>
-      </View>
-
-      {/* Customer Information */}
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Icon name="person" size={24} color="#3B82F6" />
-          <Text style={styles.sectionTitle}>Customer Information</Text>
-        </View>
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Customer Name *</Text>
-
-          <TextInput
-            style={[
-              styles.inputContainer,
-              validationErrors.customerName && styles.inputContainerError,
-            ]}
-            placeholder="Enter Customer"
-            value={search}
-            onChangeText={handleChange}
-            onBlur={handleAddIfNotExist} // ✅ jab field se bahar nikle to add
-          />
-
-          {/* Validation Error */}
-          {validationErrors.customerName && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>
-                {validationErrors.customerName}
-              </Text>
-            </View>
-          )}
-
-          {showDropdown && filtered.length > 0 && (
-            <View style={styles.dropdownWrapper}>
-              <FlatList
-                data={filtered}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({item}) => (
-                  <TouchableOpacity
-                    style={styles.customerItem}
-                    onPress={() => handleSelect(item)}>
-                    <Text style={styles.customerText}>{item}</Text>
-                  </TouchableOpacity>
-                )}
+            style={styles.formGroup}
+            ref={ref => (fieldPositions.current['title'] = ref)}>
+            <Text style={styles.formLabel}>Job Title *</Text>
+            <View
+              style={[
+                styles.inputContainer,
+                validationErrors.title && styles.inputContainerError,
+              ]}>
+              <TextInput
+                style={styles.formInput}
+                value={formData.title}
+                onChangeText={text => updateFormData('title', text)}
+                placeholder="Enter job title"
+                placeholderTextColor="#9ca3af"
               />
             </View>
-          )}
+            {validationErrors.title && (
+              <View style={styles.errorContainer}>
+                <Icon name="error" size={16} color="#ef4444" />
+                <Text style={styles.errorText}>{validationErrors.title}</Text>
+              </View>
+            )}
+          </View>
+
+          <View
+            style={styles.formGroup}
+            ref={ref => (fieldPositions.current['description'] = ref)}>
+            <Text style={styles.formLabel}>Job Description *</Text>
+            <View
+              style={[
+                styles.inputContainer,
+                validationErrors.description && styles.inputContainerError,
+              ]}>
+              <TextInput
+                style={[styles.formInput, styles.textArea]}
+                value={formData.description}
+                onChangeText={text => updateFormData('description', text)}
+                placeholder="Describe the work to be performed"
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+            {validationErrors.description && (
+              <View style={styles.errorContainer}>
+                <Icon name="error" size={16} color="#ef4444" />
+                <Text style={styles.errorText}>
+                  {validationErrors.description}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Priority Level</Text>
+            {renderDropdown(
+              formData.priority,
+              priorityOptions,
+              value => updateFormData('priority', value),
+              showPriorityDropdown,
+              () => setShowPriorityDropdown(!showPriorityDropdown),
+              'Select priority',
+              option =>
+                option && (
+                  <View style={styles.priorityDisplayContainer}>
+                    {/* <Icon name={option.icon} size={20} color={option.color} /> */}
+                    <Text style={styles.dropdownButtonText}>
+                      {option.label}
+                    </Text>
+                  </View>
+                ),
+            )}
+          </View>
         </View>
 
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Phone Number *</Text>
-          <View
-            style={[
-              styles.inputContainer,
-              validationErrors.customerPhone && styles.inputContainerError,
-            ]}>
-            <Icon
-              name="phone"
-              size={20}
-              color="#9ca3af"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={[styles.formInput, styles.inputWithIcon]}
-              value={formData.customerPhone}
-              onChangeText={text => updateFormData('customerPhone', text)}
-              placeholder="(555) 123-4567"
-              placeholderTextColor="#9ca3af"
-              keyboardType="phone-pad"
-            />
+        {/* Customer Information */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Icon name="person" size={24} color="#3B82F6" />
+            <Text style={styles.sectionTitle}>Customer Information</Text>
           </View>
-          {validationErrors.customerPhone && (
-            <View style={styles.errorContainer}>
-              <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>
-                {validationErrors.customerPhone}
+          <View
+            style={styles.formGroup}
+            ref={ref => (fieldPositions.current['customerName'] = ref)}>
+            <Text style={styles.formLabel}>Customer Name *</Text>
+
+            <TextInput
+              style={[
+                styles.inputContainer,
+                validationErrors.customerName && styles.inputContainerError,
+              ]}
+              placeholder="Enter Customer"
+              value={search}
+              onChangeText={handleChange}
+              onBlur={handleAddIfNotExist} // ✅ jab field se bahar nikle to add
+            />
+
+            {/* Validation Error */}
+            {validationErrors.customerName && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>
+                  {validationErrors.customerName}
+                </Text>
+              </View>
+            )}
+
+            {showDropdown && filtered.length > 0 && (
+              <View style={styles.dropdownWrapper}>
+                <FlatList
+                  data={filtered}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      style={styles.customerItem}
+                      onPress={() => handleSelect(item)}>
+                      <Text style={styles.customerText}>{item}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            )}
+          </View>
+
+          <View
+            style={styles.formGroup}
+            ref={ref => (fieldPositions.current['customerPhone'] = ref)}>
+            <Text style={styles.formLabel}>Phone Number *</Text>
+            <View
+              style={[
+                styles.inputContainer,
+                validationErrors.customerPhone && styles.inputContainerError,
+              ]}>
+              <Icon
+                name="phone"
+                size={20}
+                color="#9ca3af"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[styles.formInput, styles.inputWithIcon]}
+                value={formData.customerPhone}
+                onChangeText={text => updateFormData('customerPhone', text)}
+                placeholder="(555) 123-4567"
+                placeholderTextColor="#9ca3af"
+                keyboardType="phone-pad"
+              />
+            </View>
+            {validationErrors.customerPhone && (
+              <View style={styles.errorContainer}>
+                <Icon name="error" size={16} color="#ef4444" />
+                <Text style={styles.errorText}>
+                  {validationErrors.customerPhone}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Email Address</Text>
+            <View
+              style={[
+                styles.inputContainer,
+                validationErrors.customerEmail && styles.inputContainerError,
+              ]}>
+              <Icon
+                name="email"
+                size={20}
+                color="#9ca3af"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[styles.formInput, styles.inputWithIcon]}
+                value={formData.customerEmail}
+                onChangeText={text => updateFormData('customerEmail', text)}
+                placeholder="customer@email.com"
+                placeholderTextColor="#9ca3af"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+            {validationErrors.customerEmail && (
+              <View style={styles.errorContainer}>
+                <Icon name="error" size={16} color="#ef4444" />
+                <Text style={styles.errorText}>
+                  {validationErrors.customerEmail}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View
+            style={styles.formGroup}
+            ref={ref => (fieldPositions.current['customerAddress'] = ref)}>
+            <Text style={styles.formLabel}>Address *</Text>
+            <View
+              style={[
+                styles.inputContainer,
+                validationErrors.customerAddress && styles.inputContainerError,
+              ]}>
+              <Icon
+                name="place"
+                size={20}
+                color="#9ca3af"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[styles.formInput, styles.inputWithIcon]}
+                value={formData.customerAddress}
+                onChangeText={text => {
+                  updateFormData('customerAddress', text);
+                  setShowLocationSuggestions(true);
+                }}
+                onFocus={() => setShowLocationSuggestions(true)}
+                placeholder="Enter customer address"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+            {renderSuggestions(
+              locationSuggestions,
+              showLocationSuggestions,
+              suggestion => {
+                updateFormData('customerAddress', suggestion.description);
+                setShowLocationSuggestions(false);
+              },
+            )}
+            {validationErrors.customerAddress && (
+              <View style={styles.errorContainer}>
+                <Icon name="error" size={16} color="#ef4444" />
+                <Text style={styles.errorText}>
+                  {validationErrors.customerAddress}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View
+            style={styles.formGroup}
+            ef={ref => (fieldPositions.current['city'] = ref)}>
+            <Text style={styles.formLabel}>City *</Text>
+            <View
+              style={[
+                styles.inputContainer,
+                validationErrors.city && styles.inputContainerError,
+              ]}>
+              <Icon
+                name="location-city"
+                size={20}
+                color="#9ca3af"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={[styles.formInput, styles.inputWithIcon]}
+                value={formData.city}
+                onChangeText={text => {
+                  updateFormData('city', text);
+                  setShowCitySuggestions(true);
+                }}
+                onFocus={() => setShowCitySuggestions(true)}
+                placeholder="Enter city"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+            {renderSuggestions(
+              citySuggestions,
+              showCitySuggestions,
+              suggestion => {
+                updateFormData('city', suggestion.description);
+                setShowCitySuggestions(false);
+              },
+            )}
+            {validationErrors.city && (
+              <View style={styles.errorContainer}>
+                <Icon name="error" size={16} color="#ef4444" />
+                <Text style={styles.errorText}>{validationErrors.city}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Billing Address */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeaderWithToggle}>
+            <View style={styles.sectionHeaderLeft}>
+              <Icon name="receipt" size={24} color="#3B82F6" />
+              <Text style={styles.sectionTitle}>Billing Address</Text>
+            </View>
+            <View style={styles.toggleContainer}>
+              <Text style={[styles.toggleLabel, {fontSize: 12}]}>
+                Same as Customer
+              </Text>
+              <Switch
+                value={formData.sameAsCustomer}
+                onValueChange={value => updateFormData('sameAsCustomer', value)}
+                trackColor={{false: '#e5e7eb', true: '#3B82F6'}}
+                thumbColor={formData.sameAsCustomer ? '#ffffff' : '#f4f3f4'}
+                ios_backgroundColor="#e5e7eb"
+              />
+            </View>
+          </View>
+
+          {!formData.sameAsCustomer ? (
+            <>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Billing Contact Name *</Text>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    validationErrors.billingName && styles.inputContainerError,
+                  ]}>
+                  <TextInput
+                    style={styles.formInput}
+                    value={formData.billingName}
+                    onChangeText={text => updateFormData('billingName', text)}
+                    placeholder="Enter billing contact name"
+                    placeholderTextColor="#9ca3af"
+                  />
+                </View>
+                {validationErrors.billingName && (
+                  <View style={styles.errorContainer}>
+                    <Icon name="error" size={16} color="#ef4444" />
+                    <Text style={styles.errorText}>
+                      {validationErrors.billingName}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Billing Phone Number *</Text>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    validationErrors.billingPhone && styles.inputContainerError,
+                  ]}>
+                  <Icon
+                    name="phone"
+                    size={20}
+                    color="#9ca3af"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={[styles.formInput, styles.inputWithIcon]}
+                    value={formData.billingPhone}
+                    onChangeText={text => updateFormData('billingPhone', text)}
+                    placeholder="(555) 123-4567"
+                    placeholderTextColor="#9ca3af"
+                    keyboardType="phone-pad"
+                  />
+                </View>
+                {validationErrors.billingPhone && (
+                  <View style={styles.errorContainer}>
+                    <Icon name="error" size={16} color="#ef4444" />
+                    <Text style={styles.errorText}>
+                      {validationErrors.billingPhone}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Billing Email Address</Text>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    validationErrors.billingEmail && styles.inputContainerError,
+                  ]}>
+                  <Icon
+                    name="email"
+                    size={20}
+                    color="#9ca3af"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={[styles.formInput, styles.inputWithIcon]}
+                    value={formData.billingEmail}
+                    onChangeText={text => updateFormData('billingEmail', text)}
+                    placeholder="billing@company.com"
+                    placeholderTextColor="#9ca3af"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+                {validationErrors.billingEmail && (
+                  <View style={styles.errorContainer}>
+                    <Icon name="error" size={16} color="#ef4444" />
+                    <Text style={styles.errorText}>
+                      {validationErrors.billingEmail}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Billing Address *</Text>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    validationErrors.billingAddress &&
+                      styles.inputContainerError,
+                  ]}>
+                  <Icon
+                    name="place"
+                    size={20}
+                    color="#9ca3af"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={[styles.formInput, styles.inputWithIcon]}
+                    value={formData.billingAddress}
+                    onChangeText={text => {
+                      updateFormData('billingAddress', text);
+                      setShowBillingLocationSuggestions(true);
+                    }}
+                    onFocus={() => setShowBillingLocationSuggestions(true)}
+                    placeholder="Enter billing address"
+                    placeholderTextColor="#9ca3af"
+                  />
+                </View>
+                {renderSuggestions(
+                  billingLocationSuggestions,
+                  showBillingLocationSuggestions,
+                  suggestion => {
+                    updateFormData('billingAddress', suggestion.description);
+                    setShowBillingLocationSuggestions(false);
+                  },
+                )}
+                {validationErrors.billingAddress && (
+                  <View style={styles.errorContainer}>
+                    <Icon name="error" size={16} color="#ef4444" />
+                    <Text style={styles.errorText}>
+                      {validationErrors.billingAddress}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Billing City *</Text>
+                <View
+                  style={[
+                    styles.inputContainer,
+                    validationErrors.billingCity && styles.inputContainerError,
+                  ]}>
+                  <Icon
+                    name="location-city"
+                    size={20}
+                    color="#9ca3af"
+                    style={styles.inputIcon}
+                  />
+                  <TextInput
+                    style={[styles.formInput, styles.inputWithIcon]}
+                    value={formData.billingCity}
+                    onChangeText={text => {
+                      updateFormData('billingCity', text);
+                      setShowBillingCitySuggestions(true);
+                    }}
+                    onFocus={() => setShowBillingCitySuggestions(true)}
+                    placeholder="Enter billing city"
+                    placeholderTextColor="#9ca3af"
+                  />
+                </View>
+                {renderSuggestions(
+                  billingCitySuggestions,
+                  showBillingCitySuggestions,
+                  suggestion => {
+                    updateFormData('billingCity', suggestion.description);
+                    setShowBillingCitySuggestions(false);
+                  },
+                )}
+                {validationErrors.billingCity && (
+                  <View style={styles.errorContainer}>
+                    <Icon name="error" size={16} color="#ef4444" />
+                    <Text style={styles.errorText}>
+                      {validationErrors.billingCity}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </>
+          ) : (
+            <View style={styles.sameAsCustomerInfo}>
+              <Icon name="check-circle" size={24} color="#10b981" />
+              <Text style={styles.sameAsCustomerText}>
+                Billing address will be the same as customer address
               </Text>
             </View>
           )}
         </View>
 
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Email Address</Text>
-          <View
-            style={[
-              styles.inputContainer,
-              validationErrors.customerEmail && styles.inputContainerError,
-            ]}>
-            <Icon
-              name="email"
-              size={20}
-              color="#9ca3af"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={[styles.formInput, styles.inputWithIcon]}
-              value={formData.customerEmail}
-              onChangeText={text => updateFormData('customerEmail', text)}
-              placeholder="customer@email.com"
-              placeholderTextColor="#9ca3af"
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+        {/* Scheduling */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Icon name="schedule" size={24} color="#3B82F6" />
+            <Text style={styles.sectionTitle}>Scheduling</Text>
           </View>
-          {validationErrors.customerEmail && (
-            <View style={styles.errorContainer}>
-              <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>
-                {validationErrors.customerEmail}
-              </Text>
-            </View>
-          )}
-        </View>
 
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Address *</Text>
-          <View
-            style={[
-              styles.inputContainer,
-              validationErrors.customerAddress && styles.inputContainerError,
-            ]}>
-            <Icon
-              name="place"
-              size={20}
-              color="#9ca3af"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={[styles.formInput, styles.inputWithIcon]}
-              value={formData.customerAddress}
-              onChangeText={text => {
-                updateFormData('customerAddress', text);
-                setShowLocationSuggestions(true);
-              }}
-              onFocus={() => setShowLocationSuggestions(true)}
-              placeholder="Enter customer address"
-              placeholderTextColor="#9ca3af"
-            />
-          </View>
-          {renderSuggestions(
-            locationSuggestions,
-            showLocationSuggestions,
-            suggestion => {
-              updateFormData('customerAddress', suggestion.description);
-              setShowLocationSuggestions(false);
-            },
-          )}
-          {validationErrors.customerAddress && (
-            <View style={styles.errorContainer}>
-              <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>
-                {validationErrors.customerAddress}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>City *</Text>
-          <View
-            style={[
-              styles.inputContainer,
-              validationErrors.city && styles.inputContainerError,
-            ]}>
-            <Icon
-              name="location-city"
-              size={20}
-              color="#9ca3af"
-              style={styles.inputIcon}
-            />
-            <TextInput
-              style={[styles.formInput, styles.inputWithIcon]}
-              value={formData.city}
-              onChangeText={text => {
-                updateFormData('city', text);
-                setShowCitySuggestions(true);
-              }}
-              onFocus={() => setShowCitySuggestions(true)}
-              placeholder="Enter city"
-              placeholderTextColor="#9ca3af"
-            />
-          </View>
-          {renderSuggestions(
-            citySuggestions,
-            showCitySuggestions,
-            suggestion => {
-              updateFormData('city', suggestion.description);
-              setShowCitySuggestions(false);
-            },
-          )}
-          {validationErrors.city && (
-            <View style={styles.errorContainer}>
-              <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>{validationErrors.city}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Billing Address */}
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeaderWithToggle}>
-          <View style={styles.sectionHeaderLeft}>
-            <Icon name="receipt" size={24} color="#3B82F6" />
-            <Text style={styles.sectionTitle}>Billing Address</Text>
-          </View>
-          <View style={styles.toggleContainer}>
-            <Text style={[styles.toggleLabel, {fontSize: 12}]}>
-              Same as Customer
-            </Text>
-            <Switch
-              value={formData.sameAsCustomer}
-              onValueChange={value => updateFormData('sameAsCustomer', value)}
-              trackColor={{false: '#e5e7eb', true: '#3B82F6'}}
-              thumbColor={formData.sameAsCustomer ? '#ffffff' : '#f4f3f4'}
-              ios_backgroundColor="#e5e7eb"
-            />
-          </View>
-        </View>
-
-        {!formData.sameAsCustomer ? (
-          <>
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Billing Contact Name *</Text>
-              <View
+          {/* Scheduled Date */}
+          <View style={styles.dateTimeRow}>
+            <View style={styles.dateTimeItem}>
+              <Text style={styles.formLabel}>Want to Schedule Date</Text>
+              <TouchableOpacity
                 style={[
                   styles.inputContainer,
-                  validationErrors.billingName && styles.inputContainerError,
-                ]}>
-                <TextInput
-                  style={styles.formInput}
-                  value={formData.billingName}
-                  onChangeText={text => updateFormData('billingName', text)}
-                  placeholder="Enter billing contact name"
-                  placeholderTextColor="#9ca3af"
-                />
-              </View>
-              {validationErrors.billingName && (
-                <View style={styles.errorContainer}>
-                  <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>
-                    {validationErrors.billingName}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Billing Phone Number *</Text>
-              <View
-                style={[
-                  styles.inputContainer,
-                  validationErrors.billingPhone && styles.inputContainerError,
-                ]}>
+                  validationErrors.scheduledDate && styles.inputContainerError,
+                ]}
+                onPress={() => {
+                  setShowDatePicker(true),
+                    setShowTimePicker(false),
+                    setShowDueDatePicker(false);
+                }}>
                 <Icon
-                  name="phone"
+                  name="event"
                   size={20}
                   color="#9ca3af"
                   style={styles.inputIcon}
                 />
-                <TextInput
-                  style={[styles.formInput, styles.inputWithIcon]}
-                  value={formData.billingPhone}
-                  onChangeText={text => updateFormData('billingPhone', text)}
-                  placeholder="(555) 123-4567"
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="phone-pad"
+                <Text style={[styles.formInput, styles.inputWithIcon]}>
+                  {formData.scheduledDate || 'Select Date'}
+                </Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={new Date()}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, date) =>
+                    onChange(event, date, 'scheduledDate')
+                  }
                 />
-              </View>
-              {validationErrors.billingPhone && (
-                <View style={styles.errorContainer}>
-                  <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>
-                    {validationErrors.billingPhone}
-                  </Text>
-                </View>
               )}
             </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Billing Email Address</Text>
-              <View
-                style={[
-                  styles.inputContainer,
-                  validationErrors.billingEmail && styles.inputContainerError,
-                ]}>
-                <Icon
-                  name="email"
-                  size={20}
-                  color="#9ca3af"
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={[styles.formInput, styles.inputWithIcon]}
-                  value={formData.billingEmail}
-                  onChangeText={text => updateFormData('billingEmail', text)}
-                  placeholder="billing@company.com"
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-              {validationErrors.billingEmail && (
-                <View style={styles.errorContainer}>
-                  <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>
-                    {validationErrors.billingEmail}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Billing Address *</Text>
-              <View
-                style={[
-                  styles.inputContainer,
-                  validationErrors.billingAddress && styles.inputContainerError,
-                ]}>
-                <Icon
-                  name="place"
-                  size={20}
-                  color="#9ca3af"
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={[styles.formInput, styles.inputWithIcon]}
-                  value={formData.billingAddress}
-                  onChangeText={text => {
-                    updateFormData('billingAddress', text);
-                    setShowBillingLocationSuggestions(true);
-                  }}
-                  onFocus={() => setShowBillingLocationSuggestions(true)}
-                  placeholder="Enter billing address"
-                  placeholderTextColor="#9ca3af"
-                />
-              </View>
-              {renderSuggestions(
-                billingLocationSuggestions,
-                showBillingLocationSuggestions,
-                suggestion => {
-                  updateFormData('billingAddress', suggestion.description);
-                  setShowBillingLocationSuggestions(false);
-                },
-              )}
-              {validationErrors.billingAddress && (
-                <View style={styles.errorContainer}>
-                  <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>
-                    {validationErrors.billingAddress}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Billing City *</Text>
-              <View
-                style={[
-                  styles.inputContainer,
-                  validationErrors.billingCity && styles.inputContainerError,
-                ]}>
-                <Icon
-                  name="location-city"
-                  size={20}
-                  color="#9ca3af"
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={[styles.formInput, styles.inputWithIcon]}
-                  value={formData.billingCity}
-                  onChangeText={text => {
-                    updateFormData('billingCity', text);
-                    setShowBillingCitySuggestions(true);
-                  }}
-                  onFocus={() => setShowBillingCitySuggestions(true)}
-                  placeholder="Enter billing city"
-                  placeholderTextColor="#9ca3af"
-                />
-              </View>
-              {renderSuggestions(
-                billingCitySuggestions,
-                showBillingCitySuggestions,
-                suggestion => {
-                  updateFormData('billingCity', suggestion.description);
-                  setShowBillingCitySuggestions(false);
-                },
-              )}
-              {validationErrors.billingCity && (
-                <View style={styles.errorContainer}>
-                  <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>
-                    {validationErrors.billingCity}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </>
-        ) : (
-          <View style={styles.sameAsCustomerInfo}>
-            <Icon name="check-circle" size={24} color="#10b981" />
-            <Text style={styles.sameAsCustomerText}>
-              Billing address will be the same as customer address
-            </Text>
           </View>
-        )}
-      </View>
-
-      {/* Scheduling */}
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Icon name="schedule" size={24} color="#3B82F6" />
-          <Text style={styles.sectionTitle}>Scheduling</Text>
-        </View>
-
-        {/* Scheduled Date */}
-        <View style={styles.dateTimeRow}>
-          <View style={styles.dateTimeItem}>
-            <Text style={styles.formLabel}>Want to Schedule Date</Text>
+          {/* Scheduled Time */}
+          <View style={[styles.dateTimeItem, {marginVertical: 10}]}>
+            <Text style={styles.formLabel}>Time</Text>
             <TouchableOpacity
               style={[
                 styles.inputContainer,
-                validationErrors.scheduledDate && styles.inputContainerError,
+                validationErrors.scheduledTime && styles.inputContainerError,
               ]}
               onPress={() => {
-                setShowDatePicker(true),
-                  setShowTimePicker(false),
+                setShowTimePicker(true),
+                  setShowDatePicker(false),
                   setShowDueDatePicker(false);
+              }}>
+              <Icon
+                name="access-time"
+                size={20}
+                color="#9ca3af"
+                style={styles.inputIcon}
+              />
+              <Text style={[styles.formInput, styles.inputWithIcon]}>
+                {formData.scheduledTime || 'Select Time'}
+              </Text>
+            </TouchableOpacity>
+            {showTimePicker && (
+              <DateTimePicker
+                value={new Date()}
+                mode="time"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(event, date) =>
+                  onChange(event, date, 'scheduledTime')
+                }
+              />
+            )}
+          </View>
+          {/* Due Date */}
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Due Date</Text>
+            <TouchableOpacity
+              style={[
+                styles.inputContainer,
+                validationErrors.dueDate && styles.inputContainerError,
+              ]}
+              onPress={() => {
+                setShowDueDatePicker(true),
+                  setShowTimePicker(false),
+                  setShowDatePicker(false);
               }}>
               <Icon
                 name="event"
@@ -3040,88 +3177,22 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
                 style={styles.inputIcon}
               />
               <Text style={[styles.formInput, styles.inputWithIcon]}>
-                {formData.scheduledDate || 'Select Date'}
+                {formData.dueDate || 'Select Due Date'}
               </Text>
             </TouchableOpacity>
-            {showDatePicker && (
+            {showDueDatePicker && (
               <DateTimePicker
                 value={new Date()}
                 mode="date"
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(event, date) =>
-                  onChange(event, date, 'scheduledDate')
-                }
+                onChange={(event, date) => onChange(event, date, 'dueDate')}
               />
             )}
           </View>
         </View>
-        {/* Scheduled Time */}
-        <View style={[styles.dateTimeItem, {marginVertical: 10}]}>
-          <Text style={styles.formLabel}>Time</Text>
-          <TouchableOpacity
-            style={[
-              styles.inputContainer,
-              validationErrors.scheduledTime && styles.inputContainerError,
-            ]}
-            onPress={() => {
-              setShowTimePicker(true),
-                setShowDatePicker(false),
-                setShowDueDatePicker(false);
-            }}>
-            <Icon
-              name="access-time"
-              size={20}
-              color="#9ca3af"
-              style={styles.inputIcon}
-            />
-            <Text style={[styles.formInput, styles.inputWithIcon]}>
-              {formData.scheduledTime || 'Select Time'}
-            </Text>
-          </TouchableOpacity>
-          {showTimePicker && (
-            <DateTimePicker
-              value={new Date()}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, date) => onChange(event, date, 'scheduledTime')}
-            />
-          )}
-        </View>
-        {/* Due Date */}
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Due Date</Text>
-          <TouchableOpacity
-            style={[
-              styles.inputContainer,
-              validationErrors.dueDate && styles.inputContainerError,
-            ]}
-            onPress={() => {
-              setShowDueDatePicker(true),
-                setShowTimePicker(false),
-                setShowDatePicker(false);
-            }}>
-            <Icon
-              name="event"
-              size={20}
-              color="#9ca3af"
-              style={styles.inputIcon}
-            />
-            <Text style={[styles.formInput, styles.inputWithIcon]}>
-              {formData.dueDate || 'Select Due Date'}
-            </Text>
-          </TouchableOpacity>
-          {showDueDatePicker && (
-            <DateTimePicker
-              value={new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={(event, date) => onChange(event, date, 'dueDate')}
-            />
-          )}
-        </View>
-      </View>
-    </ScrollView>
-  );
+      </ScrollView>
+    );
+  };
 
   const renderResourcesStep = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
@@ -3133,7 +3204,7 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
         </View>
 
         <Text style={styles.formLabel}>Assigned Team Members *</Text>
-        <View style={styles.teamMembersList}>
+        {/* <View style={styles.teamMembersList}>
           {teamMembers.map(member => (
             <TouchableOpacity
               key={member.id}
@@ -3173,6 +3244,54 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
               )}
             </TouchableOpacity>
           ))}
+        </View> */}
+        <View style={styles.container}>
+          {/* Dropdown Header */}
+          <TouchableOpacity
+            style={styles.dropdownHeader}
+            onPress={toggleDropdown}>
+            <Text style={styles.headerText}>
+              {formData.assignedTo.length > 0
+                ? formData.assignedTo.join(',')
+                : 'Select Members'}
+            </Text>
+            <Icon
+              name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+              size={24}
+            />
+          </TouchableOpacity>
+
+          {/* Dropdown List */}
+          {isOpen && (
+            <View style={styles.dropdownList}>
+              <FlatList
+                data={teamMembers}
+                keyExtractor={item => item.id.toString()}
+                renderItem={({item}) => {
+                  const isSelected = formData.assignedTo.includes(item.name);
+                  return (
+                    <TouchableOpacity
+                      style={styles.dropdownItem}
+                      onPress={() => handleSelect(item)}>
+                      <View
+                        style={[
+                          styles.checkbox1,
+                          isSelected && styles.checkboxChecked1,
+                        ]}>
+                        {isSelected && (
+                          <Icon name="check" size={16} color="white" />
+                        )}
+                      </View>
+                      <View style={styles.memberInfo1}>
+                        <Text style={styles.memberName1}>{item.name}</Text>
+                        <Text style={styles.memberRole1}>{item.role}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            </View>
+          )}
         </View>
         {validationErrors.assignedTo && (
           <View style={styles.errorContainer}>
@@ -4072,6 +4191,56 @@ const styles = StyleSheet.create({
     maxHeight: 150,
     zIndex: 1000, // dropdown upar aaye
     elevation: 5, // android shadow
+  },
+
+  dropdownHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 12,
+    borderRadius: 8,
+  },
+  headerText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  dropdownList: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginTop: 5,
+    maxHeight: 200,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+  },
+  checkbox1: {
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: '#aaa',
+    marginRight: 10,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked1: {
+    backgroundColor: '#007AFF',
+  },
+  memberInfo1: {
+    flexDirection: 'column',
+  },
+  memberName1: {
+    fontSize1: 16,
+    fontWeight: '600',
+  },
+  memberRole1: {
+    fontSize: 14,
+    color: '#555',
   },
 });
 

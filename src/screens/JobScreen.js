@@ -94,8 +94,6 @@ const JobListingScreen = ({
     getJobId();
   }, []);
 
-  console.log('activeJobIdactiveJobId', activeJobId);
-
   const applyFilter = () => {
     console.log('Start Date:', startDate);
     console.log('End Date:', endDate);
@@ -232,7 +230,7 @@ const JobListingScreen = ({
       },
       {
         id: '6',
-        jobId: 'JDP-2024-001',
+        jobId: 'JDP-2024-006',
         title: 'Electrical Panel Upgrade',
         description: 'Upgrade main electrical panel from 100A to 200A service',
         customer: {
@@ -260,7 +258,6 @@ const JobListingScreen = ({
     setJobs(mockJobs);
   }, []);
 
-  // loadfilter
   useEffect(() => {
     if (status) {
       setActiveTab(status);
@@ -612,7 +609,7 @@ const JobListingScreen = ({
 
           <TouchableOpacity
             style={styles.actionButton}
-             onPress={() => navigation.navigate('MapScreen', job)}>
+            onPress={() => navigation.navigate('MapScreen', job)}>
             {/* onPress={() => handleNavigate(job)}> */}
             <Ionicons name="navigate" size={20} color={'#10B981'} />
             <Text style={[styles.actionText, {color: '#10B981'}]}>

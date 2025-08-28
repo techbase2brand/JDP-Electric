@@ -2779,7 +2779,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   backButton: {
     padding: Spacing.sm,
