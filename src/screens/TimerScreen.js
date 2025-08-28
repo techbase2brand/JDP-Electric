@@ -458,12 +458,10 @@ export default function TimerScreen({navigation, route}) {
     checkJobId();
   }, []);
   const handleStart = async () => {
-  
-      await AsyncStorage.setItem('activeJobId', job?.job?.jobId || job?.jobId);
-      setStoredJobId(job?.job?.jobId);
-      dispatch(startTimerWithBackground());
-      addActivity('Work Started', {color: '#4CAF50'});
-   
+    await AsyncStorage.setItem('activeJobId', job?.job?.jobId || job?.jobId);
+    setStoredJobId(job?.job?.jobId);
+    dispatch(startTimerWithBackground());
+    addActivity('Work Started', {color: '#4CAF50'});
   };
 
   const handleComplete = async () => {
@@ -660,7 +658,16 @@ export default function TimerScreen({navigation, route}) {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Pause Timer</Text>
             <Text>Select a reason:</Text>
-            {['Break', 'Emergency', 'Other'].map(reason => (
+            {[
+              'Lunch Break',
+              'Material Pickup',
+              'Customer Meeting',
+              'Equipment Issue',
+              'Weather Delay',
+              'Waiting for Parts',
+              'Safety Break',
+              'Other',
+            ].map(reason => (
               <TouchableOpacity
                 key={reason}
                 style={[

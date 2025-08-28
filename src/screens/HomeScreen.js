@@ -107,6 +107,7 @@ const HomeScreen = ({navigation}) => {
   const todaysJobs = [
     {
       id: 'JOB-001',
+      jobId: 'JOB-001',
       title: 'Electrical Panel Upgrade',
       description: 'Upgrade main electrical panel from 100A to 200A service',
       status: 'In Progress',
@@ -121,6 +122,7 @@ const HomeScreen = ({navigation}) => {
     },
     {
       id: 'JOB-002',
+      jobId: 'JOB-002',
       title: 'Commercial Lighting Installation',
       description: 'Install LED lighting system in conference rooms',
       status: 'Scheduled',
@@ -138,6 +140,7 @@ const HomeScreen = ({navigation}) => {
   const upcomingJobs = [
     {
       id: 'JOB-003',
+      jobId: 'JOB-003',
       title: 'Emergency Generator Maintenance',
       date: '1/26/2024 at 09:00',
       priority: 'high',
@@ -227,28 +230,28 @@ const HomeScreen = ({navigation}) => {
     </TouchableOpacity>
   );
 
-  const renderJobCard = item => (
+  const renderJobCard = job => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('JobDetail', {job: item})}
-      key={item.id}
+      onPress={() => navigation.navigate('JobDetail', {job})}
+      key={job.id}
       style={styles.jobCard}>
       <View style={styles.jobHeader}>
         <View style={styles.jobHeaderLeft}>
-          <Text style={styles.jobId}>{item.id}</Text>
+          <Text style={styles.jobId}>{job.id}</Text>
           <View style={[styles.statusBadge, {backgroundColor: '#E3F2FD'}]}>
-            <Text style={[styles.statusText, {color: item.statusColor}]}>
-              {item.status}
+            <Text style={[styles.statusText, {color: job.statusColor}]}>
+              {job.status}
             </Text>
           </View>
           <View style={[styles.priorityBadge, {backgroundColor: '#ECEEF2'}]}>
-            <Text style={[styles.priorityText, {color: item.priorityColor}]}>
-              {item.priority}
+            <Text style={[styles.priorityText, {color: job.priorityColor}]}>
+              {job.priority}
             </Text>
           </View>
         </View>
       </View>
-      <Text style={styles.jobTitle}>{item.title}</Text>
-      <Text style={styles.jobDescription}>{item.description}</Text>
+      <Text style={styles.jobTitle}>{job.title}</Text>
+      <Text style={styles.jobDescription}>{job.description}</Text>
       <View style={styles.jobDetails}>
         <View style={{display: 'flex', flexDirection: 'row', gap: 10}}>
           <View style={styles.jobDetailRow}>
@@ -256,41 +259,44 @@ const HomeScreen = ({navigation}) => {
               {' '}
               <Feather name="user" size={18} color={tabColor} />{' '}
             </Text>
-            <Text style={styles.jobDetailText}>{item.technician}</Text>
+            <Text style={styles.jobDetailText}>{job.technician}</Text>
           </View>
           <View style={styles.jobDetailRow}>
             <Text style={styles.jobDetailIcon}>
               <Ionicons name="timer-outline" size={18} color={tabColor} />
             </Text>
-            <Text style={styles.jobDetailText}>{item.time}</Text>
+            <Text style={styles.jobDetailText}>{job.time}</Text>
           </View>
         </View>
         <View style={styles.jobDetailRow}>
           <Text style={styles.jobDetailIcon}>
             <Feather name="map-pin" size={18} color={tabColor} />
           </Text>
-          <Text style={styles.jobDetailText}>{item.location}</Text>
+          <Text style={styles.jobDetailText}>{job.location}</Text>
         </View>
       </View>
     </TouchableOpacity>
   );
 
-  const renderUpcomingJob = item => (
-    <View key={item.id} style={styles.upcomingJobCard}>
+  const renderUpcomingJob = job => (
+    <TouchableOpacity
+      key={job.id}
+      style={styles.upcomingJobCard}
+      onPress={()   => navigation.navigate('JobDetail', {job})}>
       <View style={styles.upcomingJobHeader}>
         <View style={styles.upcomingJobLeft}>
-          <Text style={styles.upcomingJobId}>{item.id}</Text>
+          <Text style={styles.upcomingJobId}>{job.id}</Text>
           <View style={[styles.priorityBadge, {backgroundColor: '#ECEEF2'}]}>
-            <Text style={[styles.priorityText, {color: item.priorityColor}]}>
-              {item.priority}
+            <Text style={[styles.priorityText, {color: job.priorityColor}]}>
+              {job.priority}
             </Text>
           </View>
         </View>
         <View style={styles.dateBadge}>
-          <Text style={styles.dateText}>{item.date}</Text>
+          <Text style={styles.dateText}>{job.date}</Text>
         </View>
       </View>
-      <Text style={styles.upcomingJobTitle}>{item.title}</Text>
+      <Text style={styles.upcomingJobTitle}>{job.title}</Text>
       <Text style={styles.jobDescription}>
         Upgrade main electrical panel from 100A to 200A service
       </Text>
@@ -334,7 +340,7 @@ const HomeScreen = ({navigation}) => {
           <Text style={styles.jobDetailText}> {item.duration}</Text>
         </View>
       </View> */}
-    </View>
+    </TouchableOpacity>
   );
 
   return (

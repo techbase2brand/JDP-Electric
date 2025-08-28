@@ -101,6 +101,7 @@ const JobDetailScreen = ({
 
   const [timerSession, setTimerSession] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeTimerId, setActiveTimerId] = useState('');
 
   // Get job from props or route params
   const job = route?.params?.job;
@@ -390,10 +391,20 @@ const JobDetailScreen = ({
     navigation.navigate(screen, jobData ? {job: jobData} : undefined);
     // }
   };
+  useEffect(() => {
+    const getTimerId = async () => {
+      const activeJobId = await AsyncStorage.getItem('activeJobId');
+      if (job?.jobId?.toString() == activeJobId) {
+      }
+      setActiveTimerId(activeJobId);
+    };
+    getTimerId();
+  }, []);
 
-   const handleNavigateTimer = async (job) => {
+  const handleNavigateTimer = async job => {
     try {
       const activeJobId = await AsyncStorage.getItem('activeJobId');
+      // setActiveTimerId(activeJobId)
       const currentJobId = job?.jobId?.toString();
       if (!activeJobId) {
         // No active job → allow navigation
@@ -407,13 +418,13 @@ const JobDetailScreen = ({
       } else {
         // Different job already running → block
         Alert.alert(
-          "Active Job Running",
+          'Active Job Running',
           `Another job (ID: ${activeJobId}) is already running. Please complete it first.`,
-          [{text: "OK"}]
+          [{text: 'OK'}],
         );
       }
     } catch (error) {
-      console.log("❌ Error checking jobId:", error);
+      console.log('❌ Error checking jobId:', error);
     }
   };
 
@@ -536,15 +547,15 @@ const JobDetailScreen = ({
               <TouchableOpacity
                 style={styles.actionButton}
                 onPress={() => handleNavigateTimer(job)}>
-                <Icon name="timer" size={20} color={Colors.text} />
-                <Text style={styles.actionButtonText}>Start Timer</Text>
+                <Icon name="timer" size={20} color={Colors.successDark} />
+                <Text style={styles.actionButtonText}>{'Start Timer'}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.actionButton}
                 onPress={() => navigation.navigate('MapScreen', job)}>
-                <Icon name="directions" size={20} color={Colors.text} />
-                <Text style={styles.actionButtonText}>Directions</Text>
+                <Icon name="directions" size={20} color={Colors.primary} />
+                <Text style={[styles.actionButtonText,{color:Colors.primary}]}>Directions</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1040,8 +1051,8 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: Colors.text,
+    fontWeight: '700',
+    color: Colors.successDark,
   },
 
   // Info Items

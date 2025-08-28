@@ -2012,7 +2012,9 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
   const handleChange = text => {
     setSearch(text);
     setFormData({...formData, customerName: text});
-
+    if (validationErrors.customerName) {
+      setValidationErrors(prev => ({...prev, customerName: ''}));
+    }
     if (text.length > 0) {
       const matches = customers.filter(c =>
         c.toLowerCase().includes(text.toLowerCase()),
@@ -2024,11 +2026,11 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
     }
   };
 
-  // const handleSelect = name => {
-  //   setSearch(name);
-  //   setFormData({...formData, customerName: name});
-  //   setShowDropdown(false);
-  // };
+  const handleSelectName = name => {
+    setSearch(name);
+    setFormData({...formData, customerName: name});
+    setShowDropdown(false);
+  };
 
   const handleAddIfNotExist = async () => {
     if (search.trim().length === 0) return;
@@ -2046,12 +2048,11 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
   // };
   // Mock team members for assignment
   const teamMembers = [
-    {id: '1', name: 'Sarah Johnson', role: 'Lead Labor'},
-    {id: '2', name: 'Mike Wilson', role: 'Labor'},
-    {id: '3', name: 'Lisa Rodriguez', role: 'Labor'},
-    {id: '4', name: 'David Chen', role: 'Labor'},
-    {id: '5', name: 'Tom Anderson', role: 'Labor'},
-    {id: '6', name: 'James Mitchell', role: 'Labor'},
+    {id: '1', name: 'Mike Wilson', role: 'Labor'},
+    {id: '2', name: 'Lisa Rodriguez', role: 'Labor'},
+    {id: '3', name: 'David Chen', role: 'Labor'},
+    {id: '4', name: 'Tom Anderson', role: 'Labor'},
+    {id: '5', name: 'James Mitchell', role: 'Labor'},
   ];
 
   const priorityOptions = [
@@ -2366,7 +2367,7 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
       }
     }
   }, [validationErrors]);
-  // 🔥 whenever validationErrors change, scroll to first error field
+  //  whenever validationErrors change, scroll to first error field
   // useEffect(() => {
   //   const firstErrorField = Object.keys(validationErrors)[0];
   //   if (firstErrorField && fieldPositions.current[firstErrorField] !== undefined) {
@@ -2705,7 +2706,7 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
                   renderItem={({item}) => (
                     <TouchableOpacity
                       style={styles.customerItem}
-                      onPress={() => handleSelect(item)}>
+                      onPress={() => handleSelectName(item)}>
                       <Text style={styles.customerText}>{item}</Text>
                     </TouchableOpacity>
                   )}
@@ -3247,6 +3248,29 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
         </View> */}
         <View style={styles.container}>
           {/* Dropdown Header */}
+
+          <TouchableOpacity style={styles.dropdownItem}>
+            <View
+              style={[
+                styles.checkboxChecked1,
+                {
+                  width: 20,
+                  height: 20,
+                  borderWidth: 1,
+                  borderColor: '#aaa',
+                  marginRight: 10,
+                  borderRadius: 4,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+              ]}>
+              <Icon name="check" size={16} color="white" />
+            </View>
+            <View style={styles.memberInfo1}>
+              <Text style={styles.memberName1}>{'Sarah Johnson'}</Text>
+              <Text style={styles.memberRole1}>{'Lead Labour'}</Text>
+            </View>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.dropdownHeader}
             onPress={toggleDropdown}>
@@ -3373,8 +3397,8 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
   );
 
   const renderReviewStep = () => {
-    const assignedMembers = teamMembers.filter(member =>
-      formData.assignedTo.includes(member.id),
+    const assignedMembers = teamMembers?.filter(member =>
+      formData.assignedTo.includes(member.name),
     );
     const billingInfo = formData.sameAsCustomer
       ? {
