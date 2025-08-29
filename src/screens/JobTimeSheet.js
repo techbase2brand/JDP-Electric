@@ -1073,6 +1073,7 @@ import {tabColor} from '../constants/Color';
 import Feather from 'react-native-vector-icons/Feather';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {widthPercentageToDP} from '../utils';
 
 const Colors = {
   primary: '#3B82F6',
@@ -2065,7 +2066,14 @@ const JobTimesheet = ({navigation, route, user, job}) => {
   };
 
   // Modal components
-
+  const AddEllipsis = ({text}) => {
+    const words = text.split(' '); // Split the text into words
+    if (words.length > 10) {
+      // Limit to 10 words and add ellipsis
+      text = words.slice(0, 10).join(' ') + '...';
+    }
+    return <Text style={[styles.tableCell, {flex: 1}]}>{text}</Text>;
+  };
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
@@ -2269,7 +2277,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
           <View style={styles.tableContainer}>
             {/* Table Header */}
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, {flex: 2}]}>Employee</Text>
+              <Text style={[styles.tableHeaderText, {flex: 1}]}>Employee</Text>
               <Text style={[styles.tableHeaderText, {flex: 1}]}>Role</Text>
               <Text style={[styles.tableHeaderText, {flex: 1}]}>Reg.hrs</Text>
               {/* <Text style={[styles.tableHeaderText, {flex: 1}]}>OT Hrs</Text> */}
@@ -2279,11 +2287,12 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             </View>
 
             {/* Table Rows */}
-            {timesheetData.labourEntries.map(entry => (
+            {timesheetData?.labourEntries.map(entry => (
               <View key={entry.id} style={styles.tableRow}>
-                <Text style={[styles.tableCell, {flex: 2}]}>
+                <Text style={[styles.tableCell, {flex: 1}]}>
                   {entry?.employeeName || 'Sarah Johnson'}
                 </Text>
+
                 <Text style={[styles.tableCell, {flex: 1}]}>{entry.role}</Text>
                 <Text style={[styles.tableCell, {flex: 1}]}>
                   {entry.regularHours}h
@@ -2395,7 +2404,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
           <View style={styles.tableContainer}>
             {/* Table Header */}
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderText, {flex: 2}]}>Title</Text>
+              <Text style={[styles.tableHeaderText, {flex: 1}]}>Title</Text>
               <Text style={[styles.tableHeaderText, {flex: 1}]}>Qty</Text>
               <Text style={[styles.tableHeaderText, {flex: 1}]}>Used</Text>
               {canEdit() && !isReadOnly() && (
@@ -2407,7 +2416,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             {timesheetData.materialEntries.map(material => (
               <View key={material.id} style={styles.tableRow}>
                 {/* Title */}
-                <Text style={[styles.tableCell, {flex: 2}]}>
+                <Text style={[styles.tableCell, {flex: 1}]}>
                   {material.name}
                 </Text>
 
@@ -3396,6 +3405,7 @@ const styles = StyleSheet.create({
   tableCell: {
     fontSize: 14,
     color: '#333',
+    // width:widthPercentageToDP(30)
   },
 });
 

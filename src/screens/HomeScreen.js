@@ -210,22 +210,24 @@ const HomeScreen = ({navigation}) => {
   const renderQuickAction = (item, index) => (
     <TouchableOpacity
       key={index}
-      style={[styles.quickActionButton, {backgroundColor: item.color}]}
+      style={[
+        styles.quickActionButton,
+        {
+          backgroundColor: item.color,
+          width:
+            index === quickActions.length - 1 && quickActions.length % 2 === 1
+              ? '100%'
+              : '48%',
+          // width: index === 2 ? '100%' : '48%'
+        },
+      ]}
       onPress={() => handleQuickActionPress(item.title)}>
       <View style={[styles.quickActionIcon, {backgroundColor: item.color}]}>
-        {/* <Text
-            style={[
-              styles.quickActionIconText,
-             {alignSelf:"center"}
-            ]}>
-            {item.icon}
-          </Text> */}
         <Image
           source={item.icon}
           style={[styles.quickActionIconImage, {alignSelf: 'center'}]}
         />
       </View>
-
       <Text style={styles.quickActionText}>{item.title}</Text>
     </TouchableOpacity>
   );
@@ -282,7 +284,7 @@ const HomeScreen = ({navigation}) => {
     <TouchableOpacity
       key={job.id}
       style={styles.upcomingJobCard}
-      onPress={()   => navigation.navigate('JobDetail', {job})}>
+      onPress={() => navigation.navigate('JobDetail', {job})}>
       <View style={styles.upcomingJobHeader}>
         <View style={styles.upcomingJobLeft}>
           <Text style={styles.upcomingJobId}>{job.id}</Text>

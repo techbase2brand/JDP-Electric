@@ -2239,7 +2239,6 @@ const CreateJobScreen = ({navigation, user, onCreateJob}) => {
 
       return updated;
     });
-
     // Clear validation error when user starts typing
     if (validationErrors[field]) {
       setValidationErrors(prev => ({...prev, [field]: ''}));

@@ -369,6 +369,7 @@ import {
   FlatList,
   TouchableOpacity,
   Platform,
+  NativeModules
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -379,7 +380,6 @@ import {
 } from '../redux/timerSlice';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
-import {NativeModules} from 'react-native';
 import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const Shadows = {
@@ -423,7 +423,7 @@ export default function TimerScreen({navigation, route}) {
   const {isRunning, elapsedTime} = useSelector(state => state.timer);
   const dispatch = useDispatch();
   const job = route?.params?.job;
-
+const { DynamicIslandModule } = NativeModules;
   // Activity Log
   const [activityLog, setActivityLog] = useState([]);
 
@@ -458,9 +458,15 @@ export default function TimerScreen({navigation, route}) {
     checkJobId();
   }, []);
   const handleStart = async () => {
+    //  const startTime = Date.now();
     await AsyncStorage.setItem('activeJobId', job?.job?.jobId || job?.jobId);
     setStoredJobId(job?.job?.jobId);
     dispatch(startTimerWithBackground());
+     if (Platform.OS === "ios" && DynamicIslandModule) {
+      console.log("DynamicIslandModuleDynamicIslandModule is working");
+      
+    DynamicIslandModule.startTimer(isRunning, true);
+  }
     addActivity('Work Started', {color: '#4CAF50'});
   };
 

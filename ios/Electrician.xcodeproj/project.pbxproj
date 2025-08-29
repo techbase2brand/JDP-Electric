@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		540D45D12E61D82F00CA9404 /* DynamicIslandModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 540D45D02E61D82F00CA9404 /* DynamicIslandModule.swift */; };
+		540D45D32E61D86F00CA9404 /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 540D45D22E61D86F00CA9404 /* TimerActivityAttributes.swift */; };
+		540D45D72E61D8AC00CA9404 /* DynamicIslandModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 540D45D62E61D8AC00CA9404 /* DynamicIslandModule.m */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		83ED09672EB305E22A9DCA2D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
@@ -19,6 +22,10 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Electrician/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Electrician/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = Electrician/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		540D45CB2E61D45F00CA9404 /* Electrician-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Electrician-Bridging-Header.h"; sourceTree = "<group>"; };
+		540D45D02E61D82F00CA9404 /* DynamicIslandModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicIslandModule.swift; sourceTree = "<group>"; };
+		540D45D22E61D86F00CA9404 /* TimerActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerActivityAttributes.swift; sourceTree = "<group>"; };
+		540D45D62E61D8AC00CA9404 /* DynamicIslandModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DynamicIslandModule.m; sourceTree = "<group>"; };
 		546905992E4CB16C00A3AB9F /* Electrician.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Electrician.xcodeproj; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Electrician/AppDelegate.swift; sourceTree = "<group>"; };
 		7F0C018446BA7536AB08BA8B /* Pods-Electrician.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Electrician.debug.xcconfig"; path = "Target Support Files/Pods-Electrician/Pods-Electrician.debug.xcconfig"; sourceTree = "<group>"; };
@@ -79,6 +86,10 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				540D45D62E61D8AC00CA9404 /* DynamicIslandModule.m */,
+				540D45D22E61D86F00CA9404 /* TimerActivityAttributes.swift */,
+				540D45D02E61D82F00CA9404 /* DynamicIslandModule.swift */,
+				540D45CB2E61D45F00CA9404 /* Electrician-Bridging-Header.h */,
 				13B07FAE1A68108700A75B9A /* Electrician */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
@@ -140,7 +151,7 @@
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
-						LastSwiftMigration = 1120;
+						LastSwiftMigration = 1640;
 					};
 				};
 			};
@@ -261,6 +272,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				540D45D72E61D8AC00CA9404 /* DynamicIslandModule.m in Sources */,
+				540D45D32E61D86F00CA9404 /* TimerActivityAttributes.swift in Sources */,
+				540D45D12E61D82F00CA9404 /* DynamicIslandModule.swift in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -291,6 +305,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = Electrician;
+				SWIFT_OBJC_BRIDGING_HEADER = "Electrician-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -319,6 +334,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = Electrician;
+				SWIFT_OBJC_BRIDGING_HEADER = "Electrician-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};

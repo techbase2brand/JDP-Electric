@@ -62,7 +62,12 @@
 // export default App;
 
 import React, {useEffect, useState} from 'react';
-import {KeyboardAvoidingView, Platform, SafeAreaView} from 'react-native';
+import {
+  KeyboardAvoidingView,
+  NativeModules,
+  Platform,
+  SafeAreaView,
+} from 'react-native';
 import {whiteColor} from './src/constants/Color';
 import {heightPercentageToDP as hp} from './src/utils';
 import {BaseStyle} from './src/constants/Style';
@@ -85,6 +90,28 @@ import {
 const {flex} = BaseStyle;
 
 const AppContent = () => {
+  // const {DynamicIslandModule} = NativeModules;
+
+useEffect(() => {
+  // (async () => {
+  //   try {
+  //     const res = await HelloModule.testCall();
+  //     console.log("✅ Native response:", res);
+  //   } catch (err) {
+  //     console.error("❌ Native error:", err);
+  //   }
+  // })();
+//   if (Platform.OS === "ios" && DynamicIslandModule) {
+//   console.log("👉 Calling Native startTimer",true);
+//   DynamicIslandModule.startTimer(true);
+// }
+
+}, []);
+//  console.log('Native Modules:', NativeModules);  // Check if your module is listed
+// console.log('DynamicIslandModule:',CalendarModule);
+  // DynamicIslandModule.showDynamicIsland(message => {
+  //   console.log(message);
+  // });
   const userData = useSelector(state => state.user.userData);
   const {isRunning} = useSelector((state: any) => state.timer);
 
