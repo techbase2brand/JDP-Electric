@@ -264,7 +264,7 @@ const MapScreen = ({route, navigation}) => {
             fontSize: 14,
             marginVertical: 6,
           }}>
-          Customer Name: {customer.name}
+          Customer Name: {customer?.name}
         </Text>
         <Text
           style={{
@@ -272,11 +272,11 @@ const MapScreen = ({route, navigation}) => {
             fontSize: 14,
             marginVertical: 6,
           }}>
-          Customer Address: {customer.address}
+          Customer Address: {customer?.address}
         </Text>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => handleCall(customer.phone)}>
+          onPress={() => handleCall(customer?.phone)}>
           <Ionicons name="call" size={20} color={COLORS.white} />
           <Text style={{color: COLORS.white, fontWeight: '800'}}>Call</Text>
         </TouchableOpacity>

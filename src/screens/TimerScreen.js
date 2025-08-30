@@ -369,7 +369,7 @@ import {
   FlatList,
   TouchableOpacity,
   Platform,
-  NativeModules
+  NativeModules,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -423,7 +423,19 @@ export default function TimerScreen({navigation, route}) {
   const {isRunning, elapsedTime} = useSelector(state => state.timer);
   const dispatch = useDispatch();
   const job = route?.params?.job;
-const { DynamicIslandModule } = NativeModules;
+  const {TimerModule} = NativeModules;
+
+  const startLiveActivity = async elapsed => {
+    await TimerModule.startActivity(elapsed);
+  };
+
+  const updateLiveActivity = (elapsed, isRunning) => {
+    TimerModule.updateActivity(elapsed, isRunning);
+  };
+
+  const endLiveActivity = () => {
+    TimerModule.endActivity();
+  };
   // Activity Log
   const [activityLog, setActivityLog] = useState([]);
 
@@ -454,19 +466,25 @@ const { DynamicIslandModule } = NativeModules;
         console.log('Error reading jobId:', error);
       }
     };
-
     checkJobId();
   }, []);
+  useEffect(() => {
+    if (isRunning) {
+      const interval = setInterval(() => {
+        updateLiveActivity(elapsedTime, isRunning);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [elapsedTime, isRunning]);
+
   const handleStart = async () => {
-    //  const startTime = Date.now();
     await AsyncStorage.setItem('activeJobId', job?.job?.jobId || job?.jobId);
     setStoredJobId(job?.job?.jobId);
     dispatch(startTimerWithBackground());
-     if (Platform.OS === "ios" && DynamicIslandModule) {
-      console.log("DynamicIslandModuleDynamicIslandModule is working");
-      
-    DynamicIslandModule.startTimer(isRunning, true);
-  }
+    if (TimerModule) {
+      startLiveActivity(elapsedTime);
+      console.log('this is working');
+    }
     addActivity('Work Started', {color: '#4CAF50'});
   };
 
@@ -475,6 +493,7 @@ const { DynamicIslandModule } = NativeModules;
       // remove jobId from AsyncStorage
       await AsyncStorage.removeItem('activeJobId');
       dispatch(stopTimerWithBackground());
+      endLiveActivity();
       addActivity('Work Completed', {color: '#2196F3'});
       setCompleteModal(false);
     } catch (err) {
