@@ -92,28 +92,31 @@ const {flex} = BaseStyle;
 const AppContent = () => {
   // const {DynamicIslandModule} = NativeModules;
 
-useEffect(() => {
-  // (async () => {
-  //   try {
-  //     const res = await HelloModule.testCall();
-  //     console.log("✅ Native response:", res);
-  //   } catch (err) {
-  //     console.error("❌ Native error:", err);
-  //   }
-  // })();
-//   if (Platform.OS === "ios" && DynamicIslandModule) {
-//   console.log("👉 Calling Native startTimer",true);
-//   DynamicIslandModule.startTimer(true);
-// }
-
-}, []);
-//  console.log('Native Modules:', NativeModules);  // Check if your module is listed
-// console.log('DynamicIslandModule:',CalendarModule);
+  useEffect(() => {
+    // (async () => {
+    //   try {
+    //     const res = await HelloModule.testCall();
+    //     console.log("✅ Native response:", res);
+    //   } catch (err) {
+    //     console.error("❌ Native error:", err);
+    //   }
+    // })();
+    //   if (Platform.OS === "ios" && DynamicIslandModule) {
+    //   console.log("👉 Calling Native startTimer",true);
+    //   DynamicIslandModule.startTimer(true);
+    // }
+  }, []);
+  //  console.log('Native Modules:', NativeModules);  // Check if your module is listed
+  // console.log('DynamicIslandModule:',CalendarModule);
   // DynamicIslandModule.showDynamicIsland(message => {
   //   console.log(message);
   // });
-  const userData = useSelector(state => state.user.userData);
+  const userData = useSelector(state => state.user.token);
+  const user = useSelector(state => state.user.user);
+  const permissions = useSelector(state => state.user.permissions);
+
   const {isRunning} = useSelector((state: any) => state.timer);
+  console.log('userData>>>', permissions);
 
   useEffect(() => {
     if (isRunning) {

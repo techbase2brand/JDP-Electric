@@ -935,13 +935,14 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {useDispatch} from 'react-redux';
-import {clearUser} from '../redux/userSlice';
+import {useDispatch, useSelector} from 'react-redux';
+import {logout} from '../redux/userSlice';
 
 // import { useAuth } from '../utils/AuthContext';
 
 const ProfileScreen = ({navigation}) => {
   const dispatch = useDispatch();
+  const user = useSelector(state => state.user.user);
 
   // const {user, logout} = useAuth();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -1079,9 +1080,11 @@ const ProfileScreen = ({navigation}) => {
       {/* <StatusBar backgroundColor="#2563eb" barStyle="light-content" /> */}
 
       {/* Header */}
-      <LinearGradient  colors={['#155DFC', '#1447E6', '#432DD7']}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 0}} style={styles.header}>
+      <LinearGradient
+        colors={['#155DFC', '#1447E6', '#432DD7']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 0}}
+        style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity
             style={styles.backButton}
@@ -1098,15 +1101,19 @@ const ProfileScreen = ({navigation}) => {
         <View style={styles.userCard}>
           <View style={styles.userInfo}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{'P'}</Text>
+              <Text style={styles.avatarText}>
+                {user?.full_name ? user.full_name.charAt(0).toUpperCase() : 'P'}
+              </Text>
             </View>
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>{'Paul Woytcke'}</Text>
-              <Text style={styles.userEmail}>{'paul@jdpelectric.us'}</Text>
+              <Text style={styles.userName}>{user?.full_name}</Text>
+              <Text style={styles.userEmail}>{user?.email}</Text>
               <View style={styles.userBadges}>
-                <View style={styles.roleBadge}>
-                  <Text style={styles.roleBadgeText}>{'Lead'}</Text>
-                </View>
+                {user?.role == 'Lead Labour' && (
+                  <View style={styles.roleBadge}>
+                    <Text style={styles.roleBadgeText}>{'Lead'}</Text>
+                  </View>
+                )}
                 <View style={styles.departmentBadge}>
                   <Text style={styles.departmentBadgeText}>
                     Electrical Services
@@ -1121,7 +1128,7 @@ const ProfileScreen = ({navigation}) => {
       {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Personal Information */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Icon name="person" size={20} color="#2563eb" />
             <Text style={styles.sectionTitle}>Personal Information</Text>
@@ -1134,7 +1141,7 @@ const ProfileScreen = ({navigation}) => {
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Phone</Text>
-                <Text style={styles.infoValue}>+1 (555) 0123</Text>
+                <Text style={styles.infoValue}>+{user?.phone}</Text>
               </View>
             </View>
 
@@ -1166,7 +1173,7 @@ const ProfileScreen = ({navigation}) => {
               </View>
             </View>
           </View>
-        </View>
+        </View> */}
 
         {/* Account & Privacy */}
         <View style={styles.section}>
@@ -1248,7 +1255,7 @@ const ProfileScreen = ({navigation}) => {
                   setModalVisible(false);
                   if (modalConfig.type === 'signout') {
                     // logout();
-                    dispatch(clearUser());
+                    dispatch(logout());
                     AsyncStorage.setItem('isLoggedIn', 'false');
                     // navigation.navigate('AuthStack');
                   } else if (modalConfig.type === 'delete') {

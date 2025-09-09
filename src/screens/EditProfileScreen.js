@@ -16,16 +16,18 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 // import { useAuth } from '../utils/AuthContext';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useSelector} from 'react-redux';
 
 const EditProfileScreen = ({navigation}) => {
-  // const { user, updateUser } = useAuth();
+  const user = useSelector(state => state.user.user);
+
   const [avatarUri, setAvatarUri] = useState(null);
   // console.log("user",user);
 
   const [formData, setFormData] = useState({
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@jdpelectric.us',
-    phone: '+1 (555) 123-4567',
+    name: user?.full_name,
+    email: user?.email,
+    phone: user?.phone,
     address: '1234 Main Street',
     city: 'Houston',
     state: 'TX',

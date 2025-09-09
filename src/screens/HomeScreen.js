@@ -33,8 +33,10 @@ import {
   SUPPORT_ICON,
   WARRENTY_ICON,
 } from '../assests/images';
+import {useSelector} from 'react-redux';
 
 const HomeScreen = ({navigation}) => {
+  const user = useSelector(state => state.user.user);
   const statsData = [
     {
       key: 'active',
@@ -147,6 +149,23 @@ const HomeScreen = ({navigation}) => {
       client: 'Metro Hospital',
       duration: '4h',
       priorityColor: '#9F0712',
+      customer: {
+        name: 'ABC Manufacturing',
+        address: '1234 Industrial Blvd, Houston, TX 77001',
+        phone: '+1 (555) 0101',
+      },
+      status: 'upcoming',
+      scheduledDate: '2024-01-15',
+      scheduledTime: '08:00 AM',
+      specialInstructions:
+        'Customer prefers work to be done during off-hours. Main power shutdown required.',
+      tags: ['Electrical', 'Panel Upgrade', 'High Priority'],
+      location: {
+        latitude: 29.7604,
+        longitude: -95.3698,
+        address: '1234 Industrial Blvd, Houston, TX 77001',
+      },
+      estimatedHours: 8,
     },
   ];
 
@@ -363,7 +382,9 @@ const HomeScreen = ({navigation}) => {
           {/* <View style={styles.header}> */}
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
-              <Text style={styles.greeting}>Good afternoon, Sarah!</Text>
+              <Text style={styles.greeting}>
+                Good afternoon, {user?.full_name}!
+              </Text>
               <View style={styles.roleContainer}>
                 <View style={styles.roleBadge}>
                   <Text style={styles.roleText}>Lead Labor</Text>
@@ -377,7 +398,12 @@ const HomeScreen = ({navigation}) => {
               <TouchableOpacity
                 style={styles.avatar}
                 onPress={() => navigation.navigate('ProfileScreen')}>
-                <Text style={styles.avatarText}>P</Text>
+                <Text style={styles.avatarText}>
+                  {' '}
+                  {user?.full_name
+                    ? user.full_name.charAt(0).toUpperCase()
+                    : 'P'}
+                </Text>
                 <View style={styles.onlineIndicator} />
               </TouchableOpacity>
               <TouchableOpacity
@@ -417,22 +443,24 @@ const HomeScreen = ({navigation}) => {
         </View> */}
 
           {/* Quick Actions */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="flash-outline" size={24} color={tabColor} />
-              <Text style={styles.sectionTitle}>Quick Actions</Text>
-              <View
-                style={[
-                  styles.accessBadge,
-                  {marginLeft: widthPercentageToDP(35)},
-                ]}>
-                <Text style={styles.accessText}>Lead Access</Text>
+          {user.role == 'Lead Labour' && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="flash-outline" size={24} color={tabColor} />
+                <Text style={styles.sectionTitle}>Quick Actions</Text>
+                <View
+                  style={[
+                    styles.accessBadge,
+                    {marginLeft: widthPercentageToDP(35)},
+                  ]}>
+                  <Text style={styles.accessText}>Lead Access</Text>
+                </View>
+              </View>
+              <View style={styles.quickActionsGrid}>
+                {quickActions?.map(renderQuickAction)}
               </View>
             </View>
-            <View style={styles.quickActionsGrid}>
-              {quickActions?.map(renderQuickAction)}
-            </View>
-          </View>
+          )}
 
           {/* Today's Jobs */}
           <View style={styles.section}>
@@ -606,8 +634,8 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '800',
   },
   onlineIndicator: {
     position: 'absolute',

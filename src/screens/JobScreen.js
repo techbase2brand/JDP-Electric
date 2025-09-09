@@ -66,7 +66,6 @@ const JobListingScreen = ({
   const [jobs, setJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-
   const [modalVisible, setModalVisible] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
