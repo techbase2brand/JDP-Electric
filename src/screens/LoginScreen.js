@@ -414,23 +414,23 @@ const LoginScreen = ({navigation}) => {
     // }
     try {
       setLoading(true);
-      const response = await api.post(LOGIN_URL, {email, password});
+      const response = await api.post(LOGIN_URL, {
+        email,
+        password,
+        login_by: 'app',
+      });
       console.log('response>>>', response.data.data);
       const {token, user, permissions} = response?.data?.data || {};
 
-      if (token && user) {
+      if (token) {
         // ✅ Role check
-        if (user.role == 'Labour' || user.role == 'Lead Labour') {
-          // Redux State  save
-          dispatch(setUser({user: user, permissions: permissions, token}));
-          // await AsyncStorage.setItem("authToken", token);
 
-          // Navigate
-          navigation.navigate('MainTabNavigator');
-        } else {
-          // If role is not allowed
-          setLoginError('Invalid credentials.');
-        }
+        // Redux State  save
+        dispatch(setUser({user: user, permissions: permissions, token}));
+        // await AsyncStorage.setItem("authToken", token);
+
+        // Navigate
+        navigation.navigate('MainTabNavigator');
       } else {
         setLoginError('Invalid credentials');
       }

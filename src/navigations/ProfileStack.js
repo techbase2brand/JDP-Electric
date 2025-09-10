@@ -18,9 +18,6 @@ export default function ProfileStack() {
       <Stack.Screen name="TermsConditions" component={TermsConditionsScreen} />
       <Stack.Screen name="SupportScreen" component={SupportScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
-
-
-
     </Stack.Navigator>
   );
 }

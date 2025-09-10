@@ -443,7 +443,7 @@ const HomeScreen = ({navigation}) => {
         </View> */}
 
           {/* Quick Actions */}
-          {user.role == 'Lead Labour' && (
+          {user?.management_type == 'lead_labor' && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="flash-outline" size={24} color={tabColor} />

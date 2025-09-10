@@ -1109,11 +1109,11 @@ const ProfileScreen = ({navigation}) => {
               <Text style={styles.userName}>{user?.full_name}</Text>
               <Text style={styles.userEmail}>{user?.email}</Text>
               <View style={styles.userBadges}>
-                {user?.role == 'Lead Labour' && (
+             {user?.management_type == 'lead_labor' && (
                   <View style={styles.roleBadge}>
                     <Text style={styles.roleBadgeText}>{'Lead'}</Text>
                   </View>
-                )}
+              )} 
                 <View style={styles.departmentBadge}>
                   <Text style={styles.departmentBadgeText}>
                     Electrical Services

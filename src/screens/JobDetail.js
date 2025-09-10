@@ -13,6 +13,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useSelector} from 'react-redux';
 
 // Embedded Colors - JDP Electrics Theme
 const Colors = {
@@ -93,11 +94,11 @@ const JobDetailScreen = ({
   onViewTimesheet,
   onUpdateJobStatus,
   route,
-  user,
   // job: propJob,
 }) => {
   const navigation = useNavigation();
   // const {job1} =route?.params?.job
+  const user = useSelector(state => state.user.user);
 
   const [timerSession, setTimerSession] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -555,7 +556,10 @@ const JobDetailScreen = ({
                 style={styles.actionButton}
                 onPress={() => navigation.navigate('MapScreen', job)}>
                 <Icon name="directions" size={20} color={Colors.primary} />
-                <Text style={[styles.actionButtonText,{color:Colors.primary}]}>Directions</Text>
+                <Text
+                  style={[styles.actionButtonText, {color: Colors.primary}]}>
+                  Directions
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -702,6 +706,7 @@ const JobDetailScreen = ({
 
         {/* Materials */}
         {/* {job.materials && job.materials.length > 0 && ( */}
+        {/* {user?.role == 'Lead Labour' && ( */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Icon name="inventory" size={20} color={Colors.primary} />
@@ -724,6 +729,7 @@ const JobDetailScreen = ({
             </TouchableOpacity>
           </View>
         </View>
+        {/* )} */}
         {/* )} */}
 
         {/* Special Instructions */}
@@ -751,6 +757,7 @@ const JobDetailScreen = ({
           </View>
           <View style={styles.cardContent}>
             <View style={styles.actionGrid}>
+            {user?.management_type == 'lead_labor' && (
               <TouchableOpacity
                 style={styles.gridActionButton}
                 onPress={() =>
@@ -760,7 +767,8 @@ const JobDetailScreen = ({
                 }>
                 <Icon name="schedule" size={20} color={Colors.text} />
                 <Text style={styles.gridActionText}>Bluesheet</Text>
-              </TouchableOpacity>
+              </TouchableOpacity>)}
+              
 
               <TouchableOpacity
                 style={styles.gridActionButton}

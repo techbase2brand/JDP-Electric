@@ -20,6 +20,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useSelector} from 'react-redux';
 
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -56,12 +57,13 @@ const COLORS = {
 };
 
 const JobListingScreen = ({
-  user,
+  // user,
   onNavigate,
   onStartTimer,
   navigation,
   route,
 }) => {
+  const user = useSelector(state => state.user.user);
   const {status} = route?.params || {};
   const [jobs, setJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -409,20 +411,22 @@ const JobListingScreen = ({
         </Text>
       </View>
 
-      <TouchableOpacity
-        style={[
-          styles.headerButton,
-          {
-            display: 'flex',
-            flexDirection: 'row',
-            backgroundColor: '#10B981',
-            width: widthPercentageToDP(24),
-          },
-        ]}
-        onPress={() => navigation.navigate('CreateJobScreen')}>
-        <Ionicons name="add" size={24} color={COLORS.white} />
-        <Text style={{color: '#fff', fontWeight: '600'}}>New Job</Text>
-      </TouchableOpacity>
+      {/* {user.role == 'Lead Labour' && ( */}
+        <TouchableOpacity
+          style={[
+            styles.headerButton,
+            {
+              display: 'flex',
+              flexDirection: 'row',
+              backgroundColor: '#10B981',
+              width: widthPercentageToDP(24),
+            },
+          ]}
+          onPress={() => navigation.navigate('CreateJobScreen')}>
+          <Ionicons name="add" size={24} color={COLORS.white} />
+          <Text style={{color: '#fff', fontWeight: '600'}}>New Job</Text>
+        </TouchableOpacity>
+      {/* )} */}
     </View>
   );
 

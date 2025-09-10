@@ -17,14 +17,15 @@ import {
   TIMESHEET_ICON,
   TIMESHEET_ICON_FOCUSED,
 } from '../assests/images';
-import ReportsStack from './ReportsStack';
-import ActivitySummaryScreen from '../screens/ActivitySummaryScreen';
-import ActivitySummarySStack from './ActivitySummaryStack';
 import ActivitySummaryStack from './ActivitySummaryStack';
+import {useSelector} from 'react-redux';
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabNavigator() {
+  const user = useSelector(state => state.user.user);
+  console.log('MainTabNavigator_useruser>>', user);
+
   const icons = {
     Home: {focused: HOME_ICON_FOCUSED, unfocused: HOME_ICON},
     BlueSheet: {focused: TIMESHEET_ICON_FOCUSED, unfocused: TIMESHEET_ICON},
@@ -40,7 +41,9 @@ export default function MainTabNavigator() {
         headerShown: false,
       }}>
       <Tab.Screen name="Home" component={HomeStack} />
-      <Tab.Screen name="BlueSheet" component={TimeSheetStack} />
+      {user?.management_type == 'lead_labor' && (
+        <Tab.Screen name="BlueSheet" component={TimeSheetStack} />
+       )} 
       <Tab.Screen name="Jobs" component={JobStack} />
       <Tab.Screen name="Activity" component={ActivitySummaryStack} />
       <Tab.Screen name="Profile" component={ProfileStack} />
