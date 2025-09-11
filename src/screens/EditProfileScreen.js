@@ -208,7 +208,12 @@ const EditProfileScreen = ({navigation}) => {
         {/* Personal Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
-
+          <InputField
+            label="Role"
+            value={formData.role}
+            onChangeText={text => setFormData({...formData, name: text})}
+            placeholder="role"
+          />
           <InputField
             label="Full Name"
             value={formData.name}
@@ -233,6 +238,14 @@ const EditProfileScreen = ({navigation}) => {
             keyboardType="phone-pad"
             editable={false}
           />
+          <InputField
+            label="Date of birth"
+            // value={formData.email}
+            // onChangeText={text => setFormData({...formData, email: text})}
+            placeholder="26/06/1995"
+            keyboardType="email-address"
+            editable={false}
+          />
         </View>
 
         {/* Address Information */}
@@ -240,13 +253,13 @@ const EditProfileScreen = ({navigation}) => {
           <Text style={styles.sectionTitle}>Address Information</Text>
 
           <InputField
-            label="Street Address"
+            label="Address"
             value={formData.address}
             onChangeText={text => setFormData({...formData, address: text})}
             placeholder="Enter your address"
           />
 
-          <View style={styles.row}>
+          {/* <View style={styles.row}>
             <View style={styles.halfWidth}>
               <InputField
                 label="City"
@@ -263,19 +276,19 @@ const EditProfileScreen = ({navigation}) => {
                 placeholder="State"
               />
             </View>
-          </View>
+          </View> */}
 
-          <InputField
+          {/* <InputField
             label="ZIP Code"
             value={formData.zipCode}
             onChangeText={text => setFormData({...formData, zipCode: text})}
             placeholder="ZIP Code"
             keyboardType="numeric"
-          />
+          /> */}
         </View>
 
         {/* Emergency Contact */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Emergency Contact</Text>
 
           <InputField
@@ -297,18 +310,18 @@ const EditProfileScreen = ({navigation}) => {
             keyboardType="phone-pad"
             editable={false}
           />
-        </View>
+        </View> */}
 
         {/* Work Information */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Work Information</Text>
 
-          <InputField
+          {/* <InputField
             label="Employee ID"
             value={formData.employeeId}
             placeholder="Employee ID"
             editable={false}
-          />
+          /> */}
 
           <InputField
             label="Department"
@@ -316,16 +329,21 @@ const EditProfileScreen = ({navigation}) => {
             placeholder="Department"
             editable={false}
           />
-
           <InputField
+            label="Status"
+            value={formData.status}
+            placeholder="Status"
+            editable={false}
+          />
+          {/* <InputField
             label="Position"
             value={formData.position}
             placeholder="Position"
             editable={false}
-          />
+          /> */}
 
           <InputField
-            label="Hire Date"
+            label="Joining Date"
             value={formData.hireDate}
             placeholder="Hire Date"
             editable={false}
@@ -356,7 +374,7 @@ const EditProfileScreen = ({navigation}) => {
           </View>
         </View> */}
 
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Skills & Certifications</Text>
           <View style={styles.skillsContainer}>
             {skills.map((skill, index) => (
@@ -393,7 +411,7 @@ const EditProfileScreen = ({navigation}) => {
               </TouchableOpacity>
             )}
           </View>
-        </View>
+        </View> */}
         <View style={{height: 40}} />
       </ScrollView>
       {/* </KeyboardAvoidingView> */}

@@ -381,7 +381,7 @@ const OrderHistoryScreen = ({
           </View>
           
           <View style={styles.orderActionButtons}>
-            {hasLeadAccess && order.status !== 'cancelled' && (
+            {/* {hasLeadAccess && order.status !== 'cancelled' && ( */}
               <TouchableOpacity 
                 style={styles.statusUpdateButton}
                 onPress={() => showStatusUpdatePicker(order.id)}
@@ -389,7 +389,7 @@ const OrderHistoryScreen = ({
                 <Icon name="edit" size={16} color={Colors.primary} />
                 <Text style={styles.statusUpdateText}>Update</Text>
               </TouchableOpacity>
-            )}
+            {/* )} */}
             
             <TouchableOpacity 
               style={styles.detailsButton}

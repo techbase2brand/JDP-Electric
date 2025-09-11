@@ -19,12 +19,13 @@ import {
 } from '../assests/images';
 import ActivitySummaryStack from './ActivitySummaryStack';
 import {useSelector} from 'react-redux';
+import useHasPermission from '../hooks/useHasPermission';
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabNavigator() {
   const user = useSelector(state => state.user.user);
-  console.log('MainTabNavigator_useruser>>', user);
+  const canViewBlueSheet = useHasPermission('bluesheet', 'view');
 
   const icons = {
     Home: {focused: HOME_ICON_FOCUSED, unfocused: HOME_ICON},
@@ -41,11 +42,13 @@ export default function MainTabNavigator() {
         headerShown: false,
       }}>
       <Tab.Screen name="Home" component={HomeStack} />
-      {user?.management_type == 'lead_labor' && (
+      {canViewBlueSheet && (
         <Tab.Screen name="BlueSheet" component={TimeSheetStack} />
-       )} 
+      )}
       <Tab.Screen name="Jobs" component={JobStack} />
-      <Tab.Screen name="Activity" component={ActivitySummaryStack} />
+      {canViewBlueSheet && (
+        <Tab.Screen name="Activity" component={ActivitySummaryStack} />
+      )}
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
   );

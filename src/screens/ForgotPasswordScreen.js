@@ -148,19 +148,6 @@ const ForgotPasswordScreen = ({onSubmit, onBack, navigation}) => {
 
       {!isSubmitted && (
         <>
-          {/* <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <TextInput
-              style={styles.textInput}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email address"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              editable={!loading}
-            />
-          </View> */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, {marginBottom: 10}]}>Email</Text>
             <View style={styles.inputContainer}>
@@ -204,13 +191,11 @@ const ForgotPasswordScreen = ({onSubmit, onBack, navigation}) => {
           </TouchableOpacity>
         </>
       )}
-
       {isSubmitted && (
         <View style={styles.submittedActions}>
           <TouchableOpacity style={styles.primaryButton} onPress={onBack}>
             <Text style={styles.primaryButtonText}>Back to Login</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={() => setIsSubmitted(false)}>

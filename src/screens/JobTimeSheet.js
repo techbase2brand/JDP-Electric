@@ -2688,7 +2688,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
                     : // new Date(timesheetData.submittedAt).toLocaleDateString()
                       'Unknown'}
                 </Text>
-                {user?.role === 'Lead Labor' && (
+                {user?.management_type === 'lead_labor' && (
                   <View style={styles.leadActions}>
                     <TouchableOpacity
                       style={styles.approveButton}

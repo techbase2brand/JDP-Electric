@@ -66,7 +66,6 @@
 //     StatusBar.setBarStyle('dark-content');
 //   }, []);
 
-
 // const validateForm = () => {
 //   // ✅ Verification Code (must be 6 digits, only numbers)
 //   if (!/^\d{6}$/.test(code)) {
@@ -98,8 +97,6 @@
 //     );
 //     return false;
 //   }
-
-  
 
 //   // ✅ Confirm Password check
 //   if (newPassword !== confirmPassword) {
@@ -401,7 +398,6 @@
 // });
 // Embedded Styles
 
-
 import React, {useState, useEffect} from 'react';
 import {
   View,
@@ -418,7 +414,11 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {MAIN_LOGO_IMAGE} from '../assests/images';
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from '../utils';
-import { resendForgotPasswordOtp, resetForgotPassword, verifyForgotPasswordOtp } from '../config/apiConfig';
+import {
+  resendForgotPasswordOtp,
+  resetForgotPassword,
+  verifyForgotPasswordOtp,
+} from '../config/apiConfig';
 
 // 👉 Import APIs
 // import {
@@ -494,7 +494,6 @@ const ResetPasswordScreen = ({navigation, route}) => {
     if (!/^\d{6}$/.test(code)) {
       return showErrorToast('Validation Error', 'Enter valid 6-digit OTP');
     }
-
     try {
       setLoading(true);
       const res = await verifyForgotPasswordOtp(email, code);
@@ -688,14 +687,25 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     marginBottom: 20,
-    marginTop:80
+    marginTop: 80,
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
   },
-  title: {fontSize: 22, fontWeight: 'bold', color: Colors.text, marginBottom: 8, textAlign:"center"},
-  subtitle: {fontSize: 14, color: Colors.textSecondary, marginBottom: 20,textAlign:"center"},
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
   inputGroup: {marginBottom: 16},
   inputLabel: {fontSize: 14, fontWeight: '500', marginBottom: 6},
   textInput: {
@@ -724,6 +734,5 @@ const styles = StyleSheet.create({
   submitButtonText: {color: Colors.white, fontSize: 16, fontWeight: '600'},
   resendLink: {fontSize: 14, fontWeight: '600', marginBottom: 10},
 });
-
 
 export default ResetPasswordScreen;

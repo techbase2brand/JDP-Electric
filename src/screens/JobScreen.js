@@ -21,6 +21,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
+import useHasPermission from '../hooks/useHasPermission';
 
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -64,6 +65,7 @@ const JobListingScreen = ({
   route,
 }) => {
   const user = useSelector(state => state.user.user);
+  const canViewCreateJob = useHasPermission("jobs", "view");
   const {status} = route?.params || {};
   const [jobs, setJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -411,7 +413,7 @@ const JobListingScreen = ({
         </Text>
       </View>
 
-      {/* {user.role == 'Lead Labour' && ( */}
+      {canViewCreateJob && (
         <TouchableOpacity
           style={[
             styles.headerButton,
@@ -426,7 +428,7 @@ const JobListingScreen = ({
           <Ionicons name="add" size={24} color={COLORS.white} />
           <Text style={{color: '#fff', fontWeight: '600'}}>New Job</Text>
         </TouchableOpacity>
-      {/* )} */}
+       )}
     </View>
   );
 

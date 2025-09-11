@@ -27,7 +27,6 @@ export default function AuthStack() {
         console.error('Error checking first launch:', error);
       }
     };
-
     checkFirstLaunch();
   }, []);
 
@@ -46,7 +45,10 @@ export default function AuthStack() {
       )}
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-        <Stack.Screen name="ResetPasswordScreen" component={ResetPasswordScreen} />
+      <Stack.Screen
+        name="ResetPasswordScreen"
+        component={ResetPasswordScreen}
+      />
       <Stack.Screen name="MainTabNavigator" component={MainTabNavigator} />
     </Stack.Navigator>
   );

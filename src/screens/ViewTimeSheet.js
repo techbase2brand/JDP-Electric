@@ -18,6 +18,7 @@ import {tabColor} from '../constants/Color';
 import Feather from 'react-native-vector-icons/Feather';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { useSelector } from 'react-redux';
 
 const LabourModal = ({
   visible,
@@ -414,8 +415,9 @@ const ChargeModal = ({
     </View>
   </Modal>
 );
-const TimesheetScreen = ({navigation, route, user, job}) => {
+const TimesheetScreen = ({navigation, route, job}) => {
   const {timesheet} = route?.params || {};
+  const user = useSelector(state => state.user.user);
 
   const [editingLabour, setEditingLabour] = useState(null);
   const [editingMaterial, setEditingMaterial] = useState(null);
@@ -442,11 +444,11 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
             id: '1',
             employeeName: timesheet.submittedBy,
             employeeId: timesheet.employeeId,
-            role: user?.role || 'Labor',
+            role: user?.management_type || 'Labor',
             regularHours: timesheet.labourHours,
             overtimeHours: 0,
-            regularRate: user?.role === 'Lead Labor' ? 35 : 28,
-            overtimeRate: user?.role === 'Lead Labor' ? 52.5 : 42,
+            regularRate: user?.management_type === 'lead_labor' ? 35 : 28,
+            overtimeRate: user?.management_type === 'lead_labor' ? 52.5 : 42,
             totalCost: timesheet.labourCost,
             notes: 'Loaded from existing timesheet',
           },
@@ -497,9 +499,9 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
           role: user?.role || 'Labor',
           regularHours: 8,
           overtimeHours: 0,
-          regularRate: user?.role === 'Lead Labor' ? 35 : 28,
-          overtimeRate: user?.role === 'Lead Labor' ? 52.5 : 42,
-          totalCost: user?.role === 'Lead Labor' ? 280 : 224,
+          regularRate: user?.management_type === 'lead_labor' ? 35 : 28,
+          overtimeRate: user?.management_type === 'lead_labor' ? 52.5 : 42,
+          totalCost: user?.management_type === 'lead_labor' ? 280 : 224,
           notes: 'Main electrical work and installation',
         },
       ],
@@ -605,7 +607,7 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
   const canEdit = () => {
     return (
       timesheetData.status === 'draft' ||
-      (user?.role === 'Lead Labor' && timesheetData.status === 'submitted') ||
+      (user?.management_type === 'lead_labor' && timesheetData.status === 'submitted') ||
       timesheetData.status === 'rejected'
     );
   };
@@ -1331,7 +1333,7 @@ const TimesheetScreen = ({navigation, route, user, job}) => {
                     : // new Date(timesheetData.submittedAt).toLocaleDateString()
                       'Unknown'}
                 </Text>
-                {user?.role === 'Lead Labor' && (
+                {user?.management_type === 'lead_labor'&& (
                   <View style={styles.leadActions}>
                     <TouchableOpacity
                       style={styles.approveButton}

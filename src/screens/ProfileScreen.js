@@ -937,12 +937,12 @@ import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useDispatch, useSelector} from 'react-redux';
 import {logout} from '../redux/userSlice';
-
-// import { useAuth } from '../utils/AuthContext';
+import {logoutApi} from '../config/apiConfig';
 
 const ProfileScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const user = useSelector(state => state.user.user);
+  const token = useSelector(state => state.user.token);
 
   // const {user, logout} = useAuth();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -1026,10 +1026,20 @@ const ProfileScreen = ({navigation}) => {
     </TouchableOpacity>
   );
 
-  const handleSignOut = async () => {
-    // await logout();
-    await AsyncStorage.setItem('isLoggedIn', 'false');
-    setShowSignOutModal(false);
+  const handleLogout = async () => {
+    try {
+      // redux state me token hoga
+      if (!token) {
+        throw new Error('Token not found');
+      }
+
+      await logoutApi(token); // API call
+
+      // Redux logout action
+      dispatch(logout());
+    } catch (err) {
+      Alert.alert('Logout Failed', err.message || 'Please try again');
+    }
   };
 
   const handleOptionPress = option => {
@@ -1109,11 +1119,11 @@ const ProfileScreen = ({navigation}) => {
               <Text style={styles.userName}>{user?.full_name}</Text>
               <Text style={styles.userEmail}>{user?.email}</Text>
               <View style={styles.userBadges}>
-             {user?.management_type == 'lead_labor' && (
+                {user?.management_type == 'lead_labor' && (
                   <View style={styles.roleBadge}>
                     <Text style={styles.roleBadgeText}>{'Lead'}</Text>
                   </View>
-              )} 
+                )}
                 <View style={styles.departmentBadge}>
                   <Text style={styles.departmentBadgeText}>
                     Electrical Services
@@ -1254,8 +1264,9 @@ const ProfileScreen = ({navigation}) => {
                 onPress={() => {
                   setModalVisible(false);
                   if (modalConfig.type === 'signout') {
-                    // logout();
-                    dispatch(logout());
+                    handleLogout();
+                    // // logout();
+                    // dispatch(logout());
                     AsyncStorage.setItem('isLoggedIn', 'false');
                     // navigation.navigate('AuthStack');
                   } else if (modalConfig.type === 'delete') {

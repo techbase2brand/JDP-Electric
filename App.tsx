@@ -112,11 +112,11 @@ const AppContent = () => {
   //   console.log(message);
   // });
   const userData = useSelector(state => state.user.token);
-  const user = useSelector(state => state.user.user);
-  const permissions = useSelector(state => state.user.permissions);
+  // const user = useSelector(state => state.user.user);
+  // const permissions = useSelector(state => state.user.permissions);
 
   const {isRunning} = useSelector((state: any) => state.timer);
-  console.log('userData>>>', permissions);
+  // console.log('userData>>>', permissions);
 
   useEffect(() => {
     if (isRunning) {

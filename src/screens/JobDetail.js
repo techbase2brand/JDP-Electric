@@ -14,6 +14,7 @@ import {useNavigation} from '@react-navigation/native';
 import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
+import useHasPermission from '../hooks/useHasPermission';
 
 // Embedded Colors - JDP Electrics Theme
 const Colors = {
@@ -99,6 +100,8 @@ const JobDetailScreen = ({
   const navigation = useNavigation();
   // const {job1} =route?.params?.job
   const user = useSelector(state => state.user.user);
+  const canViewOrders = useHasPermission('orders', 'view');
+  const canViewBlueSheet = useHasPermission('bluesheet', 'view');
 
   const [timerSession, setTimerSession] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -707,28 +710,30 @@ const JobDetailScreen = ({
         {/* Materials */}
         {/* {job.materials && job.materials.length > 0 && ( */}
         {/* {user?.role == 'Lead Labour' && ( */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="inventory" size={20} color={Colors.primary} />
-            <Text style={styles.cardTitle}>Required Materials</Text>
+        {canViewOrders && (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Icon name="inventory" size={20} color={Colors.primary} />
+              <Text style={styles.cardTitle}>Required Materials</Text>
+            </View>
+            <View style={styles.cardContent}>
+              {job?.requiredMaterials?.map((material, idx) => (
+                <View key={idx} style={styles.materialItem}>
+                  <Text style={styles.materialName}>{material.name}</Text>
+                  <Text style={styles.materialQuantity}>
+                    {material.quantity} {material.unit}
+                  </Text>
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.outlineButton}
+                onPress={() => handleNavigate('SupplierSelectionScreen', job)}>
+                <Icon name="shopping-cart" size={20} color={Colors.primary} />
+                <Text style={styles.outlineButtonText}>Order Materials</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <View style={styles.cardContent}>
-            {job?.requiredMaterials?.map((material, idx) => (
-              <View key={idx} style={styles.materialItem}>
-                <Text style={styles.materialName}>{material.name}</Text>
-                <Text style={styles.materialQuantity}>
-                  {material.quantity} {material.unit}
-                </Text>
-              </View>
-            ))}
-            <TouchableOpacity
-              style={styles.outlineButton}
-              onPress={() => handleNavigate('SupplierSelectionScreen', job)}>
-              <Icon name="shopping-cart" size={20} color={Colors.primary} />
-              <Text style={styles.outlineButtonText}>Order Materials</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        )}      
         {/* )} */}
         {/* )} */}
 
@@ -750,33 +755,32 @@ const JobDetailScreen = ({
         )}
 
         {/* Additional Actions */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="description" size={20} color={Colors.primary} />
-            <Text style={styles.cardTitle}>More Actions</Text>
-          </View>
-          <View style={styles.cardContent}>
-            <View style={styles.actionGrid}>
-            {user?.management_type == 'lead_labor' && (
-              <TouchableOpacity
-                style={styles.gridActionButton}
-                onPress={() =>
-                  onViewTimesheet
-                    ? onViewTimesheet(job)
-                    : handleNavigate('JobTimesheet')
-                }>
-                <Icon name="schedule" size={20} color={Colors.text} />
-                <Text style={styles.gridActionText}>Bluesheet</Text>
-              </TouchableOpacity>)}
-              
+        {canViewBlueSheet && (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Icon name="description" size={20} color={Colors.primary} />
+              <Text style={styles.cardTitle}>More Actions</Text>
+            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.actionGrid}>
+                <TouchableOpacity
+                  style={styles.gridActionButton}
+                  onPress={() =>
+                    onViewTimesheet
+                      ? onViewTimesheet(job)
+                      : handleNavigate('JobTimesheet')
+                  }>
+                  <Icon name="schedule" size={20} color={Colors.text} />
+                  <Text style={styles.gridActionText}>Bluesheet</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.gridActionButton}
-                onPress={() => navigation.navigate('JobActivityLogScreen')}>
-                <Icon name="bar-chart" size={20} color={Colors.text} />
-                <Text style={styles.gridActionText}>Job Activity</Text>
-              </TouchableOpacity>
-              {/*               
+                <TouchableOpacity
+                  style={styles.gridActionButton}
+                  onPress={() => navigation.navigate('JobActivityLogScreen')}>
+                  <Icon name="bar-chart" size={20} color={Colors.text} />
+                  <Text style={styles.gridActionText}>Job Activity</Text>
+                </TouchableOpacity>
+                {/*               
               {hasLeadAccess(currentUser.role) && (
                 <TouchableOpacity 
                   style={styles.gridActionButton} 
@@ -794,9 +798,10 @@ const JobDetailScreen = ({
                 <Icon name="support" size={20} color={Colors.text} />
                 <Text style={styles.gridActionText}>Support</Text>
               </TouchableOpacity> */}
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
         {/* Bottom Spacing */}
         <View style={{height: 80}} />

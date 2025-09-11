@@ -34,9 +34,12 @@ import {
   WARRENTY_ICON,
 } from '../assests/images';
 import {useSelector} from 'react-redux';
+import useHasPermission from '../hooks/useHasPermission';
 
 const HomeScreen = ({navigation}) => {
   const user = useSelector(state => state.user.user);
+  const canViewCreateJob = useHasPermission('jobs', 'view');
+
   const statsData = [
     {
       key: 'active',
@@ -94,7 +97,7 @@ const HomeScreen = ({navigation}) => {
     //   icon: WARRENTY_ICON,
     //   color: '#9F2D00',
     // },
-    {
+    canViewCreateJob && {
       title: 'Create Job',
       icon: CREATE_JOB,
       color: '#9F2D00',
@@ -104,7 +107,7 @@ const HomeScreen = ({navigation}) => {
     //   icon: SUPPORT_ICON,
     //   color: '#A50036',
     // },
-  ];
+  ].filter(Boolean);
 
   const todaysJobs = [
     {

@@ -63,3 +63,23 @@ export const resetForgotPassword = async (
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
+
+// Logout API
+export const logoutApi = async token => {
+  console.log('tokentoken', token);
+
+  try {
+    const res = await api.post(
+      '/auth/logout',
+      {token},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
