@@ -10,6 +10,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -17,31 +18,24 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
+import {
+  getLaborById,
+  getLeadLaborById,
+  updateLaborProfile,
+  updateLeadLaborProfile,
+} from '../config/apiConfig';
 
 const EditProfileScreen = ({navigation}) => {
   const user = useSelector(state => state.user.user);
-
+  const token = useSelector(state => state.user.token);
+  const [allLabourData, setAllLabourData] = useState();
   const [avatarUri, setAvatarUri] = useState(null);
-  // console.log("user",user);
 
-  const [formData, setFormData] = useState({
-    name: user?.full_name,
-    email: user?.email,
-    phone: user?.phone,
-    address: '1234 Main Street',
-    city: 'Houston',
-    state: 'TX',
-    zipCode: '77001',
-    emergencyContact: 'John Johnson',
-    emergencyPhone: '+1 (555) 987-6543',
-    employeeId: 'EMP-001',
-    department: 'Electrical Services',
-    position: 'Lead Labor',
-    hireDate: '2020-03-15',
-  });
+  console.log('user:::', allLabourData);
+
+  const [formData, setFormData] = useState();
 
   const [isLoading, setIsLoading] = useState(false);
-
   const [skills, setSkills] = useState([]);
   const [newSkill, setNewSkill] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -72,36 +66,129 @@ const EditProfileScreen = ({navigation}) => {
     const updatedSkills = skills.filter((_, i) => i !== index);
     saveSkills(updatedSkills);
   };
+  const formatDate = dateString => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // month 0-based hota hai
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        let profileData;
+        if (user?.management_type === 'lead_labor') {
+          const leadLabor = await getLeadLaborById(
+            user?.leadLabor?.[0]?.id,
+            token,
+          );
+          profileData = leadLabor?.data;
+        } else {
+          const labor = await getLaborById(user?.labor?.[0]?.id, token);
+          profileData = labor?.data;
+        }
 
+        setAllLabourData(profileData);
+        setAvatarUri(profileData?.photo_url);
+        // API response se formData set karo
+        setFormData({
+          full_name: profileData?.users?.full_name || '',
+          email: profileData?.users?.email || '',
+          phone: profileData?.users?.phone || '',
+          address: profileData?.address || '',
+          department: profileData?.department || '',
+          date_of_joining: formatDate(profileData?.date_of_joining || ''),
+          status: profileData?.users?.status || '',
+          role: profileData?.users?.role || '',
+          dob: formatDate(profileData?.dob || ''),
+          photo_url: profileData?.photo_url || '',
+          supervisor: profileData?.supervisor?.full_name || '',
+        });
+      } catch (err) {
+        console.error('Error fetching profiles:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfiles();
+  }, []);
+
+  // const handleSave = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     // Simulate API call
+  //     await new Promise(resolve => setTimeout(resolve, 1000));
+
+  //     // Update user context
+  //     // if (updateUser) {
+  //     //   updateUser({
+  //     //     ...user,
+  //     //     name: formData.name,
+  //     //     email: formData.email,
+  //     //   });
+  //     // }
+
+  //     // Alert.alert(
+  //     //   'Success',
+  //     //   'Profile updated successfully!',
+  //     //   [{ text: 'OK', onPress: () =>
+  //     navigation.goBack();
+  //     //   }]
+  //     // );
+  //   } catch (error) {
+  //     console.log('Error', 'Failed to update profile. Please try again.');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const form = new FormData();
 
-      // Update user context
-      // if (updateUser) {
-      //   updateUser({
-      //     ...user,
-      //     name: formData.name,
-      //     email: formData.email,
-      //   });
+      // Text fields
+      form.append('full_name', formData.full_name);
+      form.append('email', formData.email);
+      form.append('phone', formData.phone);
+      form.append('address', formData.address);
+      form.append('department', formData.department);
+      form.append('dob', formData.dob);
+      form.append('date_of_joining', formData.date_of_joining);
+
+      // Image upload if selected
+      // if (avatarUri && avatarUri.startsWith('file')) {
+      if (avatarUri && avatarUri.startsWith('file')) {
+        form.append('photo', {
+          uri: avatarUri,
+          type: 'image/jpeg', // or 'image/png' if PNG
+          name: 'profile.jpg', // filename is required
+        });
+      }
       // }
+      console.log('formform>>>', form);
 
-      // Alert.alert(
-      //   'Success',
-      //   'Profile updated successfully!',
-      //   [{ text: 'OK', onPress: () =>
-      navigation.goBack();
-      //   }]
-      // );
+      let response;
+      if (user?.management_type === 'lead_labor') {
+        response = await updateLeadLaborProfile(
+          user?.leadLabor?.[0]?.id,
+          form,
+          token,
+        );
+      } else {
+        response = await updateLaborProfile(user?.labor?.[0]?.id, form, token);
+      }
+
+      Alert.alert('Success', 'Profile updated successfully!', [
+        {text: 'OK', onPress: () => navigation.goBack()},
+      ]);
     } catch (error) {
-      console.log('Error', 'Failed to update profile. Please try again.');
+      console.error('Update Error:', error);
+      Alert.alert('Error', error.message || 'Failed to update profile');
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleImagePicker = () => {
     Alert.alert(
       'Select Image',
@@ -180,86 +267,96 @@ const EditProfileScreen = ({navigation}) => {
         style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}> */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Picture Section */}
-        <View style={styles.profileSection}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              {avatarUri ? (
-                <Image source={{uri: avatarUri}} style={styles.avatarImage} />
-              ) : (
-                <Text style={styles.avatarText}>
-                  {formData.name
-                    .split(' ')
-                    .map(n => n[0])
-                    .join('')}
-                </Text>
-              )}
-            </View>
-            <TouchableOpacity
-              style={styles.changePhotoButton}
-              onPress={handleImagePicker}>
-              <Icon name="camera-alt" size={20} color="#2563eb" />
-              <Text style={styles.changePhotoText}>Change Photo</Text>
-            </TouchableOpacity>
-          </View>
+      {isLoading || !formData ? (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <ActivityIndicator />
         </View>
+      ) : (
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Profile Picture Section */}
+          <View style={styles.profileSection}>
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatar}>
+                {avatarUri ? (
+                  <Image source={{uri: avatarUri}} style={styles.avatarImage} />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    <Text style={styles.avatarText}>
+                      {formData?.full_name
+                        ? formData.full_name
+                            .split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .toUpperCase()
+                        : ''}
+                    </Text>
+                    {/* {formData?.full_name?.split?.map(n => n[0])?.join} */}
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity
+                style={styles.changePhotoButton}
+                onPress={handleImagePicker}>
+                <Icon name="camera-alt" size={20} color="#2563eb" />
+                <Text style={styles.changePhotoText}>Change Photo</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
-        {/* Personal Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
-          <InputField
+          {/* Personal Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Personal Information</Text>
+            {/* <InputField
             label="Role"
             value={formData.role}
-            onChangeText={text => setFormData({...formData, name: text})}
+            onChangeText={text => setFormData({...formData, role: text})}
             placeholder="role"
-          />
-          <InputField
-            label="Full Name"
-            value={formData.name}
-            onChangeText={text => setFormData({...formData, name: text})}
-            placeholder="Enter your full name"
-          />
+          /> */}
+            <InputField
+              label="Full Name"
+              value={formData.full_name}
+              onChangeText={text => setFormData({...formData, full_name: text})}
+              placeholder="Enter your full name"
+            />
 
-          <InputField
-            label="Email Address"
-            value={formData.email}
-            onChangeText={text => setFormData({...formData, email: text})}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-            editable={false}
-          />
+            <InputField
+              label="Email Address"
+              value={formData.email}
+              onChangeText={text => setFormData({...formData, email: text})}
+              placeholder="Enter your email"
+              keyboardType="email-address"
+              editable={false}
+            />
 
-          <InputField
-            label="Phone Number"
-            value={formData.phone}
-            onChangeText={text => setFormData({...formData, phone: text})}
-            placeholder="Enter your phone number"
-            keyboardType="phone-pad"
-            editable={false}
-          />
-          <InputField
-            label="Date of birth"
-            // value={formData.email}
-            // onChangeText={text => setFormData({...formData, email: text})}
-            placeholder="26/06/1995"
-            keyboardType="email-address"
-            editable={false}
-          />
-        </View>
+            <InputField
+              label="Phone Number"
+              value={formData.phone}
+              onChangeText={text => setFormData({...formData, phone: text})}
+              placeholder="Enter your phone number"
+              keyboardType="phone-pad"
+              // editable={false}
+            />
+            <InputField
+              label="Date of birth"
+              value={formData.dob}
+              // onChangeText={text => setFormData({...formData, email: text})}
+              placeholder="26/06/1995"
+              keyboardType="email-address"
+              editable={false}
+            />
+          </View>
 
-        {/* Address Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Address Information</Text>
+          {/* Address Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Address Information</Text>
+            <InputField
+              label="Address"
+              value={formData.address}
+              onChangeText={text => setFormData({...formData, address: text})}
+              placeholder="Enter your address"
+            />
 
-          <InputField
-            label="Address"
-            value={formData.address}
-            onChangeText={text => setFormData({...formData, address: text})}
-            placeholder="Enter your address"
-          />
-
-          {/* <View style={styles.row}>
+            {/* <View style={styles.row}>
             <View style={styles.halfWidth}>
               <InputField
                 label="City"
@@ -278,17 +375,17 @@ const EditProfileScreen = ({navigation}) => {
             </View>
           </View> */}
 
-          {/* <InputField
+            {/* <InputField
             label="ZIP Code"
             value={formData.zipCode}
             onChangeText={text => setFormData({...formData, zipCode: text})}
             placeholder="ZIP Code"
             keyboardType="numeric"
           /> */}
-        </View>
+          </View>
 
-        {/* Emergency Contact */}
-        {/* <View style={styles.section}>
+          {/* Emergency Contact */}
+          {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Emergency Contact</Text>
 
           <InputField
@@ -312,46 +409,56 @@ const EditProfileScreen = ({navigation}) => {
           />
         </View> */}
 
-        {/* Work Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Work Information</Text>
+          {/* Work Information */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Work Information</Text>
 
-          {/* <InputField
+            {/* <InputField
             label="Employee ID"
             value={formData.employeeId}
             placeholder="Employee ID"
             editable={false}
           /> */}
 
-          <InputField
-            label="Department"
-            value={formData.department}
-            placeholder="Department"
-            editable={false}
-          />
-          <InputField
-            label="Status"
-            value={formData.status}
-            placeholder="Status"
-            editable={false}
-          />
-          {/* <InputField
+            {user.management_type == 'lead_labor' && (
+              <InputField
+                label="Department"
+                value={formData.department}
+                placeholder="Department"
+                editable={false}
+              />
+            )}
+            {user.management_type == 'labor' && (
+              <InputField
+                label="Supervisor"
+                value={formData.supervisor}
+                placeholder="supervisor"
+                editable={false}
+              />
+            )}
+            <InputField
+              label="Status"
+              value={formData.status}
+              placeholder="Status"
+              editable={false}
+            />
+            {/* <InputField
             label="Position"
             value={formData.position}
             placeholder="Position"
             editable={false}
           /> */}
 
-          <InputField
-            label="Joining Date"
-            value={formData.hireDate}
-            placeholder="Hire Date"
-            editable={false}
-          />
-        </View>
+            <InputField
+              label="Joining Date"
+              value={formData.date_of_joining}
+              placeholder="Hire Date"
+              editable={false}
+            />
+          </View>
 
-        {/* Skills Section */}
-        {/* <View style={styles.section}>
+          {/* Skills Section */}
+          {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Skills & Certifications</Text>
           <View style={styles.skillsContainer}>
             {[
@@ -374,7 +481,7 @@ const EditProfileScreen = ({navigation}) => {
           </View>
         </View> */}
 
-        {/* <View style={styles.section}>
+          {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Skills & Certifications</Text>
           <View style={styles.skillsContainer}>
             {skills.map((skill, index) => (
@@ -412,8 +519,9 @@ const EditProfileScreen = ({navigation}) => {
             )}
           </View>
         </View> */}
-        <View style={{height: 40}} />
-      </ScrollView>
+          <View style={{height: 40}} />
+        </ScrollView>
+      )}
       {/* </KeyboardAvoidingView> */}
     </View>
   );

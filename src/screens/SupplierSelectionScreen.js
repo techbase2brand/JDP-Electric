@@ -10,14 +10,21 @@ import {
   Dimensions,
   Linking,
   Alert,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {widthPercentageToDP} from '../utils';
+import { getSuppliers } from '../config/apiConfig';
+import { useSelector } from 'react-redux';
+import Geocoder from 'react-native-geocoding';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
 const SupplierSelectionScreen = ({navigation, user}) => {
+    const token = useSelector(state => state.user.token);
+  Geocoder.init("AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI");
   const [viewMode, setViewMode] = useState('list');
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [sortBy, setSortBy] = useState('distance');
@@ -203,6 +210,39 @@ const SupplierSelectionScreen = ({navigation, user}) => {
           return 0;
       }
     });
+ const [supplierss, setSuppliers] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [page]);
+
+  const fetchSuppliers = async () => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+    try {
+      const res = await getSuppliers(page, 10, token);
+      console.log("SuppliersSuppliers",res.data.data);
+      
+      if (res?.data?.data) {
+        setSuppliers(prev => [...prev, ...res?.data?.data]);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to fetch suppliers');
+    } finally {
+      setLoading(false);
+    }
+  };
+   const loadMore = () => {
+    if (!loading && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  };
 
   const handleCall = phone => {
     Linking.openURL(`tel:${phone}`);
@@ -212,10 +252,26 @@ const SupplierSelectionScreen = ({navigation, user}) => {
     Linking.openURL(`mailto:${email}`);
   };
 
-  const handleDirections = supplier => {
-    const url = `https://maps.google.com/?q=${supplier.coordinates.latitude},${supplier.coordinates.longitude}`;
-    Linking.openURL(url);
-  };
+const handleDirections = supplier => {
+  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(supplier.address)}`;
+  Linking.openURL(url);
+};
+//   const handleDirections = async supplier => {
+//   try {
+//     // address → coordinates
+//     const geo = await Geocoder.from(supplier.address);
+//     const location = geo.results[0].geometry.location;
+//     const latitude = location.lat;
+//     const longitude = location.lng;
+
+//     // open Google Maps
+//     const url = `https://maps.google.com/?q=${latitude},${longitude}`;
+//     Linking.openURL(url);
+//   } catch (error) {
+//     console.error("Geocoding Error:", error);
+//     Alert.alert("Error", "Could not fetch location from address");
+//   }
+// };
 
   const handleSelectSupplier = supplier => {
     Alert.alert(
@@ -268,110 +324,15 @@ const SupplierSelectionScreen = ({navigation, user}) => {
     return <View style={styles.starsContainer}>{stars}</View>;
   };
 
-  const renderMapView = () => (
-    <View style={styles.mapContainer}>
-      {/* Mock Map View - In a real app, you'd use react-native-maps */}
-      <View style={styles.mockMap}>
-        <Text style={styles.mapPlaceholder}>Interactive Map View</Text>
-        <Text style={styles.mapSubtext}>
-          Showing {filteredSuppliers.length} suppliers nearby
-        </Text>
 
-        {/* Map Controls */}
-        <View style={styles.mapControls}>
-          <TouchableOpacity style={styles.mapControlButton}>
-            <Icon name="my-location" size={24} color="#3B82F6" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.mapControlButton}>
-            <Icon name="zoom-in" size={24} color="#3B82F6" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.mapControlButton}>
-            <Icon name="zoom-out" size={24} color="#3B82F6" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Supplier Markers Preview */}
-        <View style={styles.markersContainer}>
-          {filteredSuppliers.slice(0, 3).map((supplier, index) => (
-            <View
-              key={supplier.id}
-              style={[
-                styles.markerPreview,
-                {top: 100 + index * 80, left: 50 + index * 60},
-              ]}>
-              <Icon name="place" size={24} color="#ef4444" />
-              <Text style={styles.markerText}>
-                {supplier.name.split(' ')[0]}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* Bottom Sheet Preview */}
-      <View style={styles.mapBottomSheet}>
-        <View style={styles.bottomSheetHandle} />
-        <Text style={styles.bottomSheetTitle}>Nearby Suppliers</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.horizontalScroll}>
-          {filteredSuppliers.slice(0, 3).map(supplier => (
-            <TouchableOpacity
-              key={supplier.id}
-              style={styles.mapSupplierCard}
-              onPress={() => handleSelectSupplier(supplier)}>
-              <Text style={styles.mapCardName}>{supplier.name}</Text>
-              <Text style={styles.mapCardDistance}>{supplier.distance} mi</Text>
-              {renderStarRating(supplier.rating)}
-              <Text style={styles.mapCardHours}>
-                {supplier.isOpen ? '🟢 Open' : '🔴 Closed'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-    </View>
-  );
 
   const renderListView = () => (
-    <ScrollView
+    <View
       style={styles.listContainer}
       showsVerticalScrollIndicator={false}>
       {/* Sort and Filter Controls */}
       <View style={styles.controlsContainer}>
-        {/* <View style={styles.sortContainer}>
-          <Text style={styles.controlLabel}>Sort by:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {[
-              { key: 'distance', label: 'Distance', icon: 'navigation' },
-              { key: 'rating', label: 'Rating', icon: 'star' },
-              { key: 'name', label: 'Name', icon: 'sort-by-alpha' }
-            ].map((option) => (
-              <TouchableOpacity
-                key={option.key}
-                style={[
-                  styles.sortButton,
-                  sortBy === option.key && styles.sortButtonActive
-                ]}
-                onPress={() => setSortBy(option.key)}
-              >
-                <Icon 
-                  name={option.icon} 
-                  size={16} 
-                  color={sortBy === option.key ? 'white' : '#6b7280'} 
-                />
-                <Text style={[
-                  styles.sortButtonText,
-                  sortBy === option.key && styles.sortButtonTextActive
-                ]}>
-                  {option.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View> */}
-
+        
         <View style={styles.filterContainer}>
           <Text style={styles.controlLabel}>Category:</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -410,116 +371,95 @@ const SupplierSelectionScreen = ({navigation, user}) => {
 
       {/* Suppliers List */}
       <View style={styles.suppliersList}>
-        {filteredSuppliers.map(supplier => (
-          <View key={supplier.id} style={styles.supplierCard}>
-            {/* Featured Badge */}
-            {/* {supplier.featured && (
-              <View style={styles.featuredBadge}>
-                <Icon name="star" size={12} color="white" />
-                <Text style={styles.featuredText}>Featured</Text>
-              </View>
-            )} */}
+      
 
-            {/* Supplier Header */}
-            <View style={styles.supplierHeader}>
-              <View style={styles.supplierInfo}>
-                <Text style={styles.supplierName}>{supplier.name}</Text>
-                <Text style={styles.supplierCategory}>{supplier.category}</Text>
-
-                {/* Rating and Distance */}
-                <View style={styles.supplierMeta}>
-                  {/* {renderStarRating(supplier.rating)} */}
-                  {/* <Text style={styles.ratingText}>
-                    {supplier.rating} ({supplier.reviewCount} reviews)
-                  </Text>
-                  <Text style={styles.distanceText}>• {supplier.distance} mi</Text> */}
-                </View>
-              </View>
-
-              {/* Status Indicator */}
-              <View style={styles.statusContainer}>
-                <View
-                  style={[
-                    styles.statusDot,
-                    {backgroundColor: supplier.isOpen ? '#10b981' : '#ef4444'},
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.statusText,
-                    {color: supplier.isOpen ? '#10b981' : '#ef4444'},
-                  ]}>
-                  {supplier.isOpen ? 'Open' : 'Closed'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Address */}
-            <View style={styles.addressContainer}>
-              <Icon name="place" size={16} color="#6b7280" />
-              <Text style={styles.addressText}>
-                {supplier.address}, {supplier.city}
-              </Text>
-            </View>
-
-            {/* Hours */}
-            <View style={styles.hoursContainer}>
-              <Icon name="schedule" size={16} color="#6b7280" />
-              <Text style={styles.hoursText}>
-                {supplier.hours.open === '24/7'
-                  ? '24/7 Open'
-                  : `${supplier.hours.open} - ${supplier.hours.close} • ${supplier.hours.days}`}
-              </Text>
-            </View>
-
-            {/* Specialties */}
-            {/* <View style={styles.specialtiesContainer}>
-              <Icon name="build" size={16} color="#6b7280" />
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {supplier.specialties.map((specialty, index) => (
-                  <View key={index} style={styles.specialtyTag}>
-                    <Text style={styles.specialtyText}>{specialty}</Text>
-                  </View>
-                ))}
-              </ScrollView>
-            </View> */}
-
-            {/* Action Buttons */}
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => handleCall(supplier.phone)}>
-                <Icon name="phone" size={24} color="#3B82F6" />
-              </TouchableOpacity>
-
-              {/* <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => handleEmail(supplier.email)}>
-                <Icon name="email" size={24} color="#3B82F6" />
-                <Text style={styles.actionButtonText}>Email</Text>
-              </TouchableOpacity> */}
-
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => handleDirections(supplier)}>
-                <Icon name="directions" size={28} color="#3B82F6" />
-                {/* <Text style={styles.actionButtonText}>Directions</Text> */}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.selectButton, {width: widthPercentageToDP(40)}]}
-                onPress={() => navigation.navigate("OrderProducts")}>
-                <Icon name="add" size={16} color="white" />
-                <Text style={styles.selectButtonText}>Select</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+         <FlatList
+        data={supplierss}
+        keyExtractor={item => item.id.toString()}
+        renderItem={renderSupplier}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loading ? <ActivityIndicator size="large" color="#3B82F6" /> : null
+        }
+      />
       </View>
 
       {/* Bottom Spacing */}
-      <View style={styles.bottomSpacing} />
-    </ScrollView>
+      {/* <View style={styles.bottomSpacing} /> */}
+    </View>
+  );
+
+  const renderSupplier = ({item: supplier}) => (
+    <View style={styles.supplierCard}>
+      {/* Supplier Header */}
+      <View style={styles.supplierHeader}>
+        <View style={styles.supplierInfo}>
+          <Text style={styles.supplierName}>{supplier.contact_person}</Text>
+          <Text style={styles.supplierCategory}>{supplier.company_name}</Text>
+        </View>
+
+        {/* Status Indicator */}
+        <View style={styles.statusContainer}>
+          <View
+            style={[
+              styles.statusDot,
+              {backgroundColor:  '#10b981'},
+            ]}
+          />
+          <Text
+            style={[
+              styles.statusText,
+              {color: '#10b981' },
+              // {color: supplier.isOpen ? '#10b981' : '#ef4444'},
+            ]}>
+            {/* {supplier.isOpen ? 'Open' : 'Closed'} */}
+            {'Open'}
+
+          </Text>
+        </View>
+      </View>
+
+      {/* Address */}
+      <View style={styles.addressContainer}>
+        <Icon name="place" size={16} color="#6b7280" />
+        <Text style={styles.addressText}>
+          {supplier.address}
+        </Text>
+      </View>
+
+      {/* Hours */}
+      <View style={styles.hoursContainer}>
+        <Icon name="schedule" size={16} color="#6b7280" />
+        <Text style={styles.hoursText}>
+          {/* {supplier.hours.open === '24/7' */}
+            24/7 Open
+            {/* // : `${supplier.hours.open} - ${supplier.hours.close} • ${supplier.hours.days}`} */}
+        </Text>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleCall(supplier.phone)}>
+          <Icon name="phone" size={24} color="#3B82F6" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => handleDirections(supplier)}>
+          <Icon name="directions" size={28} color="#3B82F6" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.selectButton, {width: widthPercentageToDP(40)}]}
+          onPress={() => navigation.navigate('OrderProducts')}>
+          <Icon name="add" size={16} color="white" />
+          <Text style={styles.selectButtonText}>Select</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 
   return (
@@ -545,43 +485,6 @@ const SupplierSelectionScreen = ({navigation, user}) => {
           {/* <Icon name="filter-list" size={24} color="white" /> */}
         </TouchableOpacity>
       </View>
-
-      {/* View Toggle */}
-      {/* <View style={styles.viewToggle}>
-        <TouchableOpacity
-          style={[styles.toggleButton, viewMode === 'map' && styles.toggleButtonActive]}
-          onPress={() => setViewMode('map')}
-        >
-          <Icon 
-            name="map" 
-            size={20} 
-            color={viewMode === 'map' ? '#3B82F6' : 'white'} 
-          />
-          <Text style={[
-            styles.toggleButtonText,
-            viewMode === 'map' && styles.toggleButtonTextActive
-          ]}>
-            Map
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.toggleButton, viewMode === 'list' && styles.toggleButtonActive]}
-          onPress={() => setViewMode('list')}
-        >
-          <Icon 
-            name="list" 
-            size={20} 
-            color={viewMode === 'list' ? '#3B82F6' : 'white'} 
-          />
-          <Text style={[
-            styles.toggleButtonText,
-            viewMode === 'list' && styles.toggleButtonTextActive
-          ]}>
-            List
-          </Text>
-        </TouchableOpacity>
-      </View> */}
 
       {/* Content */}
       <View style={styles.content}>
@@ -765,6 +668,7 @@ const styles = StyleSheet.create({
   // List View Styles
   listContainer: {
     flex: 1,
+    marginBottom:180,
   },
   controlsContainer: {
     backgroundColor: 'white',
@@ -1001,7 +905,7 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   bottomSpacing: {
-    height: 24,
+    height: 500,
   },
 });
 

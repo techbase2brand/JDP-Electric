@@ -83,3 +83,81 @@ export const logoutApi = async token => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
+
+
+// ✅ Get Lead Labor by ID
+export const getLeadLaborById = async (id, token) => {
+  try {
+    const res = await api.get(`/lead-labor/getLeadLaborById/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`, // if auth required
+      },
+    });
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
+
+// ✅ Get Labor by ID
+export const getLaborById = async (id, token) => {
+  try {
+    const res = await api.get(`/labor/getLaborById/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`, // if auth required
+      },
+    });
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
+
+// ✅ Update Lead Labor Profile
+export const updateLeadLaborProfile = async (id, formData, token) => {
+  try {
+    const res = await api.post(`/lead-labor/updateProfile/${id}`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Something went wrong' };
+  }
+};
+
+// ✅ Update Labor Profile
+export const updateLaborProfile = async (id, formData, token) => {
+  try {
+    const res = await api.post(`/labor/updateProfile/${id}`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Something went wrong' };
+  }
+};
+
+// ✅ getSuppliers
+
+export const getSuppliers = async (page = 1, limit = 10, token) => {
+  try {
+    const response = await api.get(
+      `/suppliers/getAllSuppliers?page=${page}&limit=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // 👈 token send here
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching suppliers:', error.response?.data || error.message);
+    throw error;
+  }
+};
