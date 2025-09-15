@@ -5,7 +5,7 @@ export const LOGIN_URL = `${API_BASE_URL}/auth/login`;
 
 /* axios instance */
 
-//Login API
+// ✅ Login API
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -13,7 +13,20 @@ export const api = axios.create({
   },
 });
 
-// Send OTP
+api.interceptors.response.use(
+  response => response,
+  async error => {
+    if (error.response?.status === 401) {
+      //Aall App.js logout function call
+      if (global.handleLogout) {
+        global.handleLogout();
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
+// ✅ Send OTP
 export const sendForgotPasswordOtp = async email => {
   try {
     const res = await api.post('/auth/forgot-password/send-otp', {email});
@@ -23,7 +36,7 @@ export const sendForgotPasswordOtp = async email => {
   }
 };
 
-// Verify OTP
+// ✅ Verify OTP
 export const verifyForgotPasswordOtp = async (email, otp) => {
   try {
     const res = await api.post('/auth/forgot-password/verify-otp', {
@@ -36,7 +49,7 @@ export const verifyForgotPasswordOtp = async (email, otp) => {
   }
 };
 
-// Resend OTP
+// ✅ Resend OTP
 export const resendForgotPasswordOtp = async email => {
   try {
     const res = await api.post('/auth/forgot-password/resend-otp', {email});
@@ -46,7 +59,7 @@ export const resendForgotPasswordOtp = async email => {
   }
 };
 
-// Reset Password
+// ✅ Reset Password
 export const resetForgotPassword = async (
   email,
   newPassword,
@@ -64,14 +77,14 @@ export const resetForgotPassword = async (
   }
 };
 
-// Logout API
+// ✅ Logout API
 export const logoutApi = async token => {
   console.log('tokentoken', token);
 
   try {
     const res = await api.post(
       '/auth/logout',
-      {token},
+      {},
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -83,7 +96,6 @@ export const logoutApi = async token => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
-
 
 // ✅ Get Lead Labor by ID
 export const getLeadLaborById = async (id, token) => {
@@ -124,7 +136,7 @@ export const updateLeadLaborProfile = async (id, formData, token) => {
     });
     return res.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Something went wrong' };
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };
 
@@ -139,12 +151,11 @@ export const updateLaborProfile = async (id, formData, token) => {
     });
     return res.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Something went wrong' };
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };
 
 // ✅ getSuppliers
-
 export const getSuppliers = async (page = 1, limit = 10, token) => {
   try {
     const response = await api.get(
@@ -153,11 +164,34 @@ export const getSuppliers = async (page = 1, limit = 10, token) => {
         headers: {
           Authorization: `Bearer ${token}`, // 👈 token send here
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
-    console.error('Error fetching suppliers:', error.response?.data || error.message);
+    console.error(
+      'Error fetching suppliers:',
+      error.response?.data || error.message,
+    );
     throw error;
+  }
+};
+// ✅ Get All Products
+export const getAllProducts = async (page = 1, limit = 10, token) => {
+  try {
+    const response = await api.get(
+      `/products/getAllProducts?page=${page}&limit=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // token required
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      'Error fetching products:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };

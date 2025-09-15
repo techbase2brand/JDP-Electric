@@ -16,15 +16,15 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {widthPercentageToDP} from '../utils';
-import { getSuppliers } from '../config/apiConfig';
-import { useSelector } from 'react-redux';
+import {getSuppliers} from '../config/apiConfig';
+import {useSelector} from 'react-redux';
 import Geocoder from 'react-native-geocoding';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
 const SupplierSelectionScreen = ({navigation, user}) => {
-    const token = useSelector(state => state.user.token);
-  Geocoder.init("AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI");
+  const token = useSelector(state => state.user.token);
+  Geocoder.init('AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI');
   const [viewMode, setViewMode] = useState('list');
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [sortBy, setSortBy] = useState('distance');
@@ -210,11 +210,10 @@ const SupplierSelectionScreen = ({navigation, user}) => {
           return 0;
       }
     });
- const [supplierss, setSuppliers] = useState([]);
+  const [supplierss, setSuppliers] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-
 
   useEffect(() => {
     fetchSuppliers();
@@ -225,8 +224,8 @@ const SupplierSelectionScreen = ({navigation, user}) => {
     setLoading(true);
     try {
       const res = await getSuppliers(page, 10, token);
-      console.log("SuppliersSuppliers",res.data.data);
-      
+      console.log('SuppliersSuppliers', res.data.data);
+
       if (res?.data?.data) {
         setSuppliers(prev => [...prev, ...res?.data?.data]);
       } else {
@@ -238,7 +237,7 @@ const SupplierSelectionScreen = ({navigation, user}) => {
       setLoading(false);
     }
   };
-   const loadMore = () => {
+  const loadMore = () => {
     if (!loading && hasMore) {
       setPage(prev => prev + 1);
     }
@@ -252,26 +251,28 @@ const SupplierSelectionScreen = ({navigation, user}) => {
     Linking.openURL(`mailto:${email}`);
   };
 
-const handleDirections = supplier => {
-  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(supplier.address)}`;
-  Linking.openURL(url);
-};
-//   const handleDirections = async supplier => {
-//   try {
-//     // address → coordinates
-//     const geo = await Geocoder.from(supplier.address);
-//     const location = geo.results[0].geometry.location;
-//     const latitude = location.lat;
-//     const longitude = location.lng;
+  const handleDirections = supplier => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      supplier.address,
+    )}`;
+    Linking.openURL(url);
+  };
+  //   const handleDirections = async supplier => {
+  //   try {
+  //     // address → coordinates
+  //     const geo = await Geocoder.from(supplier.address);
+  //     const location = geo.results[0].geometry.location;
+  //     const latitude = location.lat;
+  //     const longitude = location.lng;
 
-//     // open Google Maps
-//     const url = `https://maps.google.com/?q=${latitude},${longitude}`;
-//     Linking.openURL(url);
-//   } catch (error) {
-//     console.error("Geocoding Error:", error);
-//     Alert.alert("Error", "Could not fetch location from address");
-//   }
-// };
+  //     // open Google Maps
+  //     const url = `https://maps.google.com/?q=${latitude},${longitude}`;
+  //     Linking.openURL(url);
+  //   } catch (error) {
+  //     console.error("Geocoding Error:", error);
+  //     Alert.alert("Error", "Could not fetch location from address");
+  //   }
+  // };
 
   const handleSelectSupplier = supplier => {
     Alert.alert(
@@ -287,7 +288,7 @@ const handleDirections = supplier => {
             //   'Success',
             //   `${supplier.name} has been added to your suppliers.`,
             // );
-            navigation.navigate("OrderProducts");
+            navigation.navigate('OrderProducts');
           },
         },
       ],
@@ -324,15 +325,10 @@ const handleDirections = supplier => {
     return <View style={styles.starsContainer}>{stars}</View>;
   };
 
-
-
   const renderListView = () => (
-    <View
-      style={styles.listContainer}
-      showsVerticalScrollIndicator={false}>
+    <View style={styles.listContainer} showsVerticalScrollIndicator={false}>
       {/* Sort and Filter Controls */}
       <View style={styles.controlsContainer}>
-        
         <View style={styles.filterContainer}>
           <Text style={styles.controlLabel}>Category:</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -359,30 +355,30 @@ const handleDirections = supplier => {
       </View>
 
       {/* Results Count */}
-      <View style={styles.resultsHeader}>
-        <Text style={styles.resultsCount}>
-          {filteredSuppliers.length} supplier
-          {filteredSuppliers.length !== 1 ? 's' : ''} found
-        </Text>
-        <Text style={styles.resultsSubtext}>
-          {/* Sorted by {sortBy === 'distance' ? 'distance' : sortBy === 'rating' ? 'rating' : 'name'} */}
-        </Text>
-      </View>
+      {supplierss.length > 0 && (
+        <View style={styles.resultsHeader}>
+          <Text style={styles.resultsCount}>
+            {supplierss?.length} supplier
+            {supplierss?.length !== 1 ? 's' : ''} found
+          </Text>
+          <Text style={styles.resultsSubtext}>
+            {/* Sorted by {sortBy === 'distance' ? 'distance' : sortBy === 'rating' ? 'rating' : 'name'} */}
+          </Text>
+        </View>
+      )}
 
       {/* Suppliers List */}
       <View style={styles.suppliersList}>
-      
-
-         <FlatList
-        data={supplierss}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderSupplier}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          loading ? <ActivityIndicator size="large" color="#3B82F6" /> : null
-        }
-      />
+        <FlatList
+          data={supplierss}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderSupplier}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loading ? <ActivityIndicator size="large" color="#3B82F6" /> : null
+          }
+        />
       </View>
 
       {/* Bottom Spacing */}
@@ -401,21 +397,15 @@ const handleDirections = supplier => {
 
         {/* Status Indicator */}
         <View style={styles.statusContainer}>
-          <View
-            style={[
-              styles.statusDot,
-              {backgroundColor:  '#10b981'},
-            ]}
-          />
+          <View style={[styles.statusDot, {backgroundColor: '#10b981'}]} />
           <Text
             style={[
               styles.statusText,
-              {color: '#10b981' },
+              {color: '#10b981'},
               // {color: supplier.isOpen ? '#10b981' : '#ef4444'},
             ]}>
             {/* {supplier.isOpen ? 'Open' : 'Closed'} */}
             {'Open'}
-
           </Text>
         </View>
       </View>
@@ -423,9 +413,7 @@ const handleDirections = supplier => {
       {/* Address */}
       <View style={styles.addressContainer}>
         <Icon name="place" size={16} color="#6b7280" />
-        <Text style={styles.addressText}>
-          {supplier.address}
-        </Text>
+        <Text style={styles.addressText}>{supplier.address}</Text>
       </View>
 
       {/* Hours */}
@@ -433,8 +421,8 @@ const handleDirections = supplier => {
         <Icon name="schedule" size={16} color="#6b7280" />
         <Text style={styles.hoursText}>
           {/* {supplier.hours.open === '24/7' */}
-            24/7 Open
-            {/* // : `${supplier.hours.open} - ${supplier.hours.close} • ${supplier.hours.days}`} */}
+          24/7 Open
+          {/* // : `${supplier.hours.open} - ${supplier.hours.close} • ${supplier.hours.days}`} */}
         </Text>
       </View>
 
@@ -454,7 +442,11 @@ const handleDirections = supplier => {
 
         <TouchableOpacity
           style={[styles.selectButton, {width: widthPercentageToDP(40)}]}
-          onPress={() => navigation.navigate('OrderProducts')}>
+          onPress={() =>
+            navigation.navigate('OrderProducts', {
+              id: supplier?.id,
+            })
+          }>
           <Icon name="add" size={16} color="white" />
           <Text style={styles.selectButtonText}>Select</Text>
         </TouchableOpacity>
@@ -668,7 +660,7 @@ const styles = StyleSheet.create({
   // List View Styles
   listContainer: {
     flex: 1,
-    marginBottom:180,
+    marginBottom: 180,
   },
   controlsContainer: {
     backgroundColor: 'white',
@@ -880,7 +872,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     borderRadius: 8,
-    width:widthPercentageToDP(10),
+    width: widthPercentageToDP(10),
     backgroundColor: '#f3f4f6',
     gap: 4,
   },

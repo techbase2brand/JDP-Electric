@@ -1,459 +1,4 @@
-// import React, {useState} from 'react';
-// import {
-//   View,
-//   Text,
-//   TouchableOpacity,
-//   StyleSheet,
-//   FlatList,
-//   TextInput,
-//   Alert,
-// } from 'react-native';
-
-// export default function OrderProducts({onNavigate, navigation}) {
-//   const [searchQuery, setSearchQuery] = useState('');
-//   const [selectedCategory, setSelectedCategory] = useState('all');
-//   const [cart, setCart] = useState([]);
-
-//   const categories = [
-//     {id: 'all', name: 'All Items'},
-//     {id: 'wire', name: 'Wire & Cable'},
-//     {id: 'outlets', name: 'Outlets & Switches'},
-//     {id: 'conduit', name: 'Conduit & Fittings'},
-//     {id: 'tools', name: 'Tools'},
-//   ];
-
-//   const mockProducts = [
-//     {
-//       id: '1',
-//       name: '12 AWG Copper Wire',
-//       category: 'wire',
-//       price: 45.99,
-//       unit: 'per 100ft',
-//       description: 'THHN/THWN-2 copper building wire',
-//       inStock: true,
-//       image: '🔌',
-//     },
-//     {
-//       id: '2',
-//       name: 'GFCI Outlet 15A',
-//       category: 'outlets',
-//       price: 12.5,
-//       unit: 'each',
-//       description: 'Ground fault circuit interrupter outlet',
-//       inStock: true,
-//       image: '🔌',
-//     },
-//     {
-//       id: '3',
-//       name: 'EMT Conduit 1/2"',
-//       category: 'conduit',
-//       price: 8.75,
-//       unit: 'per 10ft',
-//       description: 'Electrical metallic tubing',
-//       inStock: true,
-//       image: '🔧',
-//     },
-//     {
-//       id: '4',
-//       name: 'Wire Strippers',
-//       category: 'tools',
-//       price: 28.99,
-//       unit: 'each',
-//       description: 'Professional wire stripping tool',
-//       inStock: false,
-//       image: '🔧',
-//     },
-//   ];
-
-//   const getFilteredProducts = () => {
-//     let filtered = mockProducts;
-
-//     if (selectedCategory !== 'all') {
-//       filtered = filtered.filter(
-//         product => product.category === selectedCategory,
-//       );
-//     }
-
-//     if (searchQuery) {
-//       filtered = filtered.filter(
-//         product =>
-//           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-//           product.description.toLowerCase().includes(searchQuery.toLowerCase()),
-//       );
-//     }
-
-//     return filtered;
-//   };
-
-//   const addToCart = product => {
-//     const existingItem = cart.find(item => item.id === product.id);
-
-//     if (existingItem) {
-//       setCart(
-//         cart.map(item =>
-//           item.id === product.id
-//             ? {...item, quantity: item.quantity + 1}
-//             : item,
-//         ),
-//       );
-//     } else {
-//       setCart([...cart, {...product, quantity: 1}]);
-//     }
-
-//     Alert.alert('Added to Cart', `${product.name} added to cart`);
-//   };
-
-//   const getCartTotal = () => {
-//     return cart.reduce((total, item) => total + item.price * item.quantity, 0);
-//   };
-
-//   const renderProductItem = ({item}) => (
-//     <View style={styles.productCard}>
-//       <View style={styles.productHeader}>
-//         <Text style={styles.productIcon}>{item.image}</Text>
-//         <View style={styles.productInfo}>
-//           <Text style={styles.productName}>{item.name}</Text>
-//           <Text style={styles.productDescription} numberOfLines={2}>
-//             {item.description}
-//           </Text>
-//           <View style={styles.priceRow}>
-//             <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
-//             <Text style={styles.productUnit}>{item.unit}</Text>
-//           </View>
-//         </View>
-//       </View>
-
-//       <View style={styles.productActions}>
-//         <View
-//           style={[
-//             styles.stockIndicator,
-//             {backgroundColor: item.inStock ? '#10B981' : '#EF4444'},
-//           ]}>
-//           <Text style={styles.stockText}>
-//             {item.inStock ? 'In Stock' : 'Out of Stock'}
-//           </Text>
-//         </View>
-
-//         <TouchableOpacity
-//           style={[styles.addButton, !item.inStock && styles.disabledButton]}
-//           onPress={() => addToCart(item)}
-//           disabled={!item.inStock}>
-//           <Text style={styles.addButtonText}>Add to Cart</Text>
-//         </TouchableOpacity>
-//       </View>
-//     </View>
-//   );
-
-//   return (
-//     <View style={styles.container}>
-//       {/* Header */}
-//       <View style={styles.header}>
-//         <TouchableOpacity onPress={() => navigation.goBack()}>
-//           <Text style={styles.backButton}>← Back</Text>
-//         </TouchableOpacity>
-//         <Text style={styles.headerTitle}>Order Materials</Text>
-//         <TouchableOpacity onPress={() => navigation.navigate('CartScreen')}>
-//           <View style={styles.cartButton}>
-//             <Text style={styles.cartIcon}>🛒</Text>
-//             {cart.length > 0 && (
-//               <View style={styles.cartBadge}>
-//                 <Text style={styles.cartBadgeText}>{cart.length}</Text>
-//               </View>
-//             )}
-//           </View>
-//         </TouchableOpacity>
-//       </View>
-
-//       {/* Search */}
-//       <View style={styles.searchContainer}>
-//         <TextInput
-//           style={styles.searchInput}
-//           value={searchQuery}
-//           onChangeText={setSearchQuery}
-//           placeholder="Search materials..."
-//           placeholderTextColor="#9CA3AF"
-//         />
-//       </View>
-
-//       {/* Categories */}
-//       <View style={styles.categoriesContainer}>
-//         <FlatList
-//           horizontal
-//           showsHorizontalScrollIndicator={false}
-//           data={categories}
-//           keyExtractor={item => item.id}
-//           renderItem={({item}) => (
-//             <TouchableOpacity
-//               style={[
-//                 styles.categoryButton,
-//                 selectedCategory === item.id && styles.activeCategoryButton,
-//               ]}
-//               onPress={() => setSelectedCategory(item.id)}>
-//               <Text
-//                 style={[
-//                   styles.categoryText,
-//                   selectedCategory === item.id && styles.activeCategoryText,
-//                 ]}>
-//                 {item.name}
-//               </Text>
-//             </TouchableOpacity>
-//           )}
-//         />
-//       </View>
-
-//       {/* Products List */}
-//       <FlatList
-//         data={getFilteredProducts()}
-//         keyExtractor={item => item.id}
-//         renderItem={renderProductItem}
-//         contentContainerStyle={styles.listContainer}
-//         showsVerticalScrollIndicator={false}
-//         ListEmptyComponent={() => (
-//           <View style={styles.emptyContainer}>
-//             <Text style={styles.emptyIcon}>📦</Text>
-//             <Text style={styles.emptyTitle}>No products found</Text>
-//             <Text style={styles.emptyText}>
-//               Try adjusting your search or category filter
-//             </Text>
-//           </View>
-//         )}
-//       />
-//       {/* Cart Summary */}
-//       {cart.length > 0 && (
-//         <View style={styles.cartSummary}>
-//           <View style={styles.cartInfo}>
-//             <Text style={styles.cartItemCount}>{cart.length} items</Text>
-//             <Text style={styles.cartTotal}>${getCartTotal().toFixed(2)}</Text>
-//           </View>
-//           <TouchableOpacity
-//             style={styles.viewCartButton}
-//             onPress={() => navigation.navigate('CartScreen')}>
-//             <Text style={styles.viewCartText}>View Cart</Text>
-//           </TouchableOpacity>
-//         </View>
-//       )}
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#F8FAFC',
-//   },
-//   header: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     paddingHorizontal: 16,
-//     paddingTop: 50,
-//     paddingBottom: 16,
-//     backgroundColor: '#1E40AF',
-//   },
-//   backButton: {
-//     fontSize: 16,
-//     color: '#FFFFFF',
-//     fontWeight: '500',
-//   },
-//   headerTitle: {
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     color: '#FFFFFF',
-//   },
-//   cartButton: {
-//     position: 'relative',
-//     padding: 4,
-//   },
-//   cartIcon: {
-//     fontSize: 20,
-//   },
-//   cartBadge: {
-//     position: 'absolute',
-//     top: 0,
-//     right: 0,
-//     backgroundColor: '#EF4444',
-//     borderRadius: 8,
-//     minWidth: 16,
-//     height: 16,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//   },
-//   cartBadgeText: {
-//     fontSize: 10,
-//     fontWeight: 'bold',
-//     color: '#FFFFFF',
-//   },
-//   searchContainer: {
-//     padding: 16,
-//     backgroundColor: '#FFFFFF',
-//   },
-//   searchInput: {
-//     borderWidth: 1,
-//     borderColor: '#E5E7EB',
-//     borderRadius: 10,
-//     paddingHorizontal: 16,
-//     paddingVertical: 12,
-//     fontSize: 16,
-//     backgroundColor: '#F9FAFB',
-//   },
-//   categoriesContainer: {
-//     backgroundColor: '#FFFFFF',
-//     paddingHorizontal: 16,
-//     paddingBottom: 12,
-//     borderBottomWidth: 1,
-//     borderBottomColor: '#E5E7EB',
-//   },
-//   categoryButton: {
-//     paddingHorizontal: 16,
-//     paddingVertical: 8,
-//     marginRight: 8,
-//     borderRadius: 20,
-//     backgroundColor: '#F3F4F6',
-//   },
-//   activeCategoryButton: {
-//     backgroundColor: '#3B82F6',
-//   },
-//   categoryText: {
-//     fontSize: 14,
-//     fontWeight: '500',
-//     color: '#6B7280',
-//   },
-//   activeCategoryText: {
-//     color: '#FFFFFF',
-//   },
-//   listContainer: {
-//     padding: 16,
-//   },
-//   productCard: {
-//     backgroundColor: '#FFFFFF',
-//     borderRadius: 12,
-//     padding: 16,
-//     marginBottom: 12,
-//     borderWidth: 1,
-//     borderColor: '#E5E7EB',
-//   },
-//   productHeader: {
-//     flexDirection: 'row',
-//     marginBottom: 12,
-//   },
-//   productIcon: {
-//     fontSize: 32,
-//     marginRight: 12,
-//   },
-//   productInfo: {
-//     flex: 1,
-//   },
-//   productName: {
-//     fontSize: 16,
-//     fontWeight: 'bold',
-//     color: '#1F2937',
-//     marginBottom: 4,
-//   },
-//   productDescription: {
-//     fontSize: 14,
-//     color: '#6B7280',
-//     marginBottom: 8,
-//     lineHeight: 20,
-//   },
-//   priceRow: {
-//     flexDirection: 'row',
-//     alignItems: 'baseline',
-//   },
-//   productPrice: {
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     color: '#3B82F6',
-//     marginRight: 8,
-//   },
-//   productUnit: {
-//     fontSize: 12,
-//     color: '#9CA3AF',
-//   },
-//   productActions: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//   },
-//   stockIndicator: {
-//     paddingHorizontal: 8,
-//     paddingVertical: 4,
-//     borderRadius: 8,
-//   },
-//   stockText: {
-//     fontSize: 10,
-//     fontWeight: 'bold',
-//     color: '#FFFFFF',
-//   },
-//   addButton: {
-//     backgroundColor: '#3B82F6',
-//     paddingHorizontal: 16,
-//     paddingVertical: 8,
-//     borderRadius: 8,
-//   },
-//   disabledButton: {
-//     backgroundColor: '#9CA3AF',
-//   },
-//   addButtonText: {
-//     fontSize: 14,
-//     fontWeight: 'bold',
-//     color: '#FFFFFF',
-//   },
-//   emptyContainer: {
-//     alignItems: 'center',
-//     paddingVertical: 60,
-//   },
-//   emptyIcon: {
-//     fontSize: 48,
-//     marginBottom: 16,
-//   },
-//   emptyTitle: {
-//     fontSize: 18,
-//     fontWeight: '500',
-//     color: '#1F2937',
-//     marginBottom: 8,
-//   },
-//   emptyText: {
-//     fontSize: 14,
-//     color: '#6B7280',
-//     textAlign: 'center',
-//   },
-//   cartSummary: {
-//     backgroundColor: '#FFFFFF',
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     paddingHorizontal: 16,
-//     paddingVertical: 12,
-//     marginBottom: 110,
-//     borderTopWidth: 1,
-//     borderTopColor: '#E5E7EB',
-//   },
-//   cartInfo: {
-//     flex: 1,
-//   },
-//   cartItemCount: {
-//     fontSize: 14,
-//     color: '#6B7280',
-//   },
-//   cartTotal: {
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     color: '#1F2937',
-//   },
-//   viewCartButton: {
-//     backgroundColor: '#3B82F6',
-//     paddingHorizontal: 20,
-//     paddingVertical: 10,
-//     borderRadius: 8,
-//   },
-//   viewCartText: {
-//     fontSize: 14,
-//     fontWeight: 'bold',
-//     color: '#FFFFFF',
-//   },
-// });
-
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -464,9 +9,14 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
+import {getAllProducts} from '../config/apiConfig';
+import {useDispatch, useSelector} from 'react-redux';
+import {addToCart, updateQuantity} from '../redux/cartSlice';
 
 // Embedded Colors
 const Colors = {
@@ -514,154 +64,154 @@ const Shadows = {
 };
 
 const OrderProductsScreen = ({onBack, onNavigate, route}) => {
+  const token = useSelector(state => state.user.token);
+  const cart = useSelector(state => state.cart.items);
+  console.log('cart>>>', cart);
+
+  const dispatch = useDispatch();
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [cart, setCart] = useState([]);
+  // const [cart, setCart] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [stockFilter, setStockFilter] = useState('all');
-
-  // Mock products data (removed price and rating)
-  const products = [
-    {
-      id: '1',
-      name: 'Electrical Panel - 200A',
-      category: 'panels',
-      description: 'Main breaker panel for residential use',
-      sku: 'EP-200A-001',
-      inStock: true,
-      stockLevel: 15,
-      supplier: 'ElectricPro Supply',
-      image:
-        'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=300&h=300&fit=crop',
-    },
-    {
-      id: '2',
-      name: 'Circuit Breaker - 20A',
-      category: 'breakers',
-      description: 'Standard 20 amp circuit breaker',
-      sku: 'CB-20A-002',
-      inStock: true,
-      stockLevel: 45,
-      supplier: 'ElectricPro Supply',
-    },
-    {
-      id: '3',
-      name: 'THHN Wire - 12 AWG',
-      category: 'wire',
-      description: '12 gauge THHN copper wire, 500ft roll',
-      sku: 'THHN-12-003',
-      inStock: false,
-      stockLevel: 0,
-      supplier: 'Wire Solutions Inc',
-    },
-    {
-      id: '4',
-      name: 'Conduit - 1/2 inch EMT',
-      category: 'conduit',
-      description: 'Electrical metallic tubing, 10ft length',
-      sku: 'EMT-12-004',
-      inStock: true,
-      stockLevel: 28,
-      supplier: 'Conduit Corp',
-    },
-    {
-      id: '5',
-      name: 'Junction Box - 4x4',
-      category: 'boxes',
-      description: 'Square steel junction box',
-      sku: 'JB-4X4-005',
-      inStock: true,
-      stockLevel: 120,
-      supplier: 'ElectricPro Supply',
-    },
-    {
-      id: '6',
-      name: 'GFCI Outlet - 20A',
-      category: 'outlets',
-      description: 'Ground fault circuit interrupter outlet',
-      sku: 'GFCI-20A-006',
-      inStock: true,
-      stockLevel: 32,
-      supplier: 'Safety Electric Co',
-    },
-  ];
-
-  const categories = [
+  const [categories, setCategories] = useState([
     {id: 'all', name: 'All Products'},
-    {id: 'panels', name: 'Panels'},
-    {id: 'breakers', name: 'Breakers'},
-    {id: 'wire', name: 'Wire & Cable'},
-    {id: 'conduit', name: 'Conduit'},
-    {id: 'boxes', name: 'Boxes'},
-    {id: 'outlets', name: 'Outlets & Switches'},
-  ];
+  ]);
+  const [products, setProducts] = useState([]); // API data
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  // Mock products data (removed price and rating)
+  // const products = [
+  //   {
+  //     id: '1',
+  //     name: 'Electrical Panel - 200A',
+  //     category: 'panels',
+  //     description: 'Main breaker panel for residential use',
+  //     sku: 'EP-200A-001',
+  //     inStock: true,
+  //     stockLevel: 15,
+  //     supplier: 'ElectricPro Supply',
+  //     image:
+  //       'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=300&h=300&fit=crop',
+  //   },
+  //   {
+  //     id: '2',
+  //     name: 'Circuit Breaker - 20A',
+  //     category: 'breakers',
+  //     description: 'Standard 20 amp circuit breaker',
+  //     sku: 'CB-20A-002',
+  //     inStock: true,
+  //     stockLevel: 45,
+  //     supplier: 'ElectricPro Supply',
+  //   },
+  //   {
+  //     id: '3',
+  //     name: 'THHN Wire - 12 AWG',
+  //     category: 'wire',
+  //     description: '12 gauge THHN copper wire, 500ft roll',
+  //     sku: 'THHN-12-003',
+  //     inStock: false,
+  //     stockLevel: 0,
+  //     supplier: 'Wire Solutions Inc',
+  //   },
+  //   {
+  //     id: '4',
+  //     name: 'Conduit - 1/2 inch EMT',
+  //     category: 'conduit',
+  //     description: 'Electrical metallic tubing, 10ft length',
+  //     sku: 'EMT-12-004',
+  //     inStock: true,
+  //     stockLevel: 28,
+  //     supplier: 'Conduit Corp',
+  //   },
+  //   {
+  //     id: '5',
+  //     name: 'Junction Box - 4x4',
+  //     category: 'boxes',
+  //     description: 'Square steel junction box',
+  //     sku: 'JB-4X4-005',
+  //     inStock: true,
+  //     stockLevel: 120,
+  //     supplier: 'ElectricPro Supply',
+  //   },
+  //   {
+  //     id: '6',
+  //     name: 'GFCI Outlet - 20A',
+  //     category: 'outlets',
+  //     description: 'Ground fault circuit interrupter outlet',
+  //     sku: 'GFCI-20A-006',
+  //     inStock: true,
+  //     stockLevel: 32,
+  //     supplier: 'Safety Electric Co',
+  //   },
+  // ];
 
-  // const filteredProducts = products.filter(product => {
-  //   const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //                        product.sku.toLowerCase().includes(searchQuery.toLowerCase());
-  //   const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-  //   return matchesSearch && matchesCategory;
-  // });
-  // const filteredProducts = products.filter(product => {
-  //   const matchesSearch =
-  //     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     product.sku.toLowerCase().includes(searchQuery.toLowerCase());
+  // const categories = [
+  //   {id: 'all', name: 'All Products'},
+  //   {id: 'panels', name: 'Panels'},
+  //   {id: 'breakers', name: 'Breakers'},
+  //   {id: 'wire', name: 'Wire & Cable'},
+  //   {id: 'conduit', name: 'Conduit'},
+  //   {id: 'boxes', name: 'Boxes'},
+  //   {id: 'outlets', name: 'Outlets & Switches'},
+  // ];
 
-  //   const matchesCategory =
-  //     selectedCategory === 'all' || product.category === selectedCategory;
+  useEffect(() => {
+    fetchProducts();
+  }, [page]);
 
-  //   let matchesStock = true;
-  //   if (stockFilter === 'inStock') matchesStock = product.inStock;
-  //   if (stockFilter === 'outOfStock') matchesStock = !product.inStock;
+  const fetchProducts = async () => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+    try {
+      const res = await getAllProducts(page, 10, token);
 
-  //   return matchesSearch && matchesCategory && matchesStock;
-  // });
-  const filteredProducts = products.filter(product => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.sku.toLowerCase().includes(searchQuery.toLowerCase());
+      const newProducts = res?.data?.data || []; // ✅ same as suppliers
 
-    const matchesCategory =
-      selectedCategory === 'all' || product.category === selectedCategory;
+      if (newProducts.length > 0) {
+        setProducts(prev => [...prev, ...newProducts]);
 
-    let matchesStock = true;
-    if (stockFilter === 'inStock') matchesStock = product.inStock;
-    if (stockFilter === 'outOfStock') matchesStock = !product.inStock;
-
-    return matchesSearch && matchesCategory && matchesStock;
-  });
-
-  const addToCart = product => {
-    const existingItem = cart.find(item => item.id === product.id);
-
-    if (existingItem) {
-      // Agar product pehle se hai, sirf quantity badhao
-      setCart(
-        cart.map(item =>
-          item.id === product.id
-            ? {...item, quantity: item.quantity + 1}
-            : item,
-        ),
-      );
-    } else {
-      // Agar product pehli baar add ho raha hai
-      setCart([...cart, {...product, quantity: 1}]);
-      // Alert.alert('Success', `${product.name} added to cart`);
+        // ✅ only set categories on first page
+        if (page === 1) {
+          const uniqueCategories = [
+            {id: 'all', name: 'All Products'},
+            ...Array.from(new Set(newProducts.map(p => p.category))).map(
+              cat => ({
+                id: cat,
+                name: cat
+                  ? cat.charAt(0).toUpperCase() + cat.slice(1)
+                  : 'Unknown',
+              }),
+            ),
+          ];
+          setCategories(uniqueCategories);
+        }
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.log('❌ Error fetching products:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateQuantity = (productId, newQuantity) => {
-    if (newQuantity === 0) {
-      setCart(cart.filter(item => item.id !== productId));
-    } else {
-      setCart(
-        cart.map(item =>
-          item.id === productId ? {...item, quantity: newQuantity} : item,
-        ),
-      );
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      setPage(prev => prev + 1);
     }
+  };
+
+  const handleAddToCart = product => {
+    dispatch(addToCart(product));
+  };
+
+  const handleUpdateQuantity = (productId, newQuantity) => {
+    dispatch(updateQuantity({productId, newQuantity}));
   };
 
   const getCartItemCount = () => {
@@ -672,6 +222,46 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
     const item = cart.find(item => item.id === productId);
     return item ? item.quantity : 0;
   };
+
+  // const addToCart = product => {
+  //   const existingItem = cart.find(item => item.id === product.id);
+
+  //   if (existingItem) {
+  //     // Agar product pehle se hai, sirf quantity badhao
+  //     setCart(
+  //       cart.map(item =>
+  //         item.id === product.id
+  //           ? {...item, quantity: item.quantity + 1}
+  //           : item,
+  //       ),
+  //     );
+  //   } else {
+  //     // Agar product pehli baar add ho raha hai
+  //     setCart([...cart, {...product, quantity: 1}]);
+  //     // Alert.alert('Success', `${product.name} added to cart`);
+  //   }
+  // };
+
+  // const updateQuantity = (productId, newQuantity) => {
+  //   if (newQuantity === 0) {
+  //     setCart(cart.filter(item => item.id !== productId));
+  //   } else {
+  //     setCart(
+  //       cart.map(item =>
+  //         item.id === productId ? {...item, quantity: newQuantity} : item,
+  //       ),
+  //     );
+  //   }
+  // };
+
+  // const getCartItemCount = () => {
+  //   return cart.reduce((total, item) => total + item.quantity, 0);
+  // };
+
+  // const getItemQuantity = productId => {
+  //   const item = cart.find(item => item.id === productId);
+  //   return item ? item.quantity : 0;
+  // };
 
   const handleNavigate = screen => {
     if (onNavigate) {
@@ -688,115 +278,114 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       navigation.goBack();
     }
   };
+  const filteredProducts = products.filter(product => {
+    const matchesSearch =
+      product?.product_name
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      product?.supplier_sku
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      product?.jdp_sku?.toLowerCase().includes(searchQuery.toLowerCase());
 
-  const renderFiltersModal = () => (
-    <Modal
-      visible={showFilters}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={() => setShowFilters(false)}>
-      <View style={styles.modalOverlay}>
-        <TouchableOpacity
-          style={styles.modalBackdrop}
-          activeOpacity={1}
-          onPress={() => setShowFilters(false)}>
-          <View style={styles.filtersModal}>
-            <View style={styles.modalHandle} />
+    const matchesCategory =
+      selectedCategory === 'all' || product?.category === selectedCategory;
 
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filter Products</Text>
+    let matchesStock = true;
+    if (stockFilter === 'inStock') matchesStock = product?.stock_quantity > 0;
+    if (stockFilter === 'outOfStock')
+      matchesStock = product?.stock_quantity === 0;
+
+    return matchesSearch && matchesCategory && matchesStock;
+  });
+
+  // ✅ Render Product Card
+  const renderProduct = ({item}) => {
+    const quantity = getItemQuantity(item.id);
+    return (
+      <View style={styles.productCard}>
+        <View style={styles.productContent}>
+          {/* Product Icon */}
+          <View style={styles.productImageContainer}>
+            <Icon name="inventory" size={32} color="#999" />
+          </View>
+
+          {/* Info */}
+          <View style={styles.productInfo}>
+            <View style={styles.productHeader}>
+              <Text style={styles.productName} numberOfLines={1}>
+                {item.product_name}
+              </Text>
+              <View
+                style={[
+                  styles.stockBadge,
+                  item.stock_quantity > 0
+                    ? styles.inStockBadge
+                    : styles.outOfStockBadge,
+                ]}>
+                <Text
+                  style={[
+                    styles.stockBadgeText,
+                    item.stock_quantity > 0
+                      ? styles.inStockText
+                      : styles.outOfStockText,
+                  ]}>
+                  {item.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
+                </Text>
+              </View>
             </View>
 
-            <ScrollView
-              style={styles.modalContent}
-              showsVerticalScrollIndicator={false}>
-              <View style={styles.filterSection}>
-                <Text style={styles.filterSectionTitle}>Category</Text>
-                <View style={styles.categoryGrid}>
-                  {categories?.map(category => (
+            <Text style={styles.productDescription} numberOfLines={2}>
+              {item.description}
+            </Text>
+
+            <View style={styles.productDetails}>
+              <Text style={styles.productSku}>SKU: {item.jdp_sku}</Text>
+              <Text style={styles.productStock}>
+                Stock: {item.stock_quantity}
+              </Text>
+            </View>
+
+            <Text style={styles.productSupplier}>
+              Supplier: {item.suppliers.contact_person}
+            </Text>
+
+            {/* Add to Cart */}
+            {item.stock_quantity > 0 && (
+              <View style={styles.cartControls}>
+                {quantity === 0 ? (
+                  <TouchableOpacity
+                    style={styles.addToCartButton}
+                    onPress={() => handleAddToCart(item)}>
+                    <Icon name="add" size={16} color="#fff" />
+                    <Text style={styles.addToCartText}>Add to Cart</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.quantityControls}>
                     <TouchableOpacity
-                      key={category.id}
-                      style={[
-                        styles.categoryOption,
-                        selectedCategory === category.id &&
-                          styles.selectedCategoryOption,
-                      ]}
-                      onPress={() => {
-                        setSelectedCategory(category.id);
-                        setShowFilters(false);
-                      }}>
-                      <Text
-                        style={[
-                          styles.categoryOptionText,
-                          selectedCategory === category.id &&
-                            styles.selectedCategoryOptionText,
-                        ]}>
-                        {category.name}
-                      </Text>
+                      style={styles.quantityButton}
+                      onPress={() =>
+                        handleUpdateQuantity(item.id, quantity - 1)
+                      }>
+                      <Icon name="remove" size={16} color="#000" />
                     </TouchableOpacity>
-                  ))}
-                </View>
+                    <Text style={styles.quantityText}>{quantity}</Text>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={() =>
+                        handleUpdateQuantity(item.id, quantity + 1)
+                      }>
+                      <Icon name="add" size={16} color="#000" />
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
-
-              <View style={styles.filterSection}>
-                <Text style={styles.filterSectionTitle}>Availability</Text>
-                {/* <TouchableOpacity
-                  style={styles.availabilityOption}
-                  onPress={() => {
-                    setInStockOnly(true), setShowFilters(false);
-                  }}>
-                  <Text style={styles.availabilityOptionText}>
-                    In Stock Only
-                  </Text>
-                </TouchableOpacity> */}
-                <TouchableOpacity
-                  style={[
-                    styles.availabilityOption,
-                    stockFilter === 'inStock' && {backgroundColor: '#4CAF50'}, // highlight
-                  ]}
-                  onPress={() => {
-                    setStockFilter(
-                      stockFilter === 'inStock' ? 'all' : 'inStock',
-                    ),
-                      setShowFilters(false);
-                  }}>
-                  <Text style={styles.availabilityOptionText}>In Stock</Text>
-                </TouchableOpacity>
-
-                {/* Out of Stock */}
-                <TouchableOpacity
-                  style={[
-                    styles.availabilityOption,
-                    stockFilter === 'outOfStock' && {
-                      backgroundColor: '#F44336',
-                    }, // highlight
-                  ]}
-                  onPress={() => {
-                    setStockFilter(
-                      stockFilter === 'outOfStock' ? 'all' : 'outOfStock',
-                    ),
-                      setShowFilters(false);
-                  }}>
-                  <Text style={styles.availabilityOptionText}>
-                    Out of Stock
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.availabilityOption}
-                  onPress={() => {
-                    setStockFilter('all'), setShowFilters(false);
-                  }}>
-                  <Text style={styles.availabilityOptionText}>
-                    All Products
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
+            )}
           </View>
-        </TouchableOpacity>
+        </View>
       </View>
-    </Modal>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -873,109 +462,19 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       </View>
 
       {/* Products List */}
-      <ScrollView
-        style={styles.productsList}
-        showsVerticalScrollIndicator={false}>
-        {filteredProducts.map(product => {
-          const quantity = getItemQuantity(product.id);
-
-          return (
-            <View key={product.id} style={styles.productCard}>
-              <View style={styles.productContent}>
-                {/* Product Icon */}
-                <View style={styles.productImageContainer}>
-                  <Icon name="inventory" size={32} color={Colors.textLight} />
-                </View>
-
-                {/* Product Info */}
-                <View style={styles.productInfo}>
-                  <View style={styles.productHeader}>
-                    <Text style={styles.productName} numberOfLines={1}>
-                      {product.name}
-                    </Text>
-                    <View
-                      style={[
-                        styles.stockBadge,
-                        product.inStock
-                          ? styles.inStockBadge
-                          : styles.outOfStockBadge,
-                      ]}>
-                      <Text
-                        style={[
-                          styles.stockBadgeText,
-                          product.inStock
-                            ? styles.inStockText
-                            : styles.outOfStockText,
-                        ]}>
-                        {product.inStock ? 'In Stock' : 'Out of Stock'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={styles.productDescription} numberOfLines={2}>
-                    {product.description}
-                  </Text>
-
-                  <View style={styles.productDetails}>
-                    <Text style={styles.productSku}>SKU: {product.sku}</Text>
-                    <Text style={styles.productStock}>
-                      Stock: {product.stockLevel}
-                    </Text>
-                  </View>
-
-                  <Text style={styles.productSupplier}>
-                    Supplier: {product.supplier}
-                  </Text>
-
-                  {/* Add to Cart Controls */}
-                  {product.inStock && (
-                    <View style={styles.cartControls}>
-                      {quantity === 0 ? (
-                        <TouchableOpacity
-                          style={styles.addToCartButton}
-                          onPress={() => addToCart(product)}>
-                          <Icon name="add" size={16} color={Colors.white} />
-                          <Text style={styles.addToCartText}>Add to Cart</Text>
-                        </TouchableOpacity>
-                      ) : (
-                        <View style={styles.quantityControls}>
-                          <TouchableOpacity
-                            style={styles.quantityButton}
-                            onPress={() =>
-                              updateQuantity(product.id, quantity - 1)
-                            }>
-                            <Icon name="remove" size={16} color={Colors.text} />
-                          </TouchableOpacity>
-                          <Text style={styles.quantityText}>{quantity}</Text>
-                          <TouchableOpacity
-                            style={styles.quantityButton}
-                            onPress={() =>
-                              updateQuantity(product.id, quantity + 1)
-                            }>
-                            <Icon name="add" size={16} color={Colors.text} />
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
-                  )}
-                </View>
-              </View>
-            </View>
-          );
-        })}
-
-        {filteredProducts.length === 0 && (
-          <View style={styles.emptyState}>
-            <Icon name="inventory" size={64} color={Colors.textLight} />
-            <Text style={styles.emptyStateTitle}>No products found</Text>
-            <Text style={styles.emptyStateSubtitle}>
-              Try adjusting your search or filters
-            </Text>
-          </View>
-        )}
-
-        <View style={{height: 100}} />
-      </ScrollView>
+      {/* ✅ Products FlatList with Pagination */}
+      <FlatList
+        data={filteredProducts}
+        keyExtractor={item => item.id.toString()}
+        renderItem={renderProduct}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loading ? (
+            <ActivityIndicator style={{margin: 10}} color={Colors.primary} />
+          ) : null
+        }
+      />
 
       {/* Bottom Cart Summary */}
       {getCartItemCount() > 0 && (
@@ -990,9 +489,6 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
           </TouchableOpacity>
         </View>
       )}
-
-      {/* Filters Modal */}
-      {/* {renderFiltersModal()} */}
     </View>
   );
 };
@@ -1144,7 +640,7 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 16,
     fontWeight: '500',
-    color: Colors.text,
+    color: '#000',
     flex: 1,
     marginRight: Spacing.sm,
   },
@@ -1171,7 +667,7 @@ const styles = StyleSheet.create({
   },
   productDescription: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: Colors.text,
     marginBottom: Spacing.sm,
   },
   productDetails: {
@@ -1181,15 +677,15 @@ const styles = StyleSheet.create({
   },
   productSku: {
     fontSize: 12,
-    color: Colors.textLight,
+    color: Colors.text,
   },
   productStock: {
     fontSize: 12,
-    color: Colors.textLight,
+    color: Colors.text,
   },
   productSupplier: {
     fontSize: 12,
-    color: Colors.textLight,
+    color: Colors.text,
     marginBottom: Spacing.md,
   },
 

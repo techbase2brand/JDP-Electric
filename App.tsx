@@ -63,6 +63,7 @@
 
 import React, {useEffect, useState} from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   NativeModules,
   Platform,
@@ -78,7 +79,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NavigationContainer} from '@react-navigation/native';
 
 // ✅ Redux imports
-import {Provider, useSelector} from 'react-redux';
+import {Provider, useDispatch, useSelector} from 'react-redux';
 import {PersistGate} from 'redux-persist/integration/react';
 import {store, persistor} from './src/redux/store';
 import FloatingTimer from './src/components/FloatingTimer';
@@ -86,6 +87,8 @@ import {
   startBackgroundTimer,
   stopBackgroundTimer,
 } from './src/NotificationService';
+import {logout} from './src/redux/userSlice';
+import {logoutApi} from './src/config/apiConfig';
 
 const {flex} = BaseStyle;
 
@@ -114,7 +117,8 @@ const AppContent = () => {
   const userData = useSelector(state => state.user.token);
   // const user = useSelector(state => state.user.user);
   // const permissions = useSelector(state => state.user.permissions);
-
+  const dispatch = useDispatch();
+  const token = useSelector(state => state.user.token);
   const {isRunning} = useSelector((state: any) => state.timer);
   // console.log('userData>>>', permissions);
 
@@ -130,7 +134,20 @@ const AppContent = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  const handleLogout = async () => {
+    try {
+      if (token) {
+        await logoutApi(token);
+      }
+      dispatch(logout());
+      // Alert.alert('Session Expired', 'Please login again.');
+    } catch (err) {
+      Alert.alert('Logout Failed', err.message || 'Please try again');
+    }
+  };
+ 
+  // 👇 global set
+  global.handleLogout = handleLogout;
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
