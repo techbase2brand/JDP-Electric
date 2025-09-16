@@ -120,7 +120,6 @@ const AppContent = () => {
   const dispatch = useDispatch();
   const token = useSelector(state => state.user.token);
   const {isRunning} = useSelector((state: any) => state.timer);
-  // console.log('userData>>>', permissions);
 
   useEffect(() => {
     if (isRunning) {
@@ -145,9 +144,10 @@ const AppContent = () => {
       Alert.alert('Logout Failed', err.message || 'Please try again');
     }
   };
- 
+
   // 👇 global set
   global.handleLogout = handleLogout;
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -161,7 +161,6 @@ const AppContent = () => {
       const loginStatus = await AsyncStorage.getItem('isLoggedIn');
       setIsLoggedIn(loginStatus === 'true');
     };
-
     checkLogin();
   }, []);
 

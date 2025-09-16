@@ -371,6 +371,7 @@ const SupplierSelectionScreen = ({navigation, user}) => {
       <View style={styles.suppliersList}>
         <FlatList
           data={supplierss}
+          showsVerticalScrollIndicator={false}
           keyExtractor={item => item.id.toString()}
           renderItem={renderSupplier}
           onEndReached={loadMore}

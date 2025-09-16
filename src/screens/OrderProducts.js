@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
-import {getAllProducts} from '../config/apiConfig';
+import {getAllProducts, getProductsBySupplier} from '../config/apiConfig';
 import {useDispatch, useSelector} from 'react-redux';
 import {addToCart, updateQuantity} from '../redux/cartSlice';
 
@@ -64,9 +64,10 @@ const Shadows = {
 };
 
 const OrderProductsScreen = ({onBack, onNavigate, route}) => {
+  const {id} = route.params;
   const token = useSelector(state => state.user.token);
   const cart = useSelector(state => state.cart.items);
-  console.log('cart>>>', cart);
+  console.log('cart>>>', id);
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -83,6 +84,8 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [checkLoading, setCheckLoading] = useState(false);
+
   const [hasMore, setHasMore] = useState(true);
   // Mock products data (removed price and rating)
   // const products = [
@@ -159,23 +162,71 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
   //   {id: 'boxes', name: 'Boxes'},
   //   {id: 'outlets', name: 'Outlets & Switches'},
   // ];
-
+  const lastFetchedPageRef = useRef(null);
   useEffect(() => {
     fetchProducts();
+    console.log('productsproducts', products);
   }, [page]);
 
+  // const fetchProducts = async () => {
+  //   if (loading || !hasMore) return;
+  //   setLoading(true);
+  //   setCheckLoading(true);
+  //   try {
+  //     const res = await getProductsBySupplier(id, page, 10, token);
+  //     const newProducts = res?.data?.data  // ✅ same as suppliers
+  //     console.log('resresres product::', res);
+
+  //     if (newProducts.length > 0) {
+  //       setProducts(prev => [...prev, ...newProducts]);
+
+  //       // ✅ only set categories on first page
+  //       if (page === 1) {
+
+  //         const uniqueCategories = [
+  //           {id: 'all', name: 'All Products'},
+  //           ...Array.from(new Set(newProducts.map(p => p.category))).map(
+  //             cat => ({
+  //               id: cat,
+  //               name: cat
+  //                 ? cat.charAt(0).toUpperCase() + cat.slice(1)
+  //                 : 'Unknown',
+  //             }),
+  //           ),
+  //         ];
+  //         setCategories(uniqueCategories);
+  //       }
+  //     } else {
+  //       setHasMore(false);
+  //       setCheckLoading(false);
+  //     }
+  //   } catch (err) {
+  //     console.log('❌ Error fetching products:', err);
+  //   } finally {
+  //     setLoading(false);
+  //     setCheckLoading(false);
+  //   }
+  // };
   const fetchProducts = async () => {
     if (loading || !hasMore) return;
-    setLoading(true);
-    try {
-      const res = await getAllProducts(page, 10, token);
 
-      const newProducts = res?.data?.data || []; // ✅ same as suppliers
+    // ✅ agar same page dobara aa gaya to ignore
+    if (lastFetchedPageRef.current === page) {
+      console.log('⚠️ Skipping duplicate fetch for page:', page);
+      return;
+    }
+    lastFetchedPageRef.current = page;
+
+    setLoading(true);
+    setCheckLoading(true);
+
+    try {
+      const res = await getProductsBySupplier(id, page, 10, token);
+      const newProducts = res?.data?.data || [];
+      console.log('📦 Page', page, '=>', newProducts.length);
 
       if (newProducts.length > 0) {
         setProducts(prev => [...prev, ...newProducts]);
-
-        // ✅ only set categories on first page
         if (page === 1) {
           const uniqueCategories = [
             {id: 'all', name: 'All Products'},
@@ -197,9 +248,9 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       console.log('❌ Error fetching products:', err);
     } finally {
       setLoading(false);
+      setCheckLoading(false);
     }
   };
-
   const loadMore = () => {
     if (!loading && hasMore) {
       setPage(prev => prev + 1);
@@ -278,7 +329,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       navigation.goBack();
     }
   };
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = products?.filter(product => {
     const matchesSearch =
       product?.product_name
         ?.toLowerCase()
@@ -437,56 +488,78 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
         </View>
       </View>
 
-      {/* Category Tabs */}
-      <View style={styles.categoryTabs}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {categories.slice(0, 4).map(category => (
-            <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.categoryTab,
-                selectedCategory === category.id && styles.selectedCategoryTab,
-              ]}
-              onPress={() => setSelectedCategory(category.id)}>
-              <Text
-                style={[
-                  styles.categoryTabText,
-                  selectedCategory === category.id &&
-                    styles.selectedCategoryTabText,
-                ]}>
-                {category.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+      {loading ? (
+        // ✅ Loading state dikhana
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text>Loading products...</Text>
+        </View>
+      ) : filteredProducts?.length > 0 ? (
+        <View>
+          <View style={styles.categoryTabs}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {categories?.slice(0, 4)?.map(category => (
+                <TouchableOpacity
+                  key={category.id}
+                  style={[
+                    styles.categoryTab,
+                    selectedCategory === category.id &&
+                      styles.selectedCategoryTab,
+                  ]}
+                  onPress={() => setSelectedCategory(category.id)}>
+                  <Text
+                    style={[
+                      styles.categoryTabText,
+                      selectedCategory === category.id &&
+                        styles.selectedCategoryTabText,
+                    ]}>
+                    {category.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
 
-      {/* Products List */}
-      {/* ✅ Products FlatList with Pagination */}
-      <FlatList
-        data={filteredProducts}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderProduct}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          loading ? (
-            <ActivityIndicator style={{margin: 10}} color={Colors.primary} />
-          ) : null
-        }
-      />
+          {/* Products List */}
+          {/* ✅ Products FlatList with Pagination */}
+          <FlatList
+            data={filteredProducts}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={item => item.id.toString()}
+            renderItem={renderProduct}
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={
+              loading ? (
+                <ActivityIndicator
+                  style={{margin: 10}}
+                  color={Colors.primary}
+                />
+              ) : null
+            }
+          />
 
-      {/* Bottom Cart Summary */}
-      {getCartItemCount() > 0 && (
-        <View style={styles.bottomCartSummary}>
-          <TouchableOpacity
-            style={styles.cartSummaryButton}
-            onPress={() => handleNavigate('CartScreen')}>
-            <Text style={styles.cartSummaryText}>
-              View Cart ({getCartItemCount()} items)
-            </Text>
-            <Icon name="shopping-cart" size={20} color={Colors.white} />
-          </TouchableOpacity>
+          {/* Bottom Cart Summary */}
+          {getCartItemCount() > 0 && (
+            <View style={styles.bottomCartSummary}>
+              <TouchableOpacity
+                style={styles.cartSummaryButton}
+                onPress={() => handleNavigate('CartScreen')}>
+                <Text style={styles.cartSummaryText}>
+                  View Cart ({getCartItemCount()} items)
+                </Text>
+                <Icon name="shopping-cart" size={20} color={Colors.white} />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      ) : (
+        <View style={styles.emptyStateContainer}>
+          <Icon name="shopping-cart" size={80} color={Colors.textLight} />
+          <Text style={styles.emptyStateTitle1}>No Product found</Text>
+          <Text style={styles.emptyStateSubtitle1}>
+            Add some products to get started with your order
+          </Text>
         </View>
       )}
     </View>
@@ -859,6 +932,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text,
     fontWeight: '500',
+  },
+  emptyStateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.md,
+  },
+  emptyStateTitle1: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  emptyStateSubtitle1: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.xl,
   },
 });
 

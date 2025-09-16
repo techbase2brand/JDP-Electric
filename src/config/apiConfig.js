@@ -48,7 +48,7 @@ export const verifyForgotPasswordOtp = async (email, otp) => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
-
+ 
 // ✅ Resend OTP
 export const resendForgotPasswordOtp = async email => {
   try {
@@ -175,11 +175,37 @@ export const getSuppliers = async (page = 1, limit = 10, token) => {
     throw error;
   }
 };
-// ✅ Get All Products
-export const getAllProducts = async (page = 1, limit = 10, token) => {
+
+// // ✅ Get All Products
+// export const getAllProducts = async (page = 1, limit = 10, token) => {
+//   try {
+//     const response = await api.get(
+//       `/products/getAllProducts?page=${page}&limit=${limit}`,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token}`, // token required
+//         },
+//       },
+//     );
+//     return response.data;
+//   } catch (error) {
+//     console.error(
+//       'Error fetching products:',
+//       error.response?.data || error.message,
+//     );
+//     throw error.response?.data || {message: 'Something went wrong'};
+//   }
+// };
+// ✅ Get Products by Supplier
+export const getProductsBySupplier = async (
+  supplierId,
+  page = 1,
+  limit = 10,
+  token,
+) => {
   try {
     const response = await api.get(
-      `/products/getAllProducts?page=${page}&limit=${limit}`,
+      `/products/getProductsBySupplier/${supplierId}?page=${page}&limit=${limit}`,
       {
         headers: {
           Authorization: `Bearer ${token}`, // token required
@@ -189,7 +215,49 @@ export const getAllProducts = async (page = 1, limit = 10, token) => {
     return response.data;
   } catch (error) {
     console.error(
-      'Error fetching products:',
+      'Error fetching supplier products:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
+
+// ✅ Get Customers
+export const getCustomers = async (page = 1, limit = 10, token) => {
+  try {
+    const response = await api.get(
+      `/customer/getCustomers?page=${page}&limit=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // 👈 token required
+        },
+      },
+    );
+    return response.data; // { data: [], total: number }
+  } catch (error) {
+    console.error(
+      'Error fetching customers:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
+
+// ✅ Get All Labor
+export const getAllLabor = async (page = 1, limit = 10, token) => {
+  try {
+    const response = await api.get(
+      `/labor/getAllLabor?page=${page}&limit=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // 👈 token send karo
+        },
+      },
+    );
+    return response.data; // { data: [] }
+  } catch (error) {
+    console.error(
+      'Error fetching labor:',
       error.response?.data || error.message,
     );
     throw error.response?.data || {message: 'Something went wrong'};
