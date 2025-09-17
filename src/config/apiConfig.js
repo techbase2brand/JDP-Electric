@@ -13,18 +13,18 @@ export const api = axios.create({
   },
 });
 
-api.interceptors.response.use(
-  response => response,
-  async error => {
-    if (error.response?.status === 401) {
-      //Aall App.js logout function call
-      if (global.handleLogout) {
-        global.handleLogout();
-      }
-    }
-    return Promise.reject(error);
-  },
-);
+// api.interceptors.response.use(
+//   response => response,
+//   async error => {
+//     if (error.response?.status === 401) {
+//       //Aall App.js logout function call
+//       if (global.handleLogout) {
+//         global.handleLogout();
+//       }
+//     }
+//     return Promise.reject(error);
+//   },
+// );
 
 // ✅ Send OTP
 export const sendForgotPasswordOtp = async email => {
@@ -48,7 +48,7 @@ export const verifyForgotPasswordOtp = async (email, otp) => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
- 
+
 // ✅ Resend OTP
 export const resendForgotPasswordOtp = async email => {
   try {
@@ -222,6 +222,28 @@ export const getProductsBySupplier = async (
   }
 };
 
+// ✅ Create Customer
+export const createCustomer = async (payload, token) => {
+  try {
+    const response = await api.post(
+      `/customer/createCustomer`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // 👈 Token required
+        },
+      },
+    );
+    return response.data; // 👈 Response object return karega
+  } catch (error) {
+    console.error(
+      'Error creating customer:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || { message: 'Something went wrong' };
+  }
+};
+
 // ✅ Get Customers
 export const getCustomers = async (page = 1, limit = 10, token) => {
   try {
@@ -261,5 +283,40 @@ export const getAllLabor = async (page = 1, limit = 10, token) => {
       error.response?.data || error.message,
     );
     throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
+
+// 🔹 Contractor API
+export const getContractors = async (page = 1, limit = 10, token) => {
+  try {
+    const res = await api.get(
+      `/contractor/getContractors?page=${page}&limit=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching contractors:', error);
+    throw error;
+  }
+};
+
+
+// createJob
+
+export const createJob = async (payload, token) => {
+  try {
+    const res = await api.post(`/job/createJob`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error creating job:', error.response?.data || error.message);
+    throw error.response?.data || { message: 'Something went wrong' };
   }
 };

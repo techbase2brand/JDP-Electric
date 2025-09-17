@@ -20,12 +20,19 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
-import {getAllLabor, getCustomers} from '../config/apiConfig';
+import {
+  createCustomer,
+  createJob,
+  getAllLabor,
+  getContractors,
+  getCustomers,
+} from '../config/apiConfig';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -40,10 +47,10 @@ const customers = [
 const CreateJobScreen = ({navigation, onCreateJob}) => {
   const scrollRef = useRef(null);
   const fieldPositions = useRef({});
+  const isFetchingMoreRef = useRef(false);
 
   const token = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
-  console.log('userdetails>>>', user);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,19 +81,32 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
+  // const handleSelect = member => {
+  //   const isSelected = formData.assignedTo.includes(member?.users?.full_name);
+
+  //   if (isSelected) {
+  //     updateFormData(
+  //       'assignedTo',
+  //       formData.assignedTo.filter(name => name !== member?.users?.full_name),
+  //     );
+  //   } else {
+  //     updateFormData('assignedTo', [
+  //       ...formData.assignedTo,
+  //       member?.users?.full_name,
+  //     ]);
+  //   }
+  // };
   const handleSelect = member => {
-    const isSelected = formData.assignedTo.includes(member?.users?.full_name);
+    const laborId = member?.id; // <- API se aata id use karein
+    const isSelected = formData.assignedTo.includes(laborId);
 
     if (isSelected) {
       updateFormData(
         'assignedTo',
-        formData.assignedTo.filter(name => name !== member?.users?.full_name),
+        formData.assignedTo.filter(id => id !== laborId),
       );
     } else {
-      updateFormData('assignedTo', [
-        ...formData.assignedTo,
-        member?.users?.full_name,
-      ]);
+      updateFormData('assignedTo', [...formData.assignedTo, laborId]);
     }
   };
 
@@ -94,6 +114,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     title: '',
     description: '',
     customerName: '',
+    // contractorName: '',
     customerPhone: '',
     customerEmail: '',
     customerAddress: '',
@@ -112,21 +133,33 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     sameAsCustomer: true,
     assignedTo: [],
     estimatedHours: 8,
+    estimatedCost: '',
     notes: '',
   });
-  console.log('');
+  console.log('form data :::', formData);
 
   const [search, setSearch] = useState('');
   const [customers, setCustomers] = useState([]); // API se data
-  const [filtered, setFiltered] = useState([]); // Search ke hisaab se
+  const [filtered, setFiltered] = useState([]); // According Search
+  const [contractorsFiltered, setContractorsFiltered] = useState([]); // According Search
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showContractorDropdown, setShowContractorDropdown] = useState(false);
   const [labors, setLabors] = useState([]);
   const [laborPage, setLaborPage] = useState(1);
   const [laborHasMore, setLaborHasMore] = useState(true);
   const [laborLoading, setLaborLoading] = useState(false);
+  const [contractors, setContractors] = useState([]);
+  const [contractorFiltered, setContractorFiltered] = useState([]);
+  const [contractorSearch, setContractorSearch] = useState('');
+  const [contractorPage, setContractorPage] = useState(1);
+  const [contractorHasMore, setContractorHasMore] = useState(true);
+  const [selected, setSelected] = useState('customer'); // ✅ Customer default
+  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const [selectedContractorId, setSelectedContractorId] = useState(null);
+  console.log('selectedselected>>', selected);
 
   //  Load from AsyncStorage on mount
   // useEffect(() => {
@@ -177,28 +210,90 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   // };
   useEffect(() => {
     fetchCustomers();
+    // fetchContractors();
   }, []);
-  // ✅ Customers fetch karna
+  // ✅ Customers
   const fetchCustomers = async (pageNo = 1) => {
+    // page 1 ko kabhi block mat karo; baaki pages ke liye guards
+    const limit = 10;
     if (!token) return;
-    try {
-      setLoading(true);
-      const res = await getCustomers(pageNo, 10, token);
-      console.log('resresres', res.data.customers);
+    if (pageNo > 1 && (loading || isFetchingMoreRef.current || !hasMore))
+      return;
 
+    try {
+      isFetchingMoreRef.current = true;
+      setLoading(true);
+
+      const res = await getCustomers(pageNo, limit, token);
+      console.log('customer::', res);
+
+      const newItems = res?.data?.customers || [];
+      const pg = res?.data?.pagination; // { page, limit, total, totalPages }
+
+      // ---- build next list (append on page>1) ----
+      let nextList;
       if (pageNo === 1) {
-        setCustomers(res?.data?.customers);
-        setFiltered(res?.data?.customers);
+        nextList = newItems;
       } else {
-        setCustomers(prev => [...prev, ...res?.data?.customers]);
+        // ensure unique by id to avoid duplicates when API repeats boundary items
+        const prevById = new Map(customers.map(c => [c.id, c]));
+        newItems.forEach(item => prevById.set(item.id, item));
+        nextList = Array.from(prevById.values());
       }
-      setHasMore(res?.data?.customers?.length > 0);
-      setLoading(false);
+
+      // ---- commit state ----
+      setCustomers(nextList);
+
+      // search-based filtered update (same function you use to filter on type)
+      const q = (search || '').trim().toLowerCase();
+      if (q) {
+        setFiltered(
+          nextList.filter(c =>
+            (c?.customer_name || '').toLowerCase().includes(q),
+          ),
+        );
+      } else {
+        setFiltered(nextList);
+      }
+
+      // ---- hasMore logic ----
+      if (pg?.totalPages && pg?.page) {
+        setHasMore(pg.page < pg.totalPages);
+      } else {
+        setHasMore(newItems.length === limit); // fallback
+      }
+
+      setPage(pageNo);
     } catch (err) {
+      console.log('Error fetching customers:', err);
+      // 500 aaya to loop band kar do
+      setHasMore(false);
+    } finally {
       setLoading(false);
-      console.error(err);
+      isFetchingMoreRef.current = false;
     }
   };
+
+  // const fetchCustomers = async (pageNo = 1) => {
+  //   if (!token) return;
+  //   try {
+  //     setLoading(true);
+  //     const res = await getCustomers(pageNo, 10, token);
+  //     console.log('Customers', res);
+
+  //     if (pageNo === 1) {
+  //       setCustomers(res?.data?.customers);
+  //       setFiltered(res?.data?.customers);
+  //     } else {
+  //       setCustomers(prev => [...prev, ...res?.data?.customers]);
+  //     }
+  //     setHasMore(res?.data?.customers?.length > 0);
+  //     setLoading(false);
+  //   } catch (err) {
+  //     setLoading(false);
+  //     console.error(err);
+  //   }
+  // };
 
   // ✅ Search text change
   const handleChange = text => {
@@ -221,10 +316,68 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   };
 
   // ✅ Select customer
+  // replace your handleSelectName
   const handleSelectName = name => {
     setSearch(name);
-    setFormData({...formData, customerName: name});
+    const chosen = customers.find(c => c?.customer_name === name);
+    setSelectedCustomerId(chosen?.id || null);
+    setFormData(prev => ({...prev, customerName: name}));
     setShowDropdown(false);
+  };
+
+  // const handleSelectName = name => {
+  //   setSearch(name);
+  //   setFormData({...formData, customerName: name});
+  //   setShowDropdown(false);
+  // };
+  //  Contractors
+  const fetchContractors = async (pageNo = 1) => {
+    if (!token || loading || !contractorHasMore) return;
+    try {
+      setLoading(true);
+      const res = await getContractors(pageNo, 10, token);
+      console.log('Contractors:', res.data.contractors);
+      console.log('pageno', pageNo);
+
+      if (pageNo === 1) {
+        setContractors(res?.data?.contractors || []);
+        // setContractorFiltered(res?.data?.contractors || []);
+      } else {
+        setContractors(prev => [...prev, ...res?.data?.contractors]);
+      }
+
+      setContractorHasMore(res?.data?.contractors?.length > 0);
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      setContractorHasMore(false);
+      console.error(err);
+    }
+  };
+
+  // ✅ Select Contractors
+  const handleContractorChange = text => {
+    setContractorSearch(text);
+    setFormData({...formData, contractorName: text});
+
+    if (validationErrors.contractorName) {
+      setValidationErrors(prev => ({...prev, contractorName: ''}));
+    }
+
+    if (text.length > 0) {
+      const matches = contractors.filter(c =>
+        c?.contractor_name?.toLowerCase()?.includes(text?.toLowerCase()),
+      );
+      setContractorFiltered(matches);
+      setShowContractorDropdown(true);
+    } else {
+      setShowContractorDropdown(false);
+    }
+  };
+  const handleSelectContractor = name => {
+    setContractorSearch(name);
+    setFormData({...formData, contractorName: name});
+    setShowContractorDropdown(false);
   };
 
   const handleAddIfNotExist = async () => {
@@ -248,7 +401,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     try {
       setLaborLoading(true);
       const res = await getAllLabor(pageNo, 10, token);
-      console.log('labout res::>>', res?.data?.data);
+      console.log('labpur::', res);
 
       if (pageNo === 1) {
         setLabors(res?.data?.data);
@@ -484,7 +637,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
           errors.customerPhone = 'Customer phone is required';
         if (!formData.customerAddress.trim())
           errors.customerAddress = 'Customer address is required';
-        if (!formData.city.trim()) errors.city = 'City is required';
+        // if (!formData.city.trim()) errors.city = 'City is required';
         if (!formData.scheduledDate)
           errors.scheduledDate = 'Scheduled date is required';
         if (!formData.scheduledTime)
@@ -565,11 +718,23 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     return Object.keys(errors).length === 0;
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, 3));
+      try {
+        if (currentStep === 1) {
+          await handleAddCustomer(); // ✅ API call
+        }
+      } catch (err) {
+        console.log('❌ handleAddCustomer error:', err);
+        // yaha chaho to user ko alert bhi dikha sakte ho
+      } finally {
+        // ✅ Step change hamesha hoga
+        setCurrentStep(prev => Math.min(prev + 1, 3));
+      }
     }
   };
+
+  console.log('nextStepnextStep', currentStep);
 
   const prevStep = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
@@ -601,67 +766,121 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   //     });
   //   }
   // }, [validationErrors]);
+  const handleAddCustomer = async () => {
+    try {
+      // 1. Check if customer exists in current list
+      const existing = customers.find(
+        c =>
+          c.customer_name?.toLowerCase() ===
+          formData.customerName?.trim().toLowerCase(),
+      );
+
+      if (existing) {
+        console.log('✅ Customer already exists:', existing);
+        // agar customer mil gaya to directly state update kar do (id bhi rakh lo)
+        setSelectedCustomerId(existing.id);
+        return existing;
+      }
+
+      // 2. Agar exist nahi karta to create karo
+      const payload = {
+        customer_name: formData.customerName,
+        email: formData.customerEmail,
+        phone: formData.customerPhone,
+        address: formData.customerAddress,
+      };
+      console.log('Creating new customer payload::', payload);
+
+      const res = await createCustomer(payload, token);
+      console.log('✅ Customer Created:', res);
+
+      // naya add hone ke baad list refresh karo
+      fetchCustomers(1);
+
+      return res;
+    } catch (err) {
+      console.log('❌ Error in handleAddCustomer:', err);
+    }
+  };
+
+  const buildJobPayload = () => {
+    // lead labor IDs: agar current user lead hai to use include karo
+    const leadIds = user?.management_type === 'lead_labor' ? [user?.id] : [];
+
+    // API example me arrays stringified hain — backend ke hisaab se rakh rahe:
+    const assigned_lead_labor_ids = JSON.stringify(leadIds);
+    const assigned_labor_ids = JSON.stringify(formData.assignedTo || []);
+    const assigned_material_ids = JSON.stringify([]); // UI me material select nahi tha
+
+    // bill-to fields
+    const billTo = formData.sameAsCustomer
+      ? {
+          bill_to_address: formData.customerAddress?.trim(),
+          bill_to_city_zip: formData.city?.trim(),
+          bill_to_phone: formData.customerPhone?.trim(),
+          bill_to_email: formData.customerEmail?.trim(),
+        }
+      : {
+          bill_to_address: formData.billingAddress?.trim(),
+          bill_to_city_zip: formData.billingCity?.trim(),
+          bill_to_phone: formData.billingPhone?.trim(),
+          bill_to_email: formData.billingEmail?.trim(),
+        };
+
+    return {
+      job_title: formData.title?.trim(),
+      job_type: 'service_based', // as per your example
+      customer_id: selectedCustomerId, // <- required
+      // contractor_id: selectedContractorId, // <- optional if needed
+      description: formData.description?.trim(),
+      priority: formData.priority,
+      address: formData.customerAddress?.trim(),
+      city_zip: formData.city?.trim(), // aapke form me zip nahi hai, city pass kar rahe
+      phone: formData.customerPhone?.trim(),
+      email: formData.customerEmail?.trim(),
+      ...billTo,
+      same_as_address: !!formData.sameAsCustomer,
+      due_date: formData.dueDate, // "YYYY-MM-DD"
+      estimated_hours: Number(formData.estimatedHours) || 0,
+      estimated_cost: Number(formData.estimatedCost) || 0, // UI me field nahi; chahe to 0 rakho ya add a field
+      assigned_lead_labor_ids,
+      assigned_labor_ids,
+      assigned_material_ids,
+      status: 'active',
+    };
+  };
 
   const submitJob = async () => {
     if (!validateStep(3)) return;
+    if (!token) {
+      Alert.alert('Auth required', 'Please login again.');
+      return;
+    }
+    if (!selectedCustomerId) {
+      Alert.alert(
+        'Missing customer',
+        'Please select a customer from the list.',
+      );
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const job = {
-        id: `job-${Date.now()}`,
-        jobId: `job-${Date.now()}`,
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        customer: {
-          name: formData.customerName.trim(),
-          phone: formData.customerPhone.trim(),
-          email: formData.customerEmail.trim(),
-          address: formData.customerAddress.trim(),
-        },
-        billingAddress: formData.sameAsCustomer
-          ? {
-              name: formData.customerName.trim(),
-              phone: formData.customerPhone.trim(),
-              email: formData.customerEmail.trim(),
-              address: formData.customerAddress.trim(),
-              city: formData.city.trim(),
-            }
-          : {
-              name: formData.billingName.trim(),
-              phone: formData.billingPhone.trim(),
-              email: formData.billingEmail.trim(),
-              address: formData.billingAddress.trim(),
-              city: formData.billingCity.trim(),
-            },
-        assignedTo: formData.assignedTo,
-        status: 'pending',
-        priority: formData.priority,
-        estimatedHours: formData.estimatedHours,
-        scheduledDate: formData.scheduledDate,
-        scheduledTime: formData.scheduledTime,
-        startDate: formData.scheduledDate,
-        dueDate: formData.dueDate,
-        location: {
-          address: formData.customerAddress.trim(),
-          city: formData.city.trim(),
-        },
-        materials: [], // No materials section
-        notes: formData.notes.trim(),
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-      };
+      const payload = buildJobPayload();
+      console.log('CreateJob payload =>', payload);
+      const res = await createJob(payload, token);
+      console.log('resres', res);
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      // Simulate API call
-      // onCreateJob(jobData);
-      console.log('jobjob>>', job);
-
+      // success UI
       Alert.alert('Success', 'Job created successfully!', [
-        {text: 'OK', onPress: () => navigation.navigate('JobDetail', {job})},
+        {text: 'OK', onPress: () => navigation.navigate('JobStack')},
       ]);
-    } catch (error) {
-      console.error('Failed to create job:', error);
-      Alert.alert('Error', 'Failed to create job. Please try again.');
+    } catch (err) {
+      const msg = err?.message || 'Failed to create job. Please try again.';
+      Alert.alert(
+        'Error',
+        typeof msg === 'string' ? msg : 'Something went wrong',
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -813,7 +1032,15 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             <Icon name="work" size={24} color="#3B82F6" />
             <Text style={styles.sectionTitle}>Basic Information</Text>
           </View>
-
+          {/* <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'flex-start',
+              margin: 10,
+            }}>
+            {renderOption('Customer', 'customer')}
+            {renderOption('Contractor', 'contractor')}
+          </View> */}
           <View
             style={styles.formGroup}
             ref={ref => (fieldPositions.current['title'] = ref)}>
@@ -895,38 +1122,69 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Icon name="person" size={24} color="#3B82F6" />
-            <Text style={styles.sectionTitle}>Customer Information</Text>
+            <Text style={styles.sectionTitle}>
+              {selected == 'customer' ? 'Customer' : 'Contractor'} Information
+            </Text>
           </View>
-          <View
-            style={styles.formGroup}
-            ref={ref => (fieldPositions.current['customerName'] = ref)}>
-            <Text style={styles.formLabel}>Customer Name *</Text>
+        
+            <View
+              style={styles.formGroup}
+              ref={ref => (fieldPositions.current['customerName'] = ref)}>
+              <Text style={styles.formLabel}>Customer Name *</Text>
 
-            <TextInput
-              style={[
-                styles.inputContainer,
-                validationErrors.customerName && styles.inputContainerError,
-              ]}
-              placeholder="Enter Customer"
-              value={search}
-              onChangeText={handleChange}
-              // onBlur={handleAddIfNotExist}
-              onFocus={() => {
-                setFiltered(customers); // ✅ All customers dikhao
-                setShowDropdown(true); // ✅ Dropdown open karo
-              }}
-            />
-
-            {/* Validation Error */}
-            {validationErrors.customerName && (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>
-                  {validationErrors.customerName}
+              <TextInput
+                style={[
+                  styles.inputContainer,
+                  validationErrors.customerName && styles.inputContainerError,
+                ]}
+                placeholder="Enter Customer"
+                value={search}
+                onChangeText={handleChange}
+                // onBlur={handleAddIfNotExist}
+                onFocus={() => {
+                  setPage(1);
+                  setHasMore(true);
+                  setFiltered(customers);
+                  setShowDropdown(true);
+                }}
+              />
+              {/* <TouchableOpacity
+                style={[
+                  styles.inputContainer,
+                  validationErrors.customerName && styles.inputContainerError,
+                  {
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  },
+                ]}
+                activeOpacity={0.7}
+                onPress={() => {
+                  setFiltered(customers); // ✅ All customers dikhao
+                  setShowDropdown(!showDropdown); // ✅ Toggle dropdown
+                }}>
+                <Text style={{color: search ? '#000' : '#999'}}>
+                  {search || 'Select Customer'}
                 </Text>
-              </View>
-            )}
 
-            {/* {showDropdown && filtered.length > 0 && (
+                <Icon
+                  name={
+                    showDropdown ? 'keyboard-arrow-up' : 'keyboard-arrow-down'
+                  }
+                  size={24}
+                />
+              </TouchableOpacity> */}
+
+              {/* Validation Error */}
+              {validationErrors.customerName && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>
+                    {validationErrors.customerName}
+                  </Text>
+                </View>
+              )}
+
+              {/* {showDropdown && filtered.length > 0 && (
               <View style={styles.dropdownWrapper}>
                 <FlatList
                   data={filtered}
@@ -941,37 +1199,128 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 />
               </View>
             )} */}
-            {showDropdown && filtered.length > 0 && (
-              <View style={styles.dropdownWrapper}>
-                <FlatList
-                  data={filtered}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={({item}) => (
-                    <TouchableOpacity
-                      style={styles.customerItem}
-                      onPress={() => handleSelectName(item.customer_name)}>
-                      <Text style={styles.customerText}>
-                        {item.customer_name}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  onEndReached={() => {
-                    if (hasMore && !loading) {
-                      const nextPage = page + 1;
-                      setPage(nextPage);
-                      fetchCustomers(nextPage);
+              {showDropdown && filtered.length > 0 && (
+                <View style={styles.dropdownWrapper}>
+                  <FlatList
+                    data={filtered}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({item}) => (
+                      <TouchableOpacity
+                        style={styles.customerItem}
+                        onPress={() => handleSelectName(item.customer_name)}>
+                        <Text style={styles.customerText}>
+                          {item.customer_name}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                    onEndReached={() => {
+                      if (hasMore && !loading && !isFetchingMoreRef.current) {
+                        const nextPage = page + 1;
+                        setPage(nextPage);
+                        fetchCustomers(nextPage);
+                      }
+                    }}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={
+                      loading ? (
+                        <ActivityIndicator size="small" color="gray" />
+                      ) : null
                     }
-                  }}
-                  onEndReachedThreshold={0.5}
-                  ListFooterComponent={
-                    loading ? (
-                      <ActivityIndicator size="small" color="gray" />
-                    ) : null
+                  />
+                </View>
+              )}
+            </View>
+       
+
+          {/* Contactor  Information */}
+          {/* {selected == 'contractor' && (
+            <View
+              style={styles.formGroup}
+              ref={ref => (fieldPositions.current['contractorName'] = ref)}>
+              <Text style={styles.formLabel}>Contractor Name *</Text>
+
+              <TextInput
+              style={[
+                styles.inputContainer,
+                validationErrors.contractorName && styles.inputContainerError,
+              ]}
+              placeholder="Enter Contractor"
+              value={contractorSearch}
+              onChangeText={handleContractorChange}
+              onFocus={() => {
+                setContractorFiltered(contractors); // ✅ All contractors dikhao
+                setShowContractorDropdown(true);
+              }}
+            />
+              <TouchableOpacity
+                style={[
+                  styles.inputContainer,
+                  validationErrors.contractorName && styles.inputContainerError,
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  },
+                ]}
+                onPress={() => {
+                  setContractorFiltered(contractors);
+                  setShowContractorDropdown(prev => !prev); // toggle dropdown
+                }}>
+                <Text style={{color: contractorSearch ? '#000' : '#999'}}>
+                  {contractorSearch || 'Select Contractor'}
+                </Text>
+                <Icon
+                  name={
+                    showContractorDropdown
+                      ? 'keyboard-arrow-up'
+                      : 'keyboard-arrow-down'
                   }
+                  size={24}
                 />
-              </View>
-            )}
-          </View>
+              </TouchableOpacity>
+
+              {validationErrors.contractorName && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>
+                    {validationErrors.contractorName}
+                  </Text>
+                </View>
+              )}
+
+              {showContractorDropdown && contractorFiltered?.length > 0 && (
+                <View style={styles.dropdownWrapper}>
+                  <FlatList
+                    data={contractorFiltered}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({item}) => (
+                      <TouchableOpacity
+                        style={styles.customerItem}
+                        onPress={() =>
+                          handleSelectContractor(item.contractor_name)
+                        }>
+                        <Text style={styles.customerText}>
+                          {item.contractor_name}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                    onEndReached={() => {
+                      if (contractorHasMore && !loading) {
+                        const nextPage = contractorPage + 1;
+                        setContractorPage(nextPage);
+                        fetchContractors(nextPage);
+                      }
+                    }}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={
+                      loading ? (
+                        <ActivityIndicator size="small" color="gray" />
+                      ) : null
+                    }
+                  />
+                </View>
+              )}
+            </View>
+          )} */}
 
           <View
             style={styles.formGroup}
@@ -1088,7 +1437,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
           <View
             style={styles.formGroup}
             ef={ref => (fieldPositions.current['city'] = ref)}>
-            <Text style={styles.formLabel}>City *</Text>
+            <Text style={styles.formLabel}>City </Text>
             <View
               style={[
                 styles.inputContainer,
@@ -1120,12 +1469,12 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 setShowCitySuggestions(false);
               },
             )}
-            {validationErrors.city && (
+            {/* {validationErrors.city && (
               <View style={styles.errorContainer}>
                 <Icon name="error" size={16} color="#ef4444" />
                 <Text style={styles.errorText}>{validationErrors.city}</Text>
               </View>
-            )}
+            )} */}
           </View>
         </View>
 
@@ -1536,7 +1885,10 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             onPress={toggleDropdown}>
             <Text style={styles.headerText}>
               {formData.assignedTo.length > 0
-                ? formData.assignedTo.join(',')
+                ? labors
+                    .filter(labor => formData.assignedTo.includes(labor.id)) // sirf selected IDs
+                    .map(labor => labor.users?.full_name) // names nikalo
+                    .join(', ') // string me dikhao
                 : 'Select Members'}
             </Text>
             <Icon
@@ -1552,9 +1904,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 data={labors}
                 keyExtractor={item => item.id.toString()}
                 renderItem={({item}) => {
-                  const isSelected = formData.assignedTo.includes(
-                    item?.users?.full_name,
-                  );
+                  const isSelected = formData.assignedTo.includes(item?.id);
                   return (
                     <TouchableOpacity
                       style={styles.dropdownItem}
@@ -1663,9 +2013,13 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   );
 
   const renderReviewStep = () => {
-    const assignedMembers = labors?.filter(member =>
-      formData.assignedTo.includes(member.users?.full_name),
+    // const assignedMembers = labors?.filter(member =>
+    //   formData.assignedTo.includes(member.users?.full_name),
+    // );
+    const assignedMembers = labors?.filter(m =>
+      formData.assignedTo.includes(m.id),
     );
+
     const billingInfo = formData.sameAsCustomer
       ? {
           name: formData.customerName,
@@ -1840,6 +2194,20 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 {formData.estimatedHours} hours
               </Text>
             </View>
+            {/* <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Estimated Cost</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.formInput}
+                  value={(formData.estimatedCost ?? '').toString()}
+                  onChangeText={t =>
+                    updateFormData('estimatedCost', parseFloat(t) || 0)
+                  }
+                  placeholder="1500"
+                  keyboardType="numeric"
+                />
+              </View>
+            </View> */}
 
             {formData.notes && (
               <View style={styles.notesSummary}>
@@ -1853,6 +2221,18 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     );
   };
 
+  // const renderOption = (label, value) => (
+  //   <TouchableOpacity
+  //     style={styles.optionRow}
+  //     onPress={() => setSelected(value)}>
+  //     <MaterialCommunityIcons
+  //       name={selected === value ? 'checkbox-marked' : 'checkbox-blank-outline'}
+  //       size={24}
+  //       color={selected === value ? '#007AFF' : '#888'}
+  //     />
+  //     <Text style={styles.label}>{label}</Text>
+  //   </TouchableOpacity>
+  // );
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
@@ -2535,6 +2915,15 @@ const styles = StyleSheet.create({
   memberRole1: {
     fontSize: 14,
     color: '#555',
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  label: {
+    fontSize: 16,
+    marginLeft: 6,
   },
 });
 
