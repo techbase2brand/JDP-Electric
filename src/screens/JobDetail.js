@@ -109,7 +109,7 @@ const JobDetailScreen = ({
 
   // Get job from props or route params
   const job = route?.params?.job;
-  console.log('job1>>>>', job);
+  
 
   // const job = {
   //   jobId: 'JOB-0001',
@@ -727,7 +727,7 @@ const JobDetailScreen = ({
               ))}
               <TouchableOpacity
                 style={styles.outlineButton}
-                onPress={() => handleNavigate('SupplierSelectionScreen', job)}>
+                onPress={() => handleNavigate('SupplierSelectionScreen', {job})}>
                 <Icon name="shopping-cart" size={20} color={Colors.primary} />
                 <Text style={styles.outlineButtonText}>Order Materials</Text>
               </TouchableOpacity>

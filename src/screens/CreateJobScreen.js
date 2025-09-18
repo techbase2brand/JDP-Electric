@@ -1126,29 +1126,29 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               {selected == 'customer' ? 'Customer' : 'Contractor'} Information
             </Text>
           </View>
-        
-            <View
-              style={styles.formGroup}
-              ref={ref => (fieldPositions.current['customerName'] = ref)}>
-              <Text style={styles.formLabel}>Customer Name *</Text>
 
-              <TextInput
-                style={[
-                  styles.inputContainer,
-                  validationErrors.customerName && styles.inputContainerError,
-                ]}
-                placeholder="Enter Customer"
-                value={search}
-                onChangeText={handleChange}
-                // onBlur={handleAddIfNotExist}
-                onFocus={() => {
-                  setPage(1);
-                  setHasMore(true);
-                  setFiltered(customers);
-                  setShowDropdown(true);
-                }}
-              />
-              {/* <TouchableOpacity
+          <View
+            style={styles.formGroup}
+            ref={ref => (fieldPositions.current['customerName'] = ref)}>
+            <Text style={styles.formLabel}>Customer Name *</Text>
+
+            <TextInput
+              style={[
+                styles.inputContainer,
+                validationErrors.customerName && styles.inputContainerError,
+              ]}
+              placeholder="Enter Customer"
+              value={search}
+              onChangeText={handleChange}
+              // onBlur={handleAddIfNotExist}
+              onFocus={() => {
+                setPage(1);
+                setHasMore(true);
+                setFiltered(customers);
+                setShowDropdown(true);
+              }}
+            />
+            {/* <TouchableOpacity
                 style={[
                   styles.inputContainer,
                   validationErrors.customerName && styles.inputContainerError,
@@ -1175,16 +1175,16 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 />
               </TouchableOpacity> */}
 
-              {/* Validation Error */}
-              {validationErrors.customerName && (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>
-                    {validationErrors.customerName}
-                  </Text>
-                </View>
-              )}
+            {/* Validation Error */}
+            {validationErrors.customerName && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>
+                  {validationErrors.customerName}
+                </Text>
+              </View>
+            )}
 
-              {/* {showDropdown && filtered.length > 0 && (
+            {/* {showDropdown && filtered.length > 0 && (
               <View style={styles.dropdownWrapper}>
                 <FlatList
                   data={filtered}
@@ -1199,38 +1199,37 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 />
               </View>
             )} */}
-              {showDropdown && filtered.length > 0 && (
-                <View style={styles.dropdownWrapper}>
-                  <FlatList
-                    data={filtered}
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={({item}) => (
-                      <TouchableOpacity
-                        style={styles.customerItem}
-                        onPress={() => handleSelectName(item.customer_name)}>
-                        <Text style={styles.customerText}>
-                          {item.customer_name}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                    onEndReached={() => {
-                      if (hasMore && !loading && !isFetchingMoreRef.current) {
-                        const nextPage = page + 1;
-                        setPage(nextPage);
-                        fetchCustomers(nextPage);
-                      }
-                    }}
-                    onEndReachedThreshold={0.5}
-                    ListFooterComponent={
-                      loading ? (
-                        <ActivityIndicator size="small" color="gray" />
-                      ) : null
+            {showDropdown && filtered.length > 0 && (
+              <View style={styles.dropdownWrapper}>
+                <FlatList
+                  data={filtered}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      style={styles.customerItem}
+                      onPress={() => handleSelectName(item.customer_name)}>
+                      <Text style={styles.customerText}>
+                        {item.customer_name}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  onEndReached={() => {
+                    if (hasMore && !loading && !isFetchingMoreRef.current) {
+                      const nextPage = page + 1;
+                      setPage(nextPage);
+                      fetchCustomers(nextPage);
                     }
-                  />
-                </View>
-              )}
-            </View>
-       
+                  }}
+                  onEndReachedThreshold={0.5}
+                  ListFooterComponent={
+                    loading ? (
+                      <ActivityIndicator size="small" color="gray" />
+                    ) : null
+                  }
+                />
+              </View>
+            )}
+          </View>
 
           {/* Contactor  Information */}
           {/* {selected == 'contractor' && (
@@ -1696,7 +1695,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
           </View>
 
           {/* Scheduled Date */}
-          <View style={styles.dateTimeRow}>
+          {/* <View style={styles.dateTimeRow}>
             <View style={styles.dateTimeItem}>
               <Text style={styles.formLabel}>Want to Schedule Date</Text>
               <TouchableOpacity
@@ -1730,9 +1729,9 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 />
               )}
             </View>
-          </View>
+          </View> */}
           {/* Scheduled Time */}
-          <View style={[styles.dateTimeItem, {marginVertical: 10}]}>
+          {/* <View style={[styles.dateTimeItem, {marginVertical: 10}]}>
             <Text style={styles.formLabel}>Time</Text>
             <TouchableOpacity
               style={[
@@ -1764,7 +1763,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 }
               />
             )}
-          </View>
+          </View> */}
           {/* Due Date */}
           <View style={styles.formGroup}>
             <Text style={styles.formLabel}>Due Date</Text>

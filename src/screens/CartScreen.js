@@ -20,6 +20,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import {useDispatch, useSelector} from 'react-redux';
 import {updateQuantity} from '../redux/cartSlice';
+import {createProduct} from '../config/apiConfig';
 
 // Embedded Colors
 const Colors = {
@@ -67,9 +68,31 @@ const Shadows = {
 };
 
 const CartScreen = ({onBack, onNavigate, route}) => {
+  const {id, job} = route.params;
+
+  console.log('Full Job cart:', job.job.id, id);
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items);
+  const token = useSelector(state => state.user.token);
 
+  const handleAddMaterial = async () => {
+    try {
+      const payload = {
+        ...material,
+        stock_quantity: Number(material.stock_quantity),
+        unit_cost: Number(material.unit_cost),
+        supplier_id: Number(material.supplier_id),
+      };
+
+      const res = await createProduct(payload, token);
+      console.log('Material added:', res);
+      Alert.alert('Success', 'Material added successfully!');
+      setShowAddEntryModal(false);
+    } catch (error) {
+      console.error('Error adding material:', error);
+      Alert.alert('Error', error.message || 'Something went wrong');
+    }
+  };
   const statusOptions = [
     {label: 'Feet', value: 'Feet'},
     {label: 'Pieces', value: 'Pieces'},
@@ -98,78 +121,16 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   });
   const [timeEntries, setTimeEntries] = useState([]);
 
-  // Mock cart data (removed pricing)
-  // const [cartItems, setCartItems] = useState([
-  //   {
-  //     id: '1',
-  //     name: 'Electrical Panel - 200A',
-  //     category: 'panels',
-  //     description: 'Main breaker panel for residential use',
-  //     sku: 'EP-200A-001',
-  //     quantity: 2,
-  //     supplier: 'ElectricPro Supply',
-  //     // image: 'https://images.unsplash.cxssom/photo-1558618047-3c8c76ca7d13?w=300&h=300&fit=crop'
-  //   },
-  //   {
-  //     id: '2',
-  //     name: 'Circuit Breaker - 20A',
-  //     category: 'breakers',
-  //     description: 'Standard 20 amp circuit breaker',
-  //     sku: 'CB-20A-002',
-  //     quantity: 8,
-  //     supplier: 'ElectricPro Supply',
-  //   },
-  //   {
-  //     id: '4',
-  //     name: 'Conduit - 1/2 inch EMT',
-  //     category: 'conduit',
-  //     description: 'Electrical metallic tubing, 10ft length',
-  //     sku: 'EMT-12-004',
-  //     quantity: 15,
-  //     supplier: 'Conduit Corp',
-  //   },
-  //   {
-  //     id: '6',
-  //     name: 'GFCI Outlet - 20A',
-  //     category: 'outlets',
-  //     description: 'Ground fault circuit interrupter outlet',
-  //     sku: 'GFCI-20A-006',
-  //     quantity: 4,
-  //     supplier: 'Safety Electric Co',
-  //   },
-  // ]);
-
-  // const updateQuantity = (itemId, newQuantity) => {
-  //   if (newQuantity === 0) {
-  //     removeItem(itemId);
-  //     return;
-  //   }
-
-  //   setCartItems(
-  //     cartItems.map(item =>
-  //       item.id === itemId ? {...item, quantity: newQuantity} : item,
-  //     ),
-  //   );
-  // };
-
-  // const removeItem = itemId => {
-  //   const item = cartItems.find(item => item.id === itemId);
-  //   setCartItems(cartItems.filter(item => item.id !== itemId));
-
-  //   if (item) {
-  //     // Alert.alert('Success', `${item.name} removed from cart`);
-  //   }
-  // };
-
-  // const clearCart = () => {
-  //   setCartItems([]);
-  //   setShowClearConfirm(false);
-  //   // Alert.alert('Success', 'Cart cleared');
-  // };
-
-  // const getTotalItems = () => {
-  //   return cartItems.reduce((total, item) => total + item.quantity, 0);
-  // };
+  const [material, setMaterial] = useState({
+    product_name: '',
+    supplier_sku: '',
+    stock_quantity: '',
+    unit: 'pieces',
+    unit_cost: '',
+    supplier_id: id,
+    job_id: job?.job?.id || '', // job ka id route se
+    is_custom: true,
+  });
   // ✅ Update Quantity (Redux)
   const handleUpdateQuantity = (itemId, newQuantity) => {
     dispatch(updateQuantity({productId: itemId, newQuantity}));
@@ -178,12 +139,6 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   // ✅ Remove item
   const handleRemoveItem = itemId => {
     dispatch(updateQuantity({productId: itemId, newQuantity: 0}));
-  };
-
-  // ✅ Clear Cart
-  const handleClearCart = () => {
-    dispatch(clearCart());
-    setShowClearConfirm(false);
   };
 
   const getTotalItems = () => {
@@ -349,35 +304,18 @@ const CartScreen = ({onBack, onNavigate, route}) => {
       visible={showAddEntryModal}
       transparent={true}
       animationType="slide"
-      onRequestClose={() => {
-        setShowAddEntryModal(false);
-        setEditingEntry(null);
-        setNewEntry({
-          activity: '',
-          startTime: '',
-          endTime: '',
-          description: '',
-          location: '',
-          worker: '',
-          isManual: true,
-        });
-      }}>
+      onRequestClose={() => setShowAddEntryModal(false)}>
       <View style={styles.modalOverlay1}>
         <View style={styles.addEntryModal}>
+          {/* Header */}
           <View style={styles.modalHeader1}>
-            <Text style={styles.modalTitle1}>
-              {'Add miscellaneous material'}
-            </Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => {
-                setShowAddEntryModal(false);
-                setEditingEntry(null);
-              }}>
+            <Text style={styles.modalTitle1}>Add Material</Text>
+            <TouchableOpacity onPress={() => setShowAddEntryModal(false)}>
               <Icon name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
           </View>
-          {/* ✅ KeyboardAvoidingView Wrap */}
+
+          {/* Form */}
           <KeyboardAvoidingView
             style={{flex: 1}}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -385,92 +323,129 @@ const CartScreen = ({onBack, onNavigate, route}) => {
             <ScrollView
               style={styles.modalContent1}
               showsVerticalScrollIndicator={false}>
+              {/* Material Name */}
               <View style={styles.formField}>
                 <Text style={styles.fieldLabel}>Material Name *</Text>
                 <TextInput
                   style={styles.textInput}
-                  value={newEntry.activity}
+                  value={material.product_name}
                   onChangeText={text =>
-                    setNewEntry(prev => ({...prev, activity: text}))
+                    setMaterial(prev => ({...prev, product_name: text}))
                   }
                   placeholder="Enter material name"
                   placeholderTextColor={Colors.textLight}
                 />
               </View>
-              <Text style={styles.fieldLabel}>Unit *</Text>
-              <View style={styles.filtersRow}>
-                {renderDropdown(
-                  statusOptions,
-                  statusFilter,
-                  setStatusFilter,
-                  showStatusDropdown,
-                  () => {
-                    setShowStatusDropdown(!showStatusDropdown);
-                    setShowSortDropdown(false);
-                  },
-                  'Select Unit',
-                )}
+
+              {/* SKU */}
+              <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>SKU</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={material.supplier_sku}
+                  onChangeText={text =>
+                    setMaterial(prev => ({...prev, supplier_sku: text}))
+                  }
+                  placeholder="Enter SKU"
+                  placeholderTextColor={Colors.textLight}
+                />
               </View>
+
+              {/* Quantity + Unit */}
               <View style={styles.timeInputRow}>
                 <View
                   style={[
                     styles.formField,
                     {flex: 1, marginRight: Spacing.sm},
                   ]}>
-                  <Text style={styles.fieldLabel}>Total Orders *</Text>
+                  <Text style={styles.fieldLabel}>Quantity *</Text>
                   <TextInput
                     style={styles.textInput}
-                    value={newEntry.startTime}
+                    keyboardType="numeric"
+                    value={material.stock_quantity.toString()}
                     onChangeText={text =>
-                      setNewEntry(prev => ({...prev, startTime: text}))
+                      setMaterial(prev => ({...prev, stock_quantity: text}))
                     }
-                    placeholder="Orders"
+                    placeholder="0"
                     placeholderTextColor={Colors.textLight}
                   />
                 </View>
 
                 <View
                   style={[styles.formField, {flex: 1, marginLeft: Spacing.sm}]}>
-                  <Text style={styles.fieldLabel}>Amount Used *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={newEntry.endTime}
-                    onChangeText={text =>
-                      setNewEntry(prev => ({...prev, endTime: text}))
-                    }
-                    placeholder="Amount"
-                    placeholderTextColor={Colors.textLight}
-                  />
+                  <Text style={styles.fieldLabel}>Unit *</Text>
+                  {renderDropdown(
+                    [
+                      {label: 'Pieces', value: 'pieces'},
+                      {label: 'Feet', value: 'feet'},
+                      {label: 'Box', value: 'box'},
+                      {label: 'Roll', value: 'roll'},
+                    ],
+                    material.unit,
+                    val => setMaterial(prev => ({...prev, unit: val})),
+                    showStatusDropdown,
+                    () => {
+                      setShowStatusDropdown(!showStatusDropdown);
+                      setShowSortDropdown(false);
+                    },
+                    'Select Unit',
+                  )}
                 </View>
               </View>
 
+              {/* Unit Cost */}
               <View style={styles.formField}>
-                <Text style={styles.fieldLabel}>Supplier Order ID</Text>
+                <Text style={styles.fieldLabel}>Unit Cost *</Text>
                 <TextInput
                   style={styles.textInput}
-                  value={newEntry.location}
+                  keyboardType="numeric"
+                  value={material.unit_cost.toString()}
                   onChangeText={text =>
-                    setNewEntry(prev => ({...prev, location: text}))
+                    setMaterial(prev => ({...prev, unit_cost: text}))
                   }
-                  placeholder="e.g.  ORD-2024-19"
+                  placeholder="0"
                   placeholderTextColor={Colors.textLight}
                 />
               </View>
+
+              {/* Supplier */}
+              <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Supplier ID *</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={material.supplier_id.toString()}
+                  onChangeText={text =>
+                    setMaterial(prev => ({...prev, supplier_id: text}))
+                  }
+                  placeholder="Enter Supplier ID"
+                  placeholderTextColor={Colors.textLight}
+                  editable={false}
+                />
+              </View>
+
+              {/* Total Cost */}
+              {/* <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>
+                  Total Cost: $
+                  {(
+                    Number(material.stock_quantity) * Number(material.unit_cost) || 0
+                  ).toFixed(2)}
+                </Text>
+              </View> */}
             </ScrollView>
+
+            {/* Footer Actions */}
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => {
-                  setShowAddEntryModal(false);
-                  setEditingEntry(null);
-                }}>
+                onPress={() => setShowAddEntryModal(false)}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.saveButton}
-                onPress={handleAddEntry}>
-                <Text style={styles.saveButtonText}>{'Add Material'}</Text>
+                onPress={handleAddMaterial}>
+                <Text style={styles.saveButtonText}>Add Material</Text>
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>

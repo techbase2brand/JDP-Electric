@@ -14,6 +14,8 @@ import {
   Platform,
   LayoutAnimation,
   UIManager,
+  FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -22,6 +24,7 @@ import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
+import {getJobs} from '../config/apiConfig';
 
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -65,7 +68,9 @@ const JobListingScreen = ({
   route,
 }) => {
   const user = useSelector(state => state.user.user);
-  const canViewCreateJob = useHasPermission("jobs", "view");
+  const token = useSelector(state => state.user.token);
+  const leadLaborId = user?.id;
+  const canViewCreateJob = useHasPermission('jobs', 'view');
   const {status} = route?.params || {};
   const [jobs, setJobs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -78,6 +83,48 @@ const JobListingScreen = ({
   const [expandedJobId, setExpandedJobId] = useState(null);
 
   const [activeJobId, setActiveJobId] = useState(null);
+  // const [jobs, setJobs] = useState([]);
+  const [page, setPage] = useState(1);
+  const [paginationData, setPaginationData] = useState({});
+
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  // ✅ API call
+  const fetchJobs = async () => {
+    if (loading || !hasMore) return; // avoid duplicate calls
+    setLoading(true);
+    try {
+      const res = await getJobs(leadLaborId, page, 10, token);
+      console.log('jobs result::', res);
+
+      const newJobs = res?.data?.jobs ?? [];
+      const pg = res?.data?.pagination ?? {};
+
+      setPaginationData(pg);
+      setJobs(prev => [...prev, ...newJobs]);
+
+      // ✅ hasMore
+      const limit = Number(pg?.limit ?? 10);
+      const total = Number(pg?.total ?? 0);
+      const loadedSoFar = (page - 1) * limit + newJobs.length;
+      const moreAvailable = loadedSoFar < total;
+
+      setHasMore(moreAvailable);
+
+      // ✅ Page
+      if (newJobs.length > 0) {
+        setPage(prev => prev + 1);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs(); // first call
+  }, []);
 
   useEffect(() => {
     const getJobId = async () => {
@@ -258,7 +305,7 @@ const JobListingScreen = ({
       },
     ];
 
-    setJobs(mockJobs);
+    // setJobs(mockJobs);
   }, []);
 
   useEffect(() => {
@@ -272,7 +319,7 @@ const JobListingScreen = ({
     {
       key: 'all',
       label: 'All',
-      count: jobs.length,
+      count: paginationData?.totalItems,
     },
     {
       key: 'active',
@@ -428,7 +475,7 @@ const JobListingScreen = ({
           <Ionicons name="add" size={24} color={COLORS.white} />
           <Text style={{color: '#fff', fontWeight: '600'}}>New Job</Text>
         </TouchableOpacity>
-       )}
+      )}
     </View>
   );
 
@@ -491,36 +538,37 @@ const JobListingScreen = ({
   );
 
   // Render job card
-  const renderJobCard = job => {
-    const isExpanded = expandedJobId === job.id;
+  const renderJobCard = item => {
+    const job = item?.item;
+    const isExpanded = expandedJobId == job?.id;
 
     return (
       <TouchableOpacity
-        key={job.id}
+        key={job?.id}
         style={styles.jobCard}
         onPress={() => navigation.navigate('JobDetail', {job})}>
         {/* Job Header */}
         <View style={styles.jobCardHeader}>
           <View style={styles.jobCardTitleSection}>
-            <Text style={styles.jobId}>{job.jobId}</Text>
+            <Text style={styles.jobId}>{job?.id}</Text>
             <View style={styles.jobStatusPriority}>
               <View
                 style={[
                   styles.statusBadge,
-                  {backgroundColor: getStatusColor(job.status)},
+                  {backgroundColor: getStatusColor(job?.status)},
                 ]}>
                 <Text style={styles.statusText}>
-                  {job.status.toUpperCase()}
+                  {job?.status?.toUpperCase()}
                 </Text>
               </View>
               <View
                 style={[
                   styles.priorityBadge,
-                  {backgroundColor: getPriorityColor(job.priority)},
+                  {backgroundColor: getPriorityColor(job?.priority)},
                 ]}>
                 <Ionicons name="flag" size={10} color={COLORS.white} />
                 <Text style={styles.priorityText}>
-                  {job.priority.toUpperCase()}
+                  {job?.priority?.toUpperCase()}
                 </Text>
               </View>
             </View>
@@ -533,8 +581,19 @@ const JobListingScreen = ({
             flexDirection: 'row',
             justifyContent: 'space-between',
           }}>
-          <Text style={styles.jobTitle}>{job.title}</Text>
-          <TouchableOpacity onPress={() => toggleJobExpansion(job.id)}>
+          <View>
+            <Text style={styles.jobTitle}>{job?.job_title}</Text>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '500',
+                color: COLORS.gray900,
+                marginBottom: 12,
+              }}>
+              {job?.description}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => toggleJobExpansion(job?.id)}>
             <Icon
               name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
               size={28}
@@ -546,7 +605,7 @@ const JobListingScreen = ({
           <View style={styles.scheduleItem}>
             <Ionicons name="calendar" size={16} color={COLORS.gray500} />
             <Text style={[styles.scheduleText, {fontWeight: '600'}]}>
-              {new Date(job.scheduledDate).toLocaleDateString('en-US', {
+              {new Date(job?.due_date).toLocaleDateString('en-US', {
                 month: 'numeric', // "August"
                 day: 'numeric',
                 year: 'numeric',
@@ -555,19 +614,21 @@ const JobListingScreen = ({
           </View>
           <View style={styles.scheduleItem}>
             <Ionicons name="time" size={16} color={COLORS.gray500} />
-            <Text style={styles.scheduleText}>{job.scheduledTime}</Text>
+            <Text style={styles.scheduleText}>{job?.scheduledTime}</Text>
           </View>
           <View style={styles.scheduleItem}>
             <Ionicons name="hourglass" size={16} color={COLORS.gray500} />
-            <Text style={styles.scheduleText}>{job.estimatedHours}h est.</Text>
+            <Text style={styles.scheduleText}>
+              {job?.estimated_hours}h est.
+            </Text>
           </View>
         </View>
         {/* Customer Info */}
         {isExpanded && (
           <View>
             <View style={styles.customerSection}>
-              <Text style={styles.customerName}>{job.customer.name}</Text>
-              <Text style={styles.customerAddress}>{job.customer.address}</Text>
+              <Text style={styles.customerName}>{job?.customer?.name}</Text>
+              <Text style={styles.customerAddress}>{job?.address}</Text>
             </View>
             {/* Schedule Info */}
 
@@ -575,7 +636,10 @@ const JobListingScreen = ({
             <View style={styles.assignedSection}>
               <Ionicons name="people" size={16} color={COLORS.gray500} />
               <Text style={styles.assignedText}>
-                Assigned to: {job.assignedTo.join(', ')}
+                Assigned to:{' '}
+                {job?.assigned_labor
+                  ?.map(labor => labor?.user?.full_name)
+                  .join(', ') || 'N/A'}
               </Text>
             </View>
           </View>
@@ -607,7 +671,7 @@ const JobListingScreen = ({
         <View style={styles.actionsSection}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => handleCall(job.customer.phone)}>
+            onPress={() => handleCall(job?.customer?.phone)}>
             <Ionicons name="call" size={20} color={COLORS.primary} />
             <Text style={styles.actionText}>Call</Text>
           </TouchableOpacity>
@@ -742,7 +806,7 @@ const JobListingScreen = ({
       </View>
       {renderTabs()}
 
-      <ScrollView
+      {/* <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}>
@@ -751,7 +815,27 @@ const JobListingScreen = ({
         ) : (
           <View style={styles.jobsList}>{filteredJobs.map(renderJobCard)}</View>
         )}
-      </ScrollView>
+          
+      </ScrollView> */}
+      <FlatList
+        data={jobs}
+        renderItem={renderJobCard}
+        keyExtractor={(item, index) => item._id || index.toString()}
+        onEndReached={fetchJobs} // ✅ Pagination trigger
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loading ? (
+            <ActivityIndicator size="small" style={{margin: 10}} />
+          ) : null
+        }
+        ListEmptyComponent={
+          !loading && (
+            <Text style={{textAlign: 'center', marginTop: 20}}>
+              No Jobs Found
+            </Text>
+          )
+        }
+      />
     </SafeAreaView>
   );
 };

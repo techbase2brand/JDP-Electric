@@ -304,9 +304,7 @@ export const getContractors = async (page = 1, limit = 10, token) => {
   }
 };
 
-
 // createJob
-
 export const createJob = async (payload, token) => {
   try {
     const res = await api.post(`/job/createJob`, payload, {
@@ -317,6 +315,40 @@ export const createJob = async (payload, token) => {
     return res.data;
   } catch (error) {
     console.error('Error creating job:', error.response?.data || error.message);
+    throw error.response?.data || { message: 'Something went wrong' };
+  }
+};
+
+// ✅ Get Jobs API
+export const getJobs = async (leadLaborId,page = 1, limit = 10, token) => {
+  try {
+    const res = await api.get(
+     `/job/getJobsByLeadLabor?leadLaborId=${leadLaborId}&page=${page}&limit=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return res.data; // { data: [], totalPages, currentPage }
+  } catch (error) {
+    console.error('Error fetching jobs:', error.response?.data || error.message);
+    throw error.response?.data || { message: 'Something went wrong' };
+  }
+};
+
+
+// custom product
+export const createProduct = async (payload, token) => {
+  try {
+    const res = await api.post(`/products/createProduct`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error creating product:', error.response?.data || error.message);
     throw error.response?.data || { message: 'Something went wrong' };
   }
 };

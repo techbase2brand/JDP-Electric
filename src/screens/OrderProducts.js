@@ -64,10 +64,12 @@ const Shadows = {
 };
 
 const OrderProductsScreen = ({onBack, onNavigate, route}) => {
-  const {id} = route.params;
+  const {id, job} = route.params;
+
   const token = useSelector(state => state.user.token);
   const cart = useSelector(state => state.cart.items);
-  console.log('cart>>>', id);
+
+  console.log('useSelectoruseSelectoruseSelectoruseSelector', job);
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -165,7 +167,6 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
   const lastFetchedPageRef = useRef(null);
   useEffect(() => {
     fetchProducts();
-    console.log('productsproducts', products);
   }, [page]);
 
   // const fetchProducts = async () => {
@@ -274,51 +275,11 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
     return item ? item.quantity : 0;
   };
 
-  // const addToCart = product => {
-  //   const existingItem = cart.find(item => item.id === product.id);
-
-  //   if (existingItem) {
-  //     // Agar product pehle se hai, sirf quantity badhao
-  //     setCart(
-  //       cart.map(item =>
-  //         item.id === product.id
-  //           ? {...item, quantity: item.quantity + 1}
-  //           : item,
-  //       ),
-  //     );
-  //   } else {
-  //     // Agar product pehli baar add ho raha hai
-  //     setCart([...cart, {...product, quantity: 1}]);
-  //     // Alert.alert('Success', `${product.name} added to cart`);
-  //   }
-  // };
-
-  // const updateQuantity = (productId, newQuantity) => {
-  //   if (newQuantity === 0) {
-  //     setCart(cart.filter(item => item.id !== productId));
-  //   } else {
-  //     setCart(
-  //       cart.map(item =>
-  //         item.id === productId ? {...item, quantity: newQuantity} : item,
-  //       ),
-  //     );
-  //   }
-  // };
-
-  // const getCartItemCount = () => {
-  //   return cart.reduce((total, item) => total + item.quantity, 0);
-  // };
-
-  // const getItemQuantity = productId => {
-  //   const item = cart.find(item => item.id === productId);
-  //   return item ? item.quantity : 0;
-  // };
-
-  const handleNavigate = screen => {
+  const handleNavigate = ({screen, params}) => {
     if (onNavigate) {
-      onNavigate(screen);
+      onNavigate(screen, params);
     } else {
-      navigation.navigate(screen);
+      onNavigate(screen, params);
     }
   };
 
@@ -453,7 +414,12 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
 
           <TouchableOpacity
             style={styles.cartButton}
-            onPress={() => handleNavigate('CartScreen')}>
+            onPress={() =>
+              navigation.navigate('CartScreen', {
+                id: id,
+                job: job,
+              })
+            }>
             <Icon name="shopping-cart" size={24} color={Colors.text} />
             {getCartItemCount() > 0 && (
               <View style={styles.cartBadge}>
@@ -540,18 +506,6 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
           />
 
           {/* Bottom Cart Summary */}
-          {getCartItemCount() > 0 && (
-            <View style={styles.bottomCartSummary}>
-              <TouchableOpacity
-                style={styles.cartSummaryButton}
-                onPress={() => handleNavigate('CartScreen')}>
-                <Text style={styles.cartSummaryText}>
-                  View Cart ({getCartItemCount()} items)
-                </Text>
-                <Icon name="shopping-cart" size={20} color={Colors.white} />
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
       ) : (
         <View style={styles.emptyStateContainer}>
@@ -560,6 +514,23 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
           <Text style={styles.emptyStateSubtitle1}>
             Add some products to get started with your order
           </Text>
+        </View>
+      )}
+      {getCartItemCount() > 0 && (
+        <View style={styles.bottomCartSummary}>
+          <TouchableOpacity
+            style={styles.cartSummaryButton}
+            onPress={() =>
+              navigation.navigate('CartScreen', {
+                id: id,
+                job: job,
+              })
+            }>
+            <Text style={styles.cartSummaryText}>
+              View Cart ({getCartItemCount()} items)
+            </Text>
+            <Icon name="shopping-cart" size={20} color={Colors.white} />
+          </TouchableOpacity>
         </View>
       )}
     </View>

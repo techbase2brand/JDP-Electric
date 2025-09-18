@@ -22,9 +22,11 @@ import Geocoder from 'react-native-geocoding';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
-const SupplierSelectionScreen = ({navigation, user}) => {
+const SupplierSelectionScreen = ({navigation, user, route}) => {
   const token = useSelector(state => state.user.token);
   Geocoder.init('AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI');
+  const job = route?.params?.job;
+  console.log('job2>>>>', job.job);
   const [viewMode, setViewMode] = useState('list');
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [sortBy, setSortBy] = useState('distance');
@@ -445,9 +447,16 @@ const SupplierSelectionScreen = ({navigation, user}) => {
           style={[styles.selectButton, {width: widthPercentageToDP(40)}]}
           onPress={() =>
             navigation.navigate('OrderProducts', {
-              id: supplier?.id,
+              id: supplier?.id, // ek param
+              job: job, // pura job object
             })
-          }>
+          }
+          // onPress={() =>
+          //   navigation.navigate('OrderProducts', {
+          //     id: supplier?.id
+          //   })
+          // }
+        >
           <Icon name="add" size={16} color="white" />
           <Text style={styles.selectButtonText}>Select</Text>
         </TouchableOpacity>
