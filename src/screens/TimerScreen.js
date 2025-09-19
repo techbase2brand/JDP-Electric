@@ -423,6 +423,8 @@ export default function TimerScreen({navigation, route}) {
   const {isRunning, elapsedTime} = useSelector(state => state.timer);
   const dispatch = useDispatch();
   const job = route?.params?.job;
+  console.log("jobtimerr>>",job);
+  
   const {TimerModule} = NativeModules;
 
   const startLiveActivity = async elapsed => {
@@ -478,8 +480,8 @@ export default function TimerScreen({navigation, route}) {
   }, [elapsedTime, isRunning]);
 
   const handleStart = async () => {
-    await AsyncStorage.setItem('activeJobId', job?.job?.jobId || job?.jobId);
-    setStoredJobId(job?.job?.jobId);
+    await AsyncStorage.setItem('activeJobId', String(job?.id) || String(job?.id));
+    setStoredJobId(job?.job?.id);
     dispatch(startTimerWithBackground());
     if (TimerModule) {
       startLiveActivity(elapsedTime);

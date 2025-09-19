@@ -120,7 +120,7 @@ const AppContent = () => {
   const dispatch = useDispatch();
   const token = useSelector(state => state.user.token);
   const {isRunning} = useSelector((state: any) => state.timer);
-console.log("tokentokentoken",user.id);
+  // console.log("tokentokentoken",user.id);
 
   useEffect(() => {
     if (isRunning) {
@@ -148,7 +148,31 @@ console.log("tokentokentoken",user.id);
 
   // 👇 global set
   global.handleLogout = handleLogout;
+  // const handleLogout = async () => {
+  //   try {
+  //     if (token) {
+  //       await logoutApi(token);
+  //     }
+  //     dispatch(logout());
+  //     Alert.alert('Session Expired', 'You have been logged out automatically.');
+  //   } catch (err) {
+  //     Alert.alert('Logout Failed', err.message || 'Please try again');
+  //   }
+  // };
 
+  // useEffect(() => {
+  //   let timer;
+
+  //   if (token) {
+  //     // ✅ 5 minutes = 300000 ms
+  //     timer = setTimeout(() => {
+  //       handleLogout();
+  //     }, 300000);
+  //   }
+
+  //   // Cleanup agar token change ho ya component unmount ho
+  //   return () => clearTimeout(timer);
+  // }, [token]);
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);

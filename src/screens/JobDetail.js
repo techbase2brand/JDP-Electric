@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -15,6 +16,7 @@ import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
+import {getJobById} from '../config/apiConfig';
 
 // Embedded Colors - JDP Electrics Theme
 const Colors = {
@@ -100,50 +102,20 @@ const JobDetailScreen = ({
   const navigation = useNavigation();
   // const {job1} =route?.params?.job
   const user = useSelector(state => state.user.user);
+  const token = useSelector(state => state.user.token);
   const canViewOrders = useHasPermission('orders', 'view');
   const canViewBlueSheet = useHasPermission('bluesheet', 'view');
 
   const [timerSession, setTimerSession] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTimerId, setActiveTimerId] = useState('');
+  const [job, setJob] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Get job from props or route params
-  const job = route?.params?.job;
-  
+  const jobId = route?.params?.job?.id;
 
-  // const job = {
-  //   jobId: 'JOB-0001',
-  //   jobName: 'Electrical Panel Upgrade',
-  //   status: 'Unknown',
-  //   priority: 'High Priority',
-  //   actions: {
-  //     timerScreen: true,
-  //     directions: true,
-  //   },
-  //   jobInfo: {
-  //     description: 'Upgrade main electrical panel from 100A to 200A service',
-  //     estimatedTime: '8 hours',
-  //     scheduledDate: '8/21/2025',
-  //     assignedTo: 'Sarah Johnson',
-  //   },
-  //   customer: {
-  //     name: 'David Thompson',
-  //     phone: '+1 (555) 0101',
-  //     email: 'david.thompson@gmail.com',
-  //   },
-  //   location: {
-  //     address: '1234 Oak Street, Houston, TX 77001',
-  //     getDirections: true,
-  //   },
-  //   requiredMaterials: [],
-  //   moreActions: {
-  //     timesheet: true,
-  //     reports: true,
-  //     support: true,
-  //   },
-  // };
-
-  // Mock user if not provided
   const currentUser = user || {role: 'Lead Labor'};
   const openEmail = () => {
     const email = 'paul@jdpelectric.us';
@@ -164,6 +136,25 @@ const JobDetailScreen = ({
       })
       .catch(err => Alert.alert('Error', err.message));
   };
+  useEffect(() => {
+    const fetchJobDetails = async () => {
+      try {
+        setLoading(true);
+        const res = await getJobById(jobId, token);
+        console.log('viewjob >.', res);
+
+        setJob(res?.data); // ✅ response ke andar jo data hai wo set kar diya
+      } catch (err) {
+        setError(err.message || 'Failed to fetch job details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (jobId && token) {
+      fetchJobDetails();
+    }
+  }, [jobId, token]);
   // Timer effect
   useEffect(() => {
     let interval;
@@ -187,7 +178,30 @@ const JobDetailScreen = ({
     };
   }, [timerSession?.isRunning, timerSession?.isPaused]);
 
+  useEffect(() => {
+    const getTimerId = async () => {
+      const activeJobId = await AsyncStorage.getItem('activeJobId');
+      if (job?.jobId?.toString() == activeJobId) {
+      }
+      setActiveTimerId(activeJobId);
+    };
+    getTimerId();
+  }, []);
   // Handle null job case
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.background,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
   if (!job) {
     return (
       <View style={styles.container}>
@@ -211,11 +225,11 @@ const JobDetailScreen = ({
             The requested job could not be found.
           </Text>
           <TouchableOpacity
-            style={styles.primaryButton}
+            style={[styles.primaryButton, {width: widthPercentageToDP(40)}]}
             onPress={() =>
               onNavigate
-                ? onNavigate('JobListingScreen')
-                : navigation.navigate('JobListingScreen')
+                ? onNavigate('JobStack')
+                : navigation.navigate('JobStack')
             }>
             <Text style={styles.primaryButtonText}>View All Jobs</Text>
           </TouchableOpacity>
@@ -395,21 +409,12 @@ const JobDetailScreen = ({
     navigation.navigate(screen, jobData ? {job: jobData} : undefined);
     // }
   };
-  useEffect(() => {
-    const getTimerId = async () => {
-      const activeJobId = await AsyncStorage.getItem('activeJobId');
-      if (job?.jobId?.toString() == activeJobId) {
-      }
-      setActiveTimerId(activeJobId);
-    };
-    getTimerId();
-  }, []);
 
   const handleNavigateTimer = async job => {
     try {
       const activeJobId = await AsyncStorage.getItem('activeJobId');
       // setActiveTimerId(activeJobId)
-      const currentJobId = job?.jobId?.toString();
+      const currentJobId = job?.id?.toString();
       if (!activeJobId) {
         // No active job → allow navigation
         navigation.navigate('TimerScreen', {job});
@@ -452,9 +457,9 @@ const JobDetailScreen = ({
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {job.title}
+            {job?.job_title}
           </Text>
-          <Text style={styles.headerSubtitle}>#{job.jobId}</Text>
+          <Text style={styles.headerSubtitle}>#{job?.id}</Text>
         </View>
         <TouchableOpacity
           style={styles.editButton}
@@ -590,7 +595,7 @@ const JobDetailScreen = ({
                     color={Colors.textSecondary}
                   />
                   <Text style={styles.infoText}>
-                    {job?.estimatedHours || 'N/A'}
+                    {job?.estimated_hours || 'N/A'} hr
                   </Text>
                 </View>
               </View>
@@ -598,32 +603,19 @@ const JobDetailScreen = ({
                 <Text style={styles.infoLabel}>Scheduled</Text>
                 <View style={styles.infoWithIcon}>
                   <Icon name="event" size={16} color={Colors.textSecondary} />
-                  <Text style={styles.infoText}>{job?.scheduledDate}</Text>
+                  <Text style={styles.infoText}>{job?.due_date}</Text>
                 </View>
               </View>
             </View>
-
-            {job?.assignedTo && (
+            {job?.assigned_labor && Array.isArray(job?.assigned_labor) && (
               <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Assigned To</Text>
+                <Text style={styles.infoLabel}>Assigned To </Text>
                 <View style={styles.infoWithIcon}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>
-                      {Array.isArray(job?.assignedTo)
-                        ? job?.assignedTo[0]
-                            ?.split(' ')
-                            .map(n => n[0])
-                            .join('')
-                        : job?.assignedTo
-                            .split(' ')
-                            .map(n => n[0])
-                            .join('')}
-                    </Text>
-                  </View>
+                  {/* Sare full_name comma se join karke dikhana */}
                   <Text style={styles.infoText}>
-                    {Array.isArray(job?.assignedTo)
-                      ? job?.assignedTo.join(', ')
-                      : job?.assignedTo}
+                    {job?.assigned_labor
+                      .map(labor => labor.user?.full_name)
+                      .join(', ')}
                   </Text>
                 </View>
               </View>
@@ -641,7 +633,7 @@ const JobDetailScreen = ({
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Name</Text>
               <Text style={styles.infoText}>
-                {job?.customer?.name || 'N/A'}
+                {job?.customer?.customer_name || 'N/A'}
               </Text>
             </View>
 
@@ -696,7 +688,7 @@ const JobDetailScreen = ({
           </View>
           <View style={styles.cardContent}>
             <Text style={styles.locationText}>
-              {job.location?.address || 'Location not specified'}
+              {job?.address || 'Location not specified'}
             </Text>
             <TouchableOpacity
               style={styles.primaryButton}
@@ -727,13 +719,15 @@ const JobDetailScreen = ({
               ))}
               <TouchableOpacity
                 style={styles.outlineButton}
-                onPress={() => handleNavigate('SupplierSelectionScreen', {job})}>
+                onPress={() =>
+                  handleNavigate('SupplierSelectionScreen', {job})
+                }>
                 <Icon name="shopping-cart" size={20} color={Colors.primary} />
                 <Text style={styles.outlineButtonText}>Order Materials</Text>
               </TouchableOpacity>
             </View>
           </View>
-        )}      
+        )}
         {/* )} */}
         {/* )} */}
 

@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,7 @@ import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
-import {getJobs} from '../config/apiConfig';
+import {getJobs, getlabourJobs} from '../config/apiConfig';
 
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -70,6 +70,8 @@ const JobListingScreen = ({
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
   const leadLaborId = user?.id;
+  const laborId = user?.id;
+
   const canViewCreateJob = useHasPermission('jobs', 'view');
   const {status} = route?.params || {};
   const [jobs, setJobs] = useState([]);
@@ -94,7 +96,11 @@ const JobListingScreen = ({
     if (loading || !hasMore) return; // avoid duplicate calls
     setLoading(true);
     try {
-      const res = await getJobs(leadLaborId, page, 10, token);
+      const res =
+        user?.management_type == 'lead_labor'
+          ? await getJobs(leadLaborId, page, 10, token)
+          : await getlabourJobs(laborId, page, 10, token);
+      // const res = await getJobs(leadLaborId, page, 10, token);
       console.log('jobs result::', res);
 
       const newJobs = res?.data?.jobs ?? [];
@@ -315,51 +321,89 @@ const JobListingScreen = ({
   }, [status]);
 
   // Tab configuration
-  const tabs = [
-    {
-      key: 'all',
-      label: 'All',
-      count: paginationData?.totalItems,
-    },
-    {
-      key: 'active',
-      label: 'Active',
-      count: jobs.filter(j => j.status === 'active').length,
-    },
-    {
-      key: 'assigned',
-      label: 'Assigned',
-      count: jobs.filter(j => j.status === 'assigned').length,
-    },
-    {
-      key: 'upcoming',
-      label: 'Upcoming',
-      count: jobs.filter(j => j.status === 'upcoming').length,
-    },
-    {
-      key: 'pending',
-      label: 'Pending',
-      count: jobs.filter(j => j.status === 'pending').length,
-    },
-    {
-      key: 'completed',
-      label: 'Completed',
-      count: jobs.filter(j => j.status === 'completed').length,
-    },
-  ];
+  // const tabs = [
+  //   {
+  //     key: 'all',
+  //     label: 'All',
+  //     count: paginationData?.totalItems,
+  //   },
+  //   {
+  //     key: 'active',
+  //     label: 'Active',
+  //     count: jobs.filter(j => j.status === 'active').length,
+  //   },
+  //   {
+  //     key: 'assigned',
+  //     label: 'Assigned',
+  //     count: jobs.filter(j => j.status === 'assigned').length,
+  //   },
+  //   {
+  //     key: 'upcoming',
+  //     label: 'Upcoming',
+  //     count: jobs.filter(j => j.status === 'upcoming').length,
+  //   },
+  //   {
+  //     key: 'pending',
+  //     label: 'Pending',
+  //     count: jobs.filter(j => j.status === 'pending').length,
+  //   },
+  //   {
+  //     key: 'completed',
+  //     label: 'Completed',
+  //     count: jobs.filter(j => j.status === 'completed').length,
+  //   },
+  // ];
 
-  // Filter jobs based on active tab and search query
+  // // Filter jobs based on active tab and search query
+  // const filteredJobs = jobs.filter(job => {
+  //   const matchesTab = activeTab === 'all' || job.status === activeTab;
+
+  //   const matchesSearch =
+  //     searchQuery === '' ||
+  //     job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     job.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     job.jobId.toLowerCase().includes(searchQuery.toLowerCase());
+
+  //   return matchesTab && matchesSearch;
+  // });
+  const tabs = useMemo(() => {
+    // unique statuses with counts
+    const statusCounts = jobs?.reduce((acc, job) => {
+      acc[job?.status] = (acc[job?.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    const dynamicTabs = Object.keys(statusCounts)?.map(status => ({
+      key: status,
+      label: status?.charAt(0).toUpperCase() + status?.slice(1),
+      count: statusCounts[status],
+    }));
+
+    return [
+      {
+        key: 'all',
+        label: 'All',
+        count: paginationData?.totalItems || jobs?.length,
+      },
+      ...dynamicTabs,
+    ];
+  }, [jobs, paginationData]);
+
+  // 👉 filter jobs based on active tab and search
   const filteredJobs = jobs.filter(job => {
     const matchesTab = activeTab === 'all' || job.status === activeTab;
 
     const matchesSearch =
       searchQuery === '' ||
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.jobId.toLowerCase().includes(searchQuery.toLowerCase());
+      job.job_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.customer.customer_name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      String(job.id).toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesTab && matchesSearch;
   });
+
   const toggleJobExpansion = jobId => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedJobId(expandedJobId === jobId ? null : jobId);
@@ -409,10 +453,7 @@ const JobListingScreen = ({
   const handleNavigateTimer = async job => {
     try {
       const activeJobId = await AsyncStorage.getItem('activeJobId');
-      const currentJobId = job?.jobId?.toString();
-
-      console.log('🔍 Active Job ID:', activeJobId, 'Current:', currentJobId);
-
+      const currentJobId = job?.id?.toString();
       if (!activeJobId) {
         // No active job → allow navigation
         navigation.navigate('TimerScreen', {job});
@@ -818,7 +859,7 @@ const JobListingScreen = ({
           
       </ScrollView> */}
       <FlatList
-        data={jobs}
+        data={filteredJobs}
         renderItem={renderJobCard}
         keyExtractor={(item, index) => item._id || index.toString()}
         onEndReached={fetchJobs} // ✅ Pagination trigger

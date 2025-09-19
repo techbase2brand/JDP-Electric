@@ -336,6 +336,37 @@ export const getJobs = async (leadLaborId,page = 1, limit = 10, token) => {
     throw error.response?.data || { message: 'Something went wrong' };
   }
 };
+// ✅ Get Jobs API
+export const getlabourJobs = async (laborId,page = 1, limit = 10, token) => {
+  try {
+    const res = await api.get(
+     `/job/getJobsByLeadLabor?leadLaborId=${laborId}&page=${page}&limit=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return res.data; // { data: [], totalPages, currentPage }
+  } catch (error) {
+    console.error('Error fetching jobs:', error.response?.data || error.message);
+    throw error.response?.data || { message: 'Something went wrong' };
+  }
+};
+// ✅ Get Job By Id API
+export const getJobById = async (jobId, token) => {
+  try {
+    const res = await api.get(`/job/getJobById/${jobId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data; // { data: {...} }
+  } catch (error) {
+    console.error('Error fetching job by id:', error.response?.data || error.message);
+    throw error.response?.data || { message: 'Something went wrong' };
+  }
+};
 
 
 // custom product
