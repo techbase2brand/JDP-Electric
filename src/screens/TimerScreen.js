@@ -370,6 +370,7 @@ import {
   TouchableOpacity,
   Platform,
   NativeModules,
+  Alert,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -382,6 +383,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {getJobById, updateWorkData} from '../config/apiConfig';
 const Shadows = {
   sm: {
     shadowColor: '#000',
@@ -421,10 +423,35 @@ const CustomButton = ({label, onPress, color, disabled, widthbtn}) => (
 );
 export default function TimerScreen({navigation, route}) {
   const {isRunning, elapsedTime} = useSelector(state => state.timer);
+  const token = useSelector(state => state.user?.token);
+  const [startISO, setStartISO] = useState(null);
+  const [pauseList, setPauseList] = useState([]); // final pauses
+  const [currentPauseStartedAt, setCurrentPauseStartedAt] = useState(null);
+  const [currentPauseTitle, setCurrentPauseTitle] = useState(null);
   const dispatch = useDispatch();
   const job = route?.params?.job;
-  console.log("jobtimerr>>",job);
-  
+  console.log('jobtimerr>>', job);
+  const toHHMMSS = ms => {
+    const sec = Math.max(0, Math.floor(ms / 1000));
+    const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+    const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  };
+
+  const buildPayload = ({
+    work_activity = 5,
+    totalMs = 0,
+    pauseList = [],
+    startISO,
+    endISO,
+  }) => ({
+    work_activity,
+    total_work_time: toHHMMSS(totalMs),
+    pause_timer: pauseList, // [{ title, duration(seconds) }]
+    start_timer: startISO, // ISO
+    end_timer: endISO, // ISO (can be null on mid-session updates)
+  });
   const {TimerModule} = NativeModules;
 
   const startLiveActivity = async elapsed => {
@@ -440,6 +467,7 @@ export default function TimerScreen({navigation, route}) {
   };
   // Activity Log
   const [activityLog, setActivityLog] = useState([]);
+  console.log('activityLogactivityLog', activityLog);
 
   // Modals
   const [pauseModal, setPauseModal] = useState(false);
@@ -454,7 +482,10 @@ export default function TimerScreen({navigation, route}) {
   // Break Tracking
   const [breakTime, setBreakTime] = useState(0);
   const [storedJobId, setStoredJobId] = useState(null);
-
+  const [jobdat, setJobdata] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const jobId = job?.id;
   // Check AsyncStorage on mount
   useEffect(() => {
     const checkJobId = async () => {
@@ -479,29 +510,103 @@ export default function TimerScreen({navigation, route}) {
     }
   }, [elapsedTime, isRunning]);
 
-  const handleStart = async () => {
-    await AsyncStorage.setItem('activeJobId', String(job?.id) || String(job?.id));
-    setStoredJobId(job?.job?.id);
-    dispatch(startTimerWithBackground());
-    if (TimerModule) {
-      startLiveActivity(elapsedTime);
-      console.log('this is working');
+  const fetchJobDetails = async () => {
+    try {
+      setLoading(true);
+      const res = await getJobById(jobId, token);
+      console.log('viewjob >.', res);
+
+      setJobdata(res?.data); // ✅ response ke andar jo data hai wo set kar diya
+    } catch (err) {
+      setError(err.message || 'Failed to fetch job details');
+    } finally {
+      setLoading(false);
     }
-    addActivity('Work Started', {color: '#4CAF50'});
   };
+  // const handleStart = async () => {
+  //   await AsyncStorage.setItem(
+  //     'activeJobId',
+  //     String(job?.id) || String(job?.id),
+  //   );
+  //   setStoredJobId(job?.job?.id);
+  //   dispatch(startTimerWithBackground());
+  //   if (TimerModule) {
+  //     startLiveActivity(elapsedTime);
+  //     console.log('this is working');
+  //   }
+  //   addActivity('Work Started', {color: '#4CAF50'});
+  // };
+  const handleStart = async () => {
+    await AsyncStorage.setItem('activeJobId', String(job?.id ?? job?.id));
+    setStoredJobId(job?.id ?? job?.id);
+    const nowISO = new Date().toISOString();
+    setStartISO(nowISO);
+
+    dispatch(startTimerWithBackground());
+    if (TimerModule) startLiveActivity(elapsedTime);
+    addActivity('Work Started', {color: '#4CAF50'});
+
+    // (optional) start snapshot hit
+    try {
+      const jobIdForApi = job?.id ?? job?.id;
+      const payload = buildPayload({
+        work_activity: job?.work_activity ?? 5,
+        totalMs: elapsedTime,
+        pauseList,
+        startISO: nowISO,
+        endISO: null,
+      });
+      await updateWorkData(jobIdForApi, payload, token);
+      fetchJobDetails();
+    } catch (e) {
+      console.log(
+        'Start snapshot failed (ok to ignore mid-session):',
+        e?.message,
+      );
+    }
+  };
+
+  // const handleComplete = async () => {
+  //   try {
+  //     // remove jobId from AsyncStorage
+  //     await AsyncStorage.removeItem('activeJobId');
+  //     dispatch(stopTimerWithBackground());
+  //     endLiveActivity();
+  //     addActivity('Work Completed', {color: '#2196F3'});
+  //     setCompleteModal(false);
+  //   } catch (err) {
+  //     console.log('Error removing jobId', err);
+  //   }
+  // };
 
   const handleComplete = async () => {
     try {
-      // remove jobId from AsyncStorage
+      const jobIdForApi = storedJobId ?? job?.id ?? job?.job?.id;
+      const end = new Date().toISOString();
+
+      const payload = buildPayload({
+        work_activity: job?.work_activity ?? 5,
+        totalMs: elapsedTime,
+        pauseList, // all finalized pauses
+        startISO: startISO ?? new Date().toISOString(),
+        endISO: end,
+      });
+
+      await updateWorkData(jobIdForApi, payload, token);
+      fetchJobDetails();
+
       await AsyncStorage.removeItem('activeJobId');
       dispatch(stopTimerWithBackground());
       endLiveActivity();
       addActivity('Work Completed', {color: '#2196F3'});
       setCompleteModal(false);
+      Alert.alert('Success', 'Work data updated successfully.');
     } catch (err) {
-      console.log('Error removing jobId', err);
+      console.log('Error completing job', err);
+      Alert.alert('Error', err?.message || 'Failed to update work data');
     }
   };
+
   const formatTime = ms => {
     const sec = Math.floor(ms / 1000);
     const h = Math.floor(sec / 3600);
@@ -549,40 +654,23 @@ export default function TimerScreen({navigation, route}) {
   return (
     <View style={styles.container}>
       {renderHeader()}
-
       {/* ✅ Time Summary */}
-      <View style={styles.summaryCard}>
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: 20,
-            gap: 6,
-          }}>
-          <Icon name="timer" size={20} color="#000" />
-          <Text style={styles.summaryTitle}>Time Summary</Text>
-        </View>
-        <View style={styles.summaryRow}>
-          {/* <View style={[styles.summaryBox, {backgroundColor: '#E3F2FD'}]}>
-            <Text style={{color: '#1565C0'}}>Travel Time</Text>
-            <Text style={styles.summaryTime}>{formatTime(0)}</Text>
-          </View> */}
-          <View style={[styles.summaryBox, {backgroundColor: '#E8F5E9'}]}>
-            <Text style={{color: '#2E7D32'}}>Work Time</Text>
-            <Text style={styles.summaryTime}>{formatTime(elapsedTime)}</Text>
-          </View>
-          {/* <View style={[styles.summaryBox, {backgroundColor: '#FFF3E0'}]}>
-            <Text style={{color: '#E65100'}}>Break Time</Text>
-            <Text style={styles.summaryTime}>{formatTime(breakTime)}</Text>
-          </View> */}
-        </View>
-      </View>
 
       {/* Timer Card */}
 
-      {!activityLog.some(item => item.title === 'Work Completed') && (
+      {!activityLog?.some(item => item.title === 'Work Completed') && (
         <View style={styles.timerCard}>
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'flex-end',
+              marginBottom: 20,
+              gap: 6,
+            }}>
+            <Icon name="timer" size={20} color="#000" />
+            <Text style={styles.summaryTitle}>Time Summary</Text>
+          </View>
           <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
           <Text style={styles.statusText}>
             {isRunning ? 'Running' : 'Paused'}
@@ -619,20 +707,56 @@ export default function TimerScreen({navigation, route}) {
               />
             </View>
           )}
-
           {/* Paused state */}
           {!isRunning && elapsedTime > 0 && (
             <View style={styles.buttonRow}>
               <CustomButton
                 label="Resume"
                 color="#4CAF50"
-                onPress={() => {
-                  dispatch(resumeTimerWithBackground());
-                  if (lastPauseTime && pauseReason === 'Break') {
-                    const breakDuration = Date.now() - lastPauseTime;
-                    setBreakTime(prev => prev + breakDuration);
-                    setLastPauseTime(null);
+                // onPress={() => {
+                //   dispatch(resumeTimerWithBackground());
+                //   if (lastPauseTime && pauseReason === 'Break') {
+                //     const breakDuration = Date.now() - lastPauseTime;
+                //     setBreakTime(prev => prev + breakDuration);
+                //     setLastPauseTime(null);
+                //   }
+                //   addActivity('Work Resumed', {color: '#4CAF50'});
+                // }}
+                // Resume button onPress
+                onPress={async () => {
+                  // finalize the current pause
+                  if (currentPauseStartedAt && currentPauseTitle) {
+                    const durSec = Math.max(
+                      1,
+                      Math.floor((Date.now() - currentPauseStartedAt) / 1000),
+                    );
+                    const finalItem = {
+                      title: currentPauseTitle,
+                      duration: toHHMMSS(durSec * 1000),
+                    };
+                    const newList = [...pauseList, finalItem];
+                    setPauseList(newList);
+                    setCurrentPauseStartedAt(null);
+                    setCurrentPauseTitle(null);
+
+                    // ---- API HIT at resume with the finalized pause ----
+                    try {
+                      const jobIdForApi = storedJobId ?? job?.id ?? job?.id;
+                      const payload = buildPayload({
+                        work_activity: job?.work_activity ?? 5,
+                        totalMs: elapsedTime,
+                        pauseList: newList,
+                        startISO,
+                        endISO: null,
+                      });
+                      await updateWorkData(jobIdForApi, payload, token);
+                      fetchJobDetails();
+                    } catch (e) {
+                      console.log('Resume snapshot failed:', e?.message);
+                    }
                   }
+
+                  dispatch(resumeTimerWithBackground());
                   addActivity('Work Resumed', {color: '#4CAF50'});
                 }}
                 widthbtn={true}
@@ -647,7 +771,7 @@ export default function TimerScreen({navigation, route}) {
           )}
         </View>
       )}
-      {activityLog.some(item => item.title === 'Work Completed') && (
+      {activityLog?.some(item => item.title === 'Work Completed') && (
         <View style={styles.timerCard}>
           <Text style={{color: '#2196F3', fontWeight: 'bold'}}>
             Work Completed
@@ -730,8 +854,25 @@ export default function TimerScreen({navigation, route}) {
                 label="Confirm Pause"
                 color="#1565C0"
                 disabled={!pauseReason}
-                onPress={() => {
+                // onPress={() => {
+                //   if (!pauseReason) return;
+                //   dispatch(pauseTimerWithBackground());
+                //   addActivity(`Paused - ${pauseReason}`, {
+                //     notes: pauseNotes,
+                //     color: '#FF9800',
+                //   });
+                //   setPauseModal(false);
+                //   setPauseNotes('');
+                // }}
+                // Pause Modal -> Confirm Pause button onPress
+                onPress={async () => {
                   if (!pauseReason) return;
+
+                  // mark current pause
+                  const startedAt = Date.now();
+                  setCurrentPauseStartedAt(startedAt);
+                  setCurrentPauseTitle(pauseReason);
+
                   dispatch(pauseTimerWithBackground());
                   addActivity(`Paused - ${pauseReason}`, {
                     notes: pauseNotes,
@@ -739,6 +880,50 @@ export default function TimerScreen({navigation, route}) {
                   });
                   setPauseModal(false);
                   setPauseNotes('');
+
+                  // ---- API HIT at confirm pause ----
+                  try {
+                    const jobIdForApi = storedJobId ?? job?.id ?? job?.id;
+
+                    // OPTION A: send placeholder pause (0 sec) so server sees the pause title immediately
+                    const placeholder = {
+                      title: pauseReason,
+                      duration: toHHMMSS(0),
+                    };
+
+                    // (we do NOT mutate pauseList state yet— just send a "what server should see now")
+                    const payload = buildPayload({
+                      work_activity: job?.work_activity ?? 5,
+                      totalMs: elapsedTime, // current stored total time
+                      pauseList: [...pauseList, placeholder],
+                      startISO,
+                      endISO: null, // still running overall
+                    });
+
+                    await updateWorkData(jobIdForApi, payload, token);
+                    fetchJobDetails();
+                  } catch (err) {
+                    console.log('Confirm pause snapshot failed:', err?.message);
+
+                    // OPTION B fallback: try without placeholder if server rejects duration:0
+                    try {
+                      const jobIdForApi = storedJobId ?? job?.id ?? job?.id;
+                      const payloadNoPlaceholder = buildPayload({
+                        work_activity: job?.work_activity ?? 5,
+                        totalMs: elapsedTime,
+                        pauseList, // no new pause included
+                        startISO,
+                        endISO: null,
+                      });
+                      await updateWorkData(
+                        jobIdForApi,
+                        payloadNoPlaceholder,
+                        token,
+                      );
+                    } catch (e2) {
+                      console.log('Fallback also failed:', e2?.message);
+                    }
+                  }
                 }}
               />
             </View>
@@ -746,40 +931,6 @@ export default function TimerScreen({navigation, route}) {
         </View>
       </Modal>
 
-      {/* ✅ Complete Job Modal */}
-      {/* <Modal visible={completeModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>✅ Complete Job</Text>
-            <Text style={styles.modalDesc}>
-              You are about to complete this job. Please review the time summary
-              below before confirming.
-            </Text>
-            <View style={styles.summaryList}>
-              <Text>Total Time: {formatTime(elapsedTime + breakTime)}</Text>
-              <Text>Work Time: {formatTime(elapsedTime)}</Text>
-              <Text>Break Time: {formatTime(breakTime)}</Text>
-              <Text>Activities: {activityLog.length}</Text>
-            </View>
-            <View style={styles.modalBtnRow}>
-              <CustomButton
-                label="Cancel"
-                color="#9E9E9E"
-                onPress={() => setCompleteModal(false)}
-              />
-              <CustomButton
-                label="Complete Job"
-                color="#4CAF50"
-                onPress={() => {
-                  dispatch(stopTimerWithBackground());
-                  addActivity('Work Completed', {color: '#2196F3'});
-                  setCompleteModal(false);
-                }}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal> */}
       {/* ✅ Complete Job Modal */}
       <Modal visible={completeModal} transparent animationType="fade">
         <View
@@ -851,19 +1002,6 @@ export default function TimerScreen({navigation, route}) {
                 width: '100%',
                 marginBottom: 20,
               }}>
-              {/* <View
-                style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                }}>
-                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
-                  Total Time:
-                </Text>
-                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
-                  {formatTime(elapsedTime + breakTime)}
-                </Text>
-              </View> */}
               <View
                 style={{
                   display: 'flex',
@@ -921,11 +1059,6 @@ export default function TimerScreen({navigation, route}) {
                   marginHorizontal: 5,
                   backgroundColor: '#4CAF50',
                 }}
-                // onPress={() => {
-                //   dispatch(stopTimerWithBackground());
-                //   addActivity('Work Completed', {color: '#2196F3'});
-                //   setCompleteModal(false);
-                // }}
                 onPress={handleComplete}>
                 <Text style={{fontSize: 14, fontWeight: '600', color: '#fff'}}>
                   Complete Job

@@ -13,18 +13,18 @@ export const api = axios.create({
   },
 });
 
-// api.interceptors.response.use(
-//   response => response,
-//   async error => {
-//     if (error.response?.status === 401) {
-//       //Aall App.js logout function call
-//       if (global.handleLogout) {
-//         global.handleLogout();
-//       }
-//     }
-//     return Promise.reject(error);
-//   },
-// );
+api.interceptors.response.use(
+  response => response,
+  async error => {
+    if (error.response?.status === 401) {
+      // 🔑 Invalid / expired token
+      if (global.handleLogout) {
+        global.handleLogout(); // App.js se navigate karayega
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // ✅ Send OTP
 export const sendForgotPasswordOtp = async email => {
@@ -380,6 +380,22 @@ export const createProduct = async (payload, token) => {
     return res.data;
   } catch (error) {
     console.error('Error creating product:', error.response?.data || error.message);
+    throw error.response?.data || { message: 'Something went wrong' };
+  }
+};
+
+export const updateWorkData = async (jobId, payload, token) => {
+  console.log("jobId, payload, token",jobId, payload, token);
+  
+  try {
+    const res = await api.post(`/job/updateWorkData/${jobId}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data; // { data: {...} }
+  } catch (error) {
+    console.error('Error updating work data:', error.response?.data || error.message);
     throw error.response?.data || { message: 'Something went wrong' };
   }
 };

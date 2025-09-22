@@ -61,7 +61,7 @@
 
 // export default App;
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -94,7 +94,7 @@ const {flex} = BaseStyle;
 
 const AppContent = () => {
   // const {DynamicIslandModule} = NativeModules;
-
+  const navigationRef = useRef();
   useEffect(() => {
     // (async () => {
     //   try {
@@ -146,33 +146,16 @@ const AppContent = () => {
     }
   };
 
-  // 👇 global set
-  global.handleLogout = handleLogout;
-  // const handleLogout = async () => {
-  //   try {
-  //     if (token) {
-  //       await logoutApi(token);
-  //     }
-  //     dispatch(logout());
-  //     Alert.alert('Session Expired', 'You have been logged out automatically.');
-  //   } catch (err) {
-  //     Alert.alert('Logout Failed', err.message || 'Please try again');
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   let timer;
-
-  //   if (token) {
-  //     // ✅ 5 minutes = 300000 ms
-  //     timer = setTimeout(() => {
-  //       handleLogout();
-  //     }, 300000);
-  //   }
-
-  //   // Cleanup agar token change ho ya component unmount ho
-  //   return () => clearTimeout(timer);
-  // }, [token]);
+  useEffect(() => {
+    // ✅ Global logout handler set
+    global.handleLogout = () => {
+      dispatch(logout()); // redux se user data clear
+      navigationRef.current?.reset({
+        index: 0,
+        routes: [{name: 'AuthStack'}],
+      });
+    };
+  }, []);
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -197,7 +180,7 @@ const AppContent = () => {
         }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           {isLoading ? (
             <SplashScreen />
           ) : userData ? (
