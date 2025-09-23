@@ -5,7 +5,7 @@ export const LOGIN_URL = `${API_BASE_URL}/auth/login`;
 
 /* axios instance */
 
-// ✅ Login API
+// Login API
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -23,10 +23,10 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
-// ✅ Send OTP
+// Send OTP
 export const sendForgotPasswordOtp = async email => {
   try {
     const res = await api.post('/auth/forgot-password/send-otp', {email});
@@ -35,8 +35,7 @@ export const sendForgotPasswordOtp = async email => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
-
-// ✅ Verify OTP
+//  Verify OTP
 export const verifyForgotPasswordOtp = async (email, otp) => {
   try {
     const res = await api.post('/auth/forgot-password/verify-otp', {
@@ -49,7 +48,7 @@ export const verifyForgotPasswordOtp = async (email, otp) => {
   }
 };
 
-// ✅ Resend OTP
+//  Resend OTP
 export const resendForgotPasswordOtp = async email => {
   try {
     const res = await api.post('/auth/forgot-password/resend-otp', {email});
@@ -59,7 +58,7 @@ export const resendForgotPasswordOtp = async email => {
   }
 };
 
-// ✅ Reset Password
+//  Reset Password
 export const resetForgotPassword = async (
   email,
   newPassword,
@@ -77,7 +76,7 @@ export const resetForgotPassword = async (
   }
 };
 
-// ✅ Logout API
+//  Logout API
 export const logoutApi = async token => {
   console.log('tokentoken', token);
 
@@ -97,7 +96,7 @@ export const logoutApi = async token => {
   }
 };
 
-// ✅ Get Lead Labor by ID
+//  Get Lead Labor by ID
 export const getLeadLaborById = async (id, token) => {
   try {
     const res = await api.get(`/lead-labor/getLeadLaborById/${id}`, {
@@ -111,7 +110,7 @@ export const getLeadLaborById = async (id, token) => {
   }
 };
 
-// ✅ Get Labor by ID
+//  Get Labor by ID
 export const getLaborById = async (id, token) => {
   try {
     const res = await api.get(`/labor/getLaborById/${id}`, {
@@ -125,7 +124,7 @@ export const getLaborById = async (id, token) => {
   }
 };
 
-// ✅ Update Lead Labor Profile
+//  Update Lead Labor Profile
 export const updateLeadLaborProfile = async (id, formData, token) => {
   try {
     const res = await api.post(`/lead-labor/updateProfile/${id}`, formData, {
@@ -140,7 +139,7 @@ export const updateLeadLaborProfile = async (id, formData, token) => {
   }
 };
 
-// ✅ Update Labor Profile
+// Update Labor Profile
 export const updateLaborProfile = async (id, formData, token) => {
   try {
     const res = await api.post(`/labor/updateProfile/${id}`, formData, {
@@ -155,7 +154,7 @@ export const updateLaborProfile = async (id, formData, token) => {
   }
 };
 
-// ✅ getSuppliers
+//  getSuppliers
 export const getSuppliers = async (page = 1, limit = 10, token) => {
   try {
     const response = await api.get(
@@ -176,7 +175,7 @@ export const getSuppliers = async (page = 1, limit = 10, token) => {
   }
 };
 
-// // ✅ Get All Products
+// //  Get All Products
 // export const getAllProducts = async (page = 1, limit = 10, token) => {
 //   try {
 //     const response = await api.get(
@@ -196,7 +195,7 @@ export const getSuppliers = async (page = 1, limit = 10, token) => {
 //     throw error.response?.data || {message: 'Something went wrong'};
 //   }
 // };
-// ✅ Get Products by Supplier
+//  Get Products by Supplier
 export const getProductsBySupplier = async (
   supplierId,
   page = 1,
@@ -222,29 +221,25 @@ export const getProductsBySupplier = async (
   }
 };
 
-// ✅ Create Customer
+//  Create Customer
 export const createCustomer = async (payload, token) => {
   try {
-    const response = await api.post(
-      `/customer/createCustomer`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // 👈 Token required
-        },
+    const response = await api.post(`/customer/createCustomer`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`, // 👈 Token required
       },
-    );
+    });
     return response.data; // 👈 Response object return karega
   } catch (error) {
     console.error(
       'Error creating customer:',
       error.response?.data || error.message,
     );
-    throw error.response?.data || { message: 'Something went wrong' };
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };
 
-// ✅ Get Customers
+// Get Customers
 export const getCustomers = async (page = 1, limit = 10, token) => {
   try {
     const response = await api.get(
@@ -265,7 +260,7 @@ export const getCustomers = async (page = 1, limit = 10, token) => {
   }
 };
 
-// ✅ Get All Labor
+//  Get All Labor
 export const getAllLabor = async (page = 1, limit = 10, token) => {
   try {
     const response = await api.get(
@@ -286,7 +281,7 @@ export const getAllLabor = async (page = 1, limit = 10, token) => {
   }
 };
 
-// 🔹 Contractor API
+//  Contractor API
 export const getContractors = async (page = 1, limit = 10, token) => {
   try {
     const res = await api.get(
@@ -315,42 +310,48 @@ export const createJob = async (payload, token) => {
     return res.data;
   } catch (error) {
     console.error('Error creating job:', error.response?.data || error.message);
-    throw error.response?.data || { message: 'Something went wrong' };
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };
 
-// ✅ Get Jobs API
-export const getJobs = async (leadLaborId,page = 1, limit = 10, token) => {
+// Get Jobs API
+export const getJobs = async (leadLaborId, page = 1, limit = 10, token) => {
   try {
     const res = await api.get(
-     `/job/getJobsByLeadLabor?leadLaborId=${leadLaborId}&page=${page}&limit=${limit}`,
+      `/job/getJobsByLeadLabor?leadLaborId=${leadLaborId}&page=${page}&limit=${limit}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
-    return res.data; // { data: [], totalPages, currentPage }
+    return res.data; 
   } catch (error) {
-    console.error('Error fetching jobs:', error.response?.data || error.message);
-    throw error.response?.data || { message: 'Something went wrong' };
+    console.error(
+      'Error fetching jobs:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };
 // ✅ Get Jobs API
-export const getlabourJobs = async (laborId,page = 1, limit = 10, token) => {
+export const getlabourJobs = async (laborId, page = 1, limit = 10, token) => {
   try {
     const res = await api.get(
-     `/job/getJobsByLeadLabor?leadLaborId=${laborId}&page=${page}&limit=${limit}`,
+      `/job/getJobsByLeadLabor?leadLaborId=${laborId}&page=${page}&limit=${limit}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
     return res.data; // { data: [], totalPages, currentPage }
   } catch (error) {
-    console.error('Error fetching jobs:', error.response?.data || error.message);
-    throw error.response?.data || { message: 'Something went wrong' };
+    console.error(
+      'Error fetching jobs:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };
 // ✅ Get Job By Id API
@@ -363,11 +364,13 @@ export const getJobById = async (jobId, token) => {
     });
     return res.data; // { data: {...} }
   } catch (error) {
-    console.error('Error fetching job by id:', error.response?.data || error.message);
-    throw error.response?.data || { message: 'Something went wrong' };
+    console.error(
+      'Error fetching job by id:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };
-
 
 // custom product
 export const createProduct = async (payload, token) => {
@@ -379,14 +382,17 @@ export const createProduct = async (payload, token) => {
     });
     return res.data;
   } catch (error) {
-    console.error('Error creating product:', error.response?.data || error.message);
-    throw error.response?.data || { message: 'Something went wrong' };
+    console.error(
+      'Error creating product:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };
 
 export const updateWorkData = async (jobId, payload, token) => {
-  console.log("jobId, payload, token",jobId, payload, token);
-  
+  console.log('jobId, payload, token', jobId, payload, token);
+
   try {
     const res = await api.post(`/job/updateWorkData/${jobId}`, payload, {
       headers: {
@@ -395,7 +401,10 @@ export const updateWorkData = async (jobId, payload, token) => {
     });
     return res.data; // { data: {...} }
   } catch (error) {
-    console.error('Error updating work data:', error.response?.data || error.message);
-    throw error.response?.data || { message: 'Something went wrong' };
+    console.error(
+      'Error updating work data:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };

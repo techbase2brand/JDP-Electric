@@ -445,12 +445,15 @@ export default function TimerScreen({navigation, route}) {
     pauseList = [],
     startISO,
     endISO,
+    isComplete = false,
   }) => ({
     work_activity,
     total_work_time: toHHMMSS(totalMs),
     pause_timer: pauseList, // [{ title, duration(seconds) }]
     start_timer: startISO, // ISO
-    end_timer: endISO, // ISO (can be null on mid-session updates)
+    end_timer: endISO || new Date(endISO).toISOString(),
+    ...(isComplete && {status: 'completed'}),
+    // ISO (can be null on mid-session updates)
   });
   const {TimerModule} = NativeModules;
 
@@ -482,10 +485,12 @@ export default function TimerScreen({navigation, route}) {
   // Break Tracking
   const [breakTime, setBreakTime] = useState(0);
   const [storedJobId, setStoredJobId] = useState(null);
-  const [jobdat, setJobdata] = useState(null);
+  const [jobData, setJobdata] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const jobId = job?.id;
+  console.log('jobdatajobdata', jobData);
+
   // Check AsyncStorage on mount
   useEffect(() => {
     const checkJobId = async () => {
@@ -500,6 +505,7 @@ export default function TimerScreen({navigation, route}) {
       }
     };
     checkJobId();
+    fetchJobDetails();
   }, []);
   useEffect(() => {
     if (isRunning) {
@@ -516,7 +522,27 @@ export default function TimerScreen({navigation, route}) {
       const res = await getJobById(jobId, token);
       console.log('viewjob >.', res);
 
-      setJobdata(res?.data); // ✅ response ke andar jo data hai wo set kar diya
+      setJobdata(res?.data);
+      let pauses = [];
+      if (typeof res?.data?.pause_timer === 'string') {
+        try {
+          pauses = JSON.parse(res?.data.pause_timer);
+        } catch (e) {
+          console.error('Failed to parse pause_timer', e);
+        }
+      } else if (Array.isArray(res?.data?.pause_timer)) {
+        pauses = res?.data.pause_timer;
+      }
+
+      // ✅ activity log set karo
+      setActivityLog(
+        pauses.map(p => ({
+          title: p.title,
+          duration: p.duration, // already formatted string
+          time: new Date().toLocaleTimeString(), // local time jab fetch hua
+          ...p,
+        })),
+      );
     } catch (err) {
       setError(err.message || 'Failed to fetch job details');
     } finally {
@@ -583,13 +609,13 @@ export default function TimerScreen({navigation, route}) {
     try {
       const jobIdForApi = storedJobId ?? job?.id ?? job?.job?.id;
       const end = new Date().toISOString();
-
       const payload = buildPayload({
         work_activity: job?.work_activity ?? 5,
         totalMs: elapsedTime,
         pauseList, // all finalized pauses
         startISO: startISO ?? new Date().toISOString(),
         endISO: end,
+        isComplete: true,
       });
 
       await updateWorkData(jobIdForApi, payload, token);
@@ -618,15 +644,15 @@ export default function TimerScreen({navigation, route}) {
   };
 
   const addActivity = (title, extra = {}) => {
-    setActivityLog(prev => [
-      ...prev,
-      {
-        title,
-        duration: elapsedTime,
-        time: new Date().toLocaleTimeString(),
-        ...extra,
-      },
-    ]);
+    // setActivityLog(prev => [
+    //   ...prev,
+    //   {
+    //     title,
+    //     duration: elapsedTime,
+    //     time: new Date().toLocaleTimeString(),
+    //     ...extra,
+    //   },
+    // ]);
   };
 
   const renderHeader = () => (
@@ -657,7 +683,6 @@ export default function TimerScreen({navigation, route}) {
       {/* ✅ Time Summary */}
 
       {/* Timer Card */}
-
       {!activityLog?.some(item => item.title === 'Work Completed') && (
         <View style={styles.timerCard}>
           <View
@@ -755,7 +780,6 @@ export default function TimerScreen({navigation, route}) {
                       console.log('Resume snapshot failed:', e?.message);
                     }
                   }
-
                   dispatch(resumeTimerWithBackground());
                   addActivity('Work Resumed', {color: '#4CAF50'});
                 }}
@@ -789,7 +813,7 @@ export default function TimerScreen({navigation, route}) {
               <Text style={[styles.logTitle, {color: item.color || '#333'}]}>
                 {item.title}
               </Text>
-              <Text style={styles.logTime}>{formatTime(item.duration)}</Text>
+              <Text style={styles.logTime}>{item.duration}</Text>
             </View>
           )}
           ListEmptyComponent={() => (

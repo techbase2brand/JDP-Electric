@@ -69,9 +69,8 @@ const JobListingScreen = ({
 }) => {
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
-  const leadLaborId = user?.id;
-  const laborId = user?.id;
-
+  const leadLaborId = user?.leadLabor?.[0].id;
+  const laborId = user?.labor?.[0]?.id;
   const canViewCreateJob = useHasPermission('jobs', 'view');
   const {status} = route?.params || {};
   const [jobs, setJobs] = useState([]);
@@ -85,16 +84,23 @@ const JobListingScreen = ({
   const [expandedJobId, setExpandedJobId] = useState(null);
 
   const [activeJobId, setActiveJobId] = useState(null);
-  // const [jobs, setJobs] = useState([]);
   const [page, setPage] = useState(1);
   const [paginationData, setPaginationData] = useState({});
 
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
-  // ✅ API call
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    console.log('🔄 Refresh triggered');
+    setRefreshing(true);
+    await refreshJobs(); // ✅ always first page on refresh
+    setRefreshing(false);
+  };
+  // API call
   const fetchJobs = async () => {
-    if (loading || !hasMore) return; // avoid duplicate calls
+    if (loading || !hasMore) return;
     setLoading(true);
+    console.log('📡 FetchJobs called with page:', page);
     try {
       const res =
         user?.management_type == 'lead_labor'
@@ -127,6 +133,31 @@ const JobListingScreen = ({
       setLoading(false);
     }
   };
+const refreshJobs = async () => {
+  console.log("🔄 Refresh triggered");
+  setRefreshing(true);
+  setPage(1);
+  setHasMore(true);
+
+  try {
+    const res =
+      user?.management_type == 'lead_labor'
+        ? await getJobs(leadLaborId, 1, 10, token) // page = 1
+        : await getlabourJobs(laborId, 1, 10, token);
+
+    console.log("✅ Refresh result::", res);
+
+    const newJobs = res?.data?.jobs ?? [];
+    const pg = res?.data?.pagination ?? {};
+
+    setPaginationData(pg);
+    setJobs(newJobs); // ❗ overwrite instead of append
+  } catch (err) {
+    console.error("Refresh error:", err);
+  } finally {
+    setRefreshing(false);
+  }
+};
 
   useEffect(() => {
     fetchJobs(); // first call
@@ -591,7 +622,7 @@ const JobListingScreen = ({
         {/* Job Header */}
         <View style={styles.jobCardHeader}>
           <View style={styles.jobCardTitleSection}>
-            <Text style={styles.jobId}>{job?.id}</Text>
+            <Text style={styles.jobId}></Text>
             <View style={styles.jobStatusPriority}>
               <View
                 style={[
@@ -654,8 +685,8 @@ const JobListingScreen = ({
             </Text>
           </View>
           <View style={styles.scheduleItem}>
-            <Ionicons name="time" size={16} color={COLORS.gray500} />
-            <Text style={styles.scheduleText}>{job?.scheduledTime}</Text>
+            {/* <Ionicons name="time" size={16} color={COLORS.gray500} />
+            <Text style={styles.scheduleText}>{job?.scheduledTime}</Text> */}
           </View>
           <View style={styles.scheduleItem}>
             <Ionicons name="hourglass" size={16} color={COLORS.gray500} />
@@ -847,23 +878,15 @@ const JobListingScreen = ({
       </View>
       {renderTabs()}
 
-      {/* <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
-        {filteredJobs.length === 0 ? (
-          renderEmptyState()
-        ) : (
-          <View style={styles.jobsList}>{filteredJobs.map(renderJobCard)}</View>
-        )}
-          
-      </ScrollView> */}
       <FlatList
         data={filteredJobs}
         renderItem={renderJobCard}
         keyExtractor={(item, index) => item._id || index.toString()}
-        onEndReached={fetchJobs} // ✅ Pagination trigger
+        onEndReached={fetchJobs} //  Pagination trigger
         onEndReachedThreshold={0.5}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        contentContainerStyle={{flexGrow: 1}}
         ListFooterComponent={
           loading ? (
             <ActivityIndicator size="small" style={{margin: 10}} />
@@ -886,7 +909,7 @@ const styles = {
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.white,
-    marginBottom: 100,
+    // marginBottom: 100,
   },
   header: {
     flexDirection: 'row',
