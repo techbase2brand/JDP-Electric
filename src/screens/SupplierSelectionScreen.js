@@ -12,6 +12,7 @@ import {
   Alert,
   FlatList,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -21,229 +22,130 @@ import {useSelector} from 'react-redux';
 import Geocoder from 'react-native-geocoding';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
-
+const COLORS = {
+  primary: '#3B82F6',
+  primaryDark: '#1E40AF',
+  primaryLight: '#93C5FD',
+  success: '#10B981',
+  warning: '#F59E0B',
+  danger: '#EF4444',
+  white: '#FFFFFF',
+  gray50: '#F9FAFB',
+  gray100: '#F3F4F6',
+  gray200: '#E5E7EB',
+  gray300: '#D1D5DB',
+  gray400: '#9CA3AF',
+  gray500: '#6B7280',
+  gray600: '#4B5563',
+  gray700: '#374151',
+  gray800: '#1F2937',
+  gray900: '#111827',
+  blue50: '#EFF6FF',
+  blue100: '#DBEAFE',
+  green50: '#ECFDF5',
+  green100: '#D1FAE5',
+  yellow50: '#FFFBEB',
+  yellow100: '#FEF3C7',
+  red50: '#FEF2F2',
+  red100: '#FEE2E2',
+};
+Geocoder.init('AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI');
 const SupplierSelectionScreen = ({navigation, user, route}) => {
   const token = useSelector(state => state.user.token);
-  Geocoder.init('AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI');
   const job = route?.params?.job;
-  console.log('job2>>>>', job.job);
+  const endReachedLockRef = React.useRef(false);
   const [viewMode, setViewMode] = useState('list');
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [sortBy, setSortBy] = useState('distance');
-  const [filterCategory, setFilterCategory] = useState('all');
-
-  // Mock supplier data
-  const suppliers = [
-    {
-      id: '1',
-      name: 'Houston Electrical Supply',
-      category: 'Electrical Wholesale',
-      address: '1234 Industrial Blvd',
-      city: 'Houston, TX 77032',
-      phone: '+1 (713) 555-0123',
-      email: 'orders@houstonelectric.com',
-      rating: 4.8,
-      reviewCount: 152,
-      distance: 0.8,
-      hours: {
-        open: '07:00',
-        close: '17:00',
-        days: 'Mon-Fri',
-      },
-      specialties: [
-        'Industrial Supplies',
-        'Electrical Components',
-        'Safety Equipment',
-      ],
-      coordinates: {
-        latitude: 29.7604,
-        longitude: -95.3698,
-      },
-      isOpen: true,
-      featured: true,
-    },
-    {
-      id: '2',
-      name: 'TechFlow Electrical Distributors',
-      category: 'Commercial Electrical',
-      address: '567 Commerce Street',
-      city: 'Houston, TX 77002',
-      phone: '+1 (713) 555-0124',
-      email: 'support@techflow.com',
-      rating: 4.6,
-      reviewCount: 89,
-      distance: 1.2,
-      hours: {
-        open: '08:00',
-        close: '18:00',
-        days: 'Mon-Sat',
-      },
-      specialties: ['Smart Systems', 'LED Lighting', 'Control Panels'],
-      coordinates: {
-        latitude: 29.7589,
-        longitude: -95.3677,
-      },
-      isOpen: true,
-      featured: false,
-    },
-    {
-      id: '3',
-      name: 'PowerLine Supply Co.',
-      category: 'Residential & Commercial',
-      address: '890 Warehouse Drive',
-      city: 'Houston, TX 77040',
-      phone: '+1 (713) 555-0125',
-      email: 'info@powerline.com',
-      rating: 4.4,
-      reviewCount: 203,
-      distance: 2.1,
-      hours: {
-        open: '07:30',
-        close: '16:30',
-        days: 'Mon-Fri',
-      },
-      specialties: ['Wire & Cable', 'Breakers', 'Conduit & Fittings'],
-      coordinates: {
-        latitude: 29.7749,
-        longitude: -95.3922,
-      },
-      isOpen: true,
-      featured: true,
-    },
-    {
-      id: '4',
-      name: 'ElectroMax Wholesale',
-      category: 'Industrial Electrical',
-      address: '456 Industry Park Way',
-      city: 'Houston, TX 77053',
-      phone: '+1 (713) 555-0126',
-      email: 'sales@electromax.com',
-      rating: 4.7,
-      reviewCount: 124,
-      distance: 3.5,
-      hours: {
-        open: '06:00',
-        close: '17:00',
-        days: 'Mon-Fri',
-      },
-      specialties: ['Motor Controls', 'Transformers', 'High Voltage'],
-      coordinates: {
-        latitude: 29.691,
-        longitude: -95.337,
-      },
-      isOpen: false,
-      featured: false,
-    },
-    {
-      id: '5',
-      name: 'Circuit City Electrical',
-      category: 'General Electrical',
-      address: '321 Electric Avenue',
-      city: 'Houston, TX 77079',
-      phone: '+1 (713) 555-0127',
-      email: 'orders@circuitcity.com',
-      rating: 4.2,
-      reviewCount: 67,
-      distance: 4.2,
-      hours: {
-        open: '08:00',
-        close: '17:00',
-        days: 'Mon-Fri',
-      },
-      specialties: ['Residential Wiring', 'Lighting', 'HVAC Electrical'],
-      coordinates: {
-        latitude: 29.7752,
-        longitude: -95.5618,
-      },
-      isOpen: true,
-      featured: false,
-    },
-    {
-      id: '6',
-      name: 'Voltage Supply House',
-      category: 'Emergency Supplies',
-      address: '654 Service Road',
-      city: 'Houston, TX 77081',
-      phone: '+1 (713) 555-0128',
-      email: 'emergency@voltage.com',
-      rating: 4.9,
-      reviewCount: 45,
-      distance: 1.8,
-      hours: {
-        open: '24/7',
-        close: '24/7',
-        days: 'Every Day',
-      },
-      specialties: ['Emergency Supplies', '24/7 Service', 'Repair Parts'],
-      coordinates: {
-        latitude: 29.737,
-        longitude: -95.4194,
-      },
-      isOpen: true,
-      featured: true,
-    },
-  ];
-
-  const categories = [
-    'all',
-    'Electrical Wholesale',
-    'Commercial Electrical',
-    'Residential & Commercial',
-    'Industrial Electrical',
-    'General Electrical',
-    'Emergency Supplies',
-  ];
-
-  // Filter and sort suppliers
-  const filteredSuppliers = suppliers
-    .filter(
-      supplier =>
-        filterCategory === 'all' || supplier.category === filterCategory,
-    )
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'distance':
-          return a.distance - b.distance;
-        case 'rating':
-          return b.rating - a.rating;
-        case 'name':
-          return a.name.localeCompare(b.name);
-        default:
-          return 0;
-      }
-    });
+  const [searchQuery, setSearchQuery] = useState('');
   const [supplierss, setSuppliers] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    if (loading || refreshing) return;
+    setRefreshing(true);
+    endReachedLockRef.current = false;
+    setHasMore(true);
+    setSuppliers([]);
+    setPage(1);
+    try {
+      await onRefresdhfetchSuppliers(1, true);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    fetchSuppliers();
-  }, [page]);
+    fetchSuppliers(1, true);
+    setHasMore(true);
+  }, [searchQuery]);
 
-  const fetchSuppliers = async () => {
-    if (loading || !hasMore) return;
+  const PAGE_SIZE = 10;
+  const fetchSuppliers = async (targetPage, isReset = false) => {
+    if (loading || (!hasMore && !isReset)) return;
     setLoading(true);
     try {
-      const res = await getSuppliers(page, 10, token);
-      console.log('SuppliersSuppliers', res.data.data);
-
-      if (res?.data?.data) {
-        setSuppliers(prev => [...prev, ...res?.data?.data]);
-      } else {
-        setHasMore(false);
-      }
-    } catch (err) {
+      const res = await getSuppliers(targetPage, PAGE_SIZE, token);
+      const rows = res?.data?.data ?? [];
+      setSuppliers(prev => (isReset ? rows : [...prev, ...rows]));
+      setHasMore(rows.length === PAGE_SIZE);
+    } catch (e) {
       Alert.alert('Error', 'Failed to fetch suppliers');
     } finally {
       setLoading(false);
+      endReachedLockRef.current = false;
+    }
+  };
+
+  const onRefresdhfetchSuppliers = async (targetPage, isReset = false) => {
+    setLoading(true);
+    try {
+      const res = await getSuppliers(targetPage, 10, token);
+      const rows = res?.data?.data ?? [];
+      if (rows.length) {
+        setSuppliers(prev => (isReset ? rows : [...prev, ...rows]));
+        setPage(targetPage); // commit only after success
+      } else {
+        setHasMore(false);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Failed to fetch suppliers');
+    } finally {
+      setLoading(false);
+      endReachedLockRef.current = false;
     }
   };
   const loadMore = () => {
-    if (!loading && hasMore) {
-      setPage(prev => prev + 1);
-    }
+    if (loading || endReachedLockRef.current || !hasMore || searchQuery) return;
+    endReachedLockRef.current = true;
+    fetchSuppliers(page + 1);
   };
+
+  const filteredSuppliers = supplierss?.filter(supplier => {
+    // const matchesTab = activeTab === 'all' || job.status === activeTab;
+
+    const matchesSearch =
+      searchQuery === '' ||
+      supplier?.company_name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      supplier?.contact_person
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      String(job.id).toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesSearch;
+  });
+  console.log('filtersd::', filteredSuppliers);
+
+  // const loadMore = () => {
+  //   if (!loading && hasMore) {
+  //     setPage(prev => prev + 1);
+  //   }
+  // };
 
   const handleCall = phone => {
     Linking.openURL(`tel:${phone}`);
@@ -258,43 +160,6 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
       supplier.address,
     )}`;
     Linking.openURL(url);
-  };
-  //   const handleDirections = async supplier => {
-  //   try {
-  //     // address → coordinates
-  //     const geo = await Geocoder.from(supplier.address);
-  //     const location = geo.results[0].geometry.location;
-  //     const latitude = location.lat;
-  //     const longitude = location.lng;
-
-  //     // open Google Maps
-  //     const url = `https://maps.google.com/?q=${latitude},${longitude}`;
-  //     Linking.openURL(url);
-  //   } catch (error) {
-  //     console.error("Geocoding Error:", error);
-  //     Alert.alert("Error", "Could not fetch location from address");
-  //   }
-  // };
-
-  const handleSelectSupplier = supplier => {
-    Alert.alert(
-      'Select Supplier',
-      `Would you like to add ${supplier.name} as your preferred supplier for this job?`,
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Select',
-          onPress: () => {
-            // Here you would typically save the supplier selection
-            // Alert.alert(
-            //   'Success',
-            //   `${supplier.name} has been added to your suppliers.`,
-            // );
-            navigation.navigate('OrderProducts');
-          },
-        },
-      ],
-    );
   };
 
   const renderStarRating = rating => {
@@ -326,42 +191,43 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
 
     return <View style={styles.starsContainer}>{stars}</View>;
   };
+  const renderSearchBar = () => (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={20} color={'#9CA3AF'} />
+        <TextInput
+          style={styles.searchInput}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search suppliers"
+          placeholderTextColor={'#9CA3AF'}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={20} color={'#9CA3AF'} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
 
   const renderListView = () => (
     <View style={styles.listContainer} showsVerticalScrollIndicator={false}>
       {/* Sort and Filter Controls */}
       <View style={styles.controlsContainer}>
         <View style={styles.filterContainer}>
-          <Text style={styles.controlLabel}>Category:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {categories.map(category => (
-              <TouchableOpacity
-                key={category}
-                style={[
-                  styles.filterButton,
-                  filterCategory === category && styles.filterButtonActive,
-                ]}
-                onPress={() => setFilterCategory(category)}>
-                <Text
-                  style={[
-                    styles.filterButtonText,
-                    filterCategory === category &&
-                      styles.filterButtonTextActive,
-                  ]}>
-                  {category === 'all' ? 'All Categories' : category}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={{width: widthPercentageToDP(90)}}>
+            {renderSearchBar()}
+          </View>
         </View>
       </View>
 
       {/* Results Count */}
-      {supplierss.length > 0 && (
+      {filteredSuppliers?.length > 0 && (
         <View style={styles.resultsHeader}>
           <Text style={styles.resultsCount}>
-            {supplierss?.length} supplier
-            {supplierss?.length !== 1 ? 's' : ''} found
+            {filteredSuppliers?.length} supplier
+            {filteredSuppliers?.length !== 1 ? 's' : ''} found
           </Text>
           <Text style={styles.resultsSubtext}>
             {/* Sorted by {sortBy === 'distance' ? 'distance' : sortBy === 'rating' ? 'rating' : 'name'} */}
@@ -372,20 +238,27 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
       {/* Suppliers List */}
       <View style={styles.suppliersList}>
         <FlatList
-          data={supplierss}
+          data={filteredSuppliers}
           showsVerticalScrollIndicator={false}
           keyExtractor={item => item.id.toString()}
           renderItem={renderSupplier}
           onEndReached={loadMore}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.1} //  low threshold
+          //  momentum start pe lock reset
+          onMomentumScrollBegin={() => {
+            endReachedLockRef.current = false;
+          }}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           ListFooterComponent={
-            loading ? <ActivityIndicator size="large" color="#3B82F6" /> : null
+            hasMore && !searchQuery && loading ? (
+              <ActivityIndicator size="large" color="#3B82F6" />
+            ) : null
           }
         />
       </View>
 
       {/* Bottom Spacing */}
-      {/* <View style={styles.bottomSpacing} /> */}
     </View>
   );
 
@@ -394,8 +267,8 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
       {/* Supplier Header */}
       <View style={styles.supplierHeader}>
         <View style={styles.supplierInfo}>
-          <Text style={styles.supplierName}>{supplier.contact_person}</Text>
-          <Text style={styles.supplierCategory}>{supplier.company_name}</Text>
+          <Text style={styles.supplierName}>{supplier.company_name}</Text>
+          <Text style={styles.supplierCategory}>{supplier.contact_person}</Text>
         </View>
 
         {/* Status Indicator */}
@@ -447,16 +320,10 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
           style={[styles.selectButton, {width: widthPercentageToDP(40)}]}
           onPress={() =>
             navigation.navigate('OrderProducts', {
-              id: supplier?.id, // ek param
-              job: job, // pura job object
+              id: supplier?.id,
+              job: job,
             })
-          }
-          // onPress={() =>
-          //   navigation.navigate('OrderProducts', {
-          //     id: supplier?.id
-          //   })
-          // }
-        >
+          }>
           <Icon name="add" size={16} color="white" />
           <Text style={styles.selectButtonText}>Select</Text>
         </TouchableOpacity>
@@ -481,7 +348,6 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
         <TouchableOpacity
           style={styles.headerButton}
           onPress={() => {
-            // Filter functionality can be expanded
             Alert.alert('Filter', 'Filter options coming soon!');
           }}>
           {/* <Icon name="filter-list" size={24} color="white" /> */}
@@ -523,6 +389,26 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 20,
     fontWeight: '600',
+  },
+  searchContainer: {
+    backgroundColor: COLORS.white,
+    // paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray50,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: COLORS.gray900,
+    marginLeft: 8,
   },
   viewToggle: {
     backgroundColor: 'rgba(59, 130, 246, 0.2)',

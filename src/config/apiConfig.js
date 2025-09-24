@@ -325,7 +325,7 @@ export const getJobs = async (leadLaborId, page = 1, limit = 10, token) => {
         },
       },
     );
-    return res.data; 
+    return res.data;
   } catch (error) {
     console.error(
       'Error fetching jobs:',

@@ -91,9 +91,9 @@ const JobListingScreen = ({
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
-    console.log('🔄 Refresh triggered');
+    console.log(' Refresh triggered');
     setRefreshing(true);
-    await refreshJobs(); // ✅ always first page on refresh
+    await refreshJobs();
     setRefreshing(false);
   };
   // API call
@@ -115,7 +115,7 @@ const JobListingScreen = ({
       setPaginationData(pg);
       setJobs(prev => [...prev, ...newJobs]);
 
-      // ✅ hasMore
+      //  hasMore
       const limit = Number(pg?.limit ?? 10);
       const total = Number(pg?.total ?? 0);
       const loadedSoFar = (page - 1) * limit + newJobs.length;
@@ -123,7 +123,7 @@ const JobListingScreen = ({
 
       setHasMore(moreAvailable);
 
-      // ✅ Page
+      //  Page
       if (newJobs.length > 0) {
         setPage(prev => prev + 1);
       }
@@ -133,31 +133,30 @@ const JobListingScreen = ({
       setLoading(false);
     }
   };
-const refreshJobs = async () => {
-  console.log("🔄 Refresh triggered");
-  setRefreshing(true);
-  setPage(1);
-  setHasMore(true);
+  const refreshJobs = async () => {
+    setRefreshing(true);
+    setPage(1);
+    setHasMore(true);
 
-  try {
-    const res =
-      user?.management_type == 'lead_labor'
-        ? await getJobs(leadLaborId, 1, 10, token) // page = 1
-        : await getlabourJobs(laborId, 1, 10, token);
+    try {
+      const res =
+        user?.management_type == 'lead_labor'
+          ? await getJobs(leadLaborId, 1, 10, token) // page = 1
+          : await getlabourJobs(laborId, 1, 10, token);
 
-    console.log("✅ Refresh result::", res);
+      console.log('Refresh result::', res);
 
-    const newJobs = res?.data?.jobs ?? [];
-    const pg = res?.data?.pagination ?? {};
+      const newJobs = res?.data?.jobs ?? [];
+      const pg = res?.data?.pagination ?? {};
 
-    setPaginationData(pg);
-    setJobs(newJobs); // ❗ overwrite instead of append
-  } catch (err) {
-    console.error("Refresh error:", err);
-  } finally {
-    setRefreshing(false);
-  }
-};
+      setPaginationData(pg);
+      setJobs(newJobs);
+    } catch (err) {
+      console.error('Refresh error:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     fetchJobs(); // first call

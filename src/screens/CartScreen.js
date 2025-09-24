@@ -21,6 +21,7 @@ import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import {useDispatch, useSelector} from 'react-redux';
 import {updateQuantity} from '../redux/cartSlice';
 import {createProduct} from '../config/apiConfig';
+import DeviceInfo from 'react-native-device-info';
 
 // Embedded Colors
 const Colors = {
@@ -69,8 +70,6 @@ const Shadows = {
 
 const CartScreen = ({onBack, onNavigate, route}) => {
   const {id, job} = route.params;
-
-  console.log('Full Job cart:', job.job.id, id);
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items);
   const token = useSelector(state => state.user.token);
@@ -82,10 +81,10 @@ const CartScreen = ({onBack, onNavigate, route}) => {
         stock_quantity: Number(material.stock_quantity),
         unit_cost: Number(material.unit_cost),
         supplier_id: Number(material.supplier_id),
+        system_ip: deviceId._j,
       };
 
       const res = await createProduct(payload, token);
-      console.log('Material added:', res);
       Alert.alert('Success', 'Material added successfully!');
       setShowAddEntryModal(false);
     } catch (error) {
@@ -93,15 +92,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
       Alert.alert('Error', error.message || 'Something went wrong');
     }
   };
-  const statusOptions = [
-    {label: 'Feet', value: 'Feet'},
-    {label: 'Pieces', value: 'Pieces'},
-    {label: 'Meters', value: 'Meters'},
-    {label: 'Boxes', value: 'Boxes'},
-    {label: 'Rolls', value: 'Rolls'},
-    {label: 'Gallons', value: 'Gallons'},
-    {label: 'Pounds', value: 'Pounds'},
-  ];
+
   const navigation = useNavigation();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showAddEntryModal, setShowAddEntryModal] = useState(false);
@@ -128,9 +119,13 @@ const CartScreen = ({onBack, onNavigate, route}) => {
     unit: 'pieces',
     unit_cost: '',
     supplier_id: id,
-    job_id: job?.job?.id || '', // job ka id route se
+    job_id: job?.job?.id || '',
     is_custom: true,
   });
+
+  // Device unique ID
+  const deviceId = DeviceInfo.getUniqueId();
+
   // ✅ Update Quantity (Redux)
   const handleUpdateQuantity = (itemId, newQuantity) => {
     dispatch(updateQuantity({productId: itemId, newQuantity}));
