@@ -69,7 +69,7 @@ const JobListingScreen = ({
 }) => {
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
-  const leadLaborId = user?.leadLabor?.[0].id;
+  const leadLaborId = user?.leadLabor?.[0]?.id;
   const laborId = user?.labor?.[0]?.id;
   const canViewCreateJob = useHasPermission('jobs', 'view');
   const {status} = route?.params || {};
@@ -97,6 +97,8 @@ const JobListingScreen = ({
     setRefreshing(false);
   };
   // API call
+  console.log("usserr", user);
+  
   const fetchJobs = async () => {
     if (loading || !hasMore) return;
     setLoading(true);

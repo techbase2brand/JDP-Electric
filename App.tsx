@@ -116,7 +116,6 @@ const AppContent = () => {
   // });
   const userData = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
-  // const permissions = useSelector(state => state.user.permissions);
   const dispatch = useDispatch();
   const token = useSelector(state => state.user.token);
   const {isRunning} = useSelector((state: any) => state.timer);

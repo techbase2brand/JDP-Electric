@@ -642,18 +642,16 @@ const CartScreen = ({onBack, onNavigate, route}) => {
             {/* <Ionicons name="call" size={20} color={"#fff"} /> */}
             <Icon name="phone" size={22} color="#3B82F6" />
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.continueButton, {backgroundColor: '#f3f4f6'}]}
             onPress={() =>
               openWhatsApp('+911234567890', 'Hello! This is a test message.')
             }>
             <FontAwesome name="whatsapp" size={22} color="#3B82F6" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             style={[styles.continueButton, {backgroundColor: '#f3f4f6'}]}
-            onPress={() => handleEmail()}
-            // onPress={() => handleNavigate('OrderProducts')}
-          >
+            onPress={() => handleEmail()}>
             <Icon name="email" size={22} color="#3B82F6" />
           </TouchableOpacity>
           <TouchableOpacity

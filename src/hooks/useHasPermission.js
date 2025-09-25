@@ -2,7 +2,6 @@ import { useSelector } from "react-redux";
 
 const useHasPermission = (moduleName, actionType = "view") => {
    const permissions = useSelector(state => state.user.permissions);
-console.log('permissions>>>', permissions);
   // auth.permissions aapke persist state me hai
 
   return permissions?.some(

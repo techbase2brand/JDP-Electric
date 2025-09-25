@@ -195,6 +195,7 @@ export const getSuppliers = async (page = 1, limit = 10, token) => {
 //     throw error.response?.data || {message: 'Something went wrong'};
 //   }
 // };
+
 //  Get Products by Supplier
 export const getProductsBySupplier = async (
   supplierId,
@@ -338,14 +339,14 @@ export const getJobs = async (leadLaborId, page = 1, limit = 10, token) => {
 export const getlabourJobs = async (laborId, page = 1, limit = 10, token) => {
   try {
     const res = await api.get(
-      `/job/getJobsByLeadLabor?leadLaborId=${laborId}&page=${page}&limit=${limit}`,
+      `/job/getJobsByLabor?laborId=${laborId}&page=${page}&limit=${limit}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
     );
-    return res.data; // { data: [], totalPages, currentPage }
+    return res.data;
   } catch (error) {
     console.error(
       'Error fetching jobs:',
