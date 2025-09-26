@@ -366,7 +366,18 @@ const HomeScreen = ({navigation}) => {
       </View> */}
     </TouchableOpacity>
   );
+  const date = new Date();
 
+  // Greeting logic
+  const hours = date.getHours();
+  let greeting = 'Good Morning';
+  if (hours >= 12 && hours < 17) {
+    greeting = 'Good Afternoon';
+  } else if (hours >= 17) {
+    greeting = 'Good Evening';
+  }
+  const options = {weekday: 'long', month: 'short', day: 'numeric'};
+  const today = date.toLocaleDateString('en-US', options);
   return (
     <SafeAreaView style={styles.container}>
       {/* <StatusBar backgroundColor="#155DFC" barStyle="light-content" /> */}
@@ -386,14 +397,14 @@ const HomeScreen = ({navigation}) => {
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               <Text style={styles.greeting}>
-                Good afternoon, {user?.full_name}!
+                {greeting}, {user?.full_name}!
               </Text>
               <View style={styles.roleContainer}>
                 <View style={styles.roleBadge}>
                   <Text style={styles.roleText}>Lead Labor</Text>
                 </View>
                 <Text style={[styles.dateText, {color: '#fff'}]}>
-                  • Tuesday, Jul 29
+                  • {today}
                 </Text>
               </View>
             </View>

@@ -61,9 +61,6 @@ const COLORS = {
 };
 
 const JobListingScreen = ({
-  // user,
-  onNavigate,
-  onStartTimer,
   navigation,
   route,
 }) => {
@@ -97,7 +94,6 @@ const JobListingScreen = ({
     setRefreshing(false);
   };
   // API call
-  console.log("usserr", user);
   
   const fetchJobs = async () => {
     if (loading || !hasMore) return;

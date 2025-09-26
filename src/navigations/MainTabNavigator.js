@@ -46,9 +46,9 @@ export default function MainTabNavigator() {
         <Tab.Screen name="BlueSheet" component={TimeSheetStack} />
       )}
       <Tab.Screen name="Jobs" component={JobStack} />
-      {canViewBlueSheet && (
-        <Tab.Screen name="Activity" component={ActivitySummaryStack} />
-      )}
+      {/* {canViewBlueSheet && ( */}
+      <Tab.Screen name="Activity" component={ActivitySummaryStack} />
+      {/* )} */}
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
   );

@@ -875,6 +875,7 @@ import {
   Platform,
   NativeModules,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -963,6 +964,9 @@ export default function TimerScreen({navigation, route}) {
   const [currentPauseTitle, setCurrentPauseTitle] = useState(null);
 
   const [activityLog, setActivityLog] = useState([]);
+  const [lastActivityLog, setLastActivityLog] = useState([]);
+
+  console.log('activityLog,lastActivityLog', activityLog, lastActivityLog);
 
   // Modals
   const [pauseModal, setPauseModal] = useState(false);
@@ -1086,7 +1090,7 @@ export default function TimerScreen({navigation, route}) {
       return () => clearInterval(interval);
     }
   }, [elapsedTime, isRunning]);
-
+  // console.log("user?.labor?.[0]?.id",user?.labor?.[0]?.id);
   const fetchJobDetails = async () => {
     try {
       setLoading(true);
@@ -1094,19 +1098,34 @@ export default function TimerScreen({navigation, route}) {
       const data = res?.data || {};
       setJobdata(data);
 
-      // pause list parse
-      let pauses = [];
-      if (typeof data?.pause_timer === 'string') {
-        try {
-          pauses = JSON.parse(data.pause_timer);
-        } catch (e) {
-          pauses = [];
-        }
-      } else if (Array.isArray(data?.pause_timer)) {
-        pauses = data.pause_timer;
-      }
+      const laborTimesheets = data?.labor_timesheets || [];
 
-      setActivityLog(data.labor_timesheets?.[0]?.pause_timer);
+      // ✅ filter by user.id
+      const filteredTimesheets = laborTimesheets.filter(
+        item =>
+          item.labor_id === user?.labor?.[0]?.id ||
+          item.lead_labor_id === user?.labor?.[0]?.id,
+      );
+      console.log('filteredTimesheetsfilteredTimesheets', filteredTimesheets);
+
+      if (filteredTimesheets.length > 0) {
+        // ✅ last object skip karke baaki pause_timer collect karo
+        const allPauseTimers = filteredTimesheets
+          .slice(0, -1) // last element exclude
+          .map(item => item.pause_timer || [])
+          .flat();
+
+        setActivityLog(allPauseTimers || []);
+
+        // ✅ last object ka pause_timer alag state me
+        const lastPauseTimer =
+          filteredTimesheets[filteredTimesheets.length - 1]?.pause_timer || [];
+
+        setLastActivityLog(lastPauseTimer);
+      } else {
+        setActivityLog([]);
+        setLastActivityLog([]);
+      }
     } catch (err) {
       setError(err?.message || 'Failed to fetch job details');
     } finally {
@@ -1125,7 +1144,7 @@ export default function TimerScreen({navigation, route}) {
 
       dispatch(startTimerWithBackground());
       startLiveActivity(elapsedTime);
-      addActivity('Work Started', {color: '#4CAF50'});
+      // addActivity('Work Started', {color: '#4CAF50'});
 
       // snapshot to API
       const jobIdForApi = job?.id ?? job?.id;
@@ -1155,10 +1174,10 @@ export default function TimerScreen({navigation, route}) {
       setCurrentPauseTitle(pauseReason);
 
       dispatch(pauseTimerWithBackground());
-      addActivity(`Paused - ${pauseReason}`, {
-        notes: pauseNotes,
-        color: '#FF9800',
-      });
+      // addActivity(`Paused - ${pauseReason}`, {
+      //   notes: pauseNotes,
+      //   color: '#FF9800',
+      // });
       setPauseModal(false);
       setPauseNotes('');
 
@@ -1210,7 +1229,7 @@ export default function TimerScreen({navigation, route}) {
       }
 
       dispatch(resumeTimerWithBackground());
-      addActivity('Work Resumed', {color: '#4CAF50'});
+      // addActivity('Work Resumed', {color: '#4CAF50'});
     } catch (e) {
       console.log('Resume failed:', e?.message);
     } finally {
@@ -1238,7 +1257,7 @@ export default function TimerScreen({navigation, route}) {
       await AsyncStorage.removeItem('activeJobId');
       dispatch(stopTimerWithBackground());
       endLiveActivity();
-      addActivity('Work Completed', {color: '#2196F3'});
+      // addActivity('Work Completed', {color: '#2196F3'});
       setCompleteModal(false);
       Alert.alert('Success', 'Work data updated successfully.');
     } catch (err) {
@@ -1259,10 +1278,22 @@ export default function TimerScreen({navigation, route}) {
 
   const today = fmtDate(new Date());
 
-  const isTodayCompleted =
-    jobData?.labor_timesheets?.[0]?.job_status == 'completed' &&
-    jobData?.labor_timesheets?.[0]?.date === today;
+  // const lastTimesheet =
+  //   jobData?.labor_timesheets?.[jobData?.labor_timesheets?.length - 1];
 
+  // const isTodayCompleted =
+  //   lastTimesheet?.job_status === 'completed' && lastTimesheet?.date === today;
+  const filteredTimesheets =
+    jobData?.labor_timesheets?.filter(
+      item =>
+        item.labor_id === user?.labor?.[0]?.id ||
+        item.lead_labor_id === user?.leadLabor?.[0]?.id,
+    ) || [];
+
+  const lastTimesheet = filteredTimesheets[filteredTimesheets.length - 1];
+
+  const isTodayCompleted =
+    lastTimesheet?.job_status === 'completed' && lastTimesheet?.date === today;
   console.log('isTodayCompletedisTodayCompleted', isTodayCompleted);
   const renderHeader = () => (
     <View style={styles.header}>
@@ -1289,289 +1320,336 @@ export default function TimerScreen({navigation, route}) {
   return (
     <View style={styles.container}>
       {renderHeader()}
-
-      {/* Timer Card */}
-      {!isTodayCompleted && (
-        <View style={styles.timerCard}>
-          <View
-            style={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'flex-end',
-              marginBottom: 20,
-              gap: 6,
-            }}>
-            <Icon name="timer" size={20} color="#000" />
-            <Text style={styles.summaryTitle}>Time Summary</Text>
-          </View>
-
-          <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
-          <Text style={styles.statusText}>
-            {isRunning ? 'Running' : 'Paused'}
-          </Text>
-
-          {/* Start */}
-          {elapsedTime === 0 && !isRunning && (
-            <CustomButton
-              label="Start Work"
-              color="#4CAF50"
-              onPress={handleStart}
-              widthbtn={true}
-              loading={startLoading}
-              disabled={startLoading}
-            />
-          )}
-
-          {/* Running */}
-          {isRunning && (
-            <View style={styles.buttonRow}>
-              <CustomButton
-                label="Pause"
-                color="#FF9800"
-                onPress={() => setPauseModal(true)}
-                widthbtn={true}
-                loading={false}
-              />
-              <CustomButton
-                label="Complete"
-                color="#F44336"
-                onPress={() => setCompleteModal(true)}
-                widthbtn={true}
-                loading={completeLoading}
-                disabled={completeLoading}
-              />
-            </View>
-          )}
-
-          {/* Paused after start */}
-          {!isRunning && elapsedTime > 0 && (
-            <View style={styles.buttonRow}>
-              <CustomButton
-                label="Resume"
-                color="#4CAF50"
-                onPress={handleResume}
-                widthbtn={true}
-                loading={resumeLoading}
-                disabled={resumeLoading}
-              />
-              <CustomButton
-                label="Complete"
-                color="#F44336"
-                onPress={() => setCompleteModal(true)}
-                widthbtn={true}
-                loading={completeLoading}
-                disabled={completeLoading}
-              />
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* Completed banner for today */}
-      {isTodayCompleted && (
-        <View style={styles.timerCard}>
-          <Text style={{color: '#2196F3', fontWeight: 'bold'}}>
-            Today Completed
-          </Text>
-          <Text style={{marginTop: 6, color: '#666', fontSize: 12}}>
-            Timer will be available after next day.
+      {loading ? (
+        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+          <ActivityIndicator size="large" color="#1565C0" />
+          <Text style={{marginTop: 10, fontSize: 16, color: '#555'}}>
+            Loading job details...
           </Text>
         </View>
-      )}
-
-      {/* Activity Log */}
-      <View style={styles.logCard}>
-        <Text style={styles.sectionTitle}>Activity Log</Text>
-        <FlatList
-          data={activityLog}
-          keyExtractor={(_, index) => index.toString()}
-          renderItem={({item}) => (
-            <View style={styles.logItem}>
-              <Text style={[styles.logTitle, {color: item.color || '#333'}]}>
-                {item.title}
-              </Text>
-              <Text style={styles.logTime}>
-                {item.duration ?? item.time ?? '--:--:--'}
-              </Text>
-            </View>
-          )}
-          ListEmptyComponent={() => (
-            <View style={{alignItems: 'center', padding: 20}}>
-              <Feather name="activity" size={40} color="#9ca3af" />
-              <Text style={{marginTop: 10, fontSize: 16, color: '#6b7280'}}>
-                No activity found
-              </Text>
-            </View>
-          )}
-        />
-      </View>
-
-      {/* Pause Modal */}
-      <Modal visible={pauseModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Pause Timer</Text>
-            <Text>Select a reason:</Text>
-            {[
-              'Lunch Break',
-              'Material Pickup',
-              'Customer Meeting',
-              'Equipment Issue',
-              'Weather Delay',
-              'Waiting for Parts',
-              'Safety Break',
-              'Other',
-            ]?.map(reason => (
-              <TouchableOpacity
-                key={reason}
-                style={[
-                  styles.reasonBtn,
-                  pauseReason === reason && {backgroundColor: '#1565C0'},
-                ]}
-                onPress={() => setPauseReason(reason)}>
-                <Text
-                  style={[
-                    styles.reasonText,
-                    pauseReason === reason && {color: '#fff'},
-                  ]}>
-                  {reason}
-                </Text>
-              </TouchableOpacity>
-            ))}
-
-            <TextInput
-              style={styles.input}
-              placeholder="Additional notes..."
-              value={pauseNotes}
-              onChangeText={setPauseNotes}
-            />
-
-            <View style={styles.modalBtnRow}>
-              <CustomButton
-                label="Cancel"
-                color="#9E9E9E"
-                onPress={() => {
-                  setPauseModal(false);
-                  setPauseReason('');
-                  setPauseNotes('');
-                }}
-              />
-              <CustomButton
-                label="Confirm Pause"
-                color="#1565C0"
-                disabled={!pauseReason}
-                loading={pauseConfirmLoading}
-                onPress={handleConfirmPause}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Complete Job Modal */}
-      <Modal visible={completeModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, {width: '85%'}]}>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: '600',
-                marginBottom: 5,
-                color: '#000',
-              }}>
-              Complete Job
-            </Text>
-            <Text style={{fontSize: 14, color: '#555', marginBottom: 15}}>
-              You are about to complete this job. Please review the time summary
-              below before confirming.
-            </Text>
-
-            <View style={styles.successIcon}>
-              <Icon name="check-circle" size={60} color={'#10B981'} />
-            </View>
-
-            <Text
-              style={{
-                textAlign: 'center',
-                fontSize: 14,
-                color: '#444',
-                marginBottom: 15,
-              }}>
-              Are you sure you want to complete this job? This action cannot be
-              undone.
-            </Text>
-
-            <View
-              style={{
-                backgroundColor: '#F5F5F5',
-                borderRadius: 8,
-                padding: 10,
-                width: '100%',
-                marginBottom: 20,
-              }}>
+      ) : (
+        <>
+          {/* Timer Card */}
+          {!isTodayCompleted && (
+            <View style={styles.timerCard}>
               <View
                 style={{
+                  display: 'flex',
                   flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  marginVertical: 10,
+                  alignItems: 'flex-end',
+                  marginBottom: 20,
+                  gap: 6,
                 }}>
-                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
-                  Work Time:
-                </Text>
-                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
-                  {toHHMMSS(elapsedTime)}
-                </Text>
+                <Icon name="timer" size={20} color="#000" />
+                <Text style={styles.summaryTitle}>Time Summary</Text>
               </View>
-              <View
-                style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
-                  Activities:
-                </Text>
-                <Text style={{fontSize: 14, color: '#000', marginVertical: 2}}>
-                  {activityLog.length}
-                </Text>
-              </View>
-            </View>
 
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                width: '100%',
-              }}>
-              <TouchableOpacity
-                style={{
-                  flex: 1,
-                  paddingVertical: 10,
-                  borderRadius: 6,
-                  alignItems: 'center',
-                  marginHorizontal: 5,
-                  backgroundColor: '#E0E0E0',
-                }}
-                onPress={() => setCompleteModal(false)}>
-                <Text style={{fontSize: 14, fontWeight: '600'}}>Cancel</Text>
-              </TouchableOpacity>
+              <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
+              <Text style={styles.statusText}>
+                {isRunning ? 'Running' : 'Paused'}
+              </Text>
 
-              <TouchableOpacity
-                style={{
-                  flex: 1,
-                  paddingVertical: 10,
-                  borderRadius: 6,
-                  alignItems: 'center',
-                  marginHorizontal: 5,
-                  backgroundColor: '#4CAF50',
-                  opacity: completeLoading ? 0.7 : 1,
-                }}
-                disabled={completeLoading}
-                onPress={handleComplete}>
-                <Text style={{fontSize: 14, fontWeight: '600', color: '#fff'}}>
-                  {completeLoading ? 'Please wait…' : 'Complete Job'}
-                </Text>
-              </TouchableOpacity>
+              {/* Start */}
+              {elapsedTime === 0 && !isRunning && (
+                <CustomButton
+                  label="Start Work"
+                  color="#4CAF50"
+                  onPress={handleStart}
+                  widthbtn={true}
+                  loading={startLoading}
+                  disabled={startLoading}
+                />
+              )}
+
+              {/* Running */}
+              {isRunning && (
+                <View style={styles.buttonRow}>
+                  <CustomButton
+                    label="Pause"
+                    color="#FF9800"
+                    onPress={() => setPauseModal(true)}
+                    widthbtn={true}
+                    loading={false}
+                  />
+                  <CustomButton
+                    label="Complete"
+                    color="#F44336"
+                    onPress={() => setCompleteModal(true)}
+                    widthbtn={true}
+                    loading={completeLoading}
+                    disabled={completeLoading}
+                  />
+                </View>
+              )}
+
+              {/* Paused after start */}
+              {!isRunning && elapsedTime > 0 && (
+                <View style={styles.buttonRow}>
+                  <CustomButton
+                    label="Resume"
+                    color="#4CAF50"
+                    onPress={handleResume}
+                    widthbtn={true}
+                    loading={resumeLoading}
+                    disabled={resumeLoading}
+                  />
+                  <CustomButton
+                    label="Complete"
+                    color="#F44336"
+                    onPress={() => setCompleteModal(true)}
+                    widthbtn={true}
+                    loading={completeLoading}
+                    disabled={completeLoading}
+                  />
+                </View>
+              )}
             </View>
+          )}
+
+          {/* Completed banner for today */}
+          {isTodayCompleted && (
+            <View style={styles.timerCard}>
+              <Text style={{color: '#2196F3', fontWeight: 'bold'}}>
+                Today Completed
+              </Text>
+              <Text style={{marginTop: 6, color: '#666', fontSize: 12}}>
+                Timer will be available after next day.
+              </Text>
+            </View>
+          )}
+          {/* today Activity Log */}
+          <View style={[styles.logCard, {marginBottom: 20}]}>
+            <Text style={styles.sectionTitle}>Today's Activity Log</Text>
+            <FlatList
+              data={lastActivityLog}
+              keyExtractor={(_, index) => index.toString()}
+              renderItem={({item}) => (
+                <View style={styles.logItem}>
+                  <Text
+                    style={[styles.logTitle, {color: item.color || '#333'}]}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.logTime}>
+                    {item.duration ?? item.time ?? '--:--:--'}
+                  </Text>
+                </View>
+              )}
+              ListEmptyComponent={() => (
+                <View style={{alignItems: 'center', padding: 20}}>
+                  <Feather name="activity" size={40} color="#9ca3af" />
+                  <Text style={{marginTop: 10, fontSize: 16, color: '#6b7280'}}>
+                    No activity found
+                  </Text>
+                </View>
+              )}
+            />
           </View>
-        </View>
-      </Modal>
+          {/* Activity Log */}
+          <View style={styles.logCard}>
+            <Text style={styles.sectionTitle}>All Activity Log</Text>
+            <FlatList
+              data={activityLog}
+              keyExtractor={(_, index) => index.toString()}
+              renderItem={({item}) => (
+                <View style={styles.logItem}>
+                  <Text
+                    style={[styles.logTitle, {color: item.color || '#333'}]}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.logTime}>
+                    {item.duration ?? item.time ?? '--:--:--'}
+                  </Text>
+                </View>
+              )}
+              ListEmptyComponent={() => (
+                <View style={{alignItems: 'center', padding: 20}}>
+                  <Feather name="activity" size={40} color="#9ca3af" />
+                  <Text style={{marginTop: 10, fontSize: 16, color: '#6b7280'}}>
+                    No activity found
+                  </Text>
+                </View>
+              )}
+            />
+          </View>
+
+          {/* Pause Modal */}
+          <Modal visible={pauseModal} transparent animationType="fade">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Pause Timer</Text>
+                <Text>Select a reason:</Text>
+                {[
+                  'Lunch Break',
+                  'Material Pickup',
+                  'Customer Meeting',
+                  'Equipment Issue',
+                  'Weather Delay',
+                  'Waiting for Parts',
+                  'Safety Break',
+                  'Other',
+                ]?.map(reason => (
+                  <TouchableOpacity
+                    key={reason}
+                    style={[
+                      styles.reasonBtn,
+                      pauseReason === reason && {backgroundColor: '#1565C0'},
+                    ]}
+                    onPress={() => setPauseReason(reason)}>
+                    <Text
+                      style={[
+                        styles.reasonText,
+                        pauseReason === reason && {color: '#fff'},
+                      ]}>
+                      {reason}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Additional notes..."
+                  value={pauseNotes}
+                  onChangeText={setPauseNotes}
+                />
+
+                <View style={styles.modalBtnRow}>
+                  <CustomButton
+                    label="Cancel"
+                    color="#9E9E9E"
+                    onPress={() => {
+                      setPauseModal(false);
+                      setPauseReason('');
+                      setPauseNotes('');
+                    }}
+                  />
+                  <CustomButton
+                    label="Confirm Pause"
+                    color="#1565C0"
+                    disabled={!pauseReason}
+                    loading={pauseConfirmLoading}
+                    onPress={handleConfirmPause}
+                  />
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          {/* Complete Job Modal */}
+          <Modal visible={completeModal} transparent animationType="fade">
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, {width: '85%'}]}>
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: '600',
+                    marginBottom: 5,
+                    color: '#000',
+                  }}>
+                  Complete Job
+                </Text>
+                <Text style={{fontSize: 14, color: '#555', marginBottom: 15}}>
+                  You are about to complete this job. Please review the time
+                  summary below before confirming.
+                </Text>
+
+                <View style={styles.successIcon}>
+                  <Icon name="check-circle" size={60} color={'#10B981'} />
+                </View>
+
+                <Text
+                  style={{
+                    textAlign: 'center',
+                    fontSize: 14,
+                    color: '#444',
+                    marginBottom: 15,
+                  }}>
+                  Are you sure you want to complete this job? This action cannot
+                  be undone.
+                </Text>
+
+                <View
+                  style={{
+                    backgroundColor: '#F5F5F5',
+                    borderRadius: 8,
+                    padding: 10,
+                    width: '100%',
+                    marginBottom: 20,
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      marginVertical: 10,
+                    }}>
+                    <Text
+                      style={{fontSize: 14, color: '#000', marginVertical: 2}}>
+                      Work Time:
+                    </Text>
+                    <Text
+                      style={{fontSize: 14, color: '#000', marginVertical: 2}}>
+                      {toHHMMSS(elapsedTime)}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                    }}>
+                    <Text
+                      style={{fontSize: 14, color: '#000', marginVertical: 2}}>
+                      Activities:
+                    </Text>
+                    <Text
+                      style={{fontSize: 14, color: '#000', marginVertical: 2}}>
+                      {activityLog.length}
+                    </Text>
+                  </View>
+                </View>
+
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                  }}>
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      borderRadius: 6,
+                      alignItems: 'center',
+                      marginHorizontal: 5,
+                      backgroundColor: '#E0E0E0',
+                    }}
+                    onPress={() => setCompleteModal(false)}>
+                    <Text style={{fontSize: 14, fontWeight: '600'}}>
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      borderRadius: 6,
+                      alignItems: 'center',
+                      marginHorizontal: 5,
+                      backgroundColor: '#4CAF50',
+                      opacity: completeLoading ? 0.7 : 1,
+                    }}
+                    disabled={completeLoading}
+                    onPress={handleComplete}>
+                    <Text
+                      style={{fontSize: 14, fontWeight: '600', color: '#fff'}}>
+                      {completeLoading ? 'Please wait…' : 'Complete Job'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </>
+      )}
     </View>
   );
 }
