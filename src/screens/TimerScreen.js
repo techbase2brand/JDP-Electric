@@ -957,16 +957,13 @@ export default function TimerScreen({navigation, route}) {
 
   const job = route?.params?.job;
   const jobId = job?.id;
-
   const [startISO, setStartISO] = useState(null);
-  const [pauseList, setPauseList] = useState([]); // finalized pauses [{title, duration:"HH:MM:SS"}]
+  const [pauseList, setPauseList] = useState([]);
   const [currentPauseStartedAt, setCurrentPauseStartedAt] = useState(null);
   const [currentPauseTitle, setCurrentPauseTitle] = useState(null);
 
   const [activityLog, setActivityLog] = useState([]);
   const [lastActivityLog, setLastActivityLog] = useState([]);
-
-  console.log('activityLog,lastActivityLog', activityLog, lastActivityLog);
 
   // Modals
   const [pauseModal, setPauseModal] = useState(false);
@@ -988,28 +985,31 @@ export default function TimerScreen({navigation, route}) {
   const [loading, setLoading] = useState(true); // screen load
   const [error, setError] = useState(null);
   console.log('jobDatajobDatajobData', jobData);
+  const [uiLoading, setUiLoading] = useState(true);
 
+  useEffect(() => {
+    const t = setTimeout(() => setUiLoading(false), 2400);
+    return () => clearTimeout(t);
+  }, []);
   const {TimerModule} = NativeModules;
 
   const startLiveActivity = async elapsed => {
     try {
       await TimerModule?.startActivity?.(elapsed);
-    } catch (e) {
-      // noop
-    }
+    } catch (e) {}
   };
   const updateLiveActivity = (elapsed, running) => {
     try {
       TimerModule?.updateActivity?.(elapsed, running);
     } catch (e) {
-      // noop
+      //
     }
   };
   const endLiveActivity = () => {
     try {
       TimerModule?.endActivity?.();
     } catch (e) {
-      // noop
+      //
     }
   };
 
@@ -1036,7 +1036,6 @@ export default function TimerScreen({navigation, route}) {
           : undefined,
     };
 
-    // unnecessary keys हटा दो
     Object.keys(payload_id).forEach(
       key => payload_id[key] === undefined && delete payload_id[key],
     );
@@ -1046,7 +1045,6 @@ export default function TimerScreen({navigation, route}) {
         date: dateStr,
         start_time: startT,
         ...(endT ? {end_time: endT} : {}),
-        // total work ko work_activity me bhejna hai (string HH:MM:SS)
         work_activity: toSeconds(totalMs),
         pause_timer: pauseList.map(p => ({
           title: p.title,
@@ -1073,9 +1071,7 @@ export default function TimerScreen({navigation, route}) {
       try {
         const id = await AsyncStorage.getItem('activeJobId');
         if (id) setStoredJobId(id);
-      } catch (err) {
-        // ignore
-      }
+      } catch (err) {}
     };
     checkJobId();
     fetchJobDetails();
@@ -1090,6 +1086,7 @@ export default function TimerScreen({navigation, route}) {
       return () => clearInterval(interval);
     }
   }, [elapsedTime, isRunning]);
+
   // console.log("user?.labor?.[0]?.id",user?.labor?.[0]?.id);
   const fetchJobDetails = async () => {
     try {
@@ -1100,7 +1097,6 @@ export default function TimerScreen({navigation, route}) {
 
       const laborTimesheets = data?.labor_timesheets || [];
 
-      // ✅ filter by user.id
       const filteredTimesheets = laborTimesheets.filter(
         item =>
           item.labor_id === user?.labor?.[0]?.id ||
@@ -1109,7 +1105,6 @@ export default function TimerScreen({navigation, route}) {
       console.log('filteredTimesheetsfilteredTimesheets', filteredTimesheets);
 
       if (filteredTimesheets.length > 0) {
-        // ✅ last object skip karke baaki pause_timer collect karo
         const allPauseTimers = filteredTimesheets
           .slice(0, -1) // last element exclude
           .map(item => item.pause_timer || [])
@@ -1117,7 +1112,6 @@ export default function TimerScreen({navigation, route}) {
 
         setActivityLog(allPauseTimers || []);
 
-        // ✅ last object ka pause_timer alag state me
         const lastPauseTimer =
           filteredTimesheets[filteredTimesheets.length - 1]?.pause_timer || [];
 
@@ -1293,7 +1287,7 @@ export default function TimerScreen({navigation, route}) {
   const lastTimesheet = filteredTimesheets[filteredTimesheets.length - 1];
 
   const isTodayCompleted =
-    lastTimesheet?.job_status === 'completed' && lastTimesheet?.date === today;
+    lastTimesheet?.job_status == 'completed' && lastTimesheet?.date == today;
   console.log('isTodayCompletedisTodayCompleted', isTodayCompleted);
   const renderHeader = () => (
     <View style={styles.header}>
@@ -1320,7 +1314,7 @@ export default function TimerScreen({navigation, route}) {
   return (
     <View style={styles.container}>
       {renderHeader()}
-      {loading ? (
+      {uiLoading ? (
         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
           <ActivityIndicator size="large" color="#1565C0" />
           <Text style={{marginTop: 10, fontSize: 16, color: '#555'}}>
