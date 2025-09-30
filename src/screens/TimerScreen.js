@@ -954,6 +954,7 @@ export default function TimerScreen({navigation, route}) {
   const token = useSelector(state => state.user?.token);
   const user = useSelector(state => state.user?.user);
   const dispatch = useDispatch();
+  console.log('useruseruseruser', user);
 
   const job = route?.params?.job;
   const jobId = job?.id;
@@ -984,11 +985,11 @@ export default function TimerScreen({navigation, route}) {
   const [jobData, setJobdata] = useState(null);
   const [loading, setLoading] = useState(true); // screen load
   const [error, setError] = useState(null);
-  console.log('jobDatajobDatajobData', jobData);
+  console.log('jobDatajobDatajobData', jobData, lastActivityLog);
   const [uiLoading, setUiLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setUiLoading(false), 2400);
+    const t = setTimeout(() => setUiLoading(false), 2500);
     return () => clearTimeout(t);
   }, []);
   const {TimerModule} = NativeModules;
@@ -1100,7 +1101,7 @@ export default function TimerScreen({navigation, route}) {
       const filteredTimesheets = laborTimesheets.filter(
         item =>
           item.labor_id === user?.labor?.[0]?.id ||
-          item.lead_labor_id === user?.labor?.[0]?.id,
+          item.lead_labor_id === user?.leadLabor?.[0]?.id,
       );
       console.log('filteredTimesheetsfilteredTimesheets', filteredTimesheets);
 
@@ -1114,6 +1115,7 @@ export default function TimerScreen({navigation, route}) {
 
         const lastPauseTimer =
           filteredTimesheets[filteredTimesheets.length - 1]?.pause_timer || [];
+        console.log('lastPauseTimerlastPauseTimer', lastPauseTimer);
 
         setLastActivityLog(lastPauseTimer);
       } else {

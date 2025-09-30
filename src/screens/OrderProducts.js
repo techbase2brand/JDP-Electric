@@ -1184,6 +1184,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
                     <Text style={styles.quantityText}>{quantity}</Text>
                     <TouchableOpacity
                       style={styles.quantityButton}
+                      disabled={quantity >= item.stock_quantity}
                       onPress={() =>
                         handleUpdateQuantity(item.id, quantity + 1)
                       }>

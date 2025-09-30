@@ -19,7 +19,7 @@ import {useNavigation} from '@react-navigation/native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import {useDispatch, useSelector} from 'react-redux';
-import {updateQuantity} from '../redux/cartSlice';
+import {addToCart, updateQuantity} from '../redux/cartSlice';
 import {createProduct} from '../config/apiConfig';
 import DeviceInfo from 'react-native-device-info';
 
@@ -73,6 +73,9 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   const dispatch = useDispatch();
   const cartItems = useSelector(state => state.cart.items);
   const token = useSelector(state => state.user.token);
+  const user = useSelector(state => state.user.user);
+
+  console.log('cartitemss', id, job.job.id, user?.leadLabor?.[0].id);
 
   const handleAddMaterial = async () => {
     try {
@@ -85,6 +88,8 @@ const CartScreen = ({onBack, onNavigate, route}) => {
       };
 
       const res = await createProduct(payload, token);
+
+      dispatch(addToCart(res.data));
       Alert.alert('Success', 'Material added successfully!');
       setShowAddEntryModal(false);
     } catch (error) {
@@ -160,13 +165,6 @@ const CartScreen = ({onBack, onNavigate, route}) => {
         }
       })
       .catch(err => console.error('Error', err));
-  };
-  const handleNavigate = screen => {
-    if (onNavigate) {
-      onNavigate(screen);
-    } else {
-      navigation.navigate(screen);
-    }
   };
 
   const handleBack = () => {
@@ -582,6 +580,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                     </View>
                     <TouchableOpacity
                       style={styles.quantityButton}
+                      disabled={item.quantity >= item.stock_quantity}
                       onPress={() =>
                         handleUpdateQuantity(item.id, item.quantity + 1)
                       }>
@@ -656,7 +655,15 @@ const CartScreen = ({onBack, onNavigate, route}) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.checkoutButton}
-            onPress={() => handleNavigate('CheckoutScreen')}>
+            onPress={() =>
+              navigation.navigate('CheckoutScreen', {
+                leadLabourId: user?.leadLabor?.[0].id,
+                jobData: job,
+                supplierId: id,
+              })
+            }
+            // onPress={() => handleNavigate('CheckoutScreen')}
+          >
             <Text style={styles.checkoutButtonText}>Checkout</Text>
           </TouchableOpacity>
         </View>

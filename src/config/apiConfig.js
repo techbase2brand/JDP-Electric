@@ -409,3 +409,22 @@ export const updateWorkData = async (jobId, payload, token) => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
+// order 
+export const createOrders = async ( payload, token) => {
+  console.log('createOrders', payload, token);
+
+  try {
+    const res = await api.post(`/orders/createOrder`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data; // { data: {...} }
+  } catch (error) {
+    console.error(
+      'Error updating work data:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};

@@ -122,8 +122,8 @@ const OrderConfirmationScreen = ({
     email: 'orders@jdpelectric.com',
   };
 
-  const order = propOrderData || route?.params?.orderData || mockOrderData;
-  const user = propUser || route?.params?.user || mockUser;
+  const order = route?.params?.order || mockOrderData;
+  console.log('orderorderorder', order?.data);
 
   // Confetti animation
   useEffect(() => {
@@ -251,8 +251,10 @@ const OrderConfirmationScreen = ({
           <View style={styles.cardContent}>
             <View style={styles.orderInfo}>
               <View style={styles.orderInfoRow}>
-                <Text style={styles.orderInfoLabel}>Order #</Text>
-                <Text style={styles.orderInfoValue}>{order.orderId}</Text>
+                <Text style={styles.orderInfoLabel}>Order Number</Text>
+                <Text style={styles.orderInfoValue}>
+                  {order?.data?.order_number}
+                </Text>
               </View>
               <View style={styles.orderInfoRow}>
                 <Text style={styles.orderInfoLabel}>Placed on</Text>
@@ -278,11 +280,15 @@ const OrderConfirmationScreen = ({
           </View>
 
           <View style={styles.cardContent}>
-            {order?.items?.map((item, index) => (
+            {order?.data?.order_items?.map((item, index) => (
               <View key={index} style={styles.orderItem}>
                 <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemSku}>SKU: {item.sku}</Text>
+                  <Text style={styles.itemName}>
+                    {item?.product?.product_name}
+                  </Text>
+                  <Text style={styles.itemSku}>
+                    SKU: {item?.product?.supplier_sku}
+                  </Text>
                   <Text style={styles.itemQuantity}>
                     Quantity: {item.quantity}
                   </Text>
@@ -308,7 +314,7 @@ const OrderConfirmationScreen = ({
               <View style={styles.deliveryDetailInfo}>
                 <Text style={styles.deliveryDetailLabel}>PO Number</Text>
                 <Text style={styles.deliveryDetailValue}>
-                  123 Main Street, Houston, TX 77001
+                  {order?.data?.delivery_address}
                 </Text>
               </View>
             </View>
@@ -319,7 +325,9 @@ const OrderConfirmationScreen = ({
               </View>
               <View style={styles.deliveryDetailInfo}>
                 <Text style={styles.deliveryDetailLabel}>Customer Name</Text>
-                <Text style={styles.deliveryDetailValue}>{user.name}</Text>
+                <Text style={styles.deliveryDetailValue}>
+                  {order?.data?.customer?.customer_name}
+                </Text>
               </View>
             </View>
 
@@ -342,7 +350,7 @@ const OrderConfirmationScreen = ({
               <View style={styles.deliveryDetailInfo}>
                 <Text style={styles.deliveryDetailLabel}>Phone Number</Text>
                 <Text style={styles.deliveryDetailValue}>
-                  {user.phone || '(555) 123-4567'}
+                  {order?.data?.delivery_phone}
                 </Text>
               </View>
             </View>

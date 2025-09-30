@@ -9,10 +9,14 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
+import DeviceInfo from 'react-native-device-info';
+import {createOrders} from '../config/apiConfig';
+import {clearCart} from '../redux/cartSlice';
 
 // Embedded Colors
 const Colors = {
@@ -61,48 +65,57 @@ const Shadows = {
 
 const CheckoutScreen = ({onBack, onNavigate, route}) => {
   const navigation = useNavigation();
+  const deviceId = DeviceInfo.getUniqueId();
+  console.log('deviceIddeviceId>>>', deviceId._j);
+  const token = useSelector(state => state.user.token);
+  const dispatch = useDispatch();
+  const {leadLabourId, jobData, supplierId} = route.params;
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [showOrderSummary, setShowOrderSummary] = useState(false);
-// ✅ Redux se cartItems fetch karna
+  const [loading, setLoading] = useState(false);
   const cartItems = useSelector(state => state.cart.items);
-  // Mock cart data (removed pricing)
-  // const cartItems = [
-  //   {
-  //     id: '1',
-  //     name: 'Electrical Panel - 200A',
-  //     sku: 'EP-200A-001',
-  //     quantity: 2,
-  //     supplier: 'ElectricPro Supply',
-  //   },
-  //   {
-  //     id: '2',
-  //     name: 'Circuit Breaker - 20A',
-  //     sku: 'CB-20A-002',
-  //     quantity: 8,
-  //     supplier: 'ElectricPro Supply',
-  //   },
-  //   {
-  //     id: '4',
-  //     name: 'Conduit - 1/2 inch EMT',
-  //     sku: 'EMT-12-004',
-  //     quantity: 15,
-  //     supplier: 'Conduit Corp',
-  //   },
-  // ];
+  console.log('Labour ID:', leadLabourId, cartItems);
+  console.log('Job ID:', jobData);
+  console.log('Supplier ID:', supplierId);
+  const jobId = jobData?.job?.id;
 
-  const handlePlaceOrder = () => {
-    // Mock order placement
-    // Alert.alert('Success', 'Order placed successfully!');
-    setTimeout(() => {
-      handleNavigate('OrderConfirmationScreen');
-    }, 1500);
-  };
+  const handlePlaceOrder = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const formattedCartItems = cartItems.map(item => ({
+      product_id: item?.id,
+      quantity: item?.quantity,
+    }));
 
-  const handleNavigate = screen => {
-    if (onNavigate) {
-      onNavigate(screen);
-    } else {
-      navigation.navigate(screen);
+    const payload = {
+      lead_labour_id: leadLabourId,
+      job_id: jobId,
+      supplier_id: supplierId,
+      customer_id: jobData?.job?.customer_id,
+      contractor_id: jobData?.job?.contractor_id,
+      // totalItems: formattedCartItems?.length,
+      cartItems: formattedCartItems,
+      // order details.
+      order_date: today,
+      delivery_address: jobData?.job?.customer?.address,
+      // delivery_city_zip: 'New York, NY 10001',
+      delivery_phone: jobData?.job?.customer?.phone,
+      created_from: 'app',
+      status: 'pending',
+      system_ip: deviceId._j,
+      notes: specialInstructions,
+      internal_notes: 'Internal notes',
+    };
+    try {
+      setLoading(true);
+      const res = await createOrders(payload, token);
+      dispatch(clearCart()); // clear cart
+      Alert.alert('Success', 'Order Created successfully!');
+      navigation.navigate('OrderConfirmationScreen', {order: res});
+    } catch (error) {
+      console.error('Error Creating Order:', error);
+      Alert.alert('Error', error.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,8 +151,12 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
               {cartItems?.map(item => (
                 <View key={item.id} style={styles.summaryItem}>
                   <View style={styles.summaryItemInfo}>
-                    <Text style={styles.summaryItemName}>{item.product_name}</Text>
-                    <Text style={styles.summaryItemSku}>SKU: {item.jdp_sku}</Text>
+                    <Text style={styles.summaryItemName}>
+                      {item.product_name}
+                    </Text>
+                    <Text style={styles.summaryItemSku}>
+                      SKU: {item.jdp_sku}
+                    </Text>
                     <Text style={styles.summaryItemSupplier}>
                       Supplier: {item.suppliers.contact_person}
                     </Text>
@@ -152,25 +169,25 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
                 </View>
               ))}
             </ScrollView>
-              <View style={{}}>
-                <View style={styles.summaryTotals}>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>
-                      Items (
-                      {cartItems?.reduce((sum, item) => sum + item.quantity, 0)})
-                    </Text>
-                    {/* <Text style={styles.summaryValue}>Quote on Request</Text> */}
-                  </View>
+            <View style={{}}>
+              <View style={styles.summaryTotals}>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>
+                    Items (
+                    {cartItems?.reduce((sum, item) => sum + item.quantity, 0)})
+                  </Text>
+                  {/* <Text style={styles.summaryValue}>Quote on Request</Text> */}
+                </View>
 
-                  <View style={styles.summaryDivider} />
-                  {/* <View style={styles.summaryRow}>
+                <View style={styles.summaryDivider} />
+                {/* <View style={styles.summaryRow}>
                     <Text style={styles.summaryTotalLabel}>Total</Text>
                     <Text style={styles.summaryTotalValue}>
                       Quote on Request
                     </Text>
                   </View> */}
-                </View>
               </View>
+            </View>
           </View>
         </TouchableOpacity>
       </View>
@@ -277,9 +294,12 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
       {/* Bottom Action */}
       <View style={styles.bottomAction}>
         <TouchableOpacity
+          disabled={loading}
           style={styles.placeOrderButton}
           onPress={handlePlaceOrder}>
-          <Text style={styles.placeOrderText}>Place Order</Text>
+          <Text style={styles.placeOrderText}>
+            {loading ? 'Placing Order..' : 'Place Order'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -391,7 +411,7 @@ const styles = StyleSheet.create({
   },
   orderSummaryTotal: {
     flexDirection: 'row',
-    justifyContent: "flex-end",
+    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   totalItemsText: {
