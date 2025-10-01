@@ -954,7 +954,7 @@ export default function TimerScreen({navigation, route}) {
   const token = useSelector(state => state.user?.token);
   const user = useSelector(state => state.user?.user);
   const dispatch = useDispatch();
-  console.log('useruseruseruser', user);
+console.log("usseer",user);
 
   const job = route?.params?.job;
   const jobId = job?.id;
