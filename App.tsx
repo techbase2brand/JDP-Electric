@@ -119,7 +119,7 @@ const AppContent = () => {
   const dispatch = useDispatch();
   const token = useSelector(state => state.user.token);
   const {isRunning} = useSelector((state: any) => state.timer);
-  // console.log("tokentokentoken",user.id);
+  console.log("tokentokentoken",token);
 
   useEffect(() => {
     if (isRunning) {

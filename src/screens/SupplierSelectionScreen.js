@@ -107,7 +107,7 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
       const rows = res?.data?.data ?? [];
       if (rows.length) {
         setSuppliers(prev => (isReset ? rows : [...prev, ...rows]));
-        setPage(targetPage); // commit only after success
+        setPage(targetPage);
       } else {
         setHasMore(false);
       }
@@ -244,7 +244,6 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
           renderItem={renderSupplier}
           onEndReached={loadMore}
           onEndReachedThreshold={0.1} //  low threshold
-          //  momentum start pe lock reset
           onMomentumScrollBegin={() => {
             endReachedLockRef.current = false;
           }}

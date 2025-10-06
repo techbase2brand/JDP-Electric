@@ -60,10 +60,7 @@ const COLORS = {
   red100: '#FEE2E2',
 };
 
-const JobListingScreen = ({
-  navigation,
-  route,
-}) => {
+const JobListingScreen = ({navigation, route}) => {
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
   const leadLaborId = user?.leadLabor?.[0]?.id;
@@ -94,7 +91,7 @@ const JobListingScreen = ({
     setRefreshing(false);
   };
   // API call
-  
+
   const fetchJobs = async () => {
     if (loading || !hasMore) return;
     setLoading(true);
@@ -423,8 +420,8 @@ const JobListingScreen = ({
 
     const matchesSearch =
       searchQuery === '' ||
-      job.job_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.customer.customer_name
+      job?.job_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job?.customer?.customer_name
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
       String(job.id).toLowerCase().includes(searchQuery.toLowerCase());
@@ -747,7 +744,7 @@ const JobListingScreen = ({
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => navigation.navigate('MapScreen', job)}>
+            onPress={() => navigation.navigate('MapScreen', {job})}>
             {/* onPress={() => handleNavigate(job)}> */}
             <Ionicons name="navigate" size={20} color={'#10B981'} />
             <Text style={[styles.actionText, {color: '#10B981'}]}>
@@ -801,9 +798,9 @@ const JobListingScreen = ({
           {renderSearchBar()}
         </View>
         <View style={styles.container}>
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
+          {/* <TouchableOpacity onPress={() => setModalVisible(true)}>
             <Icon name="filter-list" size={28} color="#000" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <Modal
             transparent={true}

@@ -692,7 +692,7 @@ const JobDetailScreen = ({
             </Text>
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={() => handleNavigate('MapScreen', job)}>
+              onPress={() => handleNavigate('MapScreen', {job})}>
               <Icon name="directions" size={20} color={Colors.white} />
               <Text style={styles.primaryButtonText}>Get Directions</Text>
             </TouchableOpacity>
