@@ -1,4 +1,4 @@
-// import React, {useEffect, useRef, useState} from 'react';
+// import React, {useEffect, useRef, useState, useCallback} from 'react';
 // import {
 //   View,
 //   Text,
@@ -7,14 +7,12 @@
 //   TextInput,
 //   StatusBar,
 //   StyleSheet,
-//   Modal,
-//   Alert,
 //   FlatList,
 //   ActivityIndicator,
 // } from 'react-native';
 // import Icon from 'react-native-vector-icons/MaterialIcons';
 // import {useNavigation} from '@react-navigation/native';
-// import {getAllProducts, getProductsBySupplier} from '../config/apiConfig';
+// import {getProductsBySupplier} from '../config/apiConfig';
 // import {useDispatch, useSelector} from 'react-redux';
 // import {addToCart, updateQuantity} from '../redux/cartSlice';
 
@@ -37,22 +35,8 @@
 // };
 
 // // Embedded Spacing
-// const Spacing = {
-//   xs: 4,
-//   sm: 8,
-//   md: 16,
-//   lg: 24,
-//   xl: 32,
-//   xxl: 48,
-// };
-
-// const BorderRadius = {
-//   sm: 6,
-//   md: 8,
-//   lg: 12,
-//   xl: 16,
-// };
-
+// const Spacing = {xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48};
+// const BorderRadius = {sm: 6, md: 8, lg: 12, xl: 16};
 // const Shadows = {
 //   md: {
 //     shadowColor: '#000',
@@ -63,8 +47,9 @@
 //   },
 // };
 
+// const PAGE_SIZE = 10;
+
 // const OrderProductsScreen = ({onBack, onNavigate, route}) => {
-//   const lastFetchedPageRef = useRef(null);
 //   const {id, job} = route.params;
 
 //   const token = useSelector(state => state.user.token);
@@ -72,240 +57,159 @@
 
 //   const dispatch = useDispatch();
 //   const navigation = useNavigation();
+
+//   // Filters / UI
 //   const [searchQuery, setSearchQuery] = useState('');
 //   const [selectedCategory, setSelectedCategory] = useState('all');
-//   // const [cart, setCart] = useState([]);
-//   const [showFilters, setShowFilters] = useState(false);
-//   const [inStockOnly, setInStockOnly] = useState(false);
 //   const [stockFilter, setStockFilter] = useState('all');
 //   const [categories, setCategories] = useState([
 //     {id: 'all', name: 'All Products'},
 //   ]);
-//   const [products, setProducts] = useState([]); // API data
-//   const [page, setPage] = useState(1);
-//   const [limit] = useState(10);
-//   const [loading, setLoading] = useState(false);
-//   const [checkLoading, setCheckLoading] = useState(false);
 
+//   // Data / Paging
+//   const [products, setProducts] = useState([]);
+//   const [page, setPage] = useState(1);
 //   const [hasMore, setHasMore] = useState(true);
+
+//   // Loading states
+//   const [initialLoading, setInitialLoading] = useState(true);
+//   const [pagingLoading, setPagingLoading] = useState(false);
 //   const [refreshing, setRefreshing] = useState(false);
 
-//   // useEffect(() => {
-//   //   fetchProducts();
-//   // }, [page]);
+//   // Refs / guards
+//   const lastFetchedPageRef = useRef(null);
+//   const replaceNextRef = useRef(true); // initial load is a replace
+//   const onEndReachedLock = useRef(false);
 
-//   // const fetchProducts = async () => {
-//   //   if (loading || !hasMore) return;
+//   // ---------- Data Fetch ----------
+//   const fetchPage = useCallback(async () => {
+//     // duplicate guard
+//     if (!replaceNextRef.current && (pagingLoading || !hasMore)) return;
+//     if (!replaceNextRef.current && lastFetchedPageRef.current === page) return;
 
-//   //   // ✅ agar same page dobara aa gaya to ignore
-//   //   if (lastFetchedPageRef.current === page) {
-//   //     console.log('⚠️ Skipping duplicate fetch for page:', page);
-//   //     return;
-//   //   }
-//   //   lastFetchedPageRef.current = page;
+//     // mark page fetched
+//     lastFetchedPageRef.current = page;
 
-//   //   setLoading(true);
-//   //   setCheckLoading(true);
-
-//   //   try {
-//   //     const res = await getProductsBySupplier(id, page, 10, token);
-//   //     const newProducts = res?.data?.data || [];
-//   //     console.log('📦 Page', page, '=>', newProducts.length);
-
-//   //     if (newProducts.length > 0) {
-//   //       setProducts(prev => [...prev, ...newProducts]);
-//   //       if (page === 1) {
-//   //         const uniqueCategories = [
-//   //           {id: 'all', name: 'All Products'},
-//   //           ...Array.from(new Set(newProducts.map(p => p.category))).map(
-//   //             cat => ({
-//   //               id: cat,
-//   //               name: cat
-//   //                 ? cat.charAt(0).toUpperCase() + cat.slice(1)
-//   //                 : 'Unknown',
-//   //             }),
-//   //           ),
-//   //         ];
-//   //         setCategories(uniqueCategories);
-//   //       }
-//   //     } else {
-//   //       setHasMore(false);
-//   //     }
-//   //   } catch (err) {
-//   //     console.log('❌ Error fetching products:', err);
-//   //   } finally {
-//   //     setLoading(false);
-//   //     setCheckLoading(false);
-//   //   }
-//   // };
-
-//   // const loadMore = () => {
-//   //   if (!loading && hasMore) {
-//   //     setPage(prev => prev + 1);
-//   //   }
-//   // };
-//   useEffect(() => {
-//     fetchProducts(false); // not a refresh
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, [page]);
-
-//   // 3) fetch with a flag
-//   const fetchProducts = async (isRefresh = false) => {
-//     // block only normal loads
-//     if (!isRefresh && (loading || !hasMore)) return;
-
-//     // skip duplicate page ONLY for non-refresh loads
-//     if (!isRefresh && lastFetchedPageRef.current === page) {
-//       console.log('⚠️ Skipping duplicate fetch for page:', page);
-//       return;
-//     }
-//     if (!isRefresh) lastFetchedPageRef.current = page;
-
-//     if (!isRefresh) setLoading(true);
-//     setCheckLoading(true);
+//     const isReplace = replaceNextRef.current;
 
 //     try {
-//       const res = await getProductsBySupplier(id, page, 10, token);
-//       const newProducts = res?.data?.data || [];
-//       console.log(
-//         isRefresh ? '🔄 Refresh' : '📦 Page',
-//         page,
-//         '=>',
-//         newProducts.length,
-//       );
+//       if (isReplace) {
+//         if (!refreshing) setInitialLoading(true);
+//       } else {
+//         setPagingLoading(true);
+//       }
 
-//       if (isRefresh) {
+//       const res = await getProductsBySupplier(id, page, PAGE_SIZE, token);
+//       const newProducts = res?.data?.data || [];
+//       console.log('order res :::', res);
+
+//       if (isReplace) {
 //         setProducts(newProducts);
-//         setHasMore(true);
-//         // categories on refresh (page will be 1)
+//         setHasMore(newProducts.length === PAGE_SIZE);
+//         // Build categories from first page (fresh list)
 //         const uniqueCategories = [
 //           {id: 'all', name: 'All Products'},
-//           ...Array.from(new Set(newProducts.map(p => p.category))).map(cat => ({
-//             id: cat,
-//             name: cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Unknown',
-//           })),
+//           ...Array.from(new Set(newProducts.map(p => p?.category)))
+//             .filter(cat => cat) // 👈 null / undefined / empty ko hata dega
+//             .map(cat => ({
+//               id: cat,
+//               name: cat.charAt(0).toUpperCase() + cat.slice(1),
+//             })),
 //         ];
 //         setCategories(uniqueCategories);
 //       } else {
-//         if (newProducts.length > 0) {
-//           setProducts(prev => [...prev, ...newProducts]);
-//           if (page === 1) {
-//             const uniqueCategories = [
-//               {id: 'all', name: 'All Products'},
-//               ...Array.from(new Set(newProducts.map(p => p.category))).map(
-//                 cat => ({
-//                   id: cat,
-//                   name: cat
-//                     ? cat.charAt(0).toUpperCase() + cat.slice(1)
-//                     : 'Unknown',
-//                 }),
-//               ),
-//             ];
-//             setCategories(uniqueCategories);
-//           }
-//         } else {
-//           setHasMore(false);
-//         }
+//         setProducts(prev => [...prev, ...newProducts]);
+//         if (newProducts?.length < PAGE_SIZE) setHasMore(false);
 //       }
-//     } catch (err) {
-//       console.log('❌ Error fetching products:', err);
+//     } catch (e) {
+//       console.log('❌ Error fetching products:', e);
+//       // in case of error on first load, keep state sane
+//       if (replaceNextRef.current) setHasMore(true);
 //     } finally {
-//       if (!isRefresh) setLoading(false);
-//       setCheckLoading(false);
-//       if (isRefresh) setRefreshing(false);
+//       if (replaceNextRef.current) {
+//         setInitialLoading(false);
+//         setRefreshing(false);
+//         replaceNextRef.current = false;
+//       } else {
+//         setPagingLoading(false);
+//       }
+//       onEndReachedLock.current = false; // release lock
+//     }
+//   }, [id, page, token, hasMore, pagingLoading, refreshing]);
+
+//   useEffect(() => {
+//     fetchPage();
+//   }, [page, fetchPage]);
+
+//   // ---------- Handlers ----------
+//   const handleRefresh = () => {
+//     // Clean refresh: just set flags; effect will fetch with page=1
+//     setRefreshing(true);
+//     setHasMore(true);
+//     lastFetchedPageRef.current = null;
+//     replaceNextRef.current = true;
+//     setPage(1);
+//   };
+
+//   const loadMore = () => {
+//     if (onEndReachedLock.current) return;
+//     if (hasMore && !pagingLoading && !initialLoading && !refreshing) {
+//       onEndReachedLock.current = true; // prevent multiple rapid calls
+//       setPage(prev => prev + 1);
 //     }
 //   };
 
-//   // 4) CLEAN refresh handler
-//   const handleRefresh = async () => {
-//     console.log('🔄 Pull to refresh');
-//     setRefreshing(true);
-//     setHasMore(true);
-//     setPage(1); // make sure we’re on page 1
-//     lastFetchedPageRef.current = null; // reset duplicate guard
-//     await fetchProducts(true); // pass refresh flag
-//   };
-
-//   // 5) load more untouched
-//   const loadMore = () => {
-//     if (!loading && hasMore) setPage(prev => prev + 1);
-//   };
-//   const handleAddToCart = product => {
-//     dispatch(addToCart(product));
-//   };
-
-//   const handleUpdateQuantity = (productId, newQuantity) => {
-//     dispatch(updateQuantity({productId, newQuantity}));
-//   };
-
 //   const productKey = (p, idx) => {
-//   const base =
-//     p?.id ??
-//     p?.product_id ??
-//     p?.jdp_sku ??
-//     p?.supplier_sku ??
-//     `idx-${idx}`;
-//   // include supplier or page context to avoid cross-page dupes
-//   return `${base}-${id}`;
-// };
-
-//   const getCartItemCount = () => {
-//     return cart.reduce((total, item) => total + item.quantity, 0);
+//     const base =
+//       p?.id ?? p?.product_id ?? p?.jdp_sku ?? p?.supplier_sku ?? `idx-${idx}`;
+//     return `${base}-${id}`;
 //   };
+
+//   const handleAddToCart = product => dispatch(addToCart(product));
+//   const handleUpdateQuantity = (productId, newQuantity) =>
+//     dispatch(updateQuantity({productId, newQuantity}));
+
+//   const getCartItemCount = () =>
+//     cart.reduce((total, item) => total + item.quantity, 0);
 
 //   const getItemQuantity = productId => {
 //     const item = cart.find(item => item.id === productId);
 //     return item ? item.quantity : 0;
 //   };
 
-//   const handleNavigate = ({screen, params}) => {
-//     if (onNavigate) {
-//       onNavigate(screen, params);
-//     } else {
-//       onNavigate(screen, params);
-//     }
-//   };
+//   const handleBack = () => (onBack ? onBack() : navigation.goBack());
+//   const goCart = () => navigation.navigate('CartScreen', {id, job});
 
-//   const handleBack = () => {
-//     if (onBack) {
-//       onBack();
-//     } else {
-//       navigation.goBack();
-//     }
-//   };
+//   // ---------- Filters ----------
 //   const filteredProducts = products?.filter(product => {
+//     const s = (searchQuery || '').toLowerCase();
 //     const matchesSearch =
-//       product?.product_name
-//         ?.toLowerCase()
-//         .includes(searchQuery.toLowerCase()) ||
-//       product?.supplier_sku
-//         ?.toLowerCase()
-//         .includes(searchQuery.toLowerCase()) ||
-//       product?.jdp_sku?.toLowerCase().includes(searchQuery.toLowerCase());
+//       product?.product_name?.toLowerCase().includes(s) ||
+//       product?.supplier_sku?.toLowerCase().includes(s) ||
+//       product?.jdp_sku?.toLowerCase().includes(s);
 
 //     const matchesCategory =
 //       selectedCategory === 'all' || product?.category === selectedCategory;
 
 //     let matchesStock = true;
-//     if (stockFilter === 'inStock') matchesStock = product?.stock_quantity > 0;
+//     if (stockFilter === 'inStock')
+//       matchesStock = (product?.stock_quantity ?? 0) > 0;
 //     if (stockFilter === 'outOfStock')
-//       matchesStock = product?.stock_quantity === 0;
+//       matchesStock = (product?.stock_quantity ?? 0) === 0;
 
 //     return matchesSearch && matchesCategory && matchesStock;
 //   });
 
-//   // ✅ Render Product Card
+//   // ---------- UI ----------
 //   const renderProduct = ({item}) => {
 //     const quantity = getItemQuantity(item.id);
 //     return (
 //       <View style={styles.productCard}>
 //         <View style={styles.productContent}>
-//           {/* Product Icon */}
 //           <View style={styles.productImageContainer}>
 //             <Icon name="inventory" size={32} color="#999" />
 //           </View>
 
-//           {/* Info */}
 //           <View style={styles.productInfo}>
 //             <View style={styles.productHeader}>
 //               <Text style={styles.productName} numberOfLines={1}>
@@ -314,18 +218,18 @@
 //               <View
 //                 style={[
 //                   styles.stockBadge,
-//                   item.stock_quantity > 0
+//                   (item.stock_quantity ?? 0) > 0
 //                     ? styles.inStockBadge
 //                     : styles.outOfStockBadge,
 //                 ]}>
 //                 <Text
 //                   style={[
 //                     styles.stockBadgeText,
-//                     item.stock_quantity > 0
+//                     (item.stock_quantity ?? 0) > 0
 //                       ? styles.inStockText
 //                       : styles.outOfStockText,
 //                   ]}>
-//                   {item.stock_quantity > 0 ? 'In Stock' : 'Out of Stock'}
+//                   {(item.stock_quantity ?? 0) > 0 ? 'In Stock' : 'Out of Stock'}
 //                 </Text>
 //               </View>
 //             </View>
@@ -342,11 +246,10 @@
 //             </View>
 
 //             <Text style={styles.productSupplier}>
-//               Supplier: {item.suppliers.contact_person}
+//               Supplier: {item?.suppliers?.contact_person}
 //             </Text>
 
-//             {/* Add to Cart */}
-//             {item.stock_quantity > 0 && (
+//             {(item.stock_quantity ?? 0) > 0 && (
 //               <View style={styles.cartControls}>
 //                 {quantity === 0 ? (
 //                   <TouchableOpacity
@@ -360,13 +263,14 @@
 //                     <TouchableOpacity
 //                       style={styles.quantityButton}
 //                       onPress={() =>
-//                         handleUpdateQuantity(item.id, quantity - 1)
+//                         handleUpdateQuantity(item.id, Math.max(0, quantity - 1))
 //                       }>
 //                       <Icon name="remove" size={16} color="#000" />
 //                     </TouchableOpacity>
 //                     <Text style={styles.quantityText}>{quantity}</Text>
 //                     <TouchableOpacity
 //                       style={styles.quantityButton}
+//                       disabled={quantity >= item.stock_quantity}
 //                       onPress={() =>
 //                         handleUpdateQuantity(item.id, quantity + 1)
 //                       }>
@@ -395,14 +299,7 @@
 
 //           <Text style={styles.headerTitle}>Order Products</Text>
 
-//           <TouchableOpacity
-//             style={styles.cartButton}
-//             onPress={() =>
-//               navigation.navigate('CartScreen', {
-//                 id: id,
-//                 job: job,
-//               })
-//             }>
+//           <TouchableOpacity style={styles.cartButton} onPress={goCart}>
 //             <Icon name="shopping-cart" size={24} color={Colors.text} />
 //             {getCartItemCount() > 0 && (
 //               <View style={styles.cartBadge}>
@@ -412,7 +309,7 @@
 //           </TouchableOpacity>
 //         </View>
 
-//         {/* Search and Filter */}
+//         {/* Search */}
 //         <View style={styles.searchContainer}>
 //           <View style={styles.searchInputContainer}>
 //             <Icon
@@ -429,27 +326,22 @@
 //               onChangeText={setSearchQuery}
 //             />
 //           </View>
-//           {/* <TouchableOpacity
-//             style={styles.filterButton}
-//             onPress={() => setShowFilters(true)}>
-//             <Icon name="filter-list" size={20} color={Colors.text} />
-//           </TouchableOpacity> */}
 //         </View>
 //       </View>
 
-//       {loading ? (
-//         // ✅ Loading state dikhana
+//       {/* First load full-screen spinner */}
+//       {initialLoading && products.length === 0 ? (
 //         <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
 //           <ActivityIndicator size="large" color={Colors.primary} />
 //           <Text>Loading products...</Text>
 //         </View>
 //       ) : filteredProducts?.length > 0 ? (
 //         <View>
-//           <View style={styles.categoryTabs}>
+//           <View className="categoryTabs" style={styles.categoryTabs}>
 //             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
 //               {categories?.slice(0, 4)?.map(category => (
 //                 <TouchableOpacity
-//                   key={category.id}
+//                   key={category.id ?? String(category.name)}
 //                   style={[
 //                     styles.categoryTab,
 //                     selectedCategory === category.id &&
@@ -469,31 +361,31 @@
 //             </ScrollView>
 //           </View>
 
-//           {/* Products List */}
-//           {/* ✅ Products FlatList with Pagination */}
 //           <FlatList
 //             data={filteredProducts}
-//             showsVerticalScrollIndicator={false}
-//            keyExtractor={(item, index) => productKey(item, index)}
+//             keyExtractor={(item, index) => productKey(item, index)}
 //             renderItem={renderProduct}
-//             onEndReached={loadMore}
+//             showsVerticalScrollIndicator={false}
 //             refreshing={refreshing}
 //             onRefresh={handleRefresh}
+//             onEndReached={loadMore}
 //             onEndReachedThreshold={0.5}
-//             contentContainerStyle={{flexGrow: 1}}
+//             onMomentumScrollBegin={() => {
+//               onEndReachedLock.current = false;
+//             }}
+//             contentContainerStyle={{flexGrow: 1, paddingHorizontal: Spacing.md}}
 //             ListFooterComponent={
-//               loading ? (
+//               pagingLoading ? (
 //                 <ActivityIndicator
-//                   style={{margin: 10}}
+//                   style={{margin: 12}}
 //                   color={Colors.primary}
 //                 />
 //               ) : null
 //             }
 //           />
-
-//           {/* Bottom Cart Summary */}
 //         </View>
 //       ) : (
+//         // Empty state (only when not loading)
 //         <View style={styles.emptyStateContainer}>
 //           <Icon name="shopping-cart" size={80} color={Colors.textLight} />
 //           <Text style={styles.emptyStateTitle1}>No Product found</Text>
@@ -502,16 +394,10 @@
 //           </Text>
 //         </View>
 //       )}
+
 //       {getCartItemCount() > 0 && (
 //         <View style={styles.bottomCartSummary}>
-//           <TouchableOpacity
-//             style={styles.cartSummaryButton}
-//             onPress={() =>
-//               navigation.navigate('CartScreen', {
-//                 id: id,
-//                 job: job,
-//               })
-//             }>
+//           <TouchableOpacity style={styles.cartSummaryButton} onPress={goCart}>
 //             <Text style={styles.cartSummaryText}>
 //               View Cart ({getCartItemCount()} items)
 //             </Text>
@@ -523,14 +409,14 @@
 //   );
 // };
 
+// // ---------- Styles ----------
 // const styles = StyleSheet.create({
 //   container: {
 //     flex: 1,
 //     backgroundColor: Colors.backgroundLight,
-//     paddingBottom: 60,
+//     paddingBottom: 250,
 //   },
 
-//   // Header
 //   header: {
 //     backgroundColor: Colors.white,
 //     paddingTop: Spacing.xl,
@@ -545,18 +431,9 @@
 //     justifyContent: 'space-between',
 //     marginBottom: Spacing.md,
 //   },
-//   backButton: {
-//     padding: Spacing.sm,
-//   },
-//   headerTitle: {
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     color: Colors.text,
-//   },
-//   cartButton: {
-//     padding: Spacing.sm,
-//     position: 'relative',
-//   },
+//   backButton: {padding: Spacing.sm},
+//   headerTitle: {fontSize: 18, fontWeight: 'bold', color: Colors.text},
+//   cartButton: {padding: Spacing.sm, position: 'relative'},
 //   cartBadge: {
 //     position: 'absolute',
 //     top: 4,
@@ -568,17 +445,9 @@
 //     alignItems: 'center',
 //     justifyContent: 'center',
 //   },
-//   cartBadgeText: {
-//     fontSize: 12,
-//     color: Colors.white,
-//     fontWeight: 'bold',
-//   },
+//   cartBadgeText: {fontSize: 12, color: Colors.white, fontWeight: 'bold'},
 
-//   // Search
-//   searchContainer: {
-//     flexDirection: 'row',
-//     gap: Spacing.sm,
-//   },
+//   searchContainer: {flexDirection: 'row', gap: Spacing.sm},
 //   searchInputContainer: {
 //     flex: 1,
 //     flexDirection: 'row',
@@ -587,24 +456,14 @@
 //     borderRadius: BorderRadius.md,
 //     paddingHorizontal: Spacing.md,
 //   },
-//   searchIcon: {
-//     marginRight: Spacing.sm,
-//   },
+//   searchIcon: {marginRight: Spacing.sm},
 //   searchInput: {
 //     flex: 1,
 //     paddingVertical: Spacing.md,
 //     fontSize: 16,
 //     color: Colors.text,
 //   },
-//   filterButton: {
-//     backgroundColor: Colors.backgroundLight,
-//     borderRadius: BorderRadius.md,
-//     padding: Spacing.md,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//   },
 
-//   // Category Tabs
 //   categoryTabs: {
 //     backgroundColor: Colors.white,
 //     paddingHorizontal: Spacing.md,
@@ -624,31 +483,17 @@
 //     backgroundColor: Colors.primary,
 //     borderColor: Colors.primary,
 //   },
-//   categoryTabText: {
-//     fontSize: 14,
-//     color: Colors.text,
-//     fontWeight: '500',
-//   },
-//   selectedCategoryTabText: {
-//     color: Colors.white,
-//   },
+//   categoryTabText: {fontSize: 14, color: Colors.text, fontWeight: '500'},
+//   selectedCategoryTabText: {color: Colors.white},
 
-//   // Products
-//   productsList: {
-//     flex: 1,
-//     paddingHorizontal: Spacing.md,
-//   },
+//   productsList: {flex: 1, paddingHorizontal: Spacing.md},
 //   productCard: {
 //     backgroundColor: Colors.white,
 //     borderRadius: BorderRadius.lg,
 //     marginVertical: Spacing.sm,
 //     ...Shadows.md,
 //   },
-//   productContent: {
-//     flexDirection: 'row',
-//     padding: Spacing.md,
-//     gap: Spacing.md,
-//   },
+//   productContent: {flexDirection: 'row', padding: Spacing.md, gap: Spacing.md},
 //   productImageContainer: {
 //     width: 64,
 //     height: 64,
@@ -658,9 +503,7 @@
 //     justifyContent: 'center',
 //   },
 
-//   productInfo: {
-//     flex: 1,
-//   },
+//   productInfo: {flex: 1},
 //   productHeader: {
 //     flexDirection: 'row',
 //     alignItems: 'flex-start',
@@ -679,22 +522,11 @@
 //     paddingVertical: Spacing.xs,
 //     borderRadius: BorderRadius.sm,
 //   },
-//   inStockBadge: {
-//     backgroundColor: Colors.successLight,
-//   },
-//   outOfStockBadge: {
-//     backgroundColor: Colors.errorLight,
-//   },
-//   stockBadgeText: {
-//     fontSize: 12,
-//     fontWeight: '500',
-//   },
-//   inStockText: {
-//     color: Colors.success,
-//   },
-//   outOfStockText: {
-//     color: Colors.error,
-//   },
+//   inStockBadge: {backgroundColor: Colors.successLight},
+//   outOfStockBadge: {backgroundColor: Colors.errorLight},
+//   stockBadgeText: {fontSize: 12, fontWeight: '500'},
+//   inStockText: {color: Colors.success},
+//   outOfStockText: {color: Colors.error},
 //   productDescription: {
 //     fontSize: 14,
 //     color: Colors.text,
@@ -705,24 +537,11 @@
 //     justifyContent: 'space-between',
 //     marginBottom: Spacing.xs,
 //   },
-//   productSku: {
-//     fontSize: 12,
-//     color: Colors.text,
-//   },
-//   productStock: {
-//     fontSize: 12,
-//     color: Colors.text,
-//   },
-//   productSupplier: {
-//     fontSize: 12,
-//     color: Colors.text,
-//     marginBottom: Spacing.md,
-//   },
+//   productSku: {fontSize: 12, color: Colors.text},
+//   productStock: {fontSize: 12, color: Colors.text},
+//   productSupplier: {fontSize: 12, color: Colors.text, marginBottom: Spacing.md},
 
-//   // Cart Controls
-//   cartControls: {
-//     alignItems: 'flex-start',
-//   },
+//   cartControls: {alignItems: 'flex-start'},
 //   addToCartButton: {
 //     flexDirection: 'row',
 //     alignItems: 'center',
@@ -732,11 +551,7 @@
 //     borderRadius: BorderRadius.md,
 //     gap: Spacing.xs,
 //   },
-//   addToCartText: {
-//     fontSize: 14,
-//     color: Colors.white,
-//     fontWeight: '500',
-//   },
+//   addToCartText: {fontSize: 14, color: Colors.white, fontWeight: '500'},
 //   quantityControls: {
 //     flexDirection: 'row',
 //     alignItems: 'center',
@@ -759,137 +574,6 @@
 //     paddingHorizontal: Spacing.md,
 //   },
 
-//   // Empty State
-//   emptyState: {
-//     alignItems: 'center',
-//     paddingVertical: Spacing.xxl,
-//   },
-//   emptyStateTitle: {
-//     fontSize: 18,
-//     color: Colors.textSecondary,
-//     marginTop: Spacing.md,
-//   },
-//   emptyStateSubtitle: {
-//     fontSize: 14,
-//     color: Colors.textLight,
-//     marginTop: Spacing.xs,
-//   },
-
-//   // Bottom Cart Summary
-//   bottomCartSummary: {
-//     position: 'absolute',
-//     bottom: 30,
-//     left: 0,
-//     right: 0,
-//     backgroundColor: Colors.white,
-//     borderTopWidth: 1,
-//     borderTopColor: Colors.border,
-//     padding: Spacing.md,
-//   },
-//   cartSummaryButton: {
-//     backgroundColor: Colors.primary,
-//     borderRadius: BorderRadius.md,
-//     paddingVertical: Spacing.md,
-//     flexDirection: 'row',
-//     alignItems: 'center',
-//     justifyContent: 'space-between',
-//     paddingHorizontal: Spacing.lg,
-//   },
-//   cartSummaryText: {
-//     fontSize: 16,
-//     color: Colors.white,
-//     fontWeight: '600',
-//   },
-
-//   // Modal
-//   modalOverlay: {
-//     flex: 1,
-//     justifyContent: 'flex-end',
-//   },
-//   modalBackdrop: {
-//     flex: 1,
-//     backgroundColor: 'rgba(0,0,0,0.5)',
-//     justifyContent: 'flex-end',
-//   },
-//   filtersModal: {
-//     backgroundColor: Colors.white,
-//     borderTopLeftRadius: BorderRadius.xl,
-//     borderTopRightRadius: BorderRadius.xl,
-//     paddingHorizontal: Spacing.lg,
-//     paddingBottom: Spacing.xl,
-//     maxHeight: '80%',
-//   },
-//   modalHandle: {
-//     width: 40,
-//     height: 4,
-//     backgroundColor: Colors.border,
-//     borderRadius: 2,
-//     alignSelf: 'center',
-//     marginTop: Spacing.md,
-//     marginBottom: Spacing.lg,
-//   },
-//   modalHeader: {
-//     alignItems: 'center',
-//     marginBottom: Spacing.lg,
-//   },
-//   modalTitle: {
-//     fontSize: 20,
-//     fontWeight: 'bold',
-//     color: Colors.text,
-//   },
-//   modalContent: {
-//     // flex: 1,
-//   },
-
-//   // Filter Sections
-//   filterSection: {
-//     marginBottom: Spacing.lg,
-//   },
-//   filterSectionTitle: {
-//     fontSize: 16,
-//     fontWeight: '600',
-//     color: Colors.text,
-//     marginBottom: Spacing.md,
-//   },
-//   categoryGrid: {
-//     flexDirection: 'row',
-//     flexWrap: 'wrap',
-//     gap: Spacing.sm,
-//   },
-//   categoryOption: {
-//     paddingHorizontal: Spacing.md,
-//     paddingVertical: Spacing.sm,
-//     borderRadius: BorderRadius.md,
-//     borderWidth: 1,
-//     borderColor: Colors.border,
-//     backgroundColor: Colors.white,
-//   },
-//   selectedCategoryOption: {
-//     backgroundColor: Colors.primary,
-//     borderColor: Colors.primary,
-//   },
-//   categoryOptionText: {
-//     fontSize: 14,
-//     color: Colors.text,
-//     fontWeight: '500',
-//   },
-//   selectedCategoryOptionText: {
-//     color: Colors.white,
-//   },
-//   availabilityOption: {
-//     paddingVertical: Spacing.md,
-//     paddingHorizontal: Spacing.md,
-//     borderRadius: BorderRadius.md,
-//     borderWidth: 1,
-//     borderColor: Colors.border,
-//     backgroundColor: Colors.white,
-//     marginBottom: Spacing.sm,
-//   },
-//   availabilityOptionText: {
-//     fontSize: 14,
-//     color: Colors.text,
-//     fontWeight: '500',
-//   },
 //   emptyStateContainer: {
 //     flex: 1,
 //     alignItems: 'center',
@@ -909,9 +593,31 @@
 //     textAlign: 'center',
 //     marginBottom: Spacing.xl,
 //   },
+
+//   bottomCartSummary: {
+//     position: 'absolute',
+//     bottom: 30,
+//     left: 0,
+//     right: 0,
+//     backgroundColor: Colors.white,
+//     borderTopWidth: 1,
+//     borderTopColor: Colors.border,
+//     padding: Spacing.md,
+//   },
+//   cartSummaryButton: {
+//     backgroundColor: Colors.primary,
+//     borderRadius: BorderRadius.md,
+//     paddingVertical: Spacing.md,
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//     justifyContent: 'space-between',
+//     paddingHorizontal: Spacing.lg,
+//   },
+//   cartSummaryText: {fontSize: 16, color: Colors.white, fontWeight: '600'},
 // });
 
 // export default OrderProductsScreen;
+// OrderProductsScreen.jsx
 import React, {useEffect, useRef, useState, useCallback} from 'react';
 import {
   View,
@@ -926,11 +632,13 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
-import {getProductsBySupplier} from '../config/apiConfig';
 import {useDispatch, useSelector} from 'react-redux';
 import {addToCart, updateQuantity} from '../redux/cartSlice';
 
-// Embedded Colors
+// --- API imports (ensure these are exported from your api file) ---
+import {getProductsBySupplier, searchProducts} from '../config/apiConfig';
+
+// ----------------- Design Tokens -----------------
 const Colors = {
   primary: '#3B82F6',
   primaryLight: '#EBF4FF',
@@ -947,8 +655,6 @@ const Colors = {
   error: '#EF4444',
   errorLight: '#FEE2E2',
 };
-
-// Embedded Spacing
 const Spacing = {xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48};
 const BorderRadius = {sm: 6, md: 8, lg: 12, xl: 16};
 const Shadows = {
@@ -960,19 +666,25 @@ const Shadows = {
     elevation: 5,
   },
 };
-
 const PAGE_SIZE = 10;
 
-const OrderProductsScreen = ({onBack, onNavigate, route}) => {
-  const {id, job} = route.params;
+// ---------- Helpers ----------
+const asArray = x => {
+  if (Array.isArray(x)) return x;
+  if (Array.isArray(x?.data)) return x.data;
+  if (Array.isArray(x?.data?.data)) return x.data.data;
+  return [];
+};
 
+// ----------------- Screen -----------------
+const OrderProductsScreen = ({onBack, onNavigate, route}) => {
+  const {id, job} = route.params ?? {};
   const token = useSelector(state => state.user.token);
   const cart = useSelector(state => state.cart.items);
-
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
-  // Filters / UI
+  // ---------- UI / Filters ----------
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
@@ -980,30 +692,34 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
     {id: 'all', name: 'All Products'},
   ]);
 
-  // Data / Paging
+  // ---------- Data / Paging (Default Supplier List) ----------
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // Loading states
+  // ---------- Search Data ----------
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchDebounceRef = useRef(null);
+  const lastIssuedSearchRef = useRef('');
+
+  // ---------- Loading Flags ----------
   const [initialLoading, setInitialLoading] = useState(true);
   const [pagingLoading, setPagingLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Refs / guards
+  // ---------- Guards ----------
   const lastFetchedPageRef = useRef(null);
-  const replaceNextRef = useRef(true); // initial load is a replace
+  const replaceNextRef = useRef(true); // initial load is replace
   const onEndReachedLock = useRef(false);
 
-  // ---------- Data Fetch ----------
+  // ---------- Default List Fetch ----------
   const fetchPage = useCallback(async () => {
-    // duplicate guard
     if (!replaceNextRef.current && (pagingLoading || !hasMore)) return;
     if (!replaceNextRef.current && lastFetchedPageRef.current === page) return;
 
-    // mark page fetched
     lastFetchedPageRef.current = page;
-
     const isReplace = replaceNextRef.current;
 
     try {
@@ -1014,30 +730,29 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       }
 
       const res = await getProductsBySupplier(id, page, PAGE_SIZE, token);
-      const newProducts = res?.data?.data || [];
-      console.log('order res :::', res);
+      const newProducts = asArray(res);
 
       if (isReplace) {
         setProducts(newProducts);
         setHasMore(newProducts.length === PAGE_SIZE);
-        // Build categories from first page (fresh list)
+
+        // Categories from first “fresh” page
         const uniqueCategories = [
           {id: 'all', name: 'All Products'},
           ...Array.from(new Set(newProducts.map(p => p?.category)))
-            .filter(cat => cat) // 👈 null / undefined / empty ko hata dega
+            .filter(Boolean)
             .map(cat => ({
               id: cat,
-              name: cat.charAt(0).toUpperCase() + cat.slice(1),
+              name: String(cat).charAt(0).toUpperCase() + String(cat).slice(1),
             })),
         ];
         setCategories(uniqueCategories);
       } else {
         setProducts(prev => [...prev, ...newProducts]);
-        if (newProducts?.length < PAGE_SIZE) setHasMore(false);
+        if (newProducts.length < PAGE_SIZE) setHasMore(false);
       }
     } catch (e) {
-      console.log('❌ Error fetching products:', e);
-      // in case of error on first load, keep state sane
+      console.log('❌ Error fetching products:', e?.message || e);
       if (replaceNextRef.current) setHasMore(true);
     } finally {
       if (replaceNextRef.current) {
@@ -1047,17 +762,20 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       } else {
         setPagingLoading(false);
       }
-      onEndReachedLock.current = false; // release lock
+      onEndReachedLock.current = false;
     }
   }, [id, page, token, hasMore, pagingLoading, refreshing]);
 
   useEffect(() => {
-    fetchPage();
-  }, [page, fetchPage]);
+    if (!isSearching) fetchPage(); // don’t fetch default list while searching
+  }, [page, fetchPage, isSearching]);
 
-  // ---------- Handlers ----------
+  // ---------- Pull to Refresh ----------
   const handleRefresh = () => {
-    // Clean refresh: just set flags; effect will fetch with page=1
+    if (isSearching) {
+      triggerSearch(searchQuery);
+      return;
+    }
     setRefreshing(true);
     setHasMore(true);
     lastFetchedPageRef.current = null;
@@ -1065,20 +783,17 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
     setPage(1);
   };
 
+  // ---------- Infinite Scroll (Default List) ----------
   const loadMore = () => {
+    if (isSearching) return;
     if (onEndReachedLock.current) return;
     if (hasMore && !pagingLoading && !initialLoading && !refreshing) {
-      onEndReachedLock.current = true; // prevent multiple rapid calls
+      onEndReachedLock.current = true;
       setPage(prev => prev + 1);
     }
   };
 
-  const productKey = (p, idx) => {
-    const base =
-      p?.id ?? p?.product_id ?? p?.jdp_sku ?? p?.supplier_sku ?? `idx-${idx}`;
-    return `${base}-${id}`;
-  };
-
+  // ---------- Cart Helpers ----------
   const handleAddToCart = product => dispatch(addToCart(product));
   const handleUpdateQuantity = (productId, newQuantity) =>
     dispatch(updateQuantity({productId, newQuantity}));
@@ -1094,13 +809,65 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
   const handleBack = () => (onBack ? onBack() : navigation.goBack());
   const goCart = () => navigation.navigate('CartScreen', {id, job});
 
-  // ---------- Filters ----------
-  const filteredProducts = products?.filter(product => {
+  // ---------- SEARCH ----------
+  const triggerSearch = useCallback(
+    async q => {
+      if (!q || !q.trim()) {
+        // exit search mode
+        setIsSearching(false);
+        setSearchResults([]);
+        lastIssuedSearchRef.current = '';
+        return;
+      }
+
+      setIsSearching(true);
+      setSearchLoading(true);
+      lastIssuedSearchRef.current = q;
+
+      try {
+        const res = await searchProducts(q, token);
+        if (lastIssuedSearchRef.current === q) {
+          setSearchResults(asArray(res?.data?.products));
+        }
+      } catch (err) {
+        console.log('❌ Search error:', err?.message || err);
+        if (lastIssuedSearchRef.current === q) setSearchResults([]);
+      } finally {
+        if (lastIssuedSearchRef.current === q) setSearchLoading(false);
+      }
+    },
+    [token],
+  );
+
+  // Debounce search on text change
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      triggerSearch(searchQuery);
+    }, 350);
+    return () => clearTimeout(searchDebounceRef.current);
+  }, [searchQuery, triggerSearch]);
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setIsSearching(false);
+    setSearchResults([]);
+    lastIssuedSearchRef.current = '';
+  };
+
+  // ---------- Base list + Filters ----------
+  const baseListRaw = isSearching ? searchResults : products;
+  const baseList = Array.isArray(baseListRaw) ? baseListRaw : [];
+
+  const filteredProducts = baseList.filter(product => {
     const s = (searchQuery || '').toLowerCase();
-    const matchesSearch =
-      product?.product_name?.toLowerCase().includes(s) ||
-      product?.supplier_sku?.toLowerCase().includes(s) ||
-      product?.jdp_sku?.toLowerCase().includes(s);
+
+    // For server search, skip repeating client-side text filter
+    // const matchesSearch = isSearching
+    //   ? true
+    //   : product?.product_name?.toLowerCase().includes(s) ||
+    //     product?.supplier_sku?.toLowerCase().includes(s) ||
+    //     product?.jdp_sku?.toLowerCase().includes(s);
 
     const matchesCategory =
       selectedCategory === 'all' || product?.category === selectedCategory;
@@ -1111,10 +878,16 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
     if (stockFilter === 'outOfStock')
       matchesStock = (product?.stock_quantity ?? 0) === 0;
 
-    return matchesSearch && matchesCategory && matchesStock;
+    return matchesCategory && matchesStock;
   });
 
-  // ---------- UI ----------
+  // ---------- Render ----------
+  const productKey = (p, idx) => {
+    const base =
+      p?.id ?? p?.product_id ?? p?.jdp_sku ?? p?.supplier_sku ?? `idx-${idx}`;
+    return `${base}-${id}`;
+  };
+
   const renderProduct = ({item}) => {
     const quantity = getItemQuantity(item.id);
     return (
@@ -1200,6 +973,14 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
     );
   };
 
+  const showInitialSpinner =
+    !isSearching && initialLoading && products.length === 0;
+
+  const showEmpty =
+    !showInitialSpinner &&
+    !searchLoading &&
+    (filteredProducts?.length ?? 0) === 0;
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
@@ -1238,49 +1019,76 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
               placeholderTextColor={Colors.textSecondary}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              returnKeyType="search"
             />
+            {!!searchQuery && (
+              <TouchableOpacity onPress={clearSearch} style={styles.clearBtn}>
+                <Icon name="close" size={18} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
+
+        {/* Search status bar */}
+        {isSearching && (
+          <View style={styles.searchInfoBar}>
+            {searchLoading ? (
+              <Text style={styles.searchInfoText}>Searching…</Text>
+            ) : (
+              <Text style={styles.searchInfoText}>
+                {filteredProducts?.length || 0} result(s)
+              </Text>
+            )}
+            <TouchableOpacity onPress={clearSearch}>
+              <Text style={[styles.searchInfoText, {color: Colors.primary}]}>
+                Clear
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       {/* First load full-screen spinner */}
-      {initialLoading && products.length === 0 ? (
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      {showInitialSpinner ? (
+        <View style={styles.centerWrap}>
           <ActivityIndicator size="large" color={Colors.primary} />
           <Text>Loading products...</Text>
         </View>
-      ) : filteredProducts?.length > 0 ? (
+      ) : !showEmpty ? (
         <View>
-          <View className="categoryTabs" style={styles.categoryTabs}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {categories?.slice(0, 4)?.map(category => (
-                <TouchableOpacity
-                  key={category.id ?? String(category.name)}
-                  style={[
-                    styles.categoryTab,
-                    selectedCategory === category.id &&
-                      styles.selectedCategoryTab,
-                  ]}
-                  onPress={() => setSelectedCategory(category.id)}>
-                  <Text
+          {/* Categories only for default list */}
+          {!isSearching && (
+            <View style={styles.categoryTabs}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {categories?.slice(0, 4)?.map(category => (
+                  <TouchableOpacity
+                    key={category.id ?? String(category.name)}
                     style={[
-                      styles.categoryTabText,
+                      styles.categoryTab,
                       selectedCategory === category.id &&
-                        styles.selectedCategoryTabText,
-                    ]}>
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+                        styles.selectedCategoryTab,
+                    ]}
+                    onPress={() => setSelectedCategory(category.id)}>
+                    <Text
+                      style={[
+                        styles.categoryTabText,
+                        selectedCategory === category.id &&
+                          styles.selectedCategoryTabText,
+                      ]}>
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
           <FlatList
-            data={filteredProducts}
+            data={Array.isArray(filteredProducts) ? filteredProducts : []}
             keyExtractor={(item, index) => productKey(item, index)}
             renderItem={renderProduct}
             showsVerticalScrollIndicator={false}
-            refreshing={refreshing}
+            refreshing={isSearching ? searchLoading : refreshing}
             onRefresh={handleRefresh}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
@@ -1289,7 +1097,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
             }}
             contentContainerStyle={{flexGrow: 1, paddingHorizontal: Spacing.md}}
             ListFooterComponent={
-              pagingLoading ? (
+              !isSearching && pagingLoading ? (
                 <ActivityIndicator
                   style={{margin: 12}}
                   color={Colors.primary}
@@ -1299,12 +1107,14 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
           />
         </View>
       ) : (
-        // Empty state (only when not loading)
+        // Empty state
         <View style={styles.emptyStateContainer}>
           <Icon name="shopping-cart" size={80} color={Colors.textLight} />
           <Text style={styles.emptyStateTitle1}>No Product found</Text>
           <Text style={styles.emptyStateSubtitle1}>
-            Add some products to get started with your order
+            {isSearching
+              ? 'Try a different keyword or clear search.'
+              : 'Add some products to get started with your order'}
           </Text>
         </View>
       )}
@@ -1323,13 +1133,14 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
   );
 };
 
-// ---------- Styles ----------
+// ----------------- Styles -----------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.backgroundLight,
     paddingBottom: 250,
   },
+  centerWrap: {flex: 1, justifyContent: 'center', alignItems: 'center'},
 
   header: {
     backgroundColor: Colors.white,
@@ -1377,6 +1188,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.text,
   },
+  clearBtn: {paddingHorizontal: Spacing.xs, paddingVertical: Spacing.xs},
+
+  searchInfoBar: {
+    marginTop: Spacing.sm,
+    backgroundColor: Colors.primaryLight,
+    borderRadius: BorderRadius.md,
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  searchInfoText: {fontSize: 12, color: Colors.text},
 
   categoryTabs: {
     backgroundColor: Colors.white,
@@ -1400,7 +1223,6 @@ const styles = StyleSheet.create({
   categoryTabText: {fontSize: 14, color: Colors.text, fontWeight: '500'},
   selectedCategoryTabText: {color: Colors.white},
 
-  productsList: {flex: 1, paddingHorizontal: Spacing.md},
   productCard: {
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.lg,
@@ -1416,7 +1238,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   productInfo: {flex: 1},
   productHeader: {
     flexDirection: 'row',

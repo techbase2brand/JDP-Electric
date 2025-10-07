@@ -555,9 +555,9 @@ const MapScreen = ({route, navigation}) => {
 
   useEffect(() => {
     getCurrentLocation();
-    // if (job?.job?.address || job?.address) {
-    getDestinationCoords('ISBT sec 43 chandigrah');
-    // }
+    if (job?.job?.address || job?.address) {
+      getDestinationCoords(job?.job?.address || job?.address);
+    }
   }, []);
 
   useEffect(() => {

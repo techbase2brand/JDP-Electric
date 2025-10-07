@@ -409,8 +409,8 @@ export const updateWorkData = async (jobId, payload, token) => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
-// order 
-export const createOrders = async ( payload, token) => {
+// order
+export const createOrders = async (payload, token) => {
   console.log('createOrders', payload, token);
 
   try {
@@ -423,6 +423,61 @@ export const createOrders = async ( payload, token) => {
   } catch (error) {
     console.error(
       'Error updating work data:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
+
+export const searchMyJobs = async (q, token) => {
+  try {
+    const res = await api.get(`/job/searchMyJobs`, {
+      params: {q},
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error(
+      'Error searching jobs:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
+export const searchProducts = async (q, token) => {
+  try {
+    const res = await api.get(`products/searchProducts`, {
+      params: {q},
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error(
+      'Error searching jobs:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
+
+export const searchSuppliers = async (q, token) => {
+  console.log('searchSuppliers', q, token);
+
+  try {
+    const res = await api.get(`suppliers/searchSuppliers`, {
+      params: {q},
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error(
+      'Error searching jobs:',
       error.response?.data || error.message,
     );
     throw error.response?.data || {message: 'Something went wrong'};
