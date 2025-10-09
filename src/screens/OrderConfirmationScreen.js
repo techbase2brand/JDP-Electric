@@ -389,17 +389,17 @@ const OrderConfirmationScreen = ({
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
         <View style={styles.actionButtonRow}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.shareButton}
             onPress={handleShareOrder}>
             <Icon name="share" size={20} color={Colors.text} />
             <Text style={styles.shareButtonText}>Share</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
-          <TouchableOpacity style={styles.downloadButton}>
+          {/* <TouchableOpacity style={styles.downloadButton}>
             <Icon name="download" size={20} color={Colors.text} />
             <Text style={styles.downloadButtonText}>Receipt</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* <TouchableOpacity

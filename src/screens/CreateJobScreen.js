@@ -805,7 +805,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
 
   const buildJobPayload = () => {
     // lead labor IDs: agar current user lead hai to use include karo
-    const leadIds = user?.management_type === 'lead_labor' ? [user?.leadLabor?.[0]?.id] : [];
+    const leadIds =
+      user?.management_type === 'lead_labor' ? [user?.leadLabor?.[0]?.id] : [];
 
     // API example me arrays stringified hain — backend ke hisaab se rakh rahe:
     const assigned_lead_labor_ids = JSON.stringify(leadIds);

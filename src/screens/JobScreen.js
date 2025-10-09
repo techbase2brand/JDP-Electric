@@ -1477,7 +1477,7 @@ const JobListingScreen = ({navigation, route}) => {
     return () => searchTimerRef.current && clearTimeout(searchTimerRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
-  // ⬇️ add this function near fetchJobs/refreshJobs
+  // add this function near fetchJobs/refreshJobs
   const fetchFirstPage = async () => {
     if (loading) return;
     setLoading(true);
@@ -1512,6 +1512,7 @@ const JobListingScreen = ({navigation, route}) => {
           : await getlabourJobs(laborId, page, 10, token);
 
       const newJobs = res?.data?.jobs ?? [];
+
       const combined = dedupeById([...(jobs || []), ...newJobs]);
       setJobs(combined);
 
@@ -2031,7 +2032,7 @@ const styles = {
   },
   headerCenter: {flex: 1, alignItems: 'center', marginHorizontal: 16},
   headerTitle: {fontSize: 18, fontWeight: '600', color: COLORS.white},
-  headerSubtitle: {fontSize: 12, color: COLORS.primaryLight, marginTop: 2},
+  headerSubtitle: {fontSize: 12, color: COLORS.white, marginTop: 2},
   headerButton: {
     width: 40,
     height: 40,

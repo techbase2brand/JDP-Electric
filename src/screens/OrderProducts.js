@@ -696,6 +696,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  console.log('productsproducts>>>', products);
 
   // ---------- Search Data ----------
   const [searchResults, setSearchResults] = useState([]);
@@ -730,7 +731,11 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       }
 
       const res = await getProductsBySupplier(id, page, PAGE_SIZE, token);
-      const newProducts = asArray(res);
+      const newProducts = asArray(res).filter(
+        item => item?.status?.toLowerCase() === 'active',
+      );
+      // const newProducts = asArray(res);
+      console.log('newProductsnewProducts', newProducts);
 
       if (isReplace) {
         setProducts(newProducts);

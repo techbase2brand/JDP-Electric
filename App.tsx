@@ -68,9 +68,14 @@ import {
   NativeModules,
   Platform,
   SafeAreaView,
+  View,
 } from 'react-native';
 import {whiteColor} from './src/constants/Color';
-import {heightPercentageToDP as hp} from './src/utils';
+import {
+  heightPercentageToDP,
+  heightPercentageToDP as hp,
+  widthPercentageToDP,
+} from './src/utils';
 import {BaseStyle} from './src/constants/Style';
 import SplashScreen from './src/screens/SplashScreen';
 import AuthStack from './src/navigations/AuthStack';
@@ -119,7 +124,6 @@ const AppContent = () => {
   const dispatch = useDispatch();
   const token = useSelector(state => state.user.token);
   const {isRunning} = useSelector((state: any) => state.timer);
-  console.log("tokentokentoken",token);
 
   useEffect(() => {
     if (isRunning) {
@@ -148,7 +152,7 @@ const AppContent = () => {
   useEffect(() => {
     // ✅ Global logout handler set
     global.handleLogout = () => {
-      dispatch(logout()); // redux se user data clear
+      dispatch(logout());
       navigationRef.current?.reset({
         index: 0,
         routes: [{name: 'AuthStack'}],
@@ -187,6 +191,7 @@ const AppContent = () => {
           ) : (
             <AuthStack />
           )}
+
           <FloatingTimer />
         </NavigationContainer>
       </KeyboardAvoidingView>
