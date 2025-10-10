@@ -770,7 +770,7 @@ const JobDetailScreen = ({
 
                 <TouchableOpacity
                   style={styles.gridActionButton}
-                  onPress={() => navigation.navigate('JobActivityLogScreen')}>
+                  onPress={() => navigation.navigate('JobActivityLogScreen',{job})}>
                   <Icon name="bar-chart" size={20} color={Colors.text} />
                   <Text style={styles.gridActionText}>Job Activity</Text>
                 </TouchableOpacity>

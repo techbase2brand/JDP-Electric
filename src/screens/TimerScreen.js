@@ -954,7 +954,6 @@
 //     marginTop: 15,
 //   },
 // });
-
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -999,35 +998,6 @@ const fmtDate = (d = new Date()) => {
 const fmtTime = (d = new Date()) =>
   `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 
-// ---------- Persist helpers for reliable start/end ----------
-const startKeyFor = (jobId, day) => `job:${jobId}:startISO:${day}`;
-
-const storeStartISO = async (jobId, iso) => {
-  const key = startKeyFor(jobId, fmtDate(new Date()));
-  await AsyncStorage.setItem(key, iso);
-};
-
-const readPersistedStartISO = async (jobId, dateStr) => {
-  const key = startKeyFor(jobId, dateStr);
-  return AsyncStorage.getItem(key);
-};
-
-const clearPersistedStartISO = async jobId => {
-  const key = startKeyFor(jobId, fmtDate(new Date()));
-  await AsyncStorage.removeItem(key);
-};
-
-// Convert "YYYY-MM-DD" + "HH:MM:SS" to ISO (local tz → ISO)
-const makeISOFromDateTimeLocal = (dateStr, timeStr) => {
-  if (!dateStr || !timeStr) return null;
-  const [hh = '00', mm = '00', ss = '00'] = timeStr.split(':');
-  const [y, m, d] = dateStr.split('-').map(Number);
-  if (!y || !m || !d) return null;
-  const dt = new Date(y, m - 1, d, Number(hh), Number(mm), Number(ss || 0));
-  return dt.toISOString();
-};
-// -----------------------------------------------------------
-
 const CustomButton = ({label, onPress, color, disabled, widthbtn, loading}) => (
   <TouchableOpacity
     disabled={disabled || loading}
@@ -1052,7 +1022,6 @@ export default function TimerScreen({navigation, route}) {
   useEffect(() => {
     console.log('Received jobId:', route?.params?.jobId);
   }, [route?.params?.jobId]);
-
   const job = route?.params?.job;
   const jobId = job?.id || route?.params?.jobId;
 
@@ -1060,9 +1029,11 @@ export default function TimerScreen({navigation, route}) {
   const [pauseList, setPauseList] = useState([]);
   const [currentPauseStartedAt, setCurrentPauseStartedAt] = useState(null);
   const [currentPauseTitle, setCurrentPauseTitle] = useState(null);
+
   const [allSummaries, setAllSummaries] = useState([]);
   const [activityLog, setActivityLog] = useState([]);
   const [lastActivityLog, setLastActivityLog] = useState([]);
+  const [lastTodayActivityLog, setTodayActivityLog] = useState([]);
 
   // Modals
   const [pauseModal, setPauseModal] = useState(false);
@@ -1072,62 +1043,134 @@ export default function TimerScreen({navigation, route}) {
   const [pauseReason, setPauseReason] = useState('');
   const [pauseNotes, setPauseNotes] = useState('');
 
-  // Loading
+  // Loading flags
   const [startLoading, setStartLoading] = useState(false);
   const [pauseConfirmLoading, setPauseConfirmLoading] = useState(false);
   const [resumeLoading, setResumeLoading] = useState(false);
   const [completeLoading, setCompleteLoading] = useState(false);
-
-  // Job data
   const [storedJobId, setStoredJobId] = useState(null);
   const [jobData, setJobdata] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [uiLoading, setUiLoading] = useState(true);
 
-  useEffect(() => {
-    let t;
-    if (!loading) {
-      t = setTimeout(() => setUiLoading(false), 2500);
-    }
-    return () => {
-      if (t) clearTimeout(t);
-    };
-  }, [loading]);
-
   const {TimerModule} = NativeModules;
 
+  // ---------- 🔧 Helpers: local buffer (no rename of existing vars) ----------
+  const LS_KEYS = {
+    start: 'ts_buffer_startISO',
+    pauses: 'ts_buffer_pauseList',
+    elapsedOnResume: 'ts_buffer_elapsedOnResume', // snapshot when resume happens
+    pending: 'ts_buffer_pending',
+    jobId: 'ts_buffer_jobId',
+  };
+  // 🔧 Buffer se today's activity nikaalo (pauses list)
+  const loadTodayActivityFromBuffer = async () => {
+    try {
+      const todayStr = fmtDate(new Date());
+      // agar session aaj start hua hai tabhi show karna
+      const bStartISO = await AsyncStorage.getItem('ts_buffer_startISO');
+      if (!bStartISO) return []; // koi local running session nahi
+
+      const startDate = fmtDate(new Date(bStartISO));
+      if (startDate !== todayStr) return []; // aaj ka session nahi
+
+      const bPausesRaw = await AsyncStorage.getItem('ts_buffer_pauseList');
+      const bPauses = bPausesRaw ? JSON.parse(bPausesRaw) : [];
+
+      // shape normalize (UI me item.title + item.duration chahiye)
+      const normalized = (bPauses || []).map(p => ({
+        title: p.title,
+        duration: p.duration || '00:00:00',
+      }));
+
+      return normalized;
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const bufferSet = async (k, v) => {
+    try {
+      await AsyncStorage.setItem(
+        k,
+        typeof v === 'string' ? v : JSON.stringify(v),
+      );
+    } catch {}
+  };
+  const bufferGet = async (k, isJSON = true) => {
+    try {
+      const v = await AsyncStorage.getItem(k);
+      if (!isJSON) return v;
+      return v ? JSON.parse(v) : null;
+    } catch {
+      return null;
+    }
+  };
+  const bufferDel = async k => {
+    try {
+      await AsyncStorage.removeItem(k);
+    } catch {}
+  };
+
+  const enqueuePending = async payload => {
+    try {
+      const arr = (await bufferGet(LS_KEYS.pending)) || [];
+      arr.push(payload);
+      await bufferSet(LS_KEYS.pending, arr);
+    } catch {}
+  };
+
+  const tryFlushPending = async () => {
+    // net check simple: just try sending; fail => keep
+    const arr = (await bufferGet(LS_KEYS.pending)) || [];
+    if (!arr.length) return;
+
+    const jid = (await bufferGet(LS_KEYS.jobId, false)) || jobId;
+    for (let i = 0; i < arr.length; i++) {
+      try {
+        await updateWorkData(jid, arr[i], token);
+        // remove sent one
+        const fresh = (await bufferGet(LS_KEYS.pending)) || [];
+        fresh.shift();
+        await bufferSet(LS_KEYS.pending, fresh);
+      } catch (e) {
+        // stop on first failure, will retry later
+        break;
+      }
+    }
+  };
+
+  // ---------- Native Live Activity ----------
   const startLiveActivity = async elapsed => {
     try {
       await TimerModule?.startActivity?.(elapsed);
-    } catch (e) {}
+    } catch {}
   };
   const updateLiveActivity = (elapsed, running) => {
     try {
       TimerModule?.updateActivity?.(elapsed, running);
-    } catch (e) {}
+    } catch {}
   };
   const endLiveActivity = () => {
     try {
       TimerModule?.endActivity?.();
-    } catch (e) {}
+    } catch {}
   };
 
-  // ---------- Payload builder (uses reliable start/end) ----------
+  // ---------- Build payload (UNCHANGED signature) ----------
   const buildLaborTimesheetPayload = ({
     totalMs = 0,
     pauseList = [],
     startISO,
-    endISO,
+    endISO, // optional
     markCompleted = false,
   }) => {
     const now = new Date();
     const dateStr = fmtDate(now);
-    const startDate = startISO ? new Date(startISO) : now;
-    const startT = fmtTime(startDate);
+    const startT = startISO ? fmtTime(new Date(startISO)) : fmtTime(now);
     const endT = endISO ? fmtTime(new Date(endISO)) : null;
     const toSeconds = ms => Math.max(0, Math.floor(ms / 1000));
-
     let payload_id = {
       labor_id:
         user?.management_type !== 'lead_labor'
@@ -1141,7 +1184,6 @@ export default function TimerScreen({navigation, route}) {
     Object.keys(payload_id).forEach(
       key => payload_id[key] === undefined && delete payload_id[key],
     );
-
     return {
       labor_timesheet: {
         ...payload_id,
@@ -1151,101 +1193,78 @@ export default function TimerScreen({navigation, route}) {
         work_activity: toSeconds(totalMs),
         pause_timer: pauseList.map(p => ({
           title: p.title,
-          duration: p.duration,
+          duration: p.duration, // "HH:MM:SS"
         })),
         ...(markCompleted ? {job_status: 'completed'} : {}),
       },
     };
   };
-  // --------------------------------------------------------------
 
+  // ---------- Summaries for All Activity Log (API) ----------
   const computeSummaries = timesheets => {
-    const todayStr = fmtDate(new Date());
+    // keep entire history
     const all = timesheets.map(ts => ({
-      date: ts?.date,
       start: ts?.start_time || '--:--:--',
       end: ts?.job_status === 'completed' ? ts?.end_time || '--:--:--' : null,
       totalSec: Number(ts?.work_activity || 0),
+      date: ts?.date || '',
     }));
-    const todayTs = timesheets.filter(ts => ts?.date === todayStr);
-    const lastToday = todayTs[todayTs.length - 1];
-    const todaySum = lastToday
-      ? {
-          start: lastToday?.start_time || '--:--:--',
-          end:
-            lastToday?.job_status === 'completed'
-              ? lastToday?.end_time || '--:--:--'
-              : null,
-          totalSec: Number(lastToday?.work_activity || 0),
-        }
-      : null;
     setAllSummaries(all);
   };
 
-  const addActivity = (title, extra = {}) => {
-    setActivityLog(prev => [
-      ...prev,
-      {
-        title,
-        time: new Date().toLocaleTimeString(),
-        ...extra,
-      },
-    ]);
-  };
-
-  // Init: get activeJobId, job details, restore startISO
   useEffect(() => {
-    const init = async () => {
+    let t;
+    if (!loading) t = setTimeout(() => setUiLoading(false), 2500);
+    return () => {
+      if (t) clearTimeout(t);
+    };
+  }, [loading]);
+
+  // On mount: load any buffered session
+  useEffect(() => {
+    const boot = async () => {
       try {
         const id = await AsyncStorage.getItem('activeJobId');
         if (id) setStoredJobId(id);
-      } catch {}
-      await fetchJobDetails();
 
-      if (jobId) {
-        const persisted = await readPersistedStartISO(
-          jobId,
-          fmtDate(new Date()),
-        );
-        if (persisted) {
-          setStartISO(persisted);
-        } else {
-          // Fallback: reconstruct from today's last timesheet if exists
-          const ft =
-            (jobData?.labor_timesheets || []).filter(
-              item =>
-                item.labor_id === user?.labor?.[0]?.id ||
-                item.lead_labor_id === user?.leadLabor?.[0]?.id,
-            ) || [];
-          const today = fmtDate(new Date());
-          const todaySheets = ft.filter(t => t?.date === today);
-          if (todaySheets?.length) {
-            const last = todaySheets[todaySheets.length - 1];
-            const reconstructed = makeISOFromDateTimeLocal(
-              last?.date,
-              last?.start_time,
-            );
-            if (reconstructed) {
-              setStartISO(reconstructed);
-              await storeStartISO(jobId, reconstructed);
-            }
-          }
-        }
-      }
+        // restore buffered session if any
+        const bStart = await bufferGet(LS_KEYS.start, false);
+        const bPauses = await bufferGet(LS_KEYS.pauses);
+        if (bStart) setStartISO(bStart);
+        if (bPauses) setPauseList(bPauses);
+
+        await bufferSet(LS_KEYS.jobId, String(jobId || ''));
+        await tryFlushPending(); // in case something was pending
+      } catch {}
+      fetchJobDetails();
     };
-    init();
+    boot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    const getData = async () => {
+      const bufferToday = await loadTodayActivityFromBuffer();
+      console.log('bufferTodaybufferToday', bufferToday);
 
+      if (bufferToday) {
+        setTodayActivityLog(bufferToday || []);
+      }
+    };
+    getData();
+  }, [lastTodayActivityLog]);
+
+  // Keep live activity updating each second
   useEffect(() => {
     if (isRunning) {
-      const interval = setInterval(() => {
-        updateLiveActivity(elapsedTime, isRunning);
-      }, 1000);
+      const interval = setInterval(
+        () => updateLiveActivity(elapsedTime, isRunning),
+        1000,
+      );
       return () => clearInterval(interval);
     }
   }, [elapsedTime, isRunning]);
 
+  // ---------- Fetch job details (date compare fixed) ----------
   const fetchJobDetails = async () => {
     try {
       setLoading(true);
@@ -1263,18 +1282,23 @@ export default function TimerScreen({navigation, route}) {
       computeSummaries(filteredTimesheets);
 
       if (filteredTimesheets.length > 0) {
-        const allPauseTimers = filteredTimesheets
-          .map(item => item.pause_timer || [])
-          .flat();
-        setActivityLog(allPauseTimers || []);
+        // today's date using same format as BE: yyyy-mm-dd
+        const today = fmtDate(new Date()); // 🔧 FIX: use fmtDate to match BE format
 
-        const today = fmtDate(new Date());
         const todayTimesheets = filteredTimesheets.filter(
           item => item.date === today,
         );
+
         const todayPauseTimers = todayTimesheets
           .map(item => item.pause_timer || [])
           .flat();
+
+        // Show *today's* pauses separately (lastActivityLog) and all pauses (activityLog)
+        const allPauseTimers = filteredTimesheets
+          .map(item => item.pause_timer || [])
+          .flat();
+
+        setActivityLog(allPauseTimers || []);
         setLastActivityLog(todayPauseTimers || []);
       } else {
         setActivityLog([]);
@@ -1287,66 +1311,24 @@ export default function TimerScreen({navigation, route}) {
     }
   };
 
-  // Ensure reliable startISO for any API write
-  const getStartISOForWrite = async () => {
-    const today = fmtDate(new Date());
-    if (startISO) return startISO;
-
-    const persisted = jobId ? await readPersistedStartISO(jobId, today) : null;
-    if (persisted) {
-      setStartISO(persisted);
-      return persisted;
-    }
-
-    const filteredTimesheets =
-      (jobData?.labor_timesheets || []).filter(
-        item =>
-          item.labor_id === user?.labor?.[0]?.id ||
-          item.lead_labor_id === user?.leadLabor?.[0]?.id,
-      ) || [];
-    const todaySheets = filteredTimesheets.filter(t => t?.date === today);
-    if (todaySheets.length) {
-      const last = todaySheets[todaySheets.length - 1];
-      const reconstructed = makeISOFromDateTimeLocal(
-        last?.date,
-        last?.start_time,
-      );
-      if (reconstructed) {
-        setStartISO(reconstructed);
-        if (jobId) await storeStartISO(jobId, reconstructed);
-        return reconstructed;
-      }
-    }
-
-    const nowISO = new Date().toISOString();
-    if (jobId) await storeStartISO(jobId, nowISO);
-    setStartISO(nowISO);
-    return nowISO;
-  };
-
+  // ---------- START ----------
   const handleStart = async () => {
     try {
       setStartLoading(true);
-      await AsyncStorage.setItem('activeJobId', String(job?.id ?? jobId));
-      setStoredJobId(job?.id ?? jobId);
+      await AsyncStorage.setItem('activeJobId', String(job?.id ?? job?.id));
+      setStoredJobId(job?.id ?? job?.id);
 
       const nowISO = new Date().toISOString();
       setStartISO(nowISO);
-      if (jobId) await storeStartISO(jobId, nowISO);
+
+      //  buffer only; do not hit API yet
+      await bufferSet(LS_KEYS.start, nowISO);
+      await bufferSet(LS_KEYS.pauses, []);
+      await bufferSet(LS_KEYS.pending, []);
 
       dispatch(startTimerWithBackground());
-      startLiveActivity(elapsedTime);
-
-      const jobIdForApi = job?.id ?? jobId;
-      const payload = buildLaborTimesheetPayload({
-        totalMs: elapsedTime,
-        pauseList,
-        startISO: nowISO,
-        endISO: null,
-        markCompleted: false,
-      });
-      await updateWorkData(jobIdForApi, payload, token);
-      fetchJobDetails();
+      await startLiveActivity(elapsedTime);
+      updateLiveActivity(elapsedTime, true);
     } catch (e) {
       console.log('Start failed:', e?.message);
     } finally {
@@ -1354,6 +1336,7 @@ export default function TimerScreen({navigation, route}) {
     }
   };
 
+  // ---------- PAUSE CONFIRM ----------
   const handleConfirmPause = async () => {
     if (!pauseReason) return;
     try {
@@ -1367,18 +1350,13 @@ export default function TimerScreen({navigation, route}) {
       setPauseModal(false);
       setPauseNotes('');
 
+      // placeholder duration 00:00:00 will be converted on resume
       const placeholder = {title: pauseReason, duration: toHHMMSS(0)};
-      const jobIdForApi = storedJobId ?? job?.id ?? jobId;
-      const reliableStartISO = await getStartISOForWrite();
-
-      const payload = buildLaborTimesheetPayload({
-        totalMs: elapsedTime,
-        pauseList: [...pauseList, placeholder],
-        startISO: reliableStartISO,
-        endISO: null,
-      });
-      await updateWorkData(jobIdForApi, payload, token);
-      fetchJobDetails();
+      const cached = (await bufferGet(LS_KEYS.pauses)) || [];
+      const newPauses = [...cached, placeholder];
+      setPauseList(newPauses);
+      await bufferSet(LS_KEYS.pauses, newPauses);
+      await bufferSet(LS_KEYS.elapsedOnResume, elapsedTime);
     } catch (err) {
       console.log('Confirm pause failed:', err?.message);
     } finally {
@@ -1386,10 +1364,10 @@ export default function TimerScreen({navigation, route}) {
     }
   };
 
+  // ---------- RESUME ----------
   const handleResume = async () => {
     try {
       setResumeLoading(true);
-
       if (currentPauseStartedAt && currentPauseTitle) {
         const durSec = Math.max(
           1,
@@ -1399,24 +1377,28 @@ export default function TimerScreen({navigation, route}) {
           title: currentPauseTitle,
           duration: toHHMMSS(durSec * 1000),
         };
-        const newList = [...pauseList, finalItem];
+
+        const cached = (await bufferGet(LS_KEYS.pauses)) || [];
+        // replace last placeholder (same title & 00:00:00) with finalItem
+        let replaced = false;
+        const newList = cached.map((p, i, arr) => {
+          if (
+            !replaced &&
+            p.title === currentPauseTitle &&
+            p.duration === '00:00:00'
+          ) {
+            replaced = true;
+            return finalItem;
+          }
+          return p;
+        });
+        if (!replaced) newList.push(finalItem);
         setPauseList(newList);
+        await bufferSet(LS_KEYS.pauses, newList);
+
         setCurrentPauseStartedAt(null);
         setCurrentPauseTitle(null);
-
-        const jobIdForApi = storedJobId ?? job?.id ?? jobId;
-        const reliableStartISO = await getStartISOForWrite();
-
-        const payload = buildLaborTimesheetPayload({
-          totalMs: elapsedTime,
-          pauseList: newList,
-          startISO: reliableStartISO,
-          endISO: null,
-        });
-        await updateWorkData(jobIdForApi, payload, token);
-        fetchJobDetails();
       }
-
       dispatch(resumeTimerWithBackground());
     } catch (e) {
       console.log('Resume failed:', e?.message);
@@ -1424,33 +1406,50 @@ export default function TimerScreen({navigation, route}) {
       setResumeLoading(false);
     }
   };
-
+  // ---------- COMPLETE ----------
   const handleComplete = async () => {
     try {
       setCompleteLoading(true);
-      const jobIdForApi = storedJobId ?? job?.id ?? jobId;
+      const jobIdForApi = storedJobId ?? job?.id ?? job?.job?.id;
+      const end = new Date().toISOString();
 
-      const reliableStartISO = await getStartISOForWrite();
-      const endISO = new Date().toISOString();
+      //  USE BUFFERED START (never override) to avoid start=end bug
+      const persistedStart =
+        (await bufferGet(LS_KEYS.start, false)) ||
+        startISO ||
+        new Date().toISOString();
+      const bufferedPauses = (await bufferGet(LS_KEYS.pauses)) || pauseList;
 
       const payload = buildLaborTimesheetPayload({
         totalMs: elapsedTime,
-        pauseList,
-        startISO: reliableStartISO,
-        endISO,
+        pauseList: bufferedPauses,
+        startISO: persistedStart,
+        endISO: end,
         markCompleted: true,
       });
 
-      await updateWorkData(jobIdForApi, payload, token);
-      fetchJobDetails();
+      //  single-hit strategy + offline queue
+      try {
+        await updateWorkData(jobIdForApi, payload, token);
+      } catch (e) {
+        await enqueuePending(payload);
+      }
 
+      await tryFlushPending(); // try once more
+
+      // Clean up buffers after completion
       await AsyncStorage.removeItem('activeJobId');
-      if (jobId) await clearPersistedStartISO(jobId);
+      await bufferDel(LS_KEYS.start);
+      await bufferDel(LS_KEYS.pauses);
+      await bufferDel(LS_KEYS.elapsedOnResume);
+      await bufferDel(LS_KEYS.pending);
+      await bufferDel(LS_KEYS.jobId);
 
       dispatch(stopTimerWithBackground());
       endLiveActivity();
       setCompleteModal(false);
       Alert.alert('Success', 'Work data updated successfully.');
+      fetchJobDetails();
     } catch (err) {
       console.log('Error completing job', err);
       Alert.alert('Error', err?.message || 'Failed to update work data');
@@ -1468,16 +1467,13 @@ export default function TimerScreen({navigation, route}) {
   };
 
   const today = fmtDate(new Date());
-
   const filteredTimesheets =
     jobData?.labor_timesheets?.filter(
       item =>
         item.labor_id === user?.labor?.[0]?.id ||
         item.lead_labor_id === user?.leadLabor?.[0]?.id,
     ) || [];
-
   const lastTimesheet = filteredTimesheets[filteredTimesheets.length - 1];
-
   const isTodayCompleted =
     lastTimesheet?.job_status == 'completed' && lastTimesheet?.date == today;
 
@@ -1488,7 +1484,6 @@ export default function TimerScreen({navigation, route}) {
         onPress={() => navigation.goBack()}>
         <Icon name="arrow-back" size={24} color={'#000'} />
       </TouchableOpacity>
-
       <View style={styles.headerContent}>
         <Text style={styles.headerTitle}>Work Timer</Text>
         <Text style={styles.headerSubtitle}>
@@ -1515,10 +1510,12 @@ export default function TimerScreen({navigation, route}) {
         </View>
       ) : (
         <>
+          {/* Timer Card */}
           {!isTodayCompleted && (
             <View style={styles.timerCard}>
               <View
                 style={{
+                  display: 'flex',
                   flexDirection: 'row',
                   alignItems: 'flex-end',
                   marginBottom: 20,
@@ -1587,6 +1584,7 @@ export default function TimerScreen({navigation, route}) {
             </View>
           )}
 
+          {/* Completed banner for today */}
           {isTodayCompleted && (
             <View style={styles.timerCard}>
               <Text style={{color: '#2196F3', fontWeight: 'bold'}}>
@@ -1598,11 +1596,17 @@ export default function TimerScreen({navigation, route}) {
             </View>
           )}
 
-          {lastActivityLog?.length > 0 && (
+          {/* Today's Activity Log (pauses only) */}
+          {(lastActivityLog?.length > 0 ||
+            lastTodayActivityLog?.length > 0) && (
             <View style={[styles.logCard, {marginBottom: 20}]}>
               <Text style={styles.sectionTitle}>Today's Activity Log</Text>
               <FlatList
-                data={lastActivityLog}
+                data={
+                  lastActivityLog?.length > 0
+                    ? lastActivityLog
+                    : lastTodayActivityLog
+                }
                 keyExtractor={(_, index) => index.toString()}
                 renderItem={({item}) => (
                   <View style={styles.logItem}>
@@ -1628,20 +1632,30 @@ export default function TimerScreen({navigation, route}) {
             </View>
           )}
 
+          {/* 🔧 All Activity Log — now shows start, end, total from API */}
           <View style={styles.logCard}>
             <Text style={styles.sectionTitle}>All Activity Log</Text>
             <FlatList
-              data={activityLog}
+              data={allSummaries}
               keyExtractor={(_, index) => index.toString()}
               renderItem={({item}) => (
                 <View style={styles.logItem}>
-                  <Text
-                    style={[styles.logTitle, {color: item.color || '#333'}]}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.logTime}>
-                    {item.duration ?? item.time ?? '--:--:--'}
-                  </Text>
+                  <View style={{flex: 1}}>
+                    <Text style={[styles.logTitle]}>
+                      Date: {item.date || '--'}
+                    </Text>
+                    <Text style={[styles.logTitle]}>
+                      Start: {item.start || '--:--:--'}
+                    </Text>
+                  </View>
+                  <View style={{alignItems: 'flex-end'}}>
+                    <Text style={styles.logTitle}>
+                      End: {item.end ?? '--:--:--'}
+                    </Text>
+                    <Text style={styles.logTime}>
+                      Total: {toHHMMSS((item.totalSec || 0) * 1000)}
+                    </Text>
+                  </View>
                 </View>
               )}
               ListEmptyComponent={() => (
@@ -1670,7 +1684,7 @@ export default function TimerScreen({navigation, route}) {
                   'Waiting for Parts',
                   'Safety Break',
                   'Other',
-                ].map(reason => (
+                ]?.map(reason => (
                   <TouchableOpacity
                     key={reason}
                     style={[
