@@ -78,6 +78,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
   console.log('Job ID:', jobData);
   console.log('Supplier ID:', supplierId);
   const jobId = jobData?.job?.id;
+  console.log('Job ID:', jobId);
 
   const handlePlaceOrder = async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -108,7 +109,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
     try {
       setLoading(true);
       const res = await createOrders(payload, token);
-      dispatch(clearCart()); // clear cart
+      dispatch(clearCart());
       Alert.alert('Success', 'Order Created successfully!');
       navigation.navigate('OrderConfirmationScreen', {order: res});
     } catch (error) {

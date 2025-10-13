@@ -415,7 +415,7 @@ const LoginScreen = ({navigation}) => {
     try {
       setLoading(true);
       const response = await api.post(LOGIN_URL, {
-        email,
+        email: email.trim().toLowerCase(),
         password,
         login_by: 'app',
       });
@@ -423,12 +423,8 @@ const LoginScreen = ({navigation}) => {
       const {token, user, permissions} = response?.data?.data || {};
 
       if (token) {
-        // ✅ Role check
-
-        // Redux State  save
+        // Redux State
         dispatch(setUser({user: user, permissions: permissions, token}));
-        // await AsyncStorage.setItem("authToken", token);
-
         // Navigate
         navigation.navigate('MainTabNavigator');
       } else {

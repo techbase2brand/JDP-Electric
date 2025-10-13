@@ -1612,10 +1612,10 @@ export default function TimerScreen({navigation, route}) {
                   <View style={styles.logItem}>
                     <Text
                       style={[styles.logTitle, {color: item.color || '#333'}]}>
-                      {item.title}
+                      {item?.title}
                     </Text>
                     <Text style={styles.logTime}>
-                      {item.duration ?? item.time ?? '--:--:--'}
+                      {item?.duration ?? item?.time ?? '--:--:--'}
                     </Text>
                   </View>
                 )}

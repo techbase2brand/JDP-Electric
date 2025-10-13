@@ -863,6 +863,7 @@ const JobActivityLogScreen = ({navigation, route}) => {
   const {job} = route?.params || {};
   const [selectedJob] = useState(job || null);
   const [jobActivities, setJobActivities] = useState([]);
+  console.log('jobjobjob', job);
 
   // ---------------- Helpers ----------------
   const stripMicroseconds = iso => String(iso || '').replace(/\.\d+/, '');
@@ -1018,7 +1019,7 @@ const JobActivityLogScreen = ({navigation, route}) => {
     );
 
     // Placeholder for materials/orders aggregation if needed later
-    const totalOrders = 0;
+    const totalOrders = job?.orders?.length;
     const totalAmount = 0;
     const totalMaterials = 0;
 

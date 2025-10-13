@@ -256,7 +256,7 @@ const HomeScreen = ({navigation}) => {
 
   const renderJobCard = job => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('JobDetail', {job})}
+      // onPress={() => navigation.navigate('JobDetail', {job})}
       key={job.id}
       style={styles.jobCard}>
       <View style={styles.jobHeader}>
@@ -264,12 +264,12 @@ const HomeScreen = ({navigation}) => {
           <Text style={styles.jobId}>{job.id}</Text>
           <View style={[styles.statusBadge, {backgroundColor: '#E3F2FD'}]}>
             <Text style={[styles.statusText, {color: job.statusColor}]}>
-              {job.status}
+              {job?.status}
             </Text>
           </View>
           <View style={[styles.priorityBadge, {backgroundColor: '#ECEEF2'}]}>
             <Text style={[styles.priorityText, {color: job.priorityColor}]}>
-              {job.priority}
+              {job?.priority}
             </Text>
           </View>
         </View>
@@ -413,7 +413,6 @@ const HomeScreen = ({navigation}) => {
                 style={styles.avatar}
                 onPress={() => navigation.navigate('ProfileScreen')}>
                 <Text style={styles.avatarText}>
-                  {' '}
                   {user?.full_name
                     ? user.full_name.charAt(0).toUpperCase()
                     : 'P'}
@@ -428,7 +427,6 @@ const HomeScreen = ({navigation}) => {
                   size={24}
                   color={whiteColor}
                 />
-                {/* <Text style={styles.notificationIcon}>🔔</Text> */}
                 <View style={styles.notificationBadge}>
                   <Text style={styles.notificationCount}>3</Text>
                 </View>
