@@ -82,6 +82,7 @@ import AuthStack from './src/navigations/AuthStack';
 import MainTabNavigator from './src/navigations/MainTabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NavigationContainer} from '@react-navigation/native';
+import 'react-native-get-random-values';
 
 // ✅ Redux imports
 import {Provider, useDispatch, useSelector} from 'react-redux';
@@ -149,16 +150,16 @@ const AppContent = () => {
     }
   };
 
-  useEffect(() => {
-    // ✅ Global logout handler set
-    global.handleLogout = () => {
-      dispatch(logout());
-      navigationRef.current?.reset({
-        index: 0,
-        routes: [{name: 'AuthStack'}],
-      });
-    };
-  }, []);
+  // useEffect(() => {
+  //   // ✅ Global logout handler set
+  //   global.handleLogout = () => {
+  //     dispatch(logout());
+  //     navigationRef.current?.reset({
+  //       index: 0,
+  //       routes: [{name: 'AuthStack'}],
+  //     });
+  //   };
+  // }, []);
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);

@@ -13,18 +13,18 @@ export const api = axios.create({
   },
 });
 
-api.interceptors.response.use(
-  response => response,
-  async error => {
-    if (error.response?.status === 401) {
-      // 🔑 Invalid / expired token
-      if (global.handleLogout) {
-        global.handleLogout(); // App.js se navigate karayega
-      }
-    }
-    return Promise.reject(error);
-  },
-);
+// api.interceptors.response.use(
+//   response => response,
+//   async error => {
+//     if (error.response?.status === 401) {
+//       // 🔑 Invalid / expired token
+//       if (global.handleLogout) {
+//         global.handleLogout(); // App.js se navigate karayega
+//       }
+//     }
+//     return Promise.reject(error);
+//   },
+// );
 
 // Send OTP
 export const sendForgotPasswordOtp = async email => {
@@ -317,6 +317,8 @@ export const createJob = async (payload, token) => {
 
 // Get Jobs API
 export const getJobs = async (leadLaborId, page = 1, limit = 10, token) => {
+  console.log("leadLaborIdleadLaborId",leadLaborId);
+  
   try {
     const res = await api.get(
       `/job/getJobsByLeadLabor?leadLaborId=${leadLaborId}&page=${page}&limit=${limit}`,

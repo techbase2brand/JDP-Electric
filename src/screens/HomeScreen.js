@@ -203,7 +203,8 @@ const HomeScreen = ({navigation}) => {
         key={index}
         style={styles.statsCard}
         activeOpacity={0.7}
-        onPress={handlePress}>
+        // onPress={handlePress}
+      >
         {/* <View style={[styles.headerCircle, styles.topRightCircle, {overflow:"hidden"}]} /> */}
 
         <View

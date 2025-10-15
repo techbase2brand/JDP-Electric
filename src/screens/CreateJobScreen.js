@@ -33,6 +33,7 @@ import {
   getContractors,
   getCustomers,
 } from '../config/apiConfig';
+import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -45,6 +46,8 @@ const customers = [
 ];
 
 const CreateJobScreen = ({navigation, onCreateJob}) => {
+  const GOOGLE_MAPS_APIKEY = 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI';
+
   const scrollRef = useRef(null);
   const fieldPositions = useRef({});
   const isFetchingMoreRef = useRef(false);
@@ -1433,8 +1436,19 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               </View>
             )}
           </View>
-
-          <View
+          {/* <GooglePlacesAutocomplete
+            placeholder="Search"
+            onPress={(data, details = null) => {
+              // 'details' is provided when fetchDetails = true
+              console.log(data, details);
+            }}
+            predefinedPlaces={[]}
+            query={{
+              key: GOOGLE_MAPS_APIKEY,
+              language: 'en',
+            }}
+          /> */}
+          {/* <View
             style={styles.formGroup}
             ef={ref => (fieldPositions.current['city'] = ref)}>
             <Text style={styles.formLabel}>City </Text>
@@ -1469,13 +1483,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 setShowCitySuggestions(false);
               },
             )}
-            {/* {validationErrors.city && (
-              <View style={styles.errorContainer}>
-                <Icon name="error" size={16} color="#ef4444" />
-                <Text style={styles.errorText}>{validationErrors.city}</Text>
-              </View>
-            )} */}
-          </View>
+          
+          </View> */}
         </View>
 
         {/* Billing Address */}
@@ -1886,9 +1895,9 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             <Text style={styles.headerText}>
               {formData.assignedTo.length > 0
                 ? labors
-                    .filter(labor => formData.assignedTo.includes(labor.id)) // sirf selected IDs
-                    .map(labor => labor.users?.full_name) // names nikalo
-                    .join(', ') // string me dikhao
+                    .filter(labor => formData.assignedTo.includes(labor.id))
+                    .map(labor => labor.users?.full_name)
+                    .join(', ')
                 : 'Select Members'}
             </Text>
             <Icon

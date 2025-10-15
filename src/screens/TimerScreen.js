@@ -954,6 +954,7 @@
 //     marginTop: 15,
 //   },
 // });
+
 import React, {useEffect, useState} from 'react';
 import {
   View,
@@ -1644,7 +1645,7 @@ export default function TimerScreen({navigation, route}) {
                     <Text style={[styles.logTitle]}>
                       Date: {item.date || '--'}
                     </Text>
-                    <Text style={[styles.logTitle]}>
+                    <Text style={[styles.logTitle, {marginTop: 10}]}>
                       Start: {item.start || '--:--:--'}
                     </Text>
                   </View>
@@ -1652,7 +1653,7 @@ export default function TimerScreen({navigation, route}) {
                     <Text style={styles.logTitle}>
                       End: {item.end ?? '--:--:--'}
                     </Text>
-                    <Text style={styles.logTime}>
+                    <Text style={[styles.logTime, {marginTop: 10}]}>
                       Total: {toHHMMSS((item.totalSec || 0) * 1000)}
                     </Text>
                   </View>

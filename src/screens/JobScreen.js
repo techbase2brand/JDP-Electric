@@ -1403,6 +1403,8 @@ const JobListingScreen = ({navigation, route}) => {
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
   const leadLaborId = user?.leadLabor?.[0]?.id;
+  console.log('leadLaborIdleadLaborId>>', user);
+
   const laborId = user?.labor?.[0]?.id;
   const canViewCreateJob = useHasPermission('jobs', 'view');
 
@@ -1872,7 +1874,7 @@ const JobListingScreen = ({navigation, route}) => {
       <View style={styles.emptyIconContainer}>
         <Ionicons name="briefcase-outline" size={80} color={COLORS.gray300} />
       </View>
-      <Text style={styles.emptyTitle}>No {activeTab} jobs</Text>
+      <Text style={styles.emptyTitle}>No jobs found</Text>
       <Text style={styles.emptySubtitle}>
         {searchQuery
           ? 'Try adjusting your search'
@@ -1885,9 +1887,7 @@ const JobListingScreen = ({navigation, route}) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-
       {renderHeader()}
-
       <View
         style={{
           flexDirection: 'row',

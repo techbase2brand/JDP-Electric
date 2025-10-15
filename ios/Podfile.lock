@@ -1362,6 +1362,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - react-native-get-random-values (1.11.0):
+    - React-Core
   - react-native-image-picker (8.2.1):
     - DoubleConversion
     - glog
@@ -2157,6 +2159,7 @@ DEPENDENCIES:
   - react-native-background-actions (from `../node_modules/react-native-background-actions`)
   - react-native-background-timer (from `../node_modules/react-native-background-timer`)
   - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
+  - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
   - react-native-maps (from `../node_modules/react-native-maps`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
@@ -2291,6 +2294,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-background-timer"
   react-native-geolocation:
     :path: "../node_modules/@react-native-community/geolocation"
+  react-native-get-random-values:
+    :path: "../node_modules/react-native-get-random-values"
   react-native-image-picker:
     :path: "../node_modules/react-native-image-picker"
   react-native-maps:
@@ -2421,6 +2426,7 @@ SPEC CHECKSUMS:
   react-native-background-actions: 48e6bad9e2a47e3b04858634c5a05ea11062f680
   react-native-background-timer: 4638ae3bee00320753647900b21260b10587b6f7
   react-native-geolocation: d43962eb0be1b0056ba5c1f95e94fb7907494268
+  react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba
   react-native-image-picker: db0b3e3c7ae57680876318d4f42e7dbedd72244a
   react-native-maps: 6e4a37b6256b5bc6e523b77099b69b9624a2bbcc
   react-native-netinfo: 1576c36df16f4401774b33c6a8769bc8de70d01d
