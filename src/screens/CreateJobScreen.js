@@ -1893,7 +1893,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             style={styles.dropdownHeader}
             onPress={toggleDropdown}>
             <Text style={styles.headerText}>
-              {formData.assignedTo.length > 0
+              {formData?.assignedTo?.length > 0
                 ? labors
                     .filter(labor => formData.assignedTo.includes(labor.id))
                     .map(labor => labor.users?.full_name)
