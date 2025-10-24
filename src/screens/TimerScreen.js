@@ -1200,6 +1200,60 @@ export default function TimerScreen({navigation, route}) {
       },
     };
   };
+  // const buildLaborTimesheetPayload = ({
+  //   totalMs = 0,
+  //   pauseList = [],
+  //   startISO,
+  //   endISO, // optional
+  //   markCompleted = false,
+  // }) => {
+  //   const now = new Date();
+  //   const dateStr = fmtDate(now);
+  //   const startT = startISO ? fmtTime(new Date(startISO)) : fmtTime(now);
+  //   const endT = endISO ? fmtTime(new Date(endISO)) : null;
+
+  //   // ✅ Convert milliseconds to HH:MM:SS
+  //   const formatDuration = ms => {
+  //     const totalSeconds = Math.floor(ms / 1000);
+  //     const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+  //     const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(
+  //       2,
+  //       '0',
+  //     );
+  //     const seconds = String(totalSeconds % 60).padStart(2, '0');
+  //     return `${hours}:${minutes}:${seconds}`;
+  //   };
+
+  //   let payload_id = {
+  //     labor_id:
+  //       user?.management_type !== 'lead_labor'
+  //         ? user?.labor?.[0]?.id
+  //         : undefined,
+  //     lead_labor_id:
+  //       user?.management_type === 'lead_labor'
+  //         ? user?.leadLabor?.[0]?.id
+  //         : undefined,
+  //   };
+
+  //   Object.keys(payload_id).forEach(
+  //     key => payload_id[key] === undefined && delete payload_id[key],
+  //   );
+
+  //   return {
+  //     labor_timesheet: {
+  //       ...payload_id,
+  //       date: dateStr,
+  //       start_time: startT,
+  //       ...(endT ? {end_time: endT} : {}),
+  //       work_activity: formatDuration(totalMs), // ✅ Now in HH:MM:SS format
+  //       pause_timer: pauseList.map(p => ({
+  //         title: p.title,
+  //         duration: p.duration, // already "HH:MM:SS"
+  //       })),
+  //       ...(markCompleted ? {job_status: 'completed'} : {}),
+  //     },
+  //   };
+  // };
 
   // ---------- Summaries for All Activity Log (API) ----------
   const computeSummaries = timesheets => {
@@ -1245,7 +1299,6 @@ export default function TimerScreen({navigation, route}) {
   useEffect(() => {
     const getData = async () => {
       const bufferToday = await loadTodayActivityFromBuffer();
-      console.log('bufferTodaybufferToday', bufferToday);
 
       if (bufferToday) {
         setTodayActivityLog(bufferToday || []);
@@ -1272,6 +1325,7 @@ export default function TimerScreen({navigation, route}) {
       const res = await getJobById(jobId, token);
       const data = res?.data || {};
       setJobdata(data);
+      console.log('datadata>>', data);
 
       const laborTimesheets = data?.labor_timesheets || [];
       const filteredTimesheets = laborTimesheets.filter(
@@ -1284,7 +1338,7 @@ export default function TimerScreen({navigation, route}) {
 
       if (filteredTimesheets.length > 0) {
         // today's date using same format as BE: yyyy-mm-dd
-        const today = fmtDate(new Date()); // 🔧 FIX: use fmtDate to match BE format
+        const today = fmtDate(new Date());
 
         const todayTimesheets = filteredTimesheets.filter(
           item => item.date === today,

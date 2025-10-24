@@ -1028,12 +1028,11 @@ const ProfileScreen = ({navigation}) => {
 
   const handleLogout = async () => {
     try {
-      // redux state me token hoga
       if (!token) {
         throw new Error('Token not found');
       }
 
-      await logoutApi(token); // API call
+      // await logoutApi(token); // API call
 
       // Redux logout action
       dispatch(logout());
@@ -1081,7 +1080,6 @@ const ProfileScreen = ({navigation}) => {
         confirmColor: '#dc2626',
       });
     }
-
     setModalVisible(true);
   };
 
@@ -1203,7 +1201,7 @@ const ProfileScreen = ({navigation}) => {
           </View>
 
           <View style={styles.accountOptionsContainer}>
-            {accountOptions?.slice(1, 4).map((option, index) => (
+            {accountOptions?.slice(1, 4)?.map((option, index) => (
               <AccountOption
                 key={index}
                 option={option}

@@ -317,8 +317,8 @@ export const createJob = async (payload, token) => {
 
 // Get Jobs API
 export const getJobs = async (leadLaborId, page = 1, limit = 10, token) => {
-  console.log("leadLaborIdleadLaborId",leadLaborId);
-  
+  console.log('leadLaborIdleadLaborId', leadLaborId);
+
   try {
     const res = await api.get(
       `/job/getJobsByLeadLabor?leadLaborId=${leadLaborId}&page=${page}&limit=${limit}`,
@@ -402,7 +402,7 @@ export const updateWorkData = async (jobId, payload, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return res.data; // { data: {...} }
+    return res.data;
   } catch (error) {
     console.error(
       'Error updating work data:',
@@ -421,7 +421,7 @@ export const createOrders = async (payload, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return res.data; // { data: {...} }
+    return res.data;
   } catch (error) {
     console.error(
       'Error updating work data:',

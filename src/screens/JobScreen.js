@@ -1403,7 +1403,6 @@ const JobListingScreen = ({navigation, route}) => {
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
   const leadLaborId = user?.leadLabor?.[0]?.id;
-  console.log('leadLaborIdleadLaborId>>', user);
 
   const laborId = user?.labor?.[0]?.id;
   const canViewCreateJob = useHasPermission('jobs', 'view');
@@ -1440,7 +1439,6 @@ const JobListingScreen = ({navigation, route}) => {
   // ---------- initial list fetch (once)
   useEffect(() => {
     fetchJobs(); // first page only
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---------- set status tab from route (optional)
@@ -1514,6 +1512,7 @@ const JobListingScreen = ({navigation, route}) => {
           : await getlabourJobs(laborId, page, 10, token);
 
       const newJobs = res?.data?.jobs ?? [];
+      console.log('newJobsnewJobs>>', newJobs);
 
       const combined = dedupeById([...(jobs || []), ...newJobs]);
       setJobs(combined);

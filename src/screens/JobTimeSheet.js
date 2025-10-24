@@ -145,7 +145,7 @@ const LabourModal = ({
               />
             </View>
 
-            <View style={styles.formGroup}>
+            {/* <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Employee ID</Text>
               <TextInput
                 style={styles.formInput}
@@ -155,7 +155,7 @@ const LabourModal = ({
                 }
                 placeholder="Enter employee ID"
               />
-            </View>
+            </View> */}
 
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Regular Hours</Text>
@@ -173,7 +173,7 @@ const LabourModal = ({
               />
             </View>
 
-            <View style={styles.formGroup}>
+            {/* <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Overtime Hours</Text>
               <TextInput
                 style={styles.formInput}
@@ -201,7 +201,7 @@ const LabourModal = ({
                 multiline
                 numberOfLines={3}
               />
-            </View>
+            </View> */}
           </ScrollView>
 
           {/* Footer Buttons */}
@@ -497,8 +497,9 @@ const ChargeModal = ({
     </View>
   </Modal>
 );
-const JobTimesheet = ({navigation, route, user, job}) => {
+const JobTimesheet = ({navigation, route, user}) => {
   const {timesheet} = route?.params || {};
+  const {job} = route?.params || {};
 
   const [editingLabour, setEditingLabour] = useState(null);
   const [editingMaterial, setEditingMaterial] = useState(null);
@@ -633,7 +634,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
       ],
     };
   });
-  console.log('timesheetData>>>', timesheetData);
+  console.log('timesheetData>>>', job);
 
   // Temporary form state for editing
   const [tempLabourData, setTempLabourData] = useState({});
@@ -1015,7 +1016,6 @@ const JobTimesheet = ({navigation, route, user, job}) => {
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>Job Bluesheet</Text>
             <Text style={styles.headerSubtitle}>
-              {' '}
               {formatDate(selectedDate)}{' '}
             </Text>
           </View>
@@ -1195,15 +1195,15 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             </View>
 
             {/* Table Rows */}
-            {timesheetData?.labourEntries.map(entry => (
+            {job?.assigned_labor?.map(entry => (
               <View key={entry.id} style={styles.tableRow}>
                 <Text style={[styles.tableCell, {flex: 1}]}>
-                  {entry?.employeeName || 'Sarah Johnson'}
+                  {entry?.user?.full_name || 'Sarah Johnson'}
                 </Text>
 
-                <Text style={[styles.tableCell, {flex: 1}]}>{entry.role}</Text>
+                <Text style={[styles.tableCell, {flex: 1}]}>{'Labor'}</Text>
                 <Text style={[styles.tableCell, {flex: 1}]}>
-                  {entry.regularHours}h
+                  {entry.regularHours || 0}h
                 </Text>
                 {/* <Text style={[styles.tableCell, {flex: 1}]}>
                   {entry.overtimeHours}h
@@ -1321,16 +1321,16 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             </View>
 
             {/* Table Rows */}
-            {timesheetData.materialEntries.map(material => (
+            {job?.assigned_materials.map(material => (
               <View key={material.id} style={styles.tableRow}>
                 {/* Title */}
                 <Text style={[styles.tableCell, {flex: 1}]}>
-                  {material.name}
+                  {material?.product_name}
                 </Text>
 
                 {/* Qty (ordered + unit) */}
                 <Text style={[styles.tableCell, {flex: 1}]}>
-                  {material.totalOrdered} {material.unit}
+                  {material.stock_quantity} {material.unit}
                 </Text>
 
                 {/* Used */}
@@ -1368,7 +1368,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
         </View>
 
         {/* Additional Charges Section */}
-        <View style={styles.sectionCard}>
+        {/* <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <MaterialIcons name="attach-money" size={24} color={tabColor} />
             <Text style={styles.sectionTitle}>Additional Charges</Text>
@@ -1381,7 +1381,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
             )}
           </View>
 
-          {/* {timesheetData.additionalCharges.map(charge => (
+          {timesheetData.additionalCharges.map(charge => (
             <View key={charge.id} style={styles.entryCard}>
               <View style={styles.entryHeader}>
                 <View style={styles.entryInfo}>
@@ -1423,10 +1423,9 @@ const JobTimesheet = ({navigation, route, user, job}) => {
                 <Text style={styles.entryNotes}>{charge.notes}</Text>
               )}
             </View>
-          ))} */}
+          ))}
 
           <View style={styles.tableContainer}>
-            {/* Table Header */}
             <View style={styles.tableHeader}>
               <Text style={[styles.tableHeaderText, {flex: 2}]}>Title</Text>
               <Text style={[styles.tableHeaderText, {flex: 1}]}>Qty</Text>
@@ -1436,17 +1435,15 @@ const JobTimesheet = ({navigation, route, user, job}) => {
               )}
             </View>
 
-            {/* Table Rows */}
             {timesheetData.additionalCharges.map(charge => (
               <View key={charge.id} style={styles.tableRow}>
-                {/* Title */}
                 <View style={{flex: 2}}>
                   <Text style={styles.tableCell}>{charge.title}</Text>
                   <Text
                     style={[styles.tableCell, {fontSize: 12, color: '#666'}]}>
                     {charge.description}
                   </Text>
-                  {/* {charge.receipt && (
+                  {charge.receipt && (
           <Text style={[styles.tableCell, {fontSize: 12, color: '#666'}]}>
             Receipt: {charge.receipt}
           </Text>
@@ -1455,20 +1452,17 @@ const JobTimesheet = ({navigation, route, user, job}) => {
           <Text style={[styles.tableCell, {fontSize: 12, fontStyle: 'italic'}]}>
             {charge.notes}
           </Text>
-        )} */}
+        )}
                 </View>
 
-                {/* Qty */}
                 <Text style={[styles.tableCell, {flex: 1}]}>
                   {charge.quantity || 1}
                 </Text>
 
-                {/* Amount */}
                 <Text style={[styles.tableCell, {flex: 1}]}>
                   ${charge.amount?.toFixed(2) || '0.00'}
                 </Text>
 
-                {/* Actions */}
                 {canEdit() && !isReadOnly() && (
                   <View
                     style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
@@ -1495,7 +1489,7 @@ const JobTimesheet = ({navigation, route, user, job}) => {
               </View>
             ))}
           </View>
-        </View>
+        </View> */}
 
         {/* Notes Section */}
         <View style={styles.sectionCard}>
@@ -1593,8 +1587,8 @@ const JobTimesheet = ({navigation, route, user, job}) => {
                           year: 'numeric',
                         },
                       )
-                    : // new Date(timesheetData.submittedAt).toLocaleDateString()
-                      'Unknown'}
+                    : 'Unknown'}
+                  .
                 </Text>
                 {user?.management_type === 'lead_labor' && (
                   <View style={styles.leadActions}>

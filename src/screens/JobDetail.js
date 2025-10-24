@@ -759,11 +759,13 @@ const JobDetailScreen = ({
               <View style={styles.actionGrid}>
                 <TouchableOpacity
                   style={styles.gridActionButton}
-                  onPress={() =>
-                    onViewTimesheet
-                      ? onViewTimesheet(job)
-                      : handleNavigate('JobTimesheet')
-                  }>
+                  // onPress={() =>
+                  //   onViewTimesheet
+                  //     ? onViewTimesheet(job)
+                  //     : handleNavigate('JobTimesheet')
+                  // }
+                   onPress={() => navigation.navigate('JobTimesheet',{job})}
+                  >
                   <Icon name="schedule" size={20} color={Colors.text} />
                   <Text style={styles.gridActionText}>Bluesheet</Text>
                 </TouchableOpacity>
