@@ -404,7 +404,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     try {
       setLaborLoading(true);
       const res = await getAllLabor(pageNo, 10, token);
-      console.log('labpur::', res);
+      console.log('labpur::', res.data?.data);
 
       if (pageNo === 1) {
         setLabors(res?.data?.data);

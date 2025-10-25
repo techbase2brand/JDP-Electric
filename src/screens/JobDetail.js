@@ -143,7 +143,7 @@ const JobDetailScreen = ({
         const res = await getJobById(jobId, token);
         console.log('viewjob >.', res);
 
-        setJob(res?.data); // ✅ response ke andar jo data hai wo set kar diya
+        setJob(res?.data);
       } catch (err) {
         setError(err.message || 'Failed to fetch job details');
       } finally {
@@ -332,7 +332,6 @@ const JobDetailScreen = ({
         isPaused: false,
       });
 
-      // Update job status to in-progress
       if (onUpdateJobStatus) {
         onUpdateJobStatus(job.id, 'in-progress');
       }
@@ -764,15 +763,16 @@ const JobDetailScreen = ({
                   //     ? onViewTimesheet(job)
                   //     : handleNavigate('JobTimesheet')
                   // }
-                   onPress={() => navigation.navigate('JobTimesheet',{job})}
-                  >
+                  onPress={() => navigation.navigate('JobTimesheet', {job})}>
                   <Icon name="schedule" size={20} color={Colors.text} />
                   <Text style={styles.gridActionText}>Bluesheet</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.gridActionButton}
-                  onPress={() => navigation.navigate('JobActivityLogScreen',{job})}>
+                  onPress={() =>
+                    navigation.navigate('JobActivityLogScreen', {job})
+                  }>
                   <Icon name="bar-chart" size={20} color={Colors.text} />
                   <Text style={styles.gridActionText}>Job Activity</Text>
                 </TouchableOpacity>
