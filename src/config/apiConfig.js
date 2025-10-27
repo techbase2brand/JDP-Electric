@@ -485,3 +485,22 @@ export const searchSuppliers = async (q, token) => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
+
+// blue sheet 
+
+export const submitBluesheetComplete = async (payload, token) => {
+  console.log('submitBluesheetComplete', payload, token);
+  try {
+    const res = await api.post(`/bluesheet/bluesheet/complete`, payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data; // expect success object
+  } catch (error) {
+    console.error(
+      'Error submit bluesheet:',
+      error?.response?.data || error?.message
+    );
+    // Throw normalized error like your style
+    throw error?.response?.data || { message: 'Something went wrong' };
+  }
+};

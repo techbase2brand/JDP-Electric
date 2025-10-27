@@ -899,7 +899,7 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
         setHasMore(rows.length === PAGE_SIZE);
         if (isReset) setPage(targetPage);
       } catch (e) {
-        Alert.alert('Error', 'Failed to fetch suppliers');
+        // Alert.alert('Error', 'Failed to fetch suppliers');
       } finally {
         setLoading(false);
         endReachedLockRef.current = false;
@@ -930,7 +930,7 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
 
       try {
         const res = await searchSuppliers(q, token);
-        console.log('searchSupplierssearchSuppliers>>', res);
+        // console.log('searchSupplierssearchSuppliers>>', res);
 
         if (lastIssuedSearchRef.current === q) {
           setSearchResults(asArray(res?.data?.suppliers));

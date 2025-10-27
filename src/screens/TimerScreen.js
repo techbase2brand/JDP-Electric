@@ -1032,6 +1032,7 @@ export default function TimerScreen({navigation, route}) {
   const [currentPauseTitle, setCurrentPauseTitle] = useState(null);
 
   const [allSummaries, setAllSummaries] = useState([]);
+
   const [activityLog, setActivityLog] = useState([]);
   const [lastActivityLog, setLastActivityLog] = useState([]);
   const [lastTodayActivityLog, setTodayActivityLog] = useState([]);
@@ -1160,46 +1161,6 @@ export default function TimerScreen({navigation, route}) {
   };
 
   // ---------- Build payload (UNCHANGED signature) ----------
-  const buildLaborTimesheetPayload = ({
-    totalMs = 0,
-    pauseList = [],
-    startISO,
-    endISO, // optional
-    markCompleted = false,
-  }) => {
-    const now = new Date();
-    const dateStr = fmtDate(now);
-    const startT = startISO ? fmtTime(new Date(startISO)) : fmtTime(now);
-    const endT = endISO ? fmtTime(new Date(endISO)) : null;
-    const toSeconds = ms => Math.max(0, Math.floor(ms / 1000));
-    let payload_id = {
-      labor_id:
-        user?.management_type !== 'lead_labor'
-          ? user?.labor?.[0]?.id
-          : undefined,
-      lead_labor_id:
-        user?.management_type === 'lead_labor'
-          ? user?.leadLabor?.[0]?.id
-          : undefined,
-    };
-    Object.keys(payload_id).forEach(
-      key => payload_id[key] === undefined && delete payload_id[key],
-    );
-    return {
-      labor_timesheet: {
-        ...payload_id,
-        date: dateStr,
-        start_time: startT,
-        ...(endT ? {end_time: endT} : {}),
-        work_activity: toSeconds(totalMs),
-        pause_timer: pauseList.map(p => ({
-          title: p.title,
-          duration: p.duration, // "HH:MM:SS"
-        })),
-        ...(markCompleted ? {job_status: 'completed'} : {}),
-      },
-    };
-  };
   // const buildLaborTimesheetPayload = ({
   //   totalMs = 0,
   //   pauseList = [],
@@ -1211,19 +1172,7 @@ export default function TimerScreen({navigation, route}) {
   //   const dateStr = fmtDate(now);
   //   const startT = startISO ? fmtTime(new Date(startISO)) : fmtTime(now);
   //   const endT = endISO ? fmtTime(new Date(endISO)) : null;
-
-  //   // ✅ Convert milliseconds to HH:MM:SS
-  //   const formatDuration = ms => {
-  //     const totalSeconds = Math.floor(ms / 1000);
-  //     const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-  //     const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(
-  //       2,
-  //       '0',
-  //     );
-  //     const seconds = String(totalSeconds % 60).padStart(2, '0');
-  //     return `${hours}:${minutes}:${seconds}`;
-  //   };
-
+  //   const toSeconds = ms => Math.max(0, Math.floor(ms / 1000));
   //   let payload_id = {
   //     labor_id:
   //       user?.management_type !== 'lead_labor'
@@ -1234,26 +1183,78 @@ export default function TimerScreen({navigation, route}) {
   //         ? user?.leadLabor?.[0]?.id
   //         : undefined,
   //   };
-
   //   Object.keys(payload_id).forEach(
   //     key => payload_id[key] === undefined && delete payload_id[key],
   //   );
-
   //   return {
   //     labor_timesheet: {
   //       ...payload_id,
   //       date: dateStr,
   //       start_time: startT,
   //       ...(endT ? {end_time: endT} : {}),
-  //       work_activity: formatDuration(totalMs), // ✅ Now in HH:MM:SS format
+  //       work_activity: toSeconds(totalMs),
   //       pause_timer: pauseList.map(p => ({
   //         title: p.title,
-  //         duration: p.duration, // already "HH:MM:SS"
+  //         duration: p.duration, // "HH:MM:SS"
   //       })),
   //       ...(markCompleted ? {job_status: 'completed'} : {}),
   //     },
   //   };
   // };
+  const buildLaborTimesheetPayload = ({
+    totalMs = 0,
+    pauseList = [],
+    startISO,
+    endISO, // optional
+    markCompleted = false,
+  }) => {
+    const now = new Date();
+    const dateStr = fmtDate(now);
+    const startT = startISO ? fmtTime(new Date(startISO)) : fmtTime(now);
+    const endT = endISO ? fmtTime(new Date(endISO)) : null;
+
+    // ✅ Convert milliseconds to HH:MM:SS
+    const formatDuration = ms => {
+      const totalSeconds = Math.floor(ms / 1000);
+      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(
+        2,
+        '0',
+      );
+      const seconds = String(totalSeconds % 60).padStart(2, '0');
+      return `${hours}:${minutes}:${seconds}`;
+    };
+
+    let payload_id = {
+      labor_id:
+        user?.management_type !== 'lead_labor'
+          ? user?.labor?.[0]?.id
+          : undefined,
+      lead_labor_id:
+        user?.management_type === 'lead_labor'
+          ? user?.leadLabor?.[0]?.id
+          : undefined,
+    };
+
+    Object.keys(payload_id).forEach(
+      key => payload_id[key] === undefined && delete payload_id[key],
+    );
+
+    return {
+      labor_timesheet: {
+        ...payload_id,
+        date: dateStr,
+        start_time: startT,
+        ...(endT ? {end_time: endT} : {}),
+        work_activity: formatDuration(totalMs), // ✅ Now in HH:MM:SS format
+        pause_timer: pauseList.map(p => ({
+          title: p.title,
+          duration: p.duration, // already "HH:MM:SS"
+        })),
+        ...(markCompleted ? {job_status: 'completed'} : {}),
+      },
+    };
+  };
 
   // ---------- Summaries for All Activity Log (API) ----------
   const computeSummaries = timesheets => {
@@ -1261,7 +1262,7 @@ export default function TimerScreen({navigation, route}) {
     const all = timesheets.map(ts => ({
       start: ts?.start_time || '--:--:--',
       end: ts?.job_status === 'completed' ? ts?.end_time || '--:--:--' : null,
-      totalSec: Number(ts?.work_activity || 0),
+      totalSec: ts?.work_activity || 0,
       date: ts?.date || '',
     }));
     setAllSummaries(all);
@@ -1528,12 +1529,18 @@ export default function TimerScreen({navigation, route}) {
         item.labor_id === user?.labor?.[0]?.id ||
         item.lead_labor_id === user?.leadLabor?.[0]?.id,
     ) || [];
-  const lastTimesheet = filteredTimesheets[filteredTimesheets.length - 1];
+  const lastTimesheet = filteredTimesheets[0];
+
   const isTodayCompleted =
     lastTimesheet?.job_status == 'completed' && lastTimesheet?.date == today;
 
+  console.log(
+    'lastTimesheetlastTimesheet,lastTimesheet',
+    lastTimesheet,
+    isTodayCompleted,filteredTimesheets
+  );
   const renderHeader = () => (
-    <View style={styles.header}>
+    <View style={styles.header}>0
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}>
@@ -1708,7 +1715,7 @@ export default function TimerScreen({navigation, route}) {
                       End: {item.end ?? '--:--:--'}
                     </Text>
                     <Text style={[styles.logTime, {marginTop: 10}]}>
-                      Total: {toHHMMSS((item.totalSec || 0) * 1000)}
+                      Total: {item.totalSec}
                     </Text>
                   </View>
                 </View>
