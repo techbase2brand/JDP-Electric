@@ -3184,19 +3184,19 @@ const debounce = (fn, delay = 400) => {
     t = setTimeout(() => fn(...args), delay);
   };
 };
-const sameDay = (isoA, isoB) => {
-  try {
-    const a = new Date(isoA);
-    const b = new Date(isoB);
-    return (
-      a.getFullYear() === b.getFullYear() &&
-      a.getMonth() === b.getMonth() &&
-      a.getDate() === b.getDate()
-    );
-  } catch {
-    return false;
-  }
-};
+// const sameDay = (isoA, isoB) => {
+//   try {
+//     const a = new Date(isoA);
+//     const b = new Date(isoB);
+//     return (
+//       a.getFullYear() === b.getFullYear() &&
+//       a.getMonth() === b.getMonth() &&
+//       a.getDate() === b.getDate()
+//     );
+//   } catch {
+//     return false;
+//   }
+// };
 
 // 3661 -> "01:01:01"
 const secondsToHMS = (sec = 0) => {
@@ -3466,6 +3466,20 @@ const LabourModal = ({
     </View>
   </Modal>
 );
+// YYYY-MM-DD extractor (local-safe)
+const _toYMD = val => {
+  if (typeof val === 'string' && val.length >= 10) {
+    // handle "2025-10-27" or "2025-10-27T12:09:13..."
+    return val.slice(0, 10);
+  }
+  const d = new Date(val);
+  if (isNaN(d)) return '';
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+};
+
+const sameDay = (a, b) => _toYMD(a) === _toYMD(b);
 
 /* ======================
    MATERIAL MODAL
@@ -3632,123 +3646,177 @@ const JobTimesheet = ({navigation, route, user}) => {
     [jobFromRoute?.id, timesheetData.jobId],
   );
 
-  // HARD RESET when job changes
-  useEffect(() => {
-    // const freshDate = timesheetFromRoute.date || todayISO;
-    // setTimesheetData({
-    //   id: `timesheet-${jobFromRoute?.id ?? 'new'}-${freshDate}`,
-    //   jobId: jobFromRoute?.id || 'unknown',
-    //   date: freshDate,
-    //   status: 'draft',
-    //   jobNotes: 'Main electrical work and installation',
-    //   labourEntries: [],
-    //   materialEntries: [],
-    //   additionalCharges: [],
-    // });
-    // setShowAddLabour(false);
-    // setShowAddMaterial(false);
-    // setTempLabourData({});
-    // setTempMaterialData({});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobFromRoute?.id]);
-
   // storage key per job+date
   const storageKeyRef = useRef(tsKey(currentJobId, timesheetData.date));
 
-const loadFromStorageOrSeed = async (job, date) => {
-  try {
-    const key = tsKey(job?.id ?? currentJobId, date);
+  const loadFromStorageOrSeed = async (job, date) => {
+    try {
+      const jobId = job?.id ?? currentJobId;
+      const key = tsKey(jobId, date);
 
-    // 1) Try load from local storage (persisted user edits)
-    const saved = await AsyncStorage.getItem(key);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      setTimesheetData(prev => ({
-        ...prev,
-        jobId: job?.id ?? prev.jobId,
-        date,
-        jobNotes: parsed?.jobNotes ?? prev.jobNotes,
-        labourEntries: parsed?.labourEntries ?? [],
-        materialEntries: parsed?.materialEntries ?? [],
-      }));
-      return; // storage mil gaya => route se overwrite mat karo
-    }
+      // --- Build fresh data from route (always compute) ---
+      const routeLabour = (job?.labor_timesheets || [])
+        .filter(e => {
+          // prefer explicit date if present; else created_at
+          if (e?.date) return sameDay(e.date, date);
+          if (e?.created_at) return sameDay(e.created_at, date);
+          return false;
+        })
+        .map(entry => {
+          const name =
+            entry?.lead_labor?.users?.full_name ??
+            entry?.labor?.users?.full_name ??
+            entry?.lead_labour?.user?.full_name ??
+            'Unknown';
 
-    // 2) Storage empty hai => route se seed karo (same logic as before)
-    const routeLabour = (job?.labor_timesheets || [])
-      .filter(e =>
-        e?.created_at ? sameDay(e.created_at, date)
-        : e?.date ? sameDay(e.date, date)
-        : false,
-      )
-      .map(entry => {
-        const name =
-          entry?.lead_labor?.users?.full_name ??
-          entry?.labor?.users?.full_name ??
-          entry?.lead_labour?.user?.full_name ??
-          'Unknown';
-        const empId =
-          entry?.lead_labor?.id ??
-          entry?.labor?.id ??
-          entry?.lead_labour?.id ??
-          '';
-        const work = entry?.work_activity || '00:00:00';
-        const hms = /^[\d]{1,2}:[\d]{1,2}:[\d]{1,2}$/.test(work) ? work : normalizeToHMS(work);
+          const empId =
+            entry?.lead_labor?.id ??
+            entry?.labor?.id ??
+            entry?.lead_labour?.id ??
+            '';
 
-        return {
-          id: String(entry.id),
-          employeeName: name,
-          employeeId: empId,
-          role: entry?.lead_labor || entry?.lead_labour ? 'Lead Labor' : 'Labor',
-          regular_hours_input: hmsToDecimalStr(hms), // input ke liye decimal
-          regular_hours_hms: hms,
-          regularHours: hms,
-          overtimeHours: 0,
-          regularRate: entry?.lead_labor || entry?.lead_labour ? 35 : 28,
-          overtimeRate: entry?.lead_labor || entry?.lead_labour ? 52.5 : 42,
-          _source: 'route',
-        };
-      });
+          // work_activity may be "00:01:30" or "121h" etc.
+          const rawWork = entry?.work_activity ?? '00:00:00';
+          const hms = /^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$/.test(rawWork)
+            ? rawWork
+            : normalizeToHMS(rawWork);
 
-    const routeMaterials = [];
-    (job?.orders || []).forEach(order => {
-      if (!order) return;
-      const orderDate = order?.created_at || order?.order_date;
-      if (!orderDate || !sameDay(orderDate, date)) return;
-      (order?.items || []).forEach((it, idx) => {
-        routeMaterials.push({
-          id: `${order.id}_${it.id ?? idx}`,
-          name: it?.product?.product_name || '',
-          unit: it?.product?.unit || 'pieces',
-          totalOrdered: Number(it?.quantity) || 0,
-          amountUsed: Number(it?.quantity) || 0,
-          unitCost: Number(it?.product?.jdp_price ?? it?.unit_cost ?? 0) || 0,
-          productId: it?.product?.id ?? it?.product_id ?? null,
-          supplierOrderId: order?.order_number || '',
-          returnToWarehouse: false,
-          _source: 'route',
+          const isLead = !!(entry?.lead_labor || entry?.lead_labour);
+
+          return {
+            id: String(entry.id),
+            employeeName: name,
+            employeeId: empId,
+            role: isLead ? 'Lead Labor' : 'Labor',
+            regular_hours_input: hmsToDecimalStr(hms), // for input (decimal)
+            regular_hours_hms: hms, // compatibility
+            regularHours: hms, // compatibility
+            overtimeHours: 0,
+            regularRate: isLead ? 35 : 28,
+            overtimeRate: isLead ? 52.5 : 42,
+            _source: 'route',
+          };
+        });
+
+      const routeMaterials = [];
+      (job?.orders || []).forEach(order => {
+        const orderDate = order?.order_date || order?.created_at;
+        if (!orderDate || !sameDay(orderDate, date)) return;
+
+        (order?.items || []).forEach((it, idx) => {
+          routeMaterials.push({
+            id: `${order.id}_${it.id ?? idx}`,
+            name: it?.product?.product_name || '',
+            unit: it?.product?.unit || 'pieces',
+            totalOrdered: Number(it?.quantity) || 0,
+            amountUsed: Number(it?.quantity) || 0,
+            unitCost: Number(it?.product?.jdp_price ?? it?.unit_cost ?? 0) || 0,
+            productId: it?.product?.id ?? it?.product_id ?? null,
+            supplierOrderId: order?.order_number || '',
+            returnToWarehouse: false,
+            _source: 'route',
+          });
         });
       });
-    });
 
-    const toStore = {
-      jobNotes: 'Main electrical work and installation',
-      labourEntries: routeLabour,
-      materialEntries: routeMaterials,
-    };
+      // --- Try load from storage ---
+      const savedRaw = await AsyncStorage.getItem(key);
+      if (savedRaw) {
+        const saved = JSON.parse(savedRaw) || {};
+        const savedLabour = Array.isArray(saved.labourEntries)
+          ? saved.labourEntries
+          : [];
+        const savedMaterials = Array.isArray(saved.materialEntries)
+          ? saved.materialEntries
+          : [];
 
-    await AsyncStorage.setItem(key, JSON.stringify(toStore));
+        // Merge by id: saved has priority; add any new route items not in saved
+        const mergeById = (a = [], b = []) => {
+          const map = new Map(a.map(x => [String(x.id), x]));
+          b.forEach(y => {
+            const k = String(y.id);
+            if (!map.has(k)) map.set(k, y);
+            else {
+              // optional: fill blanks from route (e.g., hours empty in saved)
+              const cur = map.get(k);
+              const merged = {
+                ...y,
+                ...cur,
+                // ensure hours fields are consistent
+                regular_hours_input:
+                  cur?.regular_hours_input ??
+                  hmsToDecimalStr(
+                    normalizeToHMS(
+                      cur?.regular_hours_hms ??
+                        cur?.regularHours ??
+                        y?.regular_hours_hms ??
+                        y?.regularHours ??
+                        '00:00:00',
+                    ),
+                  ),
+                regular_hours_hms: normalizeToHMS(
+                  cur?.regular_hours_input ??
+                    cur?.regular_hours_hms ??
+                    cur?.regularHours ??
+                    y?.regular_hours_hms ??
+                    y?.regularHours ??
+                    '00:00:00',
+                ),
+                regularHours: undefined, // keep single source of truth
+              };
+              map.set(k, merged);
+            }
+          });
+          return Array.from(map.values());
+        };
 
-    setTimesheetData(prev => ({
-      ...prev,
-      jobId: job?.id ?? prev.jobId,
-      date,
-      jobNotes: toStore.jobNotes,
-      labourEntries: toStore.labourEntries,
-      materialEntries: toStore.materialEntries,
-    }));
-  } catch {}
-};
+        const mergedLabour = mergeById(savedLabour, routeLabour);
+        const mergedMaterials = mergeById(savedMaterials, routeMaterials);
+
+        // set state
+        setTimesheetData(prev => ({
+          ...prev,
+          jobId,
+          date,
+          jobNotes: saved?.jobNotes ?? prev.jobNotes,
+          labourEntries: mergedLabour,
+          materialEntries: mergedMaterials,
+        }));
+
+        // also persist the merged snapshot so next open pe fresh mile
+        await AsyncStorage.setItem(
+          key,
+          JSON.stringify({
+            jobNotes:
+              saved?.jobNotes ?? 'Main electrical work and installation',
+            labourEntries: mergedLabour,
+            materialEntries: mergedMaterials,
+          }),
+        );
+
+        return; // done
+      }
+
+      // --- No storage: seed from route and persist ---
+      const toStore = {
+        jobNotes: 'Main electrical work and installation',
+        labourEntries: routeLabour,
+        materialEntries: routeMaterials,
+      };
+      await AsyncStorage.setItem(key, JSON.stringify(toStore));
+
+      setTimesheetData(prev => ({
+        ...prev,
+        jobId,
+        date,
+        jobNotes: toStore.jobNotes,
+        labourEntries: toStore.labourEntries,
+        materialEntries: toStore.materialEntries,
+      }));
+    } catch (e) {
+      // soft-fail: keep current state
+    }
+  };
 
   // Seed when job/date changes
   useEffect(() => {
@@ -4116,7 +4184,7 @@ const loadFromStorageOrSeed = async (job, date) => {
                   The blue sheet for today has been submitted.
                 </Text>
                 <Text style={styles.approvalDetails}>
-                 The next submission will be enabled for tomorrow.
+                  The next submission will be enabled for tomorrow.
                 </Text>
               </View>
             </View>
@@ -4229,16 +4297,16 @@ const loadFromStorageOrSeed = async (job, date) => {
               )}
             </View>
 
-            {timesheetData.materialEntries.map(material => (
-              <View key={material.id} style={styles.tableRow}>
+            {timesheetData?.materialEntries?.map(material => (
+              <View key={material?.id} style={styles.tableRow}>
                 <Text style={[styles.tableCell, {flex: 1}]}>
-                  {material.name}
+                  {material?.name}
                 </Text>
                 <Text style={[styles.tableCell, {flex: 1}]}>
-                  {material.totalOrdered} {material.unit}
+                  {material?.totalOrdered} {material?.unit}
                 </Text>
                 <Text style={[styles.tableCell, {flex: 1}]}>
-                  {material.amountUsed} {material.unit}
+                  {material?.amountUsed} {material?.unit}
                 </Text>
                 {canEdit() && (
                   <View

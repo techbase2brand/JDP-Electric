@@ -17,7 +17,7 @@ export const api = axios.create({
 //   response => response,
 //   async error => {
 //     if (error.response?.status === 401) {
-//       // 🔑 Invalid / expired token
+//       //  Invalid / expired token
 //       if (global.handleLogout) {
 //         global.handleLogout(); // App.js se navigate karayega
 //       }
@@ -161,7 +161,7 @@ export const getSuppliers = async (page = 1, limit = 10, token) => {
       `/suppliers/getAllSuppliers?page=${page}&limit=${limit}`,
       {
         headers: {
-          Authorization: `Bearer ${token}`, // 👈 token send here
+          Authorization: `Bearer ${token}`,
         },
       },
     );
@@ -317,8 +317,6 @@ export const createJob = async (payload, token) => {
 
 // Get Jobs API
 export const getJobs = async (leadLaborId, page = 1, limit = 10, token) => {
-  console.log('leadLaborIdleadLaborId', leadLaborId);
-
   try {
     const res = await api.get(
       `/job/getJobsByLeadLabor?leadLaborId=${leadLaborId}&page=${page}&limit=${limit}`,
@@ -486,21 +484,21 @@ export const searchSuppliers = async (q, token) => {
   }
 };
 
-// blue sheet 
+// blue sheet
 
 export const submitBluesheetComplete = async (payload, token) => {
   console.log('submitBluesheetComplete', payload, token);
   try {
     const res = await api.post(`/bluesheet/bluesheet/complete`, payload, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {Authorization: `Bearer ${token}`},
     });
     return res.data; // expect success object
   } catch (error) {
     console.error(
       'Error submit bluesheet:',
-      error?.response?.data || error?.message
+      error?.response?.data || error?.message,
     );
     // Throw normalized error like your style
-    throw error?.response?.data || { message: 'Something went wrong' };
+    throw error?.response?.data || {message: 'Something went wrong'};
   }
 };
