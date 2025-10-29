@@ -1581,7 +1581,7 @@ const ActivitySummaryScreen = ({navigation}) => {
             {filteredJobs?.length} jobs • {formatDateForInput(fromDate)} -{' '}
             {formatDateForInput(toDate)}
           </Text>
-        </View>
+        </View> 
 
         <TouchableOpacity style={styles.filterButton} onPress={showBottomSheet}>
           <Icon name="filter-list" size={24} color="#FFFFFF" />
