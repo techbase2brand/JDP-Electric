@@ -101,7 +101,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
       // delivery_city_zip: 'New York, NY 10001',
       delivery_phone: jobData?.job?.customer?.phone,
       created_from: 'app',
-      status: 'pending',
+      status: 'completed',
       system_ip: deviceId._j,
       notes: specialInstructions,
       internal_notes: 'Internal notes',

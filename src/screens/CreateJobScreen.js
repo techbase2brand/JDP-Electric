@@ -125,9 +125,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     priority: 'medium',
     scheduledDate: new Date().toISOString().split('T')[0],
     scheduledTime: '09:00',
-    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split('T')[0],
+    dueDate: new Date().toISOString().split('T')[0],
     billingName: '',
     billingPhone: '',
     billingEmail: '',

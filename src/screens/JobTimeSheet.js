@@ -3691,6 +3691,7 @@ const JobTimesheet = ({navigation, route, user}) => {
             regular_hours_input: hmsToDecimalStr(hms), // for input (decimal)
             regular_hours_hms: hms, // compatibility
             regularHours: hms, // compatibility
+            base_hours_hms: hms,
             overtimeHours: 0,
             regularRate: isLead ? 35 : 28,
             overtimeRate: isLead ? 52.5 : 42,
@@ -3743,6 +3744,16 @@ const JobTimesheet = ({navigation, route, user}) => {
                 ...y,
                 ...cur,
                 // ensure hours fields are consistent
+                base_hours_hms:
+                  cur?.base_hours_hms ??
+                  y?.base_hours_hms ??
+                  normalizeToHMS(
+                    cur?.regular_hours_hms ??
+                      cur?.regularHours ??
+                      y?.regular_hours_hms ??
+                      y?.regularHours ??
+                      '00:00:00',
+                  ),
                 regular_hours_input:
                   cur?.regular_hours_input ??
                   hmsToDecimalStr(
@@ -3847,6 +3858,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         ...l,
         // keep both: input decimal + computed HMS for compatibility
         regular_hours_input: l?.regular_hours_input ?? '',
+        base_hours_hms: l?.base_hours_hms,
         regular_hours_hms: normalizeToHMS(
           l?.regular_hours_input ??
             l?.regular_hours_hms ??
@@ -3876,16 +3888,26 @@ const JobTimesheet = ({navigation, route, user}) => {
 
   // payload mappers (HH:MM:SS out)
   const localLaborToApi = l => {
+    console.log('llllllllllll', l);
+
     const isLead = (l.role || 'labor')
       .toString()
       .toLowerCase()
       .includes('lead');
+
     const hms = normalizeToHMS(
       l?.regular_hours_input ??
         l?.regular_hours_hms ??
         l?.regularHours ??
         '00:00:00',
     );
+    const mainHms = normalizeToHMS(
+      l?.base_hours_hms ??
+        l?.regular_hours_hms ??
+        l?.regularHours ??
+        '00:00:00',
+    );
+
     return {
       ...(isLead
         ? {
@@ -3900,9 +3922,10 @@ const JobTimesheet = ({navigation, route, user}) => {
           }),
       employee_name: l.employeeName,
       role: isLead ? 'lead_labor' : 'labor',
+      labor_hours: mainHms,
       regular_hours: hms, // <— HH:MM:SS
       overtime_hours: '00:00:00',
-      hourly_rate: Number(l.regularRate || 0),
+      // hourly_rate: Number(l.regularRate || 0),
     };
   };
 
@@ -3963,6 +3986,7 @@ const JobTimesheet = ({navigation, route, user}) => {
       // compatibility fields (not used by input)
       regular_hours_hms: '00:00:00',
       regularHours: '00:00:00',
+      base_hours_hms: '00:00:00',
       overtimeHours: 0,
       regularRate: 28,
       overtimeRate: 42,
@@ -3987,6 +4011,11 @@ const JobTimesheet = ({navigation, route, user}) => {
         tempLabourData?.regular_hours_input ?? hmsToDecimalStr(hms),
       regular_hours_hms: hms,
       regularHours: hms,
+      base_hours_hms:
+        tempLabourData?.base_hours_hms ??
+        tempLabourData?.regular_hours_hms ??
+        tempLabourData?.regularHours ??
+        '00:00:00',
     };
     setTimesheetData(prev => {
       const exists = prev.labourEntries.some(

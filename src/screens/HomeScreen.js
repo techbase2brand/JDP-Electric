@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   StatusBar,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import {tabColor, whiteColor} from '../constants/Color';
 import Feather from 'react-native-vector-icons/Feather';
@@ -35,10 +36,20 @@ import {
 } from '../assests/images';
 import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
+import {getJobs, getlabourJobs} from '../config/apiConfig';
 
 const HomeScreen = ({navigation}) => {
   const user = useSelector(state => state.user.user);
+  const token = useSelector(state => state.user.token);
+  const leadLaborId = user?.leadLabor?.[0]?.id;
+  const laborId = user?.labor?.[0]?.id;
   const canViewCreateJob = useHasPermission('jobs', 'view');
+
+  const [loading, setLoading] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [todayDueJobs, setTodayDueJobs] = useState([]);
+
+  console.log('jobsssshome', jobs);
 
   const statsData = [
     {
@@ -109,38 +120,38 @@ const HomeScreen = ({navigation}) => {
     // },
   ].filter(Boolean);
 
-  const todaysJobs = [
-    {
-      id: 'JOB-001',
-      jobId: 'JOB-001',
-      title: 'Electrical Panel Upgrade',
-      description: 'Upgrade main electrical panel from 100A to 200A service',
-      status: 'In Progress',
-      priority: 'HIGH',
-      technician: 'David Thompson',
-      time: '08:00 est.',
-      location: '1234 Oak Street, Houston, TX 77001',
-      statusColor: '#193CB8',
-      priorityColor: '#9F0712',
-      startCoordinates: {latitude: 29.7604, longitude: -95.3698},
-      destinationCoordinates: {latitude: 29.713, longitude: -95.399},
-    },
-    {
-      id: 'JOB-002',
-      jobId: 'JOB-002',
-      title: 'Commercial Lighting Installation',
-      description: 'Install LED lighting system in conference rooms',
-      status: 'Scheduled',
-      priority: 'MEDIUM',
-      technician: 'TechCorp Office',
-      time: '14:00 est.',
-      location: '1500 Corporate Blvd, Houston, TX 77002',
-      statusColor: '#016630',
-      priorityColor: '#894B00',
-      startCoordinates: {latitude: 29.7604, longitude: -95.3698},
-      destinationCoordinates: {latitude: 29.757, longitude: -95.37},
-    },
-  ];
+  // const todaysJobs = [
+  //   {
+  //     id: 'JOB-001',
+  //     jobId: 'JOB-001',
+  //     title: 'Electrical Panel Upgrade',
+  //     description: 'Upgrade main electrical panel from 100A to 200A service',
+  //     status: 'In Progress',
+  //     priority: 'HIGH',
+  //     technician: 'David Thompson',
+  //     time: '08:00 est.',
+  //     location: '1234 Oak Street, Houston, TX 77001',
+  //     statusColor: '#193CB8',
+  //     priorityColor: '#9F0712',
+  //     startCoordinates: {latitude: 29.7604, longitude: -95.3698},
+  //     destinationCoordinates: {latitude: 29.713, longitude: -95.399},
+  //   },
+  //   {
+  //     id: 'JOB-002',
+  //     jobId: 'JOB-002',
+  //     title: 'Commercial Lighting Installation',
+  //     description: 'Install LED lighting system in conference rooms',
+  //     status: 'Scheduled',
+  //     priority: 'MEDIUM',
+  //     technician: 'TechCorp Office',
+  //     time: '14:00 est.',
+  //     location: '1500 Corporate Blvd, Houston, TX 77002',
+  //     statusColor: '#016630',
+  //     priorityColor: '#894B00',
+  //     startCoordinates: {latitude: 29.7604, longitude: -95.3698},
+  //     destinationCoordinates: {latitude: 29.757, longitude: -95.37},
+  //   },
+  // ];
 
   const upcomingJobs = [
     {
@@ -171,6 +182,37 @@ const HomeScreen = ({navigation}) => {
       estimatedHours: 8,
     },
   ];
+  useEffect(() => {
+    const fetchJobs = async () => {
+      if (loading) return;
+      setLoading(true);
+      try {
+        const res =
+          user?.management_type === 'lead_labor'
+            ? await getJobs(leadLaborId, 1, 10, token)
+            : await getlabourJobs(laborId, 1, 10, token);
+
+        const newJobs = res?.data?.jobs ?? [];
+        console.log('newJobsnewJobs>>', newJobs);
+
+        setJobs(newJobs);
+      } catch (err) {
+        console.error('Error fetching jobs:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]; // e.g. "2025-10-29"
+
+    // assuming 'data' is your array of jobs or tasks
+    const filtered = jobs?.filter(item => item.due_date === today);
+
+    setTodayDueJobs(filtered);
+  }, [jobs]);
 
   const handleQuickActionPress = title => {
     if (title == 'Create Job') {
@@ -257,12 +299,12 @@ const HomeScreen = ({navigation}) => {
 
   const renderJobCard = job => (
     <TouchableOpacity
-      // onPress={() => navigation.navigate('JobDetail', {job})}
+      onPress={() => navigation.navigate('JobDetail', {job})}
       key={job.id}
       style={styles.jobCard}>
       <View style={styles.jobHeader}>
         <View style={styles.jobHeaderLeft}>
-          <Text style={styles.jobId}>{job.id}</Text>
+          <Text style={styles.jobId}>{job.job_title}</Text>
           <View style={[styles.statusBadge, {backgroundColor: '#E3F2FD'}]}>
             <Text style={[styles.statusText, {color: job.statusColor}]}>
               {job?.status}
@@ -275,29 +317,37 @@ const HomeScreen = ({navigation}) => {
           </View>
         </View>
       </View>
-      <Text style={styles.jobTitle}>{job.title}</Text>
+      {/* <Text style={styles.jobTitle}>{job.title}</Text> */}
       <Text style={styles.jobDescription}>{job.description}</Text>
       <View style={styles.jobDetails}>
-        <View style={{display: 'flex', flexDirection: 'row', gap: 10}}>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 10,
+            justifyContent: 'space-between',
+          }}>
           <View style={styles.jobDetailRow}>
             <Text style={styles.jobDetailIcon}>
               {' '}
               <Feather name="user" size={18} color={tabColor} />{' '}
             </Text>
-            <Text style={styles.jobDetailText}>{job.technician}</Text>
+            <Text style={styles.jobDetailText}>
+              {job?.customer?.customer_name}
+            </Text>
           </View>
           <View style={styles.jobDetailRow}>
             <Text style={styles.jobDetailIcon}>
               <Ionicons name="timer-outline" size={18} color={tabColor} />
             </Text>
-            <Text style={styles.jobDetailText}>{job.time}</Text>
+            <Text style={styles.jobDetailText}>{job.estimated_hours}hrs</Text>
           </View>
         </View>
         <View style={styles.jobDetailRow}>
           <Text style={styles.jobDetailIcon}>
             <Feather name="map-pin" size={18} color={tabColor} />
           </Text>
-          <Text style={styles.jobDetailText}>{job.location}</Text>
+          <Text style={styles.jobDetailText}>{job?.address}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -483,7 +533,7 @@ const HomeScreen = ({navigation}) => {
                 Jobs
               </Text>
               <View style={styles.countBadge}>
-                <Text style={styles.countText}>2</Text>
+                <Text style={styles.countText}>{todayDueJobs?.length}</Text>
               </View>
               <TouchableOpacity
                 style={{marginLeft: widthPercentageToDP(32)}}
@@ -491,7 +541,11 @@ const HomeScreen = ({navigation}) => {
                 <Text style={styles.viewAllText}>View All →</Text>
               </TouchableOpacity>
             </View>
-            {todaysJobs?.map(renderJobCard)}
+            {loading ? (
+              <ActivityIndicator size="large" color={'#3B82F6'} />
+            ) : (
+              todayDueJobs?.map(renderJobCard)
+            )}
           </View>
 
           {/* Upcoming Jobs */}
