@@ -335,7 +335,7 @@ export const getJobs = async (leadLaborId, page = 1, limit = 10, token) => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
-// ✅ Get Jobs API
+//  Get Jobs API
 export const getlabourJobs = async (laborId, page = 1, limit = 10, token) => {
   try {
     const res = await api.get(
@@ -355,7 +355,7 @@ export const getlabourJobs = async (laborId, page = 1, limit = 10, token) => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
-// ✅ Get Job By Id API
+//  Get Job By Id API
 export const getJobById = async (jobId, token) => {
   try {
     const res = await api.get(`/job/getJobById/${jobId}`, {
@@ -500,5 +500,30 @@ export const submitBluesheetComplete = async (payload, token) => {
     );
     // Throw normalized error like your style
     throw error?.response?.data || {message: 'Something went wrong'};
+  }
+};
+
+
+// blue sheet 
+
+
+// ✅ Get Jobs API
+export const getBlueSheets = async (token) => {
+  try {
+    const res = await api.get(
+      `/bluesheet/lead-labor/bluesheets`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    return res.data;
+  } catch (error) {
+    console.error(
+      'Error fetching jobs:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
   }
 };

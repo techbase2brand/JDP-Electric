@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from 'react';
+import React, {useState, useMemo, useEffect} from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import {tabColor} from '../constants/Color';
 import {widthPercentageToDP} from '../utils';
+import {getBlueSheets} from '../config/apiConfig';
+import {useSelector} from 'react-redux';
 
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -27,12 +29,15 @@ if (Platform.OS === 'android') {
   }
 }
 const TimesheetScreen = ({navigation, user, jobs}) => {
+  const token = useSelector(state => state.user.token);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [expandedJobId, setExpandedJobId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [blueSheetData, setBlueSheetData] = useState([false]);
 
   // Mock comprehensive timesheet data across all jobs
   const allTimesheets = [
@@ -160,7 +165,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
 
   // Filter and sort timesheets
   const filteredTimesheets = useMemo(() => {
-    let filtered = allTimesheets;
+    let filtered = blueSheetData;
 
     // Status filter
     if (statusFilter !== 'all') {
@@ -207,26 +212,35 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedJobId(expandedJobId === jobId ? null : jobId);
   };
-  // Calculate summary statistics
-  const summaryStats = useMemo(() => {
-    const total = allTimesheets.length;
-    const submitted = allTimesheets.filter(
-      t => t.status === 'submitted',
-    ).length;
-    const approved = allTimesheets.filter(t => t.status === 'approved').length;
-    const rejected = allTimesheets.filter(t => t.status === 'rejected').length;
-    const totalCost = allTimesheets.reduce((sum, t) => sum + t.totalCost, 0);
-    const totalHours = allTimesheets.reduce((sum, t) => sum + t.labourHours, 0);
+  // ✅ correct usage inside your effect
+  useEffect(() => {
+    const fetchBlueSheet = async () => {
+      if (loading) return;
+      setLoading(true);
+      try {
+        const res = await getBlueSheets(token);
 
-    return {
-      total,
-      submitted,
-      approved,
-      rejected,
-      totalCost,
-      totalHours,
+        // axios -> res is already parsed JSON (from res.data in service)
+        // handle a few common shapes safely:
+        const blue = Array.isArray(res)
+          ? res
+          : res?.data ?? res?.items ?? res?.rows ?? [];
+
+        console.log('✅ full response:', res);
+        console.log('✅ normalized rows:', blue.bluesheets);
+
+        // keep in state if you want
+        setBlueSheetData(blue.bluesheets);
+      } catch (err) {
+        console.error('Error fetching bluesheets:', err);
+      } finally {
+        setLoading(false);
+      }
     };
-  }, [allTimesheets]);
+
+    fetchBlueSheet();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Helper functions
   const getStatusColor = status => {
@@ -292,33 +306,9 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
     });
   };
 
-  const canEditTimesheet = timesheet => {
-    // Can edit if status is draft or submitted and user has lead access
-    return (
-      timesheet.status === 'draft' ||
-      (timesheet.status === 'submitted' && user?.role === 'Lead Labor') ||
-      timesheet.status === 'rejected'
-    );
-  };
-
   const handleViewTimesheet = timesheet => {
     navigation.navigate('ViewTimesheet', {timesheet});
   };
-
-  const statusOptions = [
-    {label: 'All Statuses', value: 'all'},
-    {label: 'Submitted', value: 'submitted'},
-    {label: 'Approved', value: 'approved'},
-    {label: 'Rejected', value: 'rejected'},
-    {label: 'Draft', value: 'draft'},
-  ];
-
-  const sortOptions = [
-    {label: 'Job Date', value: 'date'},
-    {label: 'Submitted Date', value: 'submitted'},
-    {label: 'Total Cost', value: 'cost'},
-    {label: 'Customer', value: 'customer'},
-  ];
 
   const renderDropdown = (
     options,
@@ -372,12 +362,6 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
 
       {/* Header */}
       <View style={styles.header}>
-        {/* <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity> */}
-
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>All Bluesheets</Text>
           <Text style={styles.headerSubtitle}>
@@ -389,59 +373,6 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Summary Statistics */}
-        {/* <View style={styles.statsContainer}>
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <View style={[styles.statIcon, {backgroundColor: '#dbeafe'}]}>
-                <MaterialIcons
-                  name="pending-actions"
-                  size={24}
-                  color="#3B82F6"
-                />
-              </View>
-              <Text style={styles.statValue}>{summaryStats.total}</Text>
-              <Text style={styles.statLabel}>Total Timesheets</Text>
-            </View>
-
-            <View style={styles.statCard}>
-              <View style={[styles.statIcon, {backgroundColor: '#dcfce7'}]}>
-                <MaterialIcons name="check-circle" size={24} color="#166534" />
-              </View>
-              <Text style={styles.statValue}>{summaryStats.approved}</Text>
-              <Text style={styles.statLabel}>Approved</Text>
-            </View>
-          </View>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <View style={[styles.statIcon, {backgroundColor: '#fef3c7'}]}>
-                <MaterialIcons
-                  name="warning-amber"
-                  size={24}
-                  color="#f1c206ff"
-                />
-              </View>
-              <Text style={styles.statValue}>{summaryStats.submitted}</Text>
-              <Text style={styles.statLabel}>Pending Review</Text>
-            </View>
-
-            <View style={styles.statCard}>
-              <View style={[styles.statIcon, {backgroundColor: '#e0e7ff'}]}>
-                <MaterialIcons
-                  name="work-outline"
-                  size={24}
-                  color="#0c40edff"
-                />
-              </View>
-              <Text style={styles.statValue}>
-               79
-              </Text>
-              <Text style={styles.statLabel}>Total Job</Text>
-            </View>
-          </View>
-        </View> */}
-
         {/* Filters and Search */}
         <View style={styles.filtersCard}>
           {/* Search */}
@@ -454,33 +385,6 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
               onChangeText={setSearchQuery}
               placeholderTextColor="#6b7280"
             />
-          </View>
-
-          {/* Filters */}
-          <View style={styles.filtersRow}>
-            {renderDropdown(
-              statusOptions,
-              statusFilter,
-              setStatusFilter,
-              showStatusDropdown,
-              () => {
-                setShowStatusDropdown(!showStatusDropdown);
-                setShowSortDropdown(false);
-              },
-              'Filter by status',
-            )}
-
-            {renderDropdown(
-              sortOptions,
-              sortBy,
-              setSortBy,
-              showSortDropdown,
-              () => {
-                setShowSortDropdown(!showSortDropdown);
-                setShowStatusDropdown(false);
-              },
-              'Sort by',
-            )}
           </View>
         </View>
 
@@ -501,16 +405,16 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
               </Text>
             </View>
           ) : (
-            filteredTimesheets.map(timesheet => {
+            filteredTimesheets?.map(timesheet => {
               const isExpanded = expandedJobId === timesheet.id;
               return (
-                <View key={timesheet.id} style={styles.timesheetCard}>
+                <View key={timesheet?.id} style={styles.timesheetCard}>
                   {/* Header */}
                   <View style={styles.timesheetHeader}>
                     <View style={styles.timesheetTitleContainer}>
                       <View style={styles.timesheetBadges}>
                         <Text style={styles.timesheetId}>
-                          {timesheet.jobId}
+                          {timesheet?.job?.job_title}
                         </Text>
                         <View
                           style={[
@@ -518,17 +422,17 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                             getStatusColor(timesheet.status),
                           ]}>
                           <Text style={styles.statusIcon}>
-                            {getStatusIcon(timesheet.status)}
+                            {getStatusIcon(timesheet?.status)}
                           </Text>
                           <Text
                             style={[
                               styles.statusBadgeText,
                               {color: getStatusColor(timesheet.status).color},
                             ]}>
-                            {timesheet.status.replace('-', ' ').toUpperCase()}
+                            {timesheet?.status?.toUpperCase()}
                           </Text>
                         </View>
-                        <View
+                        {/* <View
                           style={[
                             styles.priorityBadge,
                             getPriorityColor(timesheet.priority),
@@ -543,14 +447,19 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                             ]}>
                             {timesheet.priority.toUpperCase()}
                           </Text>
-                        </View>
+                        </View> */}
                       </View>
                       <Text style={styles.timesheetTitle}>
                         {timesheet.jobTitle}
                       </Text>
-                      <View style={{display:"flex", flexDirection:"row", justifyContent:"space-between"}}>
+                      <View
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                        }}>
                         <Text style={styles.timesheetCustomer}>
-                          {timesheet.customer}
+                          {timesheet?.job?.customer?.customer_name}
                         </Text>
                         <TouchableOpacity
                           onPress={() => toggleJobExpansion(timesheet.id)}>
@@ -579,13 +488,14 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                             color={tabColor}
                           />
                           <Text style={styles.detailText}>
-                            Job Date: {formatDate(timesheet.date)}
+                            Job Date: {timesheet?.date}
                           </Text>
                         </View>
                         <View style={styles.detailItem}>
                           <Feather name="clock" size={20} color={tabColor} />
                           <Text style={styles.detailText}>
-                            Hours: {timesheet.labourHours}h
+                            {/* Hours: {timesheet.labourHours}h */}
+                            Hours: {'timesheet.labourHours'}h
                           </Text>
                         </View>
                       </View>
@@ -593,66 +503,38 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                         <View style={styles.detailItem}>
                           <Feather name="user" size={20} color={tabColor} />
                           <Text style={styles.detailText}>
-                            By: {timesheet.submittedBy}
+                            By: {timesheet?.submittedBy}
                           </Text>
                         </View>
                         <View style={styles.detailItem}>
                           <Feather name="users" size={20} color={tabColor} />
                           <Text style={styles.detailText}>
-                            Team: {timesheet.assignedTo.length}
+                            Team: {timesheet?.assignedTo?.length}
                           </Text>
                         </View>
                       </View>
                     </View>
                   )}
 
-                  {/* Cost Breakdown */}
-                  {/* <View style={styles.costBreakdown}>
-                  <View style={styles.costRow}>
-                    <View style={styles.costItem}>
-                      <Text style={styles.costLabel}>Labour</Text>
-                      <Text style={styles.costValue}>
-                        ${timesheet.labourCost.toFixed(0)}
-                      </Text>
-                    </View>
-                    <View style={styles.costItem}>
-                      <Text style={styles.costLabel}>Materials</Text>
-                      <Text style={styles.costValue}>
-                        ${timesheet.materialCost.toFixed(0)}
-                      </Text>
-                    </View>
-                    <View style={styles.costItem}>
-                      <Text style={styles.costLabel}>Other</Text>
-                      <Text style={styles.costValue}>
-                        ${timesheet.additionalCharges.toFixed(0)}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.costTotal}>
-                    <Text style={styles.costTotalLabel}>
-                      Total: ${timesheet.totalCost.toLocaleString()}
-                    </Text>
-                  </View>
-                </View> */}
-
                   {/* Status-specific information */}
-                  {timesheet.status === 'approved' && timesheet.approvedAt && (
-                    <View style={styles.statusInfo}>
-                      <View style={styles.statusInfoIcon}>
-                        <FontAwesome
-                          name="check-circle"
-                          size={18}
-                          color="#166534"
-                        />
+                  {timesheet?.status === 'approved' &&
+                    timesheet?.approvedAt && (
+                      <View style={styles.statusInfo}>
+                        <View style={styles.statusInfoIcon}>
+                          <FontAwesome
+                            name="check-circle"
+                            size={18}
+                            color="#166534"
+                          />
+                        </View>
+                        <Text style={styles.statusInfoText}>
+                          Approved by {timesheet?.approvedBy} on{' '}
+                          {formatDateTime(timesheet?.approvedAt)}
+                        </Text>
                       </View>
-                      <Text style={styles.statusInfoText}>
-                        Approved by {timesheet.approvedBy} on{' '}
-                        {formatDateTime(timesheet.approvedAt)}
-                      </Text>
-                    </View>
-                  )}
+                    )}
 
-                  {timesheet.status === 'rejected' &&
+                  {/* {timesheet.status === 'rejected' &&
                     timesheet.rejectionReason && (
                       <View
                         style={[
@@ -680,7 +562,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                           </Text>
                         </View>
                       </View>
-                    )}
+                    )} */}
 
                   {/* Footer */}
                   <View style={styles.timesheetFooter}>
@@ -688,28 +570,16 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                       Submitted {formatDateTime(timesheet.submittedAt)}
                     </Text>
                     <TouchableOpacity
-                      style={[
-                        styles.viewButton,
-                        canEditTimesheet(timesheet)
-                          ? styles.viewButtonPrimary
-                          : styles.viewButtonSecondary,
-                      ]}
+                      style={[styles.viewButton]}
                       onPress={() => handleViewTimesheet(timesheet)}>
-                      <Feather
-                        name="eye"
-                        size={20}
-                        color={canEditTimesheet(timesheet) ? '#fff' : tabColor}
-                      />
+                      <Feather name="eye" size={20} color={tabColor} />
                       <Text
                         style={[
                           styles.viewButtonText,
-                          canEditTimesheet(timesheet)
-                            ? styles.viewButtonTextPrimary
-                            : styles.viewButtonTextSecondary,
+
+                          styles.viewButtonTextSecondary,
                         ]}>
-                        {canEditTimesheet(timesheet)
-                          ? 'View Details'
-                          : 'View (Read-only)'}
+                        {'View (Read-only)'}
                       </Text>
                     </TouchableOpacity>
                   </View>
