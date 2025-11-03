@@ -1537,10 +1537,12 @@ export default function TimerScreen({navigation, route}) {
   console.log(
     'lastTimesheetlastTimesheet,lastTimesheet',
     lastTimesheet,
-    isTodayCompleted,filteredTimesheets
+    isTodayCompleted,
+    filteredTimesheets,
   );
   const renderHeader = () => (
-    <View style={styles.header}>0
+    <View style={styles.header}>
+      0
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}>
@@ -1694,7 +1696,7 @@ export default function TimerScreen({navigation, route}) {
             </View>
           )}
 
-          {/* 🔧 All Activity Log — now shows start, end, total from API */}
+          {/*  All Activity Log — now shows start, end, total from API */}
           <View style={styles.logCard}>
             <Text style={styles.sectionTitle}>All Activity Log</Text>
             <FlatList

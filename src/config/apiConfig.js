@@ -506,9 +506,9 @@ export const submitBluesheetComplete = async (payload, token) => {
 
 // blue sheet 
 
-
-// ✅ Get Jobs API
 export const getBlueSheets = async (token) => {
+  console.log("token",token);
+  
   try {
     const res = await api.get(
       `/bluesheet/lead-labor/bluesheets`,

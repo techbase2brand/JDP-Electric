@@ -51,6 +51,7 @@ export default function BluesheetSubmission({
             const submissionData = {
               ...formData,
               jobId: selectedJob?.id,
+              status:"pending",
               teamMembers,
               submittedAt: new Date().toISOString(),
             };

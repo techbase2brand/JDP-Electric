@@ -3955,6 +3955,7 @@ const JobTimesheet = ({navigation, route, user}) => {
     const payload = {
       job_id: isNaN(Number(currentJobId)) ? currentJobId : Number(currentJobId),
       date: timesheetData.date,
+      status:"pending",
       notes: timesheetData.jobNotes || '',
       additional_charges: Number(additionalCharges.toFixed(2)),
       labor_entries: (timesheetData.labourEntries || []).map(localLaborToApi),

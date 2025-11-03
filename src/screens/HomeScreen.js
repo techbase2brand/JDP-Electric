@@ -417,6 +417,15 @@ const HomeScreen = ({navigation}) => {
       </View> */}
     </TouchableOpacity>
   );
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <View style={styles.emptyIconContainer}>
+        <Ionicons name="briefcase-outline" size={40} color={'#D1D5DB'} />
+      </View>
+      <Text style={styles.emptyTitle}>No jobs found</Text>
+    </View>
+  );
   const date = new Date();
 
   // Greeting logic
@@ -542,9 +551,11 @@ const HomeScreen = ({navigation}) => {
               </TouchableOpacity>
             </View>
             {loading ? (
-              <ActivityIndicator size="large" color={'#3B82F6'} />
+              <ActivityIndicator size="large" color="#3B82F6" />
+            ) : todayDueJobs?.length === 0 ? (
+              renderEmptyState()
             ) : (
-              todayDueJobs?.map(renderJobCard)
+              todayDueJobs.map(renderJobCard)
             )}
           </View>
 
@@ -698,6 +709,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
     position: 'relative',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+  },
+  emptyIconContainer: {marginBottom: 16},
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#4B5563',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   avatarText: {
     color: '#FFFFFF',

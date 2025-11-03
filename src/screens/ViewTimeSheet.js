@@ -18,406 +18,12 @@ import {tabColor} from '../constants/Color';
 import Feather from 'react-native-vector-icons/Feather';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { useSelector } from 'react-redux';
+import {useSelector} from 'react-redux';
 
-const LabourModal = ({
-  visible,
-  setShowAddLabour,
-  editingLabour,
-  setEditingLabour,
-  tempLabourData,
-  setTempLabourData,
-  handleSaveLabour,
-}) => (
-  <Modal
-    visible={visible}
-    animationType="slide"
-    transparent
-    onRequestClose={() => {
-      setShowAddLabour(false);
-      setEditingLabour(null);
-      setTempLabourData({});
-    }}>
-    <View style={styles.modalOverlay}>
-      <View style={styles.modalContent}>
-        {/* ✅ KeyboardAvoidingView Added */}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
-          <ScrollView
-            contentContainerStyle={styles.modalBody}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}>
-            {/* Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {editingLabour ? 'Edit Labour Entry' : 'Add Labour Entry'}
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setShowAddLabour(false);
-                  setEditingLabour(null);
-                  setTempLabourData({});
-                }}>
-                <Text style={styles.modalCloseButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Form Fields */}
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Employee Name</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempLabourData.employeeName || ''}
-                onChangeText={text =>
-                  setTempLabourData(prev => ({...prev, employeeName: text}))
-                }
-                placeholder="Enter employee name"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Employee ID</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempLabourData.employeeId || ''}
-                onChangeText={text =>
-                  setTempLabourData(prev => ({...prev, employeeId: text}))
-                }
-                placeholder="Enter employee ID"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Regular Hours</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempLabourData.regularHours?.toString() || ''}
-                onChangeText={text =>
-                  setTempLabourData(prev => ({
-                    ...prev,
-                    regularHours: text === '' ? '' : parseFloat(text) || 0,
-                  }))
-                }
-                placeholder="0"
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Overtime Hours</Text>
-              <TextInput
-                style={styles.formInput}
-                value={tempLabourData.overtimeHours?.toString() || ''}
-                onChangeText={text =>
-                  setTempLabourData(prev => ({
-                    ...prev,
-                    overtimeHours: text === '' ? '' : parseFloat(text) || 0,
-                  }))
-                }
-                placeholder="0"
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Notes</Text>
-              <TextInput
-                style={[styles.formInput, styles.textArea]}
-                value={tempLabourData.notes || ''}
-                onChangeText={text =>
-                  setTempLabourData(prev => ({...prev, notes: text}))
-                }
-                placeholder="Enter notes"
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-          </ScrollView>
-
-          {/* Footer Buttons */}
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonSecondary]}
-              onPress={() => {
-                setShowAddLabour(false);
-                setEditingLabour(null);
-                setTempLabourData({});
-              }}>
-              <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonPrimary]}
-              onPress={handleSaveLabour}>
-              <Text style={styles.modalButtonTextPrimary}>Save</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </View>
-    </View>
-  </Modal>
-);
-
-const MaterialModal = ({
-  visible,
-  onClose,
-  tempMaterialData,
-  setTempMaterialData,
-  editingMaterial,
-  setEditingMaterial,
-  handleSaveMaterial,
-}) => (
-  <Modal visible={visible} animationType="slide" transparent>
-    <View style={styles.modalOverlay}>
-      <View style={styles.modalContent}>
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>
-            {editingMaterial ? 'Edit Material Entry' : 'Add Material Entry'}
-          </Text>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.modalCloseButton}>✕</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView style={styles.modalBody}>
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Material Name</Text>
-            <TextInput
-              style={styles.formInput}
-              value={tempMaterialData.name || ''}
-              onChangeText={text =>
-                setTempMaterialData(prev => ({...prev, name: text}))
-              }
-              placeholder="Enter material name"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Unit</Text>
-            <TextInput
-              style={styles.formInput}
-              value={tempMaterialData.unit || ''}
-              onChangeText={text =>
-                setTempMaterialData(prev => ({...prev, unit: text}))
-              }
-              placeholder="pieces, feet, etc."
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Total Ordered</Text>
-            <TextInput
-              style={styles.formInput}
-              value={tempMaterialData.totalOrdered?.toString() || ''}
-              onChangeText={text =>
-                setTempMaterialData(prev => ({
-                  ...prev,
-                  totalOrdered: parseFloat(text) || 0,
-                }))
-              }
-              placeholder="0"
-              keyboardType="numeric"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Material Used</Text>
-            <TextInput
-              style={styles.formInput}
-              value={tempMaterialData.amountUsed?.toString() || ''}
-              onChangeText={text =>
-                setTempMaterialData(prev => ({
-                  ...prev,
-                  amountUsed: parseFloat(text) || 0,
-                }))
-              }
-              placeholder="0"
-              keyboardType="numeric"
-            />
-          </View>
-
-          {/* <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Unit Cost ($)</Text>
-            <TextInput
-              style={styles.formInput}
-              value={tempMaterialData.unitCost?.toString() || ''}
-              onChangeText={text =>
-                setTempMaterialData(prev => ({
-                  ...prev,
-                  unitCost: parseFloat(text) || 0,
-                }))
-              }
-              placeholder="0.00"
-              keyboardType="numeric"
-            />
-          </View> */}
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Supplier Order ID</Text>
-            <TextInput
-              style={styles.formInput}
-              value={tempMaterialData.supplierOrderId || ''}
-              onChangeText={text =>
-                setTempMaterialData(prev => ({
-                  ...prev,
-                  supplierOrderId: text,
-                }))
-              }
-              placeholder="Enter order ID"
-            />
-          </View>
-
-          <View style={styles.switchGroup}>
-            <Text style={styles.formLabel}>Return to Warehouse</Text>
-            <Switch
-              value={tempMaterialData.returnToWarehouse || false}
-              onValueChange={value =>
-                setTempMaterialData(prev => ({
-                  ...prev,
-                  returnToWarehouse: value,
-                }))
-              }
-              trackColor={{false: '#e5e7eb', true: '#3B82F6'}}
-              thumbColor={
-                tempMaterialData.returnToWarehouse ? '#ffffff' : '#f4f3f4'
-              }
-            />
-          </View>
-        </ScrollView>
-
-        <View style={styles.modalFooter}>
-          <TouchableOpacity
-            style={[styles.modalButton, styles.modalButtonSecondary]}
-            onPress={() => {
-              setShowAddMaterial(false);
-              setEditingMaterial(null);
-              setTempMaterialData({});
-            }}>
-            <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.modalButton, styles.modalButtonPrimary]}
-            onPress={handleSaveMaterial}>
-            <Text style={styles.modalButtonTextPrimary}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  </Modal>
-);
-
-const ChargeModal = ({
-  visible,
-  onClose,
-  tempChargeData,
-  setTempChargeData,
-  editingCharge,
-  setEditingCharge,
-  handleSaveCharge,
-}) => (
-  <Modal visible={visible} animationType="slide" transparent>
-    <View style={styles.modalOverlay}>
-      <View style={styles.modalContent}>
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>
-            {editingCharge ? 'Edit Additional Charge' : 'Add Additional Charge'}
-          </Text>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.modalCloseButton}>✕</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView style={styles.modalBody}>
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Description</Text>
-            <TextInput
-              style={styles.formInput}
-              value={tempChargeData.description || ''}
-              onChangeText={text =>
-                setTempChargeData(prev => ({...prev, description: text}))
-              }
-              placeholder="Enter charge description"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Category</Text>
-            <TextInput
-              style={styles.formInput}
-              value={tempChargeData.category || ''}
-              onChangeText={text =>
-                setTempChargeData(prev => ({...prev, category: text}))
-              }
-              placeholder="Equipment, Travel, Permits, etc."
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Amount ($)</Text>
-            <TextInput
-              style={styles.formInput}
-              value={tempChargeData.amount?.toString() || ''}
-              onChangeText={text =>
-                setTempChargeData(prev => ({
-                  ...prev,
-                  amount: parseFloat(text) || 0,
-                }))
-              }
-              placeholder="0.00"
-              keyboardType="numeric"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Receipt ID</Text>
-            <TextInput
-              style={styles.formInput}
-              value={tempChargeData.receipt || ''}
-              onChangeText={text =>
-                setTempChargeData(prev => ({...prev, receipt: text}))
-              }
-              placeholder="Enter receipt ID"
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Notes</Text>
-            <TextInput
-              style={[styles.formInput, styles.textArea]}
-              value={tempChargeData.notes || ''}
-              onChangeText={text =>
-                setTempChargeData(prev => ({...prev, notes: text}))
-              }
-              placeholder="Enter notes"
-              multiline
-              numberOfLines={3}
-            />
-          </View>
-        </ScrollView>
-
-        <View style={styles.modalFooter}>
-          <TouchableOpacity
-            style={[styles.modalButton, styles.modalButtonSecondary]}
-            onPress={() => {
-              setShowAddCharge(false);
-              setEditingCharge(null);
-              setTempChargeData({});
-            }}>
-            <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.modalButton, styles.modalButtonPrimary]}
-            onPress={handleSaveCharge}>
-            <Text style={styles.modalButtonTextPrimary}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  </Modal>
-);
 const TimesheetScreen = ({navigation, route, job}) => {
   const {timesheet} = route?.params || {};
   const user = useSelector(state => state.user.user);
+  console.log('timesheettimesheet', timesheet);
 
   const [editingLabour, setEditingLabour] = useState(null);
   const [editingMaterial, setEditingMaterial] = useState(null);
@@ -555,30 +161,6 @@ const TimesheetScreen = ({navigation, route, job}) => {
   const [tempMaterialData, setTempMaterialData] = useState({});
   const [tempChargeData, setTempChargeData] = useState({});
 
-  // Calculate totals
-  const totals = useMemo(() => {
-    const labourTotal = timesheetData.labourEntries.reduce(
-      (sum, entry) => sum + entry.totalCost,
-      0,
-    );
-    const materialTotal = timesheetData.materialEntries.reduce(
-      (sum, entry) => sum + entry.amountUsed * entry.unitCost,
-      0,
-    );
-    const chargesTotal = timesheetData.additionalCharges.reduce(
-      (sum, charge) => sum + charge.amount,
-      0,
-    );
-    const grandTotal = labourTotal + materialTotal + chargesTotal;
-
-    return {
-      labour: labourTotal,
-      materials: materialTotal,
-      charges: chargesTotal,
-      grandTotal,
-    };
-  }, [timesheetData]);
-
   // Helper functions
   const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -602,279 +184,6 @@ const TimesheetScreen = ({navigation, route, job}) => {
       default:
         return {backgroundColor: '#f3f4f6', color: '#374151'};
     }
-  };
-
-  const canEdit = () => {
-    return (
-      timesheetData.status === 'draft' ||
-      (user?.management_type === 'lead_labor' && timesheetData.status === 'submitted') ||
-      timesheetData.status === 'rejected'
-    );
-  };
-
-  const isReadOnly = () => {
-    return timesheetData.status === 'approved';
-  };
-
-  // Labour entry handlers
-  const handleAddLabour = () => {
-    setTempLabourData({
-      id: `labour-${Date.now()}`,
-      employeeName: '',
-      employeeId: '',
-      role: 'Labor',
-      regularHours: 0,
-      overtimeHours: 0,
-      regularRate: 28,
-      overtimeRate: 42,
-      totalCost: 0,
-      notes: '',
-    });
-    setShowAddLabour(true);
-  };
-
-  const handleSaveLabour = () => {
-    if (!tempLabourData.employeeName || !tempLabourData.employeeId) {
-      Alert.alert('Error', 'Please fill in employee name and ID');
-      return;
-    }
-
-    const totalCost =
-      (tempLabourData.regularHours || 0) * (tempLabourData.regularRate || 0) +
-      (tempLabourData.overtimeHours || 0) * (tempLabourData.overtimeRate || 0);
-
-    const newEntry = {
-      ...tempLabourData,
-      totalCost,
-    };
-
-    if (editingLabour) {
-      setTimesheetData(prev => ({
-        ...prev,
-        labourEntries: prev.labourEntries.map(entry =>
-          entry.id === editingLabour ? newEntry : entry,
-        ),
-      }));
-      setEditingLabour(null);
-    } else {
-      setTimesheetData(prev => ({
-        ...prev,
-        labourEntries: [...prev.labourEntries, newEntry],
-      }));
-    }
-
-    setShowAddLabour(false);
-    setTempLabourData({});
-  };
-
-  const handleDeleteLabour = id => {
-    Alert.alert(
-      'Delete Labour Entry',
-      'Are you sure you want to delete this labour entry?',
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            setTimesheetData(prev => ({
-              ...prev,
-              labourEntries: prev.labourEntries.filter(
-                entry => entry.id !== id,
-              ),
-            }));
-          },
-        },
-      ],
-    );
-  };
-
-  // Material entry handlers
-  const handleAddMaterial = () => {
-    setTempMaterialData({
-      id: `material-${Date.now()}`,
-      name: '',
-      unit: 'pieces',
-      totalOrdered: 0,
-      amountUsed: 0,
-      amountRemaining: 0,
-      unitCost: 0,
-      totalCost: 0,
-      supplierOrderId: '',
-      returnToWarehouse: false,
-    });
-    setShowAddMaterial(true);
-  };
-
-  const handleSaveMaterial = () => {
-    if (!tempMaterialData.name) {
-      Alert.alert('Error', 'Please fill in material name');
-      return;
-    }
-
-    const totalCost =
-      (tempMaterialData.amountUsed || 0) * (tempMaterialData.unitCost || 0);
-    const amountRemaining =
-      (tempMaterialData.totalOrdered || 0) - (tempMaterialData.amountUsed || 0);
-
-    const newEntry = {
-      ...tempMaterialData,
-      totalCost,
-      amountRemaining,
-    };
-
-    if (editingMaterial) {
-      setTimesheetData(prev => ({
-        ...prev,
-        materialEntries: prev.materialEntries.map(entry =>
-          entry.id === editingMaterial ? newEntry : entry,
-        ),
-      }));
-      setEditingMaterial(null);
-    } else {
-      setTimesheetData(prev => ({
-        ...prev,
-        materialEntries: [...prev.materialEntries, newEntry],
-      }));
-    }
-
-    setShowAddMaterial(false);
-    setTempMaterialData({});
-  };
-
-  const handleDeleteMaterial = id => {
-    Alert.alert(
-      'Delete Material Entry',
-      'Are you sure you want to delete this material entry?',
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            setTimesheetData(prev => ({
-              ...prev,
-              materialEntries: prev.materialEntries.filter(
-                entry => entry.id !== id,
-              ),
-            }));
-          },
-        },
-      ],
-    );
-  };
-
-  // Additional charge handlers
-  const handleAddCharge = () => {
-    setTempChargeData({
-      id: `charge-${Date.now()}`,
-      description: '',
-      category: 'Other',
-      amount: 0,
-      receipt: '',
-      notes: '',
-    });
-    setShowAddCharge(true);
-  };
-
-  const handleSaveCharge = () => {
-    if (!tempChargeData.description) {
-      Alert.alert('Error', 'Please fill in charge description');
-      return;
-    }
-
-    const newEntry = tempChargeData;
-
-    if (editingCharge) {
-      setTimesheetData(prev => ({
-        ...prev,
-        additionalCharges: prev.additionalCharges.map(entry =>
-          entry.id === editingCharge ? newEntry : entry,
-        ),
-      }));
-      setEditingCharge(null);
-    } else {
-      setTimesheetData(prev => ({
-        ...prev,
-        additionalCharges: [...prev.additionalCharges, newEntry],
-      }));
-    }
-
-    setShowAddCharge(false);
-    setTempChargeData({});
-  };
-
-  const handleDeleteCharge = id => {
-    Alert.alert(
-      'Delete Additional Charge',
-      'Are you sure you want to delete this charge?',
-      [
-        {text: 'Cancel', style: 'cancel'},
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            setTimesheetData(prev => ({
-              ...prev,
-              additionalCharges: prev.additionalCharges.filter(
-                entry => entry.id !== id,
-              ),
-            }));
-          },
-        },
-      ],
-    );
-  };
-
-  // Submit for approval
-  const handleSubmitForApproval = () => {
-    if (timesheetData.labourEntries.length === 0) {
-      Alert.alert('Error', 'Please add at least one labour entry');
-      return;
-    }
-
-    const newStatus =
-      timesheetData.status === 'rejected' ? 'submitted' : 'submitted';
-    setTimesheetData(prev => ({
-      ...prev,
-      status: newStatus,
-      submittedAt: new Date().toISOString(),
-      rejectionReason: undefined, // Clear rejection reason on resubmit
-    }));
-
-    const message =
-      timesheetData.status === 'rejected'
-        ? 'Timesheet resubmitted for approval'
-        : 'Timesheet submitted for approval';
-    Alert.alert('Success', message);
-  };
-
-  // Approval handlers for Lead Labor
-  const handleApprove = () => {
-    setTimesheetData(prev => ({
-      ...prev,
-      status: 'approved',
-      approvedAt: new Date().toISOString(),
-      approvedBy: user?.name || 'Management',
-    }));
-    Alert.alert('Success', 'Timesheet approved');
-  };
-
-  const handleReject = () => {
-    Alert.prompt(
-      'Reject Timesheet',
-      'Please provide a reason for rejection:',
-      reason => {
-        if (reason) {
-          setTimesheetData(prev => ({
-            ...prev,
-            status: 'rejected',
-            rejectionReason: reason,
-          }));
-          Alert.alert('Success', 'Timesheet rejected');
-        }
-      },
-    );
   };
 
   // Navigation handler - go back to appropriate screen
@@ -905,8 +214,8 @@ const TimesheetScreen = ({navigation, route, job}) => {
             {timesheet ? 'Bluesheet Details' : 'Daily Timesheet'}
           </Text>
           <Text style={styles.headerSubtitle}>
-            {timesheet ? timesheet.jobTitle : job?.title || 'Unknown Job'} •{' '}
-            {formatDate(timesheetData.date)}
+            {timesheet ? timesheet.job?.jobTitle : job?.title || 'Unknown Job'}{' '}
+            • {/* {formatDate(timesheet?.created_at)} */}
           </Text>
         </View>
 
@@ -918,18 +227,12 @@ const TimesheetScreen = ({navigation, route, job}) => {
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <View style={styles.jobInfo}>
-              <Text style={styles.jobTitle}>
-                {timesheet ? timesheet.jobTitle : job?.title || 'Unknown Job'}
-              </Text>
+              <Text style={styles.jobTitle}>{timesheet?.job?.job_title}</Text>
               <Text style={styles.jobCustomer}>
-                {timesheet
-                  ? timesheet.customer
-                  : job?.customer?.name || 'Unknown Customer'}
+                {timesheet?.job?.customer?.customer_name}
               </Text>
               <Text style={styles.jobLocation}>
-                {timesheet
-                  ? timesheet.location
-                  : job?.customer?.address || 'Unknown Location'}
+                {timesheet?.job?.bill_to_address}
               </Text>
             </View>
             <View style={styles.statusBadges}>
@@ -943,14 +246,13 @@ const TimesheetScreen = ({navigation, route, job}) => {
                     styles.statusBadgeText,
                     {color: getStatusColor(timesheetData.status).color},
                   ]}>
-                  {timesheetData.status.toUpperCase()}
+                  {timesheetData?.status?.toUpperCase() || 'Pending'}
                 </Text>
               </View>
-              {isReadOnly() && (
-                <View style={styles.readOnlyBadge}>
-                  <Text style={styles.readOnlyBadgeText}>READ-ONLY</Text>
-                </View>
-              )}
+
+              <View style={styles.readOnlyBadge}>
+                <Text style={styles.readOnlyBadgeText}>READ-ONLY</Text>
+              </View>
             </View>
           </View>
 
@@ -987,59 +289,28 @@ const TimesheetScreen = ({navigation, route, job}) => {
           <View style={styles.sectionHeader}>
             <Feather name="clock" size={20} color={tabColor} />
             <Text style={styles.sectionTitle}>Labour Hours</Text>
-            {canEdit() && !isReadOnly() && (
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleAddLabour}>
-                <Text style={styles.addButtonText}>+</Text>
-              </TouchableOpacity>
-            )}
           </View>
 
-          {timesheetData.labourEntries.map(entry => (
+          {timesheet?.labor_entries?.map(entry => (
             <View key={entry.id} style={styles.entryCard}>
               <View style={styles.entryHeader}>
                 <View style={styles.entryInfo}>
-                  <Text style={styles.entryName}>{entry.employeeName}</Text>
-                  <Text style={styles.entryDetails}>
-                    {entry.role} • {entry.employeeId}
-                  </Text>
+                  <Text style={styles.entryName}>{entry?.employee_name}</Text>
+                  <Text style={styles.entryDetails}></Text>
                 </View>
-                {canEdit() && !isReadOnly() && (
-                  <View style={styles.entryActions}>
-                    <TouchableOpacity
-                      style={styles.editButton}
-                      onPress={() => {
-                        setTempLabourData(entry);
-                        setEditingLabour(entry.id);
-                        setShowAddLabour(true);
-                      }}>
-                      <MaterialIcons name="edit" size={24} color={tabColor} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() => handleDeleteLabour(entry.id)}>
-                      <MaterialIcons
-                        name="delete"
-                        size={24}
-                        color={'#dc2626'}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
               </View>
 
               <View style={styles.entryDetails}>
                 <View style={styles.entryRow}>
                   <Text style={styles.entryLabel}>Regular Hours:</Text>
-                  <Text style={styles.entryValue}>
-                    {entry.regularHours}h 
-                  </Text>
+                  <Text style={styles.entryValue}>{entry?.total_hours}</Text>
                 </View>
                 <View style={styles.entryRow}>
                   <Text style={styles.entryLabel}>Overtime Hours:</Text>
                   <Text style={styles.entryValue}>
-                    {entry.overtimeHours}h
+                    {entry?.overtime_hours == '00:00:00'
+                      ? '0h'
+                      : entry?.overtime_hours}
                   </Text>
                 </View>
                 {/* <View style={styles.entryCostRow}>
@@ -1068,65 +339,37 @@ const TimesheetScreen = ({navigation, route, job}) => {
           <View style={styles.sectionHeader}>
             <Feather name="box" size={20} color={tabColor} />
             <Text style={styles.sectionTitle}>Materials</Text>
-            {canEdit() && !isReadOnly() && (
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleAddMaterial}>
-                <Text style={styles.addButtonText}>+</Text>
-              </TouchableOpacity>
-            )}
           </View>
 
-          {timesheetData.materialEntries.map(material => (
+          {timesheet?.material_entries?.map(material => (
             <View key={material.id} style={styles.entryCard}>
               <View style={styles.entryHeader}>
                 <View style={styles.entryInfo}>
                   <Text style={styles.entryName}>{material.name}</Text>
                   <Text style={styles.entryDetails}>
-                    Order ID: {material.supplierOrderId}
+                    Order ID: {material.supplier_order_id}
                   </Text>
                 </View>
-                {canEdit() && !isReadOnly() && (
-                  <View style={styles.entryActions}>
-                    <TouchableOpacity
-                      style={styles.editButton}
-                      onPress={() => {
-                        setTempMaterialData(material);
-                        setEditingMaterial(material.id);
-                        setShowAddMaterial(true);
-                      }}>
-                      <MaterialIcons name="edit" size={24} color={tabColor} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() => handleDeleteMaterial(material.id)}>
-                      <MaterialIcons
-                        name="delete"
-                        size={24}
-                        color={'#dc2626'}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
               </View>
 
               <View style={styles.materialGrid}>
                 <View style={styles.materialGridItem}>
                   <Text style={styles.entryLabel}>Ordered:</Text>
                   <Text style={styles.entryValue}>
-                    {material.totalOrdered} {material.unit}
+                    {material.quantity} {material.unit}
                   </Text>
                 </View>
                 <View style={styles.materialGridItem}>
                   <Text style={styles.entryLabel}>Used:</Text>
                   <Text style={styles.entryValue}>
-                    {material.amountUsed} {material.unit}
+                    {material.material_used} {material.unit}
                   </Text>
                 </View>
                 <View style={styles.materialGridItem}>
                   <Text style={styles.entryLabel}>Remaining:</Text>
                   <Text style={styles.entryValue}>
-                    {material.amountRemaining} {material.unit}
+                    {material?.quantity - material.material_used}{' '}
+                    {material.unit}
                   </Text>
                 </View>
               </View>
@@ -1166,251 +409,9 @@ const TimesheetScreen = ({navigation, route, job}) => {
           </View> */}
         </View>
 
-        {/* Additional Charges Section */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <MaterialIcons name="attach-money" size={24} color={tabColor} />
-            <Text style={styles.sectionTitle}>Additional Charges</Text>
-            {canEdit() && !isReadOnly() && (
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleAddCharge}>
-                <Text style={styles.addButtonText}>+</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {timesheetData.additionalCharges.map(charge => (
-            <View key={charge.id} style={styles.entryCard}>
-              <View style={styles.entryHeader}>
-                <View style={styles.entryInfo}>
-                  <Text style={styles.entryName}>{charge.description}</Text>
-                  <Text style={styles.entryDetails}>{charge.category}</Text>
-                  {charge.receipt && (
-                    <Text style={styles.entryDetails}>
-                      Receipt: {charge.receipt}
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.chargeAmount}>
-                  <Text style={styles.chargeAmountValue}>2</Text>
-                  {canEdit() && !isReadOnly() && (
-                    <View style={styles.entryActions}>
-                      <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => {
-                          setTempChargeData(charge);
-                          setEditingCharge(charge.id);
-                          setShowAddCharge(true);
-                        }}>
-                        <MaterialIcons name="edit" size={24} color={tabColor} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={() => handleDeleteCharge(charge.id)}>
-                        <MaterialIcons
-                          name="delete"
-                          size={24}
-                          color={'#dc2626'}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
-              </View>
-              {charge.notes && (
-                <Text style={styles.entryNotes}>{charge.notes}</Text>
-              )}
-            </View>
-          ))}
-
-          {/* <View style={styles.sectionTotal}>
-            <Text style={styles.sectionTotalLabel}>
-              Total Additional Charges:
-            </Text>
-            <Text style={styles.sectionTotalValue}>
-              ${totals.charges.toFixed(2)}
-            </Text>
-          </View> */}
-        </View>
-
-        {/* Notes Section */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <MaterialIcons name="edit-note" size={26} color={tabColor} />
-            <Text style={styles.sectionTitle}>Job Notes</Text>
-          </View>
-          <TextInput
-            style={styles.notesInput}
-            value={timesheetData.jobNotes}
-            onChangeText={text =>
-              setTimesheetData(prev => ({
-                ...prev,
-                jobNotes: text,
-              }))
-            }
-            placeholder="Add any additional notes about the job..."
-            multiline
-            numberOfLines={4}
-            editable={canEdit() && !isReadOnly()}
-          />
-        </View>
-
-        {/* Summary and Submit */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <MaterialIcons name="summarize" size={26} color={tabColor} />
-            <Text style={styles.sectionTitle}>Summary</Text>
-          </View>
-
-          <View style={styles.summaryBreakdown}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Labour:</Text>
-              <Text style={styles.summaryValue}>
-                5{/* ${totals.labour.toFixed(2)} */}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Material:</Text>
-              <Text style={styles.summaryValue}>
-                {/* ${totals.materials.toFixed(2)} */}
-              </Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Additional items:</Text>
-              <Text style={styles.summaryValue}>
-                3{/* ${totals.charges.toFixed(2)} */}
-              </Text>
-            </View>
-            <View style={styles.summaryDivider} />
-            {/* <View style={styles.summaryTotal}>
-              <Text style={styles.summaryTotalLabel}>Total Cost:</Text>
-              <Text style={styles.summaryTotalValue}>
-                ${totals.grandTotal.toFixed(2)}
-              </Text>
-            </View> */}
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            {/* Submit/Resubmit Button */}
-            {(timesheetData.status === 'draft' ||
-              timesheetData.status === 'rejected') &&
-              canEdit() &&
-              !isReadOnly() && (
-                <TouchableOpacity
-                  style={[
-                    styles.submitButton,
-                    timesheetData.status === 'rejected' &&
-                      styles.resubmitButton,
-                  ]}
-                  onPress={handleSubmitForApproval}>
-                  <Text style={styles.submitButtonText}>
-                    {timesheetData.status === 'rejected'
-                      ? 'Resubmit for Approval'
-                      : '✓ Submit for Approval'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-
-            {/* Submitted Status */}
-            {timesheetData.status === 'submitted' && (
-              <View style={styles.submittedStatus}>
-                <Text style={styles.submittedStatusTitle}>
-                  Timesheet submitted for approval
-                </Text>
-                <Text style={styles.submittedStatusDetails}>
-                  Submitted on{' '}
-                  {timesheetData.submittedAt
-                    ? new Date(timesheetData.submittedAt).toLocaleDateString(
-                        'en-US',
-                        {
-                          month: 'numeric', // "August"
-                          day: 'numeric',
-                          year: 'numeric',
-                        },
-                      )
-                    : // new Date(timesheetData.submittedAt).toLocaleDateString()
-                      'Unknown'}
-                </Text>
-                {user?.management_type === 'lead_labor'&& (
-                  <View style={styles.leadActions}>
-                    <TouchableOpacity
-                      style={styles.approveButton}
-                      onPress={handleApprove}>
-                      <Text style={styles.approveButtonText}>Approve</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.rejectButton}
-                      onPress={handleReject}>
-                      <Text style={styles.rejectButtonText}>Reject</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            )}
-
-            {/* Approved Status */}
-            {timesheetData.status === 'approved' && (
-              <View style={styles.approvedStatus}>
-                <Text style={styles.approvedStatusTitle}>
-                  Timesheet approved
-                </Text>
-                <Text style={styles.approvedStatusDetails}>
-                  Approved by {timesheetData.approvedBy || 'Management'} on{' '}
-                  {timesheetData.approvedAt
-                    ? new Date(timesheetData.approvedAt).toLocaleDateString()
-                    : 'Unknown'}
-                </Text>
-              </View>
-            )}
-
-            {/* Back to list button */}
-            {timesheet && (
-              <TouchableOpacity
-                style={styles.backToListButton}
-                onPress={() => navigation.navigate('TimeSheetScreen')}>
-                <Text style={styles.backToListButtonText}>
-                  Back to All Bluesheets
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
         {/* Bottom spacing */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
-
-      {/* Modals */}
-      <LabourModal
-        visible={showAddLabour}
-        setShowAddLabour={setShowAddLabour}
-        editingLabour={editingLabour}
-        setEditingLabour={setEditingLabour}
-        tempLabourData={tempLabourData}
-        setTempLabourData={setTempLabourData}
-        handleSaveLabour={handleSaveLabour}
-      />
-      <MaterialModal
-        visible={showAddMaterial}
-        onClose={() => setShowAddMaterial(false)}
-        tempMaterialData={tempMaterialData}
-        setTempMaterialData={setTempMaterialData}
-        editingMaterial={editingMaterial}
-        setEditingMaterial={setEditingMaterial}
-        handleSaveMaterial={handleSaveMaterial}
-      />
-
-      <ChargeModal
-        visible={showAddCharge}
-        onClose={() => setShowAddCharge(false)}
-        tempChargeData={tempChargeData}
-        setTempChargeData={setTempChargeData}
-        editingCharge={editingCharge}
-        setEditingCharge={setEditingCharge}
-        handleSaveCharge={handleSaveCharge}
-      />
     </SafeAreaView>
   );
 };
