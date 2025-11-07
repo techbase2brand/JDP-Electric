@@ -12,6 +12,7 @@ import {
   Platform,
   UIManager,
   LayoutAnimation,
+  ActivityIndicator,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -262,9 +263,10 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
     return new Date(dateString).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
+      year: 'numeric',
+      // hour: 'numeric',
+      // minute: '2-digit',
+      // hour12: true,
     });
   };
 
@@ -287,68 +289,73 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
 
         {/* <View style={styles.headerSpacer} /> */}
       </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Filters and Search */}
-        <View style={styles.filtersCard}>
-          {/* Search */}
-          <View style={styles.searchContainer}>
-            <Feather name="search" size={20} color={'#6b7280'} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search by job name and customer name"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor="#6b7280"
-            />
-          </View>
-        </View>
-
-        {/* Timesheets List */}
-        <View style={styles.timesheetsList}>
-          {filteredTimesheets?.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateIcon}>📋</Text>
-              <Text style={styles.emptyStateTitle}>
-                {searchQuery
-                  ? 'No matching timesheets found'
-                  : 'No timesheets found'}
-              </Text>
-              <Text style={styles.emptyStateSubtitle}>
-                {searchQuery
-                  ? 'Try adjusting your search terms or filters.'
-                  : 'Timesheets will appear here once they are submitted.'}
-              </Text>
+      {loading ? (
+        <ActivityIndicator color="#3B82F6" style={{marginTop: 40}} />
+      ) : (
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Filters and Search */}
+          <View style={styles.filtersCard}>
+            {/* Search */}
+            <View style={styles.searchContainer}>
+              <Feather name="search" size={20} color={'#6b7280'} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search by job name and customer name"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#6b7280"
+              />
             </View>
-          ) : (
-            filteredTimesheets?.map(timesheet => {
-              const isExpanded = expandedJobId === timesheet.id;
-              return (
-                <View key={timesheet?.id} style={styles.timesheetCard}>
-                  {/* Header */}
-                  <View style={styles.timesheetHeader}>
-                    <View style={styles.timesheetTitleContainer}>
-                      <View style={styles.timesheetBadges}>
-                        <Text style={styles.timesheetId}>
-                          {timesheet?.job?.job_title}
-                        </Text>
-                        <View
-                          style={[
-                            styles.statusBadge,
-                            getStatusColor(timesheet?.status),
-                          ]}>
-                          <Text style={styles.statusIcon}>
-                            {/* {getStatusIcon(timesheet?.status)} */}
+          </View>
+
+          {/* Timesheets List */}
+          <View style={styles.timesheetsList}>
+            {filteredTimesheets?.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateIcon}>📋</Text>
+                <Text style={styles.emptyStateTitle}>
+                  {searchQuery
+                    ? 'No matching timesheets found'
+                    : 'No timesheets found'}
+                </Text>
+                <Text style={styles.emptyStateSubtitle}>
+                  {searchQuery
+                    ? 'Try adjusting your search terms or filters.'
+                    : 'Timesheets will appear here once they are submitted.'}
+                </Text>
+              </View>
+            ) : (
+              filteredTimesheets?.map(timesheet => {
+                const isExpanded = expandedJobId === timesheet.id;
+                return (
+                  <View key={timesheet?.id} style={styles.timesheetCard}>
+                    {/* Header */}
+                    <View style={styles.timesheetHeader}>
+                      <View style={styles.timesheetTitleContainer}>
+                        <View style={styles.timesheetBadges}>
+                          <Text style={styles.timesheetId}>
+                            {timesheet?.job?.job_title}
                           </Text>
-                          <Text
+                          <View
                             style={[
-                              styles.statusBadgeText,
-                              {color: getStatusColor(timesheet?.status).color},
+                              styles.statusBadge,
+                              getStatusColor(timesheet?.status),
                             ]}>
-                            {timesheet?.status?.toUpperCase() || 'Pending'}
-                          </Text>
-                        </View>
-                        {/* <View
+                            <Text style={styles.statusIcon}>
+                              {/* {getStatusIcon(timesheet?.status)} */}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.statusBadgeText,
+                                {
+                                  color: getStatusColor(timesheet?.status)
+                                    .color,
+                                },
+                              ]}>
+                              {timesheet?.status?.toUpperCase() || 'Pending'}
+                            </Text>
+                          </View>
+                          {/* <View
                           style={[
                             styles.priorityBadge,
                             getPriorityColor(timesheet.priority),
@@ -364,20 +371,20 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                             {timesheet.priority.toUpperCase()}
                           </Text>
                         </View> */}
-                      </View>
-                      <Text style={styles.timesheetTitle}>
-                        {timesheet.jobTitle}
-                      </Text>
-                      <View
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                        }}>
-                        <Text style={styles.timesheetCustomer}>
-                          {timesheet?.job?.customer?.customer_name}
+                        </View>
+                        <Text style={styles.timesheetTitle}>
+                          {timesheet.jobTitle}
                         </Text>
-                        <TouchableOpacity
+                        <View
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                          }}>
+                          <Text style={styles.timesheetCustomer}>
+                            {timesheet?.job?.customer?.customer_name}
+                          </Text>
+                          {/* <TouchableOpacity
                           onPress={() => toggleJobExpansion(timesheet.id)}>
                           <MaterialIcons
                             name={
@@ -388,13 +395,13 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                             size={28}
                             color="#6B7280"
                           />
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
+                        </View>
                       </View>
                     </View>
-                  </View>
 
-                  {/* Details Grid */}
-                  {isExpanded && (
+                    {/* Details Grid */}
+                    {/* {isExpanded && ( */}
                     <View style={styles.detailsGrid}>
                       <View style={styles.detailRow}>
                         <View style={styles.detailItem}>
@@ -437,27 +444,27 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                         </View>
                       </View>
                     </View>
-                  )}
+                    {/* // )} */}
 
-                  {/* Status-specific information */}
-                  {timesheet?.status === 'approved' &&
-                    timesheet?.approvedAt && (
-                      <View style={styles.statusInfo}>
-                        <View style={styles.statusInfoIcon}>
-                          <FontAwesome
-                            name="check-circle"
-                            size={18}
-                            color="#166534"
-                          />
+                    {/* Status-specific information */}
+                    {timesheet?.status === 'approved' &&
+                      timesheet?.approvedAt && (
+                        <View style={styles.statusInfo}>
+                          <View style={styles.statusInfoIcon}>
+                            <FontAwesome
+                              name="check-circle"
+                              size={18}
+                              color="#166534"
+                            />
+                          </View>
+                          <Text style={styles.statusInfoText}>
+                            Approved by {timesheet?.approvedBy} on{' '}
+                            {formatDateTime(timesheet?.approvedAt)}
+                          </Text>
                         </View>
-                        <Text style={styles.statusInfoText}>
-                          Approved by {timesheet?.approvedBy} on{' '}
-                          {formatDateTime(timesheet?.approvedAt)}
-                        </Text>
-                      </View>
-                    )}
+                      )}
 
-                  {/* {timesheet.status === 'rejected' &&
+                    {/* {timesheet.status === 'rejected' &&
                     timesheet.rejectionReason && (
                       <View
                         style={[
@@ -487,34 +494,35 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                       </View>
                     )} */}
 
-                  {/* Footer */}
-                  <View style={styles.timesheetFooter}>
-                    <Text style={styles.submittedText}>
-                      Submitted {formatDateTime(timesheet.created_at)}
-                    </Text>
-                    <TouchableOpacity
-                      style={[styles.viewButton]}
-                      onPress={() => handleViewTimesheet(timesheet)}>
-                      <Feather name="eye" size={20} color={tabColor} />
-                      <Text
-                        style={[
-                          styles.viewButtonText,
-
-                          styles.viewButtonTextSecondary,
-                        ]}>
-                        {'View (Read-only)'}
+                    {/* Footer */}
+                    <View style={styles.timesheetFooter}>
+                      <Text style={styles.submittedText}>
+                        Submitted {formatDateTime(timesheet.created_at)}
                       </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })
-          )}
-        </View>
+                      <TouchableOpacity
+                        style={[styles.viewButton]}
+                        onPress={() => handleViewTimesheet(timesheet)}>
+                        <Feather name="eye" size={20} color={tabColor} />
+                        <Text
+                          style={[
+                            styles.viewButtonText,
 
-        {/* Bottom spacing */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
+                            styles.viewButtonTextSecondary,
+                          ]}>
+                          {'View (Read-only)'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+          </View>
+
+          {/* Bottom spacing */}
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -530,7 +538,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 12,
     paddingTop: 20,
     justifyContent: 'center',
   },
@@ -792,7 +800,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 4,
+    // marginBottom: 4,
   },
   timesheetCustomer: {
     fontSize: 14,

@@ -13,6 +13,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -74,11 +75,14 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   const cartItems = useSelector(state => state.cart.items);
   const token = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
+  const [loading, setLoading] = useState(false);
 
   console.log('cartitemss', id, job.job.id, user?.leadLabor?.[0].id);
 
   const handleAddMaterial = async () => {
     try {
+      setLoading(true); // start loader
+
       const payload = {
         ...material,
         stock_quantity: Number(material.stock_quantity),
@@ -95,6 +99,8 @@ const CartScreen = ({onBack, onNavigate, route}) => {
     } catch (error) {
       console.error('Error adding material:', error);
       Alert.alert('Error', error.message || 'Something went wrong');
+    } finally {
+      setLoading(false); // stop loader
     }
   };
 
@@ -438,8 +444,12 @@ const CartScreen = ({onBack, onNavigate, route}) => {
               <TouchableOpacity
                 style={styles.saveButton}
                 onPress={handleAddMaterial}>
-                <Text style={styles.saveButtonText}>Add Material</Text>
-              </TouchableOpacity>
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Add Material</Text>
+                )}
+              </TouchableOpacity> 
             </View>
           </KeyboardAvoidingView>
         </View>

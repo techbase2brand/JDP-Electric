@@ -79,13 +79,10 @@ const EditProfileScreen = ({navigation}) => {
       try {
         let profileData;
         if (user?.management_type === 'lead_labor') {
-          const leadLabor = await getLeadLaborById(
-            user?.leadLabor?.[0]?.id,
-            token,
-          );
+          const leadLabor = await getLeadLaborById(user?.lead_labor?.id, token);
           profileData = leadLabor?.data;
         } else {
-          const labor = await getLaborById(user?.labor?.[0]?.id, token);
+          const labor = await getLaborById(user?.labor?.id, token);
           profileData = labor?.data;
         }
 
@@ -171,12 +168,12 @@ const EditProfileScreen = ({navigation}) => {
       let response;
       if (user?.management_type === 'lead_labor') {
         response = await updateLeadLaborProfile(
-          user?.leadLabor?.[0]?.id,
+          user?.lead_labor?.id,
           form,
           token,
         );
       } else {
-        response = await updateLaborProfile(user?.labor?.[0]?.id, form, token);
+        response = await updateLaborProfile(user?.labor?.id, form, token);
       }
 
       Alert.alert('Success', 'Profile updated successfully!', [

@@ -125,6 +125,7 @@ const AppContent = () => {
   const dispatch = useDispatch();
   const token = useSelector(state => state.user.token);
   const {isRunning} = useSelector((state: any) => state.timer);
+  console.log('useruser', user, token);
 
   useEffect(() => {
     if (isRunning) {

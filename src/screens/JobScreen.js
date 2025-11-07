@@ -1402,9 +1402,10 @@ const JobListingScreen = ({navigation, route}) => {
   // ----- redux/user
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
-  const leadLaborId = user?.leadLabor?.[0]?.id;
+  const leadLaborId = user?.lead_labor?.id;
+  console.log('leadLaborId>>', user, leadLaborId);
 
-  const laborId = user?.labor?.[0]?.id;
+  const laborId = user?.labor?.id;
   const canViewCreateJob = useHasPermission('jobs', 'view');
 
   // ----- route
@@ -1646,7 +1647,7 @@ const JobListingScreen = ({navigation, route}) => {
 
   // ---------- UI renderers
   const renderHeader = () => (
-    <View style={styles.header}>
+    <View style={[styles.header]}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}>
@@ -1673,12 +1674,12 @@ const JobListingScreen = ({navigation, route}) => {
             {
               flexDirection: 'row',
               backgroundColor: '#10B981',
-              width: widthPercentageToDP(24),
+              width: widthPercentageToDP(10),
             },
           ]}
           onPress={() => navigation.navigate('CreateJobScreen')}>
-          <Ionicons name="add" size={24} color={COLORS.white} />
-          <Text style={{color: '#fff', fontWeight: '600'}}>New Job</Text>
+          <Ionicons name="add" size={20} color={COLORS.white} />
+          {/* <Text style={{color: '#fff', fontWeight: '600', fontSize:12}}>New Job</Text> */}
         </TouchableOpacity>
       )}
     </View>
@@ -1760,7 +1761,7 @@ const JobListingScreen = ({navigation, route}) => {
                   {(job?.status || '').toUpperCase()}
                 </Text>
               </View>
-              <View
+              {/* <View
                 style={[
                   styles.priorityBadge,
                   {backgroundColor: getPriorityColor(job?.priority)},
@@ -1769,7 +1770,7 @@ const JobListingScreen = ({navigation, route}) => {
                 <Text style={styles.priorityText}>
                   {(job?.priority || '').toUpperCase()}
                 </Text>
-              </View>
+              </View> */}
             </View>
           </View>
         </View>
@@ -1777,17 +1778,6 @@ const JobListingScreen = ({navigation, route}) => {
         <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
           <View>
             <Text style={styles.jobTitle}>{job?.job_title || job?.title}</Text>
-            {!!job?.description && (
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: '500',
-                  color: COLORS.gray900,
-                  marginBottom: 12,
-                }}>
-                {job?.description}
-              </Text>
-            )}
           </View>
           <TouchableOpacity
             onPress={() => toggleJobExpansion(job?.id ?? job?._id)}>
@@ -1798,7 +1788,17 @@ const JobListingScreen = ({navigation, route}) => {
             />
           </TouchableOpacity>
         </View>
-
+        {!!job?.description && (
+          <Text
+            style={{
+              fontSize: 14,
+              fontWeight: '500',
+              color: COLORS.gray900,
+              marginBottom: 12,
+            }}>
+            {job?.description}
+          </Text>
+        )}
         <View style={styles.scheduleSection}>
           <View style={styles.scheduleItem}>
             <Ionicons name="calendar" size={16} color={COLORS.gray500} />
@@ -1808,12 +1808,12 @@ const JobListingScreen = ({navigation, route}) => {
                 : '—'}
             </Text>
           </View>
-          <View style={styles.scheduleItem}>
+          {/* <View style={styles.scheduleItem}>
             <Ionicons name="hourglass" size={16} color={COLORS.gray500} />
             <Text style={styles.scheduleText}>
               {job?.estimated_hours ? `${job?.estimated_hours}h est.` : '—'}
             </Text>
-          </View>
+          </View> */}
         </View>
 
         {isExpanded && (
@@ -2021,15 +2021,10 @@ const styles = {
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: COLORS.primary,
+    justifyContent: 'space-between',
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerCenter: {flex: 1, alignItems: 'center', marginHorizontal: 16},
+  backButton: {},
+  headerCenter: {alignItems: 'center'},
   headerTitle: {fontSize: 18, fontWeight: '600', color: COLORS.white},
   headerSubtitle: {fontSize: 12, color: COLORS.white, marginTop: 2},
   headerButton: {

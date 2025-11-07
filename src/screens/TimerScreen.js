@@ -1055,6 +1055,7 @@ export default function TimerScreen({navigation, route}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [uiLoading, setUiLoading] = useState(true);
+  console.log('jobDatajobDatajobData', jobData);
 
   const {TimerModule} = NativeModules;
 
@@ -1227,12 +1228,10 @@ export default function TimerScreen({navigation, route}) {
 
     let payload_id = {
       labor_id:
-        user?.management_type !== 'lead_labor'
-          ? user?.labor?.[0]?.id
-          : undefined,
+        user?.management_type !== 'lead_labor' ? user?.labor?.id : undefined,
       lead_labor_id:
         user?.management_type === 'lead_labor'
-          ? user?.leadLabor?.[0]?.id
+          ? user?.lead_labor?.id
           : undefined,
     };
 
@@ -1270,7 +1269,7 @@ export default function TimerScreen({navigation, route}) {
 
   useEffect(() => {
     let t;
-    if (!loading) t = setTimeout(() => setUiLoading(false), 2500);
+    if (!loading) t = setTimeout(() => setUiLoading(false), 1000);
     return () => {
       if (t) clearTimeout(t);
     };
@@ -1331,8 +1330,8 @@ export default function TimerScreen({navigation, route}) {
       const laborTimesheets = data?.labor_timesheets || [];
       const filteredTimesheets = laborTimesheets.filter(
         item =>
-          item.labor_id === user?.labor?.[0]?.id ||
-          item.lead_labor_id === user?.leadLabor?.[0]?.id,
+          item.labor_id === user?.labor?.id ||
+          item.lead_labor_id === user?.lead_labor?.id,
       );
 
       computeSummaries(filteredTimesheets);
@@ -1526,10 +1525,11 @@ export default function TimerScreen({navigation, route}) {
   const filteredTimesheets =
     jobData?.labor_timesheets?.filter(
       item =>
-        item.labor_id === user?.labor?.[0]?.id ||
-        item.lead_labor_id === user?.leadLabor?.[0]?.id,
+        item.labor_id === user?.labor?.id ||
+        item.lead_labor_id === user?.lead_labor?.id,
     ) || [];
   const lastTimesheet = filteredTimesheets[0];
+  console.log('filteredTimesheetsfilteredTimesheets', filteredTimesheets);
 
   const isTodayCompleted =
     lastTimesheet?.job_status == 'completed' && lastTimesheet?.date == today;
@@ -1706,14 +1706,19 @@ export default function TimerScreen({navigation, route}) {
                 <View style={styles.logItem}>
                   <View style={{flex: 1}}>
                     <Text style={[styles.logTitle]}>
-                      Date: {item.date || '--'}
-                    </Text>
-                    <Text style={[styles.logTitle, {marginTop: 10}]}>
                       Start: {item.start || '--:--:--'}
                     </Text>
+
+                    <Text style={[styles.logTitle, {marginTop: 10}]}>
+                      Date: {item.date || '--'}
+                    </Text>
+                    {/* <Text style={[styles.logTitle, {marginTop: 10}]}>
+                      End: {item.end ?? '--:--:--'}
+                    </Text>
+                     */}
                   </View>
                   <View style={{alignItems: 'flex-end'}}>
-                    <Text style={styles.logTitle}>
+                    <Text style={[styles.logTitle, ]}>
                       End: {item.end ?? '--:--:--'}
                     </Text>
                     <Text style={[styles.logTime, {marginTop: 10}]}>

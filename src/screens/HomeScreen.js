@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -37,46 +37,50 @@ import {
 import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
 import {getJobs, getlabourJobs} from '../config/apiConfig';
+import {useFocusEffect} from '@react-navigation/native';
 
 const HomeScreen = ({navigation}) => {
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
-  const leadLaborId = user?.leadLabor?.[0]?.id;
-  const laborId = user?.labor?.[0]?.id;
+  const leadLaborId = user?.lead_labor?.id;
+  const laborId = user?.labor?.id;
   const canViewCreateJob = useHasPermission('jobs', 'view');
 
   const [loading, setLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
+  const [dashboardData, setDashboardData] = useState();
+
   const [todayDueJobs, setTodayDueJobs] = useState([]);
+  console.log('todayDueJobstodayDueJobs', todayDueJobs);
 
   console.log('jobsssshome', jobs);
 
   const statsData = [
     {
-      key: 'active',
+      key: 'total',
       title: 'Active Jobs',
-      value: '2',
+      value: dashboardData?.summary?.total_jobs || 0,
       subtitle: "Today's schedule",
       icon: <Feather name="activity" size={24} color={whiteColor} />,
     },
     {
-      key: 'pending',
-      title: 'In Progress',
-      value: '1',
+      key: 'active',
+      title: 'Active Jobs',
+      value: dashboardData?.summary?.active_jobs || 0,
       subtitle: 'Currently working',
       icon: <AntDesign name="sync" size={20} color={whiteColor} />,
     },
     {
-      key: 'upcoming',
-      title: 'Upcoming',
-      value: '1',
+      key: 'completed',
+      title: 'Completed Jobs',
+      value: dashboardData?.summary?.completed_jobs || 0,
       subtitle: 'Next 3 days',
       icon: <Feather name="calendar" size={24} color={whiteColor} />,
     },
     {
       key: 'thisWeek',
       title: 'This Week',
-      value: '24',
+      value: dashboardData?.summary?.this_week_jobs || 0,
       subtitle: 'Total assigned',
       icon: <MaterialIcons name="assignment" size={24} color={whiteColor} />,
     },
@@ -120,39 +124,6 @@ const HomeScreen = ({navigation}) => {
     // },
   ].filter(Boolean);
 
-  // const todaysJobs = [
-  //   {
-  //     id: 'JOB-001',
-  //     jobId: 'JOB-001',
-  //     title: 'Electrical Panel Upgrade',
-  //     description: 'Upgrade main electrical panel from 100A to 200A service',
-  //     status: 'In Progress',
-  //     priority: 'HIGH',
-  //     technician: 'David Thompson',
-  //     time: '08:00 est.',
-  //     location: '1234 Oak Street, Houston, TX 77001',
-  //     statusColor: '#193CB8',
-  //     priorityColor: '#9F0712',
-  //     startCoordinates: {latitude: 29.7604, longitude: -95.3698},
-  //     destinationCoordinates: {latitude: 29.713, longitude: -95.399},
-  //   },
-  //   {
-  //     id: 'JOB-002',
-  //     jobId: 'JOB-002',
-  //     title: 'Commercial Lighting Installation',
-  //     description: 'Install LED lighting system in conference rooms',
-  //     status: 'Scheduled',
-  //     priority: 'MEDIUM',
-  //     technician: 'TechCorp Office',
-  //     time: '14:00 est.',
-  //     location: '1500 Corporate Blvd, Houston, TX 77002',
-  //     statusColor: '#016630',
-  //     priorityColor: '#894B00',
-  //     startCoordinates: {latitude: 29.7604, longitude: -95.3698},
-  //     destinationCoordinates: {latitude: 29.757, longitude: -95.37},
-  //   },
-  // ];
-
   const upcomingJobs = [
     {
       id: 'JOB-003',
@@ -182,37 +153,64 @@ const HomeScreen = ({navigation}) => {
       estimatedHours: 8,
     },
   ];
-  useEffect(() => {
-    const fetchJobs = async () => {
-      if (loading) return;
-      setLoading(true);
-      try {
-        const res =
-          user?.management_type === 'lead_labor'
-            ? await getJobs(leadLaborId, 1, 10, token)
-            : await getlabourJobs(laborId, 1, 10, token);
+  // useEffect(() => {
+  //   const fetchJobs = async () => {
+  //     if (loading) return;
+  //     setLoading(true);
+  //     try {
+  //       const res =
+  //         user?.management_type === 'lead_labor'
+  //           ? await getJobs(leadLaborId, 1, 10, token)
+  //           : await getlabourJobs(laborId, 1, 10, token);
 
-        const newJobs = res?.data?.jobs ?? [];
-        console.log('newJobsnewJobs>>', newJobs);
+  //       const newJobs = res?.data?.jobs ?? [];
+  //       setDashboardData(res?.data)
+  //       console.log('newJobsnewJobs>>', res?.data);
 
-        setJobs(newJobs);
-      } catch (err) {
-        console.error('Error fetching jobs:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchJobs();
-  }, []);
+  //       setJobs(newJobs);
+  //     } catch (err) {
+  //       console.error('Error fetching jobs:', err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchJobs();
+  // }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchJobs = async () => {
+        if (loading) return;
+        setLoading(true);
+        try {
+          const res =
+            user?.management_type === 'lead_labor'
+              ? await getJobs(leadLaborId, 1, 10, token)
+              : await getlabourJobs(laborId, 1, 10, token);
 
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]; // e.g. "2025-10-29"
+          const newJobs = res?.data?.jobs ?? [];
+          setDashboardData(res?.data);
+          console.log('newJobsnewJobs>>', res?.data);
+          setJobs(newJobs);
+        } catch (err) {
+          console.error('Error fetching jobs:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    // assuming 'data' is your array of jobs or tasks
-    const filtered = jobs?.filter(item => item.due_date === today);
+      fetchJobs();
+    }, [user, leadLaborId, laborId, token]),
+  );
+useEffect(() => {
+  const today = new Date().toISOString().split('T')[0]; // e.g. "2025-11-07"
 
-    setTodayDueJobs(filtered);
-  }, [jobs]);
+  const filtered = jobs?.filter(item => {
+    const createdDate = item?.created_at?.split('T')[0];
+    return createdDate === today;
+  });
+
+  setTodayDueJobs(filtered);
+}, [jobs]);
 
   const handleQuickActionPress = title => {
     if (title == 'Create Job') {
@@ -310,11 +308,11 @@ const HomeScreen = ({navigation}) => {
               {job?.status}
             </Text>
           </View>
-          <View style={[styles.priorityBadge, {backgroundColor: '#ECEEF2'}]}>
+          {/* <View style={[styles.priorityBadge, {backgroundColor: '#ECEEF2'}]}>
             <Text style={[styles.priorityText, {color: job.priorityColor}]}>
               {job?.priority}
             </Text>
-          </View>
+          </View> */}
         </View>
       </View>
       {/* <Text style={styles.jobTitle}>{job.title}</Text> */}
@@ -329,7 +327,6 @@ const HomeScreen = ({navigation}) => {
           }}>
           <View style={styles.jobDetailRow}>
             <Text style={styles.jobDetailIcon}>
-              {' '}
               <Feather name="user" size={18} color={tabColor} />{' '}
             </Text>
             <Text style={styles.jobDetailText}>
@@ -440,8 +437,6 @@ const HomeScreen = ({navigation}) => {
   const today = date.toLocaleDateString('en-US', options);
   return (
     <SafeAreaView style={styles.container}>
-      {/* <StatusBar backgroundColor="#155DFC" barStyle="light-content" /> */}
-
       <ScrollView
         style={{marginBottom: 70}}
         showsVerticalScrollIndicator={false}>
@@ -517,14 +512,16 @@ const HomeScreen = ({navigation}) => {
           {/* Quick Actions */}
           {user?.management_type == 'lead_labor' && (
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="flash-outline" size={24} color={tabColor} />
-                <Text style={styles.sectionTitle}>Quick Actions</Text>
-                <View
-                  style={[
-                    styles.accessBadge,
-                    {marginLeft: widthPercentageToDP(35)},
-                  ]}>
+              <View
+                style={[
+                  styles.sectionHeader,
+                  {justifyContent: 'space-between'},
+                ]}>
+                <View style={{flexDirection: 'row'}}>
+                  <Ionicons name="flash-outline" size={24} color={tabColor} />
+                  <Text style={styles.sectionTitle}>Quick Actions</Text>
+                </View>
+                <View style={[styles.accessBadge]}>
                   <Text style={styles.accessText}>Lead Access</Text>
                 </View>
               </View>
@@ -536,16 +533,19 @@ const HomeScreen = ({navigation}) => {
 
           {/* Today's Jobs */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-                <AntDesign name="calendar" size={18} color={tabColor} /> Today's
-                Jobs
-              </Text>
-              <View style={styles.countBadge}>
-                <Text style={styles.countText}>{todayDueJobs?.length}</Text>
+            <View
+              style={[styles.sectionHeader, {justifyContent: 'space-between'}]}>
+              <View style={{flexDirection: 'row'}}>
+                <AntDesign name="calendar" size={18} color={tabColor} />
+                <Text style={[styles.sectionTitle, {marginLeft: 4}]}>
+                  Today's Jobs
+                </Text>
+                <View style={styles.countBadge}>
+                  <Text style={styles.countText}>{todayDueJobs?.length}</Text>
+                </View>
               </View>
               <TouchableOpacity
-                style={{marginLeft: widthPercentageToDP(32)}}
+                // style={{marginLeft: widthPercentageToDP(32)}}
                 onPress={() => navigation.navigate('JobStack')}>
                 <Text style={styles.viewAllText}>View All →</Text>
               </TouchableOpacity>
@@ -555,28 +555,34 @@ const HomeScreen = ({navigation}) => {
             ) : todayDueJobs?.length === 0 ? (
               renderEmptyState()
             ) : (
-              todayDueJobs.map(renderJobCard)
+              todayDueJobs?.map(renderJobCard)
             )}
           </View>
 
           {/* Upcoming Jobs */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-                <Feather name="clock" size={20} color={tabColor} /> Upcoming
-                Jobs
-              </Text>
-              <View style={[styles.countBadge, {backgroundColor: '#F0FDF4'}]}>
-                <Text style={[styles.countText, {color: '#008236'}]}>1</Text>
+          {/* <View style={styles.section}>
+            <View
+              style={[
+                styles.sectionHeader,
+                {justifyContent: 'space-between', alignItems: 'center'},
+              ]}>
+              <View style={{flexDirection: 'row'}}>
+                <Feather name="clock" size={20} color={tabColor} />
+                <Text style={[styles.sectionTitle, {marginLeft: 4}]}>
+                  Upcoming Jobs
+                </Text>
+                <View style={[styles.countBadge, {backgroundColor: '#F0FDF4'}]}>
+                  <Text style={[styles.countText, {color: '#008236'}]}>1</Text>
+                </View>
               </View>
               <TouchableOpacity
-                style={{marginLeft: widthPercentageToDP(28)}}
+                // style={{marginLeft: widthPercentageToDP(28)}}
                 onPress={() => navigation.navigate('JobStack')}>
                 <Text style={styles.viewAllText}>View All →</Text>
               </TouchableOpacity>
             </View>
             {upcomingJobs?.map(renderUpcomingJob)}
-          </View>
+          </View> */}
 
           {/* Team Performance */}
           {/* <View style={styles.section}>
@@ -685,7 +691,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-    marginRight: 8,
   },
   roleText: {
     color: '#FFFFFF',
@@ -717,7 +722,7 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
     paddingHorizontal: 32,
   },
-  emptyIconContainer: {marginBottom: 16},
+  // emptyIconContainer: {marginBottom: 16},
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600',

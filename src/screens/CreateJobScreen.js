@@ -702,8 +702,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
       case 2: // Resources
         if (formData.assignedTo.length === 0)
           errors.assignedTo = 'At least one team member must be assigned';
-        if (formData.estimatedHours <= 0)
-          errors.estimatedHours = 'Estimated hours must be greater than 0';
+
         if (formData.estimatedHours > 100)
           errors.estimatedHours = 'Estimated hours seems too high (max 100)';
         break;
@@ -805,11 +804,9 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   };
 
   const buildJobPayload = () => {
-    // lead labor IDs: agar current user lead hai to use include karo
     const leadIds =
-      user?.management_type === 'lead_labor' ? [user?.leadLabor?.[0]?.id] : [];
+      user?.management_type === 'lead_labor' ? [user?.lead_labor?.id] : [];
 
-    // API example me arrays stringified hain — backend ke hisaab se rakh rahe:
     const assigned_lead_labor_ids = JSON.stringify(leadIds);
     const assigned_labor_ids = JSON.stringify(formData.assignedTo || []);
     const assigned_material_ids = JSON.stringify([]); // UI me material select nahi tha
@@ -835,20 +832,20 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
       customer_id: selectedCustomerId, // <- required
       // contractor_id: selectedContractorId, // <- optional if needed
       description: formData.description?.trim(),
-      priority: formData.priority,
+      // priority: formData.priority,
       address: formData.customerAddress?.trim(),
-      city_zip: formData.city?.trim(), // aapke form me zip nahi hai, city pass kar rahe
+      city_zip: formData.city?.trim(),
       phone: formData.customerPhone?.trim(),
-      email: formData.customerEmail?.trim(),
+      email: formData.customerEmail?.trim() || '',
       ...billTo,
       same_as_address: !!formData.sameAsCustomer,
-      due_date: formData.dueDate, // "YYYY-MM-DD"
+      due_date: formData.dueDate,
       estimated_hours: Number(formData.estimatedHours) || 0,
-      estimated_cost: Number(formData.estimatedCost) || 0, // UI me field nahi; chahe to 0 rakho ya add a field
+      estimated_cost: Number(formData.estimatedCost) || 0,
       assigned_lead_labor_ids,
       assigned_labor_ids,
       assigned_material_ids,
-      status: 'active',
+      status: 'pending',
     };
   };
 
@@ -1098,7 +1095,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             )}
           </View>
 
-          <View style={styles.formGroup}>
+          {/* <View style={styles.formGroup}>
             <Text style={styles.formLabel}>Priority Level</Text>
             {renderDropdown(
               formData.priority,
@@ -1110,14 +1107,13 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               option =>
                 option && (
                   <View style={styles.priorityDisplayContainer}>
-                    {/* <Icon name={option.icon} size={20} color={option.color} /> */}
                     <Text style={styles.dropdownButtonText}>
                       {option.label}
                     </Text>
                   </View>
                 ),
             )}
-          </View>
+          </View> */}
         </View>
 
         {/* Customer Information */}
@@ -1331,6 +1327,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               style={[
                 styles.inputContainer,
                 validationErrors.customerPhone && styles.inputContainerError,
+                ,
+                {paddingHorizontal: 0},
               ]}>
               <Icon
                 name="phone"
@@ -1363,6 +1361,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               style={[
                 styles.inputContainer,
                 validationErrors.customerEmail && styles.inputContainerError,
+                ,
+                {paddingHorizontal: 0},
               ]}>
               <Icon
                 name="email"
@@ -1398,6 +1398,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               style={[
                 styles.inputContainer,
                 validationErrors.customerAddress && styles.inputContainerError,
+                ,
+                {paddingHorizontal: 0},
               ]}>
               <Icon
                 name="place"
@@ -1434,18 +1436,51 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               </View>
             )}
           </View>
-          {/* <GooglePlacesAutocomplete
-            placeholder="Search"
-            onPress={(data, details = null) => {
-              // 'details' is provided when fetchDetails = true
-              console.log(data, details);
-            }}
-            predefinedPlaces={[]}
-            query={{
-              key: GOOGLE_MAPS_APIKEY,
-              language: 'en',
-            }}
-          /> */}
+          {/* <View style={{flex: 1, padding: 10}}>
+            <GooglePlacesAutocomplete
+              placeholder="Search location"
+              fetchDetails={true}
+              onPress={(data, details = null) => {
+                console.log('Selected:', data.description);
+              }}
+              query={{
+                key: GOOGLE_MAPS_APIKEY,
+                language: 'en',
+              }}
+              debounce={200}
+              enablePoweredByContainer={false}
+              textInputProps={{
+                onFocus: () => {},
+                onBlur: () => {},
+                placeholderTextColor: '#999',
+              }}
+              GooglePlacesDetailsQuery={{
+                fields: 'geometry',
+              }}
+              styles={{
+                container: {flex: 0},
+                textInputContainer: {
+                  width: '100%',
+                },
+                textInput: {
+                  height: 44,
+                  color: '#000',
+                  fontSize: 16,
+                  borderColor: '#ccc',
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  paddingHorizontal: 10,
+                },
+                listView: {
+                  backgroundColor: 'white',
+                  borderRadius: 8,
+                  elevation: 4,
+                  zIndex: 10,
+                },
+              }}
+            />
+          </View> */}
+
           {/* <View
             style={styles.formGroup}
             ef={ref => (fieldPositions.current['city'] = ref)}>
@@ -1493,9 +1528,9 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               <Text style={styles.sectionTitle}>Billing Address</Text>
             </View>
             <View style={styles.toggleContainer}>
-              <Text style={[styles.toggleLabel, {fontSize: 12}]}>
+              {/* <Text style={[styles.toggleLabel, {fontSize: 12}]}>
                 Same as Customer
-              </Text>
+              </Text> */}
               <Switch
                 value={formData.sameAsCustomer}
                 onValueChange={value => updateFormData('sameAsCustomer', value)}
@@ -1773,7 +1808,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             )}
           </View> */}
           {/* Due Date */}
-          <View style={styles.formGroup}>
+          <View style={[styles.formGroup]}>
             <Text style={styles.formLabel}>Due Date</Text>
             <TouchableOpacity
               style={[
@@ -1949,7 +1984,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
       </View>
 
       {/* Time Estimation */}
-      <View style={styles.sectionCard}>
+      {/* <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <Icon name="timer" size={24} color="#3B82F6" />
           <Text style={styles.sectionTitle}>Time Estimation</Text>
@@ -1991,7 +2026,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             Estimated total hours for completion
           </Text>
         </View>
-      </View>
+      </View> */}
 
       {/* Additional Notes */}
       <View style={styles.sectionCard}>
@@ -2295,9 +2330,13 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               style={[styles.navButton, styles.submitButton]}
               onPress={submitJob}
               disabled={isSubmitting}>
-              <Icon name="check" size={20} color="white" />
+              {/* <Icon name="check" size={20} color="white" /> */}
               <Text style={styles.submitButtonText}>
-                {isSubmitting ? 'Creating...' : 'Create Job'}
+                {isSubmitting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  'Create Job'
+                )}
               </Text>
             </TouchableOpacity>
           )}
@@ -2317,7 +2356,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 12,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
@@ -2442,12 +2481,12 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   toggleContainer: {
-    flexDirection: 'row',
+    // flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   toggleLabel: {
-    fontSize: 16,
+    fontSize: 10,
     fontWeight: '500',
     color: '#111827',
   },
@@ -2468,14 +2507,14 @@ const styles = StyleSheet.create({
     minHeight: 48,
     justifyContent: 'center',
     position: 'relative',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
   },
   inputContainerError: {
     borderColor: '#ef4444',
   },
   formInput: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 0,
+    paddingVertical: 10,
     fontSize: 16,
     color: '#111827',
     flex: 1,

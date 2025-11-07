@@ -3955,7 +3955,7 @@ const JobTimesheet = ({navigation, route, user}) => {
     const payload = {
       job_id: isNaN(Number(currentJobId)) ? currentJobId : Number(currentJobId),
       date: timesheetData.date,
-      status:"pending",
+      status: 'pending',
       notes: timesheetData.jobNotes || '',
       additional_charges: Number(additionalCharges.toFixed(2)),
       labor_entries: (timesheetData.labourEntries || []).map(localLaborToApi),
@@ -3971,6 +3971,7 @@ const JobTimesheet = ({navigation, route, user}) => {
   // temp states
   const [tempLabourData, setTempLabourData] = useState({});
   const [tempMaterialData, setTempMaterialData] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const locked = isSubmittedForDay;
 
@@ -4108,6 +4109,66 @@ const JobTimesheet = ({navigation, route, user}) => {
   };
 
   /* ========= SUBMIT (one per day) ========= */
+  // const handleSubmitForApproval = async () => {
+  //   try {
+  //     if (locked) {
+  //       Alert.alert(
+  //         'Already Submitted',
+  //         'Aaj ki bluesheet submit ho chuki hai.',
+  //       );
+  //       return;
+  //     }
+  //     const payload = buildBluesheetPayload();
+  //     if (!payload.labor_entries.length && !payload.material_entries.length) {
+  //       Alert.alert('Empty', 'Nothing to submit for the selected date.');
+  //       return;
+  //     }
+
+  //     await submitBluesheetComplete(payload, token);
+
+  //     await AsyncStorage.setItem(
+  //       submitKey(currentJobId, timesheetData.date),
+  //       'true',
+  //     );
+  //     setIsSubmittedForDay(true);
+
+  //     await AsyncStorage.removeItem(tsKey(currentJobId, timesheetData.date));
+
+  //     setTimesheetData(prev => ({
+  //       ...prev,
+  //       status: 'submitted',
+  //       submittedAt: new Date().toISOString(),
+  //       rejectionReason: undefined,
+  //     }));
+  //     Alert.alert('Success', 'Bluesheet submitted for approval');
+  //   } catch (err) {
+  //     const msg = err?.message || 'Failed to submit bluesheet';
+  //     if (
+  //       /already.*submitted|duplicate/i.test(
+  //         String(err?.message || err?.error || ''),
+  //       )
+  //     ) {
+  //       await AsyncStorage.setItem(
+  //         submitKey(currentJobId, timesheetData.date),
+  //         'true',
+  //       );
+  //       setIsSubmittedForDay(true);
+  //       await AsyncStorage.removeItem(tsKey(currentJobId, timesheetData.date));
+  //       setTimesheetData(prev => ({
+  //         ...prev,
+  //         status: 'submitted',
+  //         submittedAt: prev.submittedAt || new Date().toISOString(),
+  //       }));
+  //       Alert.alert(
+  //         'Already Submitted',
+  //         'Aaj ki bluesheet pehle hi submit ho chuki hai.',
+  //       );
+  //       return;
+  //     }
+  //     Alert.alert('Error', msg);
+  //   }
+  // };
+
   const handleSubmitForApproval = async () => {
     try {
       if (locked) {
@@ -4117,11 +4178,14 @@ const JobTimesheet = ({navigation, route, user}) => {
         );
         return;
       }
+
       const payload = buildBluesheetPayload();
       if (!payload.labor_entries.length && !payload.material_entries.length) {
         Alert.alert('Empty', 'Nothing to submit for the selected date.');
         return;
       }
+
+      setLoading(true); // start loading
 
       await submitBluesheetComplete(payload, token);
 
@@ -4139,9 +4203,11 @@ const JobTimesheet = ({navigation, route, user}) => {
         submittedAt: new Date().toISOString(),
         rejectionReason: undefined,
       }));
+
       Alert.alert('Success', 'Bluesheet submitted for approval');
     } catch (err) {
       const msg = err?.message || 'Failed to submit bluesheet';
+
       if (
         /already.*submitted|duplicate/i.test(
           String(err?.message || err?.error || ''),
@@ -4164,7 +4230,10 @@ const JobTimesheet = ({navigation, route, user}) => {
         );
         return;
       }
+
       Alert.alert('Error', msg);
+    } finally {
+      setLoading(false); // stop loading in all cases
     }
   };
 
@@ -4238,7 +4307,7 @@ const JobTimesheet = ({navigation, route, user}) => {
           <View style={styles.tableContainer}>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableHeaderText, {flex: 1}]}>Employee</Text>
-              <Text style={[styles.tableHeaderText, {flex: 1}]}>Role</Text>
+              {/* <Text style={[styles.tableHeaderText, {flex: 1}]}>Role</Text> */}
               <Text style={[styles.tableHeaderText, {flex: 1}]}>Reg.hrs</Text>
               {canEdit() && (
                 <Text style={[styles.tableHeaderText, {flex: 1}]}>Actions</Text>
@@ -4250,9 +4319,9 @@ const JobTimesheet = ({navigation, route, user}) => {
                 <Text style={[styles.tableCell, {flex: 1}]}>
                   {entry.employeeName}
                 </Text>
-                <Text style={[styles.tableCell, {flex: 1}]}>
+                {/* <Text style={[styles.tableCell, {flex: 1}]}>
                   {entry.role || 'Labor'}
-                </Text>
+                </Text> */}
                 <Text style={[styles.tableCell, {flex: 1}]}>
                   {normalizeToHMS(
                     entry.regular_hours_input ??
@@ -4411,14 +4480,21 @@ const JobTimesheet = ({navigation, route, user}) => {
           </View>
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              style={[styles.submitButton, isReadOnly() && {opacity: 0.5}]}
-              disabled={isReadOnly()}
+              style={[
+                styles.submitButton,
+                (isReadOnly() || loading) && {opacity: 0.5},
+              ]}
+              disabled={isReadOnly() || loading}
               onPress={handleSubmitForApproval}>
-              <Text style={styles.submitButtonText}>
-                {isReadOnly()
-                  ? 'Submitted (come back tomorrow)'
-                  : 'Submit for Approval'}
-              </Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  {isReadOnly()
+                    ? 'Submitted (come back tomorrow)'
+                    : 'Submit for Approval'}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -4497,7 +4573,7 @@ const styles = StyleSheet.create({
   approvalDetails: {fontSize: 14, color: '#16a34a'},
   sectionCard: {
     backgroundColor: '#fff',
-    marginHorizontal: 16,
+    marginHorizontal: 0,
     marginBottom: 16,
     padding: 16,
     borderRadius: 12,

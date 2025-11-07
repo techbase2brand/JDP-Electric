@@ -298,9 +298,11 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
           disabled={loading}
           style={styles.placeOrderButton}
           onPress={handlePlaceOrder}>
-          <Text style={styles.placeOrderText}>
-            {loading ? 'Placing Order..' : 'Place Order'}
-          </Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.placeOrderText}>Place Order</Text>
+          )}
         </TouchableOpacity>
       </View>
 

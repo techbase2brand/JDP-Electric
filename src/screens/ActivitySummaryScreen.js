@@ -979,8 +979,8 @@ if (Platform.OS === 'android') {
 const ActivitySummaryScreen = ({navigation}) => {
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
-  const leadLaborId = user?.leadLabor?.[0]?.id;
-  const laborId = user?.labor?.[0]?.id;
+  const leadLaborId = user?.lead_labor?.id;
+  const laborId = user?.labor?.id;
   console.log('leadLaborIdleadLaborId', leadLaborId, laborId);
 
   // -------- UI State
@@ -1641,7 +1641,8 @@ const ActivitySummaryScreen = ({navigation}) => {
             data={filteredJobs}
             keyExtractor={keyExtractor}
             renderItem={renderJobCard}
-            contentContainerStyle={{gap: 12, paddingBottom: 32}}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{gap: 12, paddingBottom: 350}}
             onEndReachedThreshold={0.4}
             onEndReached={handleEndReached}
             ListFooterComponent={
@@ -1674,7 +1675,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 12,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},

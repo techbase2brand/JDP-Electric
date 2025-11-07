@@ -11,12 +11,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Skeleton from 'react-native-reanimated-skeleton';
 import {useNavigation} from '@react-navigation/native';
 import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
 import {getJobById} from '../config/apiConfig';
+import {style} from '../constants/Fonts';
 
 // Embedded Colors - JDP Electrics Theme
 const Colors = {
@@ -100,11 +102,12 @@ const JobDetailScreen = ({
   // job: propJob,
 }) => {
   const navigation = useNavigation();
-  // const {job1} =route?.params?.job
+  // const job =route?.params?.job
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
   const canViewOrders = useHasPermission('orders', 'view');
   const canViewBlueSheet = useHasPermission('bluesheet', 'view');
+  console.log('job>>>>>', job);
 
   const [timerSession, setTimerSession] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -188,20 +191,134 @@ const JobDetailScreen = ({
     getTimerId();
   }, []);
   // Handle null job case
+  // if (loading) {
+  //   return (
+  //     <View
+  //       style={{
+  //         flex: 1,
+  //         backgroundColor: Colors.background,
+  //         justifyContent: 'center',
+  //         alignItems: 'center',
+  //       }}>
+  //       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+  //       <ActivityIndicator size="large" color={Colors.primary} />
+  //     </View>
+  //   );
+  // }
+
   if (loading) {
     return (
-      <View
-        style={{
+      <Skeleton
+        isLoading={false}
+        duration={1200}
+        animationType="shiver"
+        animationDirection="horizontalRight"
+        boneColor="#E1E9EE"
+        highlightColor="#F2F8FC"
+        containerStyle={{
           flex: 1,
           backgroundColor: Colors.background,
-          justifyContent: 'center',
-          alignItems: 'center',
+          padding: 16,
         }}>
-        <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
+        {/* Header Skeleton */}
+        <View
+          style={{
+            height: 60,
+            borderRadius: 8,
+            backgroundColor: '#E1E9EE',
+            marginBottom: 20,
+          }}
+        />
+
+        {/* Priority / Badge Skeleton */}
+        <View
+          style={{
+            height: 40,
+            borderRadius: 8,
+            backgroundColor: '#E1E9EE',
+            marginBottom: 20,
+          }}
+        />
+
+        {/* Actions Card Skeleton */}
+        <View
+          style={{
+            height: 120,
+            borderRadius: 12,
+            backgroundColor: '#E1E9EE',
+            marginBottom: 20,
+          }}
+        />
+
+        {/* Job Details Card Skeleton */}
+        <View
+          style={{
+            height: 180,
+            borderRadius: 12,
+            backgroundColor: '#E1E9EE',
+            marginBottom: 20,
+          }}
+        />
+
+        {/* Customer Card Skeleton */}
+        <View
+          style={{
+            height: 140,
+            borderRadius: 12,
+            backgroundColor: '#E1E9EE',
+            marginBottom: 20,
+          }}
+        />
+
+        {/* Location Card Skeleton */}
+        <View
+          style={{
+            height: 100,
+            borderRadius: 12,
+            backgroundColor: '#E1E9EE',
+            marginBottom: 20,
+          }}
+        />
+
+        {/* Materials Card Skeleton (if canViewOrders) */}
+        {canViewOrders && (
+          <View
+            style={{
+              height: 140,
+              borderRadius: 12,
+              backgroundColor: '#E1E9EE',
+              marginBottom: 20,
+            }}
+          />
+        )}
+
+        {/* Special Instructions Skeleton */}
+        {job?.notes && (
+          <View
+            style={{
+              height: 80,
+              borderRadius: 12,
+              backgroundColor: '#E1E9EE',
+              marginBottom: 20,
+            }}
+          />
+        )}
+
+        {/* Additional Actions Skeleton */}
+        {canViewBlueSheet && (
+          <View
+            style={{
+              height: 100,
+              borderRadius: 12,
+              backgroundColor: '#E1E9EE',
+              marginBottom: 20,
+            }}
+          />
+        )}
+      </Skeleton>
     );
   }
+
   if (!job) {
     return (
       <View style={styles.container}>
@@ -238,60 +355,6 @@ const JobDetailScreen = ({
     );
   }
 
-  // Status helpers
-  const isCompleted = job.status === 'completed';
-  const isInProgress = job.status === 'in-progress';
-  const canStartWork = ['pending', 'scheduled', 'assigned'].includes(
-    job.status,
-  );
-
-  const getStatusConfig = status => {
-    switch (status) {
-      case 'completed':
-        return {
-          icon: 'check-circle',
-          color: Colors.successLight,
-          textColor: Colors.successDark,
-          label: 'Completed',
-        };
-      case 'in-progress':
-        return {
-          icon: 'play-arrow',
-          color: Colors.primaryLight,
-          textColor: Colors.primaryDark,
-          label: 'In Progress',
-        };
-      case 'assigned':
-        return {
-          icon: 'person',
-          color: Colors.purpleLight,
-          textColor: Colors.purple,
-          label: 'Assigned',
-        };
-      case 'scheduled':
-        return {
-          icon: 'schedule',
-          color: Colors.indigoLight,
-          textColor: Colors.indigo,
-          label: 'Scheduled',
-        };
-      case 'pending':
-        return {
-          icon: 'hourglass-empty',
-          color: Colors.orangeLight,
-          textColor: Colors.orange,
-          label: 'Pending',
-        };
-      default:
-        return {
-          icon: 'help-outline',
-          color: Colors.backgroundLight,
-          textColor: Colors.textLight,
-          label: 'Unknown',
-        };
-    }
-  };
-
   const getPriorityConfig = priority => {
     switch (priority) {
       case 'high':
@@ -321,85 +384,7 @@ const JobDetailScreen = ({
     }
   };
 
-  // Timer functions
-  const handleStartJob = () => {
-    if (!timerSession && canStartWork) {
-      const now = new Date();
-      setTimerSession({
-        startTime: now,
-        elapsedTime: 0,
-        isRunning: true,
-        isPaused: false,
-      });
-
-      if (onUpdateJobStatus) {
-        onUpdateJobStatus(job.id, 'in-progress');
-      }
-
-      Alert.alert('Success', `Job started at ${now.toLocaleTimeString()}`);
-    }
-  };
-
-  const handlePauseTimer = () => {
-    if (timerSession) {
-      setTimerSession(prev =>
-        prev
-          ? {
-              ...prev,
-              isPaused: !prev.isPaused,
-            }
-          : null,
-      );
-
-      Alert.alert(
-        'Success',
-        timerSession.isPaused ? 'Timer resumed' : 'Timer paused',
-      );
-    }
-  };
-
-  const handleStopTimer = () => {
-    if (timerSession) {
-      const duration = formatDuration(timerSession.elapsedTime);
-      setTimerSession(null);
-
-      // Update job status to completed
-      if (onUpdateJobStatus) {
-        onUpdateJobStatus(job.id, 'completed');
-      }
-
-      Alert.alert('Success', `Job completed in ${duration}`);
-    }
-  };
-
-  const formatDuration = seconds => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ${secs}s`;
-    } else if (minutes > 0) {
-      return `${minutes}m ${secs}s`;
-    } else {
-      return `${secs}s`;
-    }
-  };
-
-  const formatTime = date => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
-
-  const hasLeadAccess = role => {
-    return role === 'Lead Labor';
-  };
-
-  const statusConfig = getStatusConfig(job.status);
-  const priorityConfig = getPriorityConfig(job.priority || 'medium');
+  // const priorityConfig = getPriorityConfig(job.priority || 'medium');
 
   const handleNavigate = (screen, jobData) => {
     // if (onNavigate) {
@@ -468,43 +453,16 @@ const JobDetailScreen = ({
       </View>
 
       {/* Status and Priority Badges */}
-      <View style={styles.badgesContainer}>
-        {/* <View style={[styles.badge, {backgroundColor: statusConfig.color}]}>
-          <Icon
-            name={statusConfig.icon}
-            size={16}
-            color={statusConfig.textColor}
-          />
-          <Text style={[styles.badgeText, {color: statusConfig.textColor}]}>
-            {statusConfig.label}
-          </Text>
-        </View> */}
+      {/* <View style={styles.badgesContainer}>
         <View style={[styles.badge, {backgroundColor: Colors.errorLight}]}>
           <Icon name="star" size={16} color={Colors.error} />
           <Text style={[styles.badgeText, {color: Colors.error}]}>
             {priorityConfig.label}
           </Text>
         </View>
-      </View>
+      </View> */}
 
       {/* Timer Display */}
-      {timerSession && (
-        <View style={styles.timerCard}>
-          <View style={styles.timerHeader}>
-            <Icon name="timer" size={20} color={Colors.white} />
-            <Text style={styles.timerHeaderText}>Active Session</Text>
-          </View>
-          <Text style={styles.timerDuration}>
-            {formatDuration(timerSession.elapsedTime)}
-          </Text>
-          <Text style={styles.timerStartTime}>
-            Started at {formatTime(timerSession.startTime)}
-          </Text>
-          {timerSession.isPaused && (
-            <Text style={styles.timerPausedText}>Timer Paused</Text>
-          )}
-        </View>
-      )}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Primary Actions */}
@@ -514,43 +472,6 @@ const JobDetailScreen = ({
             <Text style={styles.cardTitle}>Actions</Text>
           </View>
           <View style={styles.cardContent}>
-            {/* {!timerSession && canStartWork && (
-              <TouchableOpacity
-                style={styles.startButton}
-                onPress={handleStartJob}>
-                <Icon name="play-arrow" size={24} color={Colors.white} />
-                <Text style={styles.startButtonText}>Start Job</Text>
-              </TouchableOpacity>
-            )}
-
-            {timerSession && (
-              <View style={styles.timerControls}>
-                <View style={styles.timerButtonRow}>
-                  <TouchableOpacity
-                    style={styles.timerButton}
-                    onPress={handlePauseTimer}>
-                    <Icon
-                      name={timerSession.isPaused ? 'play-arrow' : 'pause'}
-                      size={20}
-                      color={Colors.text}
-                    />
-                    <Text style={styles.timerButtonText}>
-                      {timerSession.isPaused ? 'Resume' : 'Pause'}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.timerButton, styles.stopButton]}
-                    onPress={handleStopTimer}>
-                    <Icon name="stop" size={20} color={Colors.white} />
-                    <Text
-                      style={[styles.timerButtonText, styles.stopButtonText]}>
-                      Complete
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )} */}
-
             <View style={styles.actionButtonRow}>
               <TouchableOpacity
                 style={styles.actionButton}
@@ -561,7 +482,7 @@ const JobDetailScreen = ({
 
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => navigation.navigate('MapScreen', job)}>
+                onPress={() => navigation.navigate('MapScreen', {job})}>
                 <Icon name="directions" size={20} color={Colors.primary} />
                 <Text
                   style={[styles.actionButtonText, {color: Colors.primary}]}>
@@ -585,7 +506,7 @@ const JobDetailScreen = ({
             </View>
 
             <View style={styles.infoRow}>
-              <View style={styles.infoColumn}>
+              {/* <View style={styles.infoColumn}>
                 <Text style={styles.infoLabel}>Estimated Time</Text>
                 <View style={styles.infoWithIcon}>
                   <Icon
@@ -597,6 +518,22 @@ const JobDetailScreen = ({
                     {job?.estimated_hours || 'N/A'} hr
                   </Text>
                 </View>
+              </View> */}
+              <View style={styles.infoColumn}>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Assigned To :</Text>
+                  <View style={styles.infoWithIcon}>
+                    {/* Sare full_name comma se join karke dikhana */}
+                    {job?.assigned_labor &&
+                      Array.isArray(job?.assigned_labor) && (
+                        <Text style={styles.infoText}>
+                          {job?.assigned_labor
+                            .map(labor => labor.user?.full_name)
+                            .join(', ')}
+                        </Text>
+                      )}
+                  </View>
+                </View>
               </View>
               <View style={styles.infoColumn}>
                 <Text style={styles.infoLabel}>Scheduled</Text>
@@ -606,11 +543,10 @@ const JobDetailScreen = ({
                 </View>
               </View>
             </View>
-            {job?.assigned_labor && Array.isArray(job?.assigned_labor) && (
+            {/* {job?.assigned_labor && Array.isArray(job?.assigned_labor) && (
               <View style={styles.infoItem}>
                 <Text style={styles.infoLabel}>Assigned To </Text>
                 <View style={styles.infoWithIcon}>
-                  {/* Sare full_name comma se join karke dikhana */}
                   <Text style={styles.infoText}>
                     {job?.assigned_labor
                       .map(labor => labor.user?.full_name)
@@ -618,7 +554,7 @@ const JobDetailScreen = ({
                   </Text>
                 </View>
               </View>
-            )}
+            )} */}
           </View>
         </View>
 
@@ -636,11 +572,11 @@ const JobDetailScreen = ({
               </Text>
             </View>
 
-            {job.customer?.phone && (
+            {job?.customer?.phone && (
               <View style={styles.customerContactItem}>
                 <View style={styles.contactInfo}>
                   <Text style={styles.infoLabel}>Phone</Text>
-                  <Text style={styles.infoText}>{job.customer.phone}</Text>
+                  <Text style={styles.infoText}>{job?.customer?.phone}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.contactButton}
@@ -661,21 +597,6 @@ const JobDetailScreen = ({
                 </TouchableOpacity>
               </View>
             )}
-
-            {/* {job.customer?.email && (
-              <View style={styles.customerContactItem}>
-                <View style={styles.contactInfo}>
-                  <Text style={styles.infoLabel}>Email</Text>
-                  <Text style={styles.infoText}>{job.customer.email}</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.emailButton}
-                  onPress={openEmail}>
-                  <Icon name="email" size={16} color={Colors.text} />
-                  <Text style={styles.emailButtonText}>Email</Text>
-                </TouchableOpacity>
-              </View>
-            )} */}
           </View>
         </View>
 
@@ -731,7 +652,7 @@ const JobDetailScreen = ({
         {/* )} */}
 
         {/* Special Instructions */}
-        {job.notes && (
+        {job?.notes && (
           <View style={[styles.card, styles.warningCard]}>
             <View style={styles.cardHeader}>
               <Icon name="warning" size={20} color={Colors.orange} />
@@ -741,7 +662,7 @@ const JobDetailScreen = ({
             </View>
             <View style={styles.cardContent}>
               <View style={styles.warningContent}>
-                <Text style={styles.warningText}>{job.notes}</Text>
+                <Text style={styles.warningText}>{job?.notes}</Text>
               </View>
             </View>
           </View>
@@ -758,11 +679,6 @@ const JobDetailScreen = ({
               <View style={styles.actionGrid}>
                 <TouchableOpacity
                   style={styles.gridActionButton}
-                  // onPress={() =>
-                  //   onViewTimesheet
-                  //     ? onViewTimesheet(job)
-                  //     : handleNavigate('JobTimesheet')
-                  // }
                   onPress={() => navigation.navigate('JobTimesheet', {job})}>
                   <Icon name="schedule" size={20} color={Colors.text} />
                   <Text style={styles.gridActionText}>Bluesheet</Text>
@@ -776,24 +692,6 @@ const JobDetailScreen = ({
                   <Icon name="bar-chart" size={20} color={Colors.text} />
                   <Text style={styles.gridActionText}>Job Activity</Text>
                 </TouchableOpacity>
-                {/*               
-              {hasLeadAccess(currentUser.role) && (
-                <TouchableOpacity 
-                  style={styles.gridActionButton} 
-                  onPress={() => handleNavigate('InvoiceManagementScreen', job)}
-                >
-                  <Icon name="receipt" size={20} color={Colors.text} />
-                  <Text style={styles.gridActionText}>Invoice</Text>
-                </TouchableOpacity>
-              )}
-              
-              <TouchableOpacity 
-                style={styles.gridActionButton} 
-                onPress={() => handleNavigate('SupportCenterScreen')}
-              >
-                <Icon name="support" size={20} color={Colors.text} />
-                <Text style={styles.gridActionText}>Support</Text>
-              </TouchableOpacity> */}
               </View>
             </View>
           </View>
@@ -811,13 +709,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-
   // Header
   header: {
     backgroundColor: Colors.primary,
-    paddingTop: Spacing.xl,
+    paddingVertical: 12,
     paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
   },
