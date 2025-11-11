@@ -545,7 +545,7 @@ const MapScreen = ({route, navigation}) => {
               'Geofence Alert 🚨',
               'You are within 100 meters of destination!',
             );
-            navigation.navigate('JobDetail', {job})
+            navigation.navigate('JobDetail', {job});
           }
         }
       },

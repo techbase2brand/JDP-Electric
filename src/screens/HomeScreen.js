@@ -153,64 +153,64 @@ const HomeScreen = ({navigation}) => {
       estimatedHours: 8,
     },
   ];
-  // useEffect(() => {
-  //   const fetchJobs = async () => {
-  //     if (loading) return;
-  //     setLoading(true);
-  //     try {
-  //       const res =
-  //         user?.management_type === 'lead_labor'
-  //           ? await getJobs(leadLaborId, 1, 10, token)
-  //           : await getlabourJobs(laborId, 1, 10, token);
+  useEffect(() => {
+    const fetchJobs = async () => {
+      if (loading) return;
+      setLoading(true);
+      try {
+        const res =
+          user?.management_type === 'lead_labor'
+            ? await getJobs(leadLaborId, 1, 10, token)
+            : await getlabourJobs(laborId, 1, 10, token);
 
-  //       const newJobs = res?.data?.jobs ?? [];
-  //       setDashboardData(res?.data)
-  //       console.log('newJobsnewJobs>>', res?.data);
+        const newJobs = res?.data?.jobs ?? [];
+        setDashboardData(res?.data)
+        console.log('newJobsnewJobs>>', res?.data);
 
-  //       setJobs(newJobs);
-  //     } catch (err) {
-  //       console.error('Error fetching jobs:', err);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchJobs();
-  // }, []);
-  useFocusEffect(
-    useCallback(() => {
-      const fetchJobs = async () => {
-        if (loading) return;
-        setLoading(true);
-        try {
-          const res =
-            user?.management_type === 'lead_labor'
-              ? await getJobs(leadLaborId, 1, 10, token)
-              : await getlabourJobs(laborId, 1, 10, token);
+        setJobs(newJobs);
+      } catch (err) {
+        console.error('Error fetching jobs:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const fetchJobs = async () => {
+  //       if (loading) return;
+  //       setLoading(true);
+  //       try {
+  //         const res =
+  //           user?.management_type === 'lead_labor'
+  //             ? await getJobs(leadLaborId, 1, 10, token)
+  //             : await getlabourJobs(laborId, 1, 10, token);
 
-          const newJobs = res?.data?.jobs ?? [];
-          setDashboardData(res?.data);
-          console.log('newJobsnewJobs>>', res?.data);
-          setJobs(newJobs);
-        } catch (err) {
-          console.error('Error fetching jobs:', err);
-        } finally {
-          setLoading(false);
-        }
-      };
+  //         const newJobs = res?.data?.jobs ?? [];
+  //         setDashboardData(res?.data);
+  //         console.log('newJobsnewJobs>>', res?.data);
+  //         setJobs(newJobs);
+  //       } catch (err) {
+  //         console.error('Error fetching jobs:', err);
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     };
 
-      fetchJobs();
-    }, [user, leadLaborId, laborId, token]),
-  );
-useEffect(() => {
-  const today = new Date().toISOString().split('T')[0]; // e.g. "2025-11-07"
+  //     fetchJobs();
+  //   }, [user, leadLaborId, laborId, token]),
+  // );
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]; // e.g. "2025-11-07"
 
-  const filtered = jobs?.filter(item => {
-    const createdDate = item?.created_at?.split('T')[0];
-    return createdDate === today;
-  });
+    const filtered = jobs?.filter(item => {
+      const createdDate = item?.created_at?.split('T')[0];
+      return createdDate === today;
+    });
 
-  setTodayDueJobs(filtered);
-}, [jobs]);
+    setTodayDueJobs(filtered);
+  }, [jobs]);
 
   const handleQuickActionPress = title => {
     if (title == 'Create Job') {
@@ -544,9 +544,7 @@ useEffect(() => {
                   <Text style={styles.countText}>{todayDueJobs?.length}</Text>
                 </View>
               </View>
-              <TouchableOpacity
-                // style={{marginLeft: widthPercentageToDP(32)}}
-                onPress={() => navigation.navigate('JobStack')}>
+              <TouchableOpacity onPress={() => navigation.navigate('JobStack')}>
                 <Text style={styles.viewAllText}>View All →</Text>
               </TouchableOpacity>
             </View>

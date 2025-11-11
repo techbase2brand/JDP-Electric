@@ -11,170 +11,203 @@
 // } from 'react-native';
 // import Icon from 'react-native-vector-icons/MaterialIcons';
 // import Ionicons from 'react-native-vector-icons/Ionicons';
+// import {getJobActivity} from '../config/apiConfig';
+// import {useSelector} from 'react-redux';
+// import {widthPercentageToDP} from '../utils';
 
 // const {width} = Dimensions.get('window');
 
 // const JobActivityLogScreen = ({navigation, route}) => {
 //   const {job} = route?.params || {};
-
-//   // Example usage
-
-//   console.log('job>>>', job);
-
+//   const token = useSelector(state => state.user.token);
 //   const [selectedJob] = useState(job || null);
 //   const [jobActivities, setJobActivities] = useState([]);
+//   const jobId = job?.id;
+//   console.log('jobjobjob', job, jobId);
+//   // ---------------- Helpers ----------------
+//   const stripMicroseconds = iso => String(iso || '').replace(/\.\d+/, '');
 
-//   const formatJobDateTime = created_at => {
-//     if (!created_at) return {date: '--', time: '--'};
-
-//     // 🔹 Fix invalid ISO format (remove microseconds)
-//     const safeDateString = String(created_at).replace(/\.\d+/, '');
-
-//     const dateObj = new Date(safeDateString);
-//     if (isNaN(dateObj)) return {date: '--', time: '--'};
-
-//     const optionsDate = {month: 'short', day: 'numeric', year: 'numeric'};
-//     const optionsTime = {hour: 'numeric', minute: '2-digit', hour12: true};
-
-//     const formattedDate = dateObj.toLocaleDateString('en-US', optionsDate);
-//     const formattedTime = dateObj.toLocaleTimeString('en-US', optionsTime);
-
-//     return {date: formattedDate, time: formattedTime};
+//   const toSeconds = (hhmmss = '00:00:00') => {
+//     const [hh = '0', mm = '0', ss = '0'] = String(hhmmss).split(':');
+//     const h = parseInt(hh, 10) || 0;
+//     const m = parseInt(mm, 10) || 0;
+//     const s = parseInt(ss, 10) || 0;
+//     return h * 3600 + m * 60 + s;
 //   };
+
+//   const secondsToHours = (sec = 0) => +(sec / 3600).toFixed(2);
+
+//   const safeISO = d => {
+//     if (!d) return null;
+//     const date = new Date(d);
+//     return isNaN(date) ? null : date.toISOString();
+//   };
+
 //   useEffect(() => {
-//     if (!job?.created_at) return; // wait until job data is available
+//     const fetchJobActivity = async () => {
+//       try {
+//         // fetch for current date so route-seeding uses that data immediately
+//         const res = await getJobActivity(jobId, token);
+//         console.log("fetchJobActivityfetchJobActivity",res);
 
-//     const {date, time} = formatJobDateTime(job.created_at);
-//     console.log('date, time>>', date, time);
+//         // res might be { success, message, data: { labor_timesheets: [...], orders: [...] } }
+//         // setBulesheetData(res?.data ?? {}); // keep shape similar to previous code
+//       } catch (error) {
+//         console.log('Error fetching timesheet:', error);
+//         // setBulesheetData({}); // fail-safe
+//       }
+//     };
 
-//     const activities = [
-//       {
-//         id: '1',
-//         jobId: 'JDP-2024-001',
+//     fetchJobActivity();
+//   }, [jobId]);
+//   const joinDateTimeToISO = (dateStr, timeStr) => {
+//     if (!dateStr || !timeStr) return null;
+//     // Create ISO in local time (acceptable for display; if you need exact TZ, adapt here)
+//     const isoRaw = `${dateStr}T${timeStr}`;
+//     const d = new Date(isoRaw);
+//     return isNaN(d) ? null : d.toISOString();
+//   };
+
+//   const getEarliestStartISO = (timesheets = []) => {
+//     const allStarts = timesheets
+//       .map(
+//         ts =>
+//           joinDateTimeToISO(ts.date, ts.start_time) || safeISO(ts.created_at),
+//       )
+//       .filter(Boolean)
+//       .sort((a, b) => new Date(a) - new Date(b));
+//     return allStarts[0] || null;
+//   };
+
+//   // Build timeline dynamically from job object
+//   useEffect(() => {
+//     if (!job) return;
+
+//     const createdISO = safeISO(stripMicroseconds(job.created_at));
+//     const completedISO = safeISO(stripMicroseconds(job.updated_at));
+//     const timesheets = Array.isArray(job.labor_timesheets)
+//       ? job.labor_timesheets
+//       : [];
+
+//     const dynamicActivities = [];
+
+//     // 1) Job Created
+//     if (createdISO) {
+//       dynamicActivities.push({
+//         id: 'job_created',
+//         jobId: job.id,
 //         type: 'job_created',
 //         title: 'Job Created',
-//         description:
-//           'New electrical panel upgrade job was created and assigned to the team.',
-//         timestamp: `${date} ${time}`,
-//         user: 'Sarah Johnson',
-//         metadata: {
-//           status: 'pending',
-//         },
-//       },
-//       {
-//         id: '2',
-//         jobId: selectedJob?.id || 'JDP-2024-001',
+//         description: `Job ${job.job_title || `#${job.id}`} was created.`,
+//         timestamp: createdISO,
+//         user: job?.created_by_user?.full_name || 'System',
+//         metadata: {status: job.status || 'pending'},
+//       });
+//     }
+
+//     // 2) Job Started (earliest start across timesheets)
+//     const earliestStartISO = getEarliestStartISO(timesheets);
+//     if (earliestStartISO) {
+//       dynamicActivities.push({
+//         id: 'job_started',
+//         jobId: job.id,
 //         type: 'job_started',
 //         title: 'Job Started',
-//         description:
-//           'Work began on electrical panel upgrade with on-site arrival confirmation.',
-//         timestamp: '2024-01-15T08:30:00Z',
-//         user: 'Mike Wilson',
-//         metadata: {
-//           status: 'in-progress',
-//         },
-//       },
-//       {
-//         id: '3',
-//         jobId: selectedJob?.id || 'JDP-2024-001',
+//         description: 'Teams started working on the job.',
+//         timestamp: earliestStartISO,
+//         user: job?.assigned_lead_labor?.[0]?.user?.full_name || 'Lead',
+//         metadata: {status: 'in-progress'},
+//       });
+//     }
+
+//     // 3) Timesheet → Labour Hours (+ optional Timesheet Submitted)
+//     timesheets.forEach((ts, idx) => {
+//       const workedSeconds = toSeconds(ts.work_hours || '00:00:00');
+//       const hours = secondsToHours(workedSeconds);
+//       const tsStartISO =
+//         joinDateTimeToISO(ts.date, ts.start_time) || safeISO(ts.created_at);
+//       const tsEndISO =
+//         joinDateTimeToISO(ts.date, ts.end_time) || safeISO(ts.updated_at);
+
+//       dynamicActivities.push({
+//         id: `labour_${idx + 1}`,
+//         jobId: job.id,
 //         type: 'labour_hours',
 //         title: 'Labour Hours Logged',
-//         description:
-//           'Team logged 6.5 hours of work on electrical installations and safety checks.',
-//         timestamp: '2024-01-15T15:00:00Z',
-//         user: 'Mike Wilson',
-//         metadata: {
-//           hours: 6.5,
-//         },
-//       },
-//       {
-//         id: '4',
-//         jobId: selectedJob?.id || 'JDP-2024-001',
-//         type: 'material_ordered',
-//         title: 'Job Material Ordered',
-//         description:
-//           'Ordered electrical components and safety equipment from preferred supplier.',
-//         timestamp: '2024-01-15T16:30:00Z',
-//         user: 'David Chen',
-//         metadata: {
-//           materialCount: 12,
-//           amount: 850.0,
-//         },
-//       },
-//       {
-//         id: '5',
-//         jobId: selectedJob?.id || 'JDP-2024-001',
-//         type: 'labour_hours',
-//         title: 'Labour Hours Logged',
-//         description:
-//           'Additional 4.2 hours logged for final installations and testing.',
-//         timestamp: '2024-01-16T14:30:00Z',
-//         user: 'Mike Wilson',
-//         metadata: {
-//           hours: 4.2,
-//         },
-//       },
-//       {
-//         id: '6',
-//         jobId: selectedJob?.id || 'JDP-2024-001',
-//         type: 'timesheet_submitted',
-//         title: 'Timesheet Submitted',
-//         description:
-//           'Daily timesheet submitted with 10.7 total hours and job completion details.',
-//         timestamp: '2024-01-16T17:00:00Z',
-//         user: 'Mike Wilson',
-//         metadata: {
-//           hours: 10.7,
-//         },
-//       },
-//       {
-//         id: '7',
-//         jobId: selectedJob?.id || 'JDP-2024-001',
+//         description: `${ts.labor_name || 'Technician'} logged ${hours}h on ${
+//           ts.date || ''
+//         }.`,
+//         timestamp:
+//           tsEndISO || tsStartISO || createdISO || new Date().toISOString(),
+//         user: ts.labor_name || 'Technician',
+//         metadata: {hours},
+//       });
+
+//       if (ts.updated_at) {
+//         const updISO = safeISO(ts.updated_at);
+//         if (updISO) {
+//           dynamicActivities.push({
+//             id: `timesheet_${idx + 1}`,
+//             jobId: job.id,
+//             type: 'timesheet_submitted',
+//             title: 'Timesheet Submitted',
+//             description: `Timesheet updated/submitted by ${
+//               ts.labor_name || 'Technician'
+//             }.`,
+//             timestamp: updISO,
+//             user: ts.labor_name || 'Technician',
+//             metadata: {hours},
+//           });
+//         }
+//       }
+//     });
+
+//     // 4) Job Completed
+//     if ((job.status || '').toLowerCase() === 'completed' && completedISO) {
+//       dynamicActivities.push({
+//         id: 'job_completed',
+//         jobId: job.id,
 //         type: 'job_completed',
 //         title: 'Job Completed',
-//         description:
-//           'Electrical panel upgrade completed successfully with customer sign-off.',
-//         timestamp: '2024-01-16T17:30:00Z',
-//         user: 'Mike Wilson',
-//         metadata: {
-//           status: 'completed',
-//         },
-//       },
-//     ];
+//         description: 'Job marked as completed.',
+//         timestamp: completedISO,
+//         user: job?.assigned_lead_labor?.[0]?.user?.full_name || 'Lead',
+//         metadata: {status: 'completed'},
+//       });
+//     }
 
-//     setJobActivities(activities);
+//     // Sort timeline
+//     dynamicActivities.sort(
+//       (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
+//     );
+
+//     setJobActivities(dynamicActivities);
 //   }, [job]);
 
-//   // Calculate summary statistics - exact match with web version
+//   // Summary (Total Spent Hours from all timesheets)
 //   const summaryStats = useMemo(() => {
-//     const totalHours = jobActivities
-//       .filter(activity => activity.type === 'labour_hours')
-//       .reduce((sum, activity) => sum + (activity.metadata?.hours || 0), 0);
+//     const timesheets = Array.isArray(job?.labor_timesheets)
+//       ? job.labor_timesheets
+//       : [];
+//     const totalSpentSeconds = timesheets.reduce(
+//       (sum, ts) => sum + toSeconds(ts.work_hours || '00:00:00'),
+//       0,
+//     );
 
-//     const totalOrders = jobActivities.filter(
-//       activity => activity.type === 'material_ordered',
-//     ).length;
-
-//     const totalAmount = jobActivities
-//       .filter(activity => activity.type === 'material_ordered')
-//       .reduce((sum, activity) => sum + (activity.metadata?.amount || 0), 0);
-
-//     const totalMaterials = jobActivities
-//       .filter(activity => activity.type === 'material_ordered')
-//       .reduce(
-//         (sum, activity) => sum + (activity.metadata?.materialCount || 0),
-//         0,
-//       );
+//     // Placeholder for materials/orders aggregation if needed later
+//     const totalOrders = job?.orders?.length;
+//     const totalAmount = 0;
+//     const totalMaterials = 0;
 
 //     return {
-//       totalHours: Math.round(totalHours * 10) / 10,
+//       totalHours: secondsToHours(totalSpentSeconds),
 //       totalOrders,
 //       totalAmount,
 //       totalMaterials,
 //     };
-//   }, [jobActivities]);
+//   }, [job]);
 
-//   // Get activity icon and color - using React Native Vector Icons
+//   // UI helpers
 //   const getActivityConfig = type => {
 //     switch (type) {
 //       case 'job_created':
@@ -236,7 +269,6 @@
 //     }
 //   };
 
-//   // Format timestamp - exact match with web version
 //   const formatTimestamp = timestamp => {
 //     const date = new Date(timestamp);
 //     return {
@@ -253,18 +285,6 @@
 //     };
 //   };
 
-//   const handleNavigation = screen => {
-//     try {
-//       if (navigation && typeof navigation.navigate === 'function') {
-//         navigation.navigate(screen);
-//       } else {
-//         console.warn('Navigation function not available');
-//       }
-//     } catch (error) {
-//       console.error('Navigation error:', error);
-//     }
-//   };
-
 //   const renderIcon = (iconName, iconLib, size, color) => {
 //     if (iconLib === 'ionicon') {
 //       return <Ionicons name={iconName} size={size} color={color} />;
@@ -276,7 +296,7 @@
 //     <SafeAreaView style={styles.container}>
 //       <StatusBar barStyle="light-content" backgroundColor="#3B82F6" />
 
-//       {/* Header - exact match with web version */}
+//       {/* Header */}
 //       <View style={styles.header}>
 //         <TouchableOpacity
 //           style={styles.backButton}
@@ -287,7 +307,7 @@
 //         <View style={styles.headerContent}>
 //           <Text style={styles.headerTitle}>Job Activity Log</Text>
 //           <Text style={styles.headerSubtitle}>
-//             {selectedJob ? `#${selectedJob.id}` : 'Job Activities'}
+//             {selectedJob ? `${selectedJob?.job_title}` : 'Job Activities'}
 //           </Text>
 //         </View>
 
@@ -298,7 +318,7 @@
 //         style={styles.scrollView}
 //         showsVerticalScrollIndicator={false}>
 //         <View style={styles.content}>
-//           {/* Summary Section - exact match with web version */}
+//           {/* Summary */}
 //           <View style={styles.summaryCard}>
 //             <View style={styles.summaryHeader}>
 //               <Icon name="flash-on" size={24} color="#F59E0B" />
@@ -320,7 +340,7 @@
 //                 <Text style={styles.summaryItemLabel}>Total Spent Hours</Text>
 //               </View>
 
-//               {/* Total Number of Orders */}
+//               {/* Total Number of Orders (placeholder) */}
 //               <View style={styles.summaryItem}>
 //                 <View
 //                   style={[
@@ -330,26 +350,15 @@
 //                   <Icon name="inventory" size={24} color="#4338CA" />
 //                 </View>
 //                 <Text style={styles.summaryItemValue}>
-//                   {summaryStats.totalOrders}
+//                   {summaryStats.totalOrders || 0}
 //                 </Text>
 //                 <Text style={styles.summaryItemLabel}>
 //                   Total Number of Orders
 //                 </Text>
 //               </View>
 
-//               {/* Material Costs */}
+//               {/* Materials Ordered (placeholder) */}
 //               {/* <View style={styles.summaryItem}>
-//                 <View style={[styles.summaryItemIcon, { backgroundColor: '#BBF7D0' }]}>
-//                   <Icon name="attach-money" size={24} color="#059669" />
-//                 </View>
-//                 <Text style={styles.summaryItemValue}>
-//                   ${summaryStats.totalAmount.toLocaleString()}
-//                 </Text>
-//                 <Text style={styles.summaryItemLabel}>Material Costs</Text>
-//               </View> */}
-
-//               {/* Materials Ordered */}
-//               <View style={styles.summaryItem}>
 //                 <View
 //                   style={[
 //                     styles.summaryItemIcon,
@@ -361,11 +370,11 @@
 //                   {summaryStats.totalMaterials}
 //                 </Text>
 //                 <Text style={styles.summaryItemLabel}>Materials Ordered</Text>
-//               </View>
+//               </View> */}
 //             </View>
 //           </View>
 
-//           {/* Activity Timeline - exact match with web version */}
+//           {/* Activity Timeline */}
 //           <View style={styles.timelineCard}>
 //             <View style={styles.timelineHeader}>
 //               <Icon name="timeline" size={24} color="#3B82F6" />
@@ -449,7 +458,7 @@
 
 //                               {/* Metadata badges */}
 //                               <View style={styles.metadataBadges}>
-//                                 {activity.metadata?.hours && (
+//                                 {activity.metadata?.hours ? (
 //                                   <View
 //                                     style={[
 //                                       styles.metadataBadge,
@@ -463,8 +472,9 @@
 //                                       {activity.metadata.hours}h
 //                                     </Text>
 //                                   </View>
-//                                 )}
-//                                 {activity.metadata?.materialCount && (
+//                                 ) : null}
+
+//                                 {activity.metadata?.materialCount ? (
 //                                   <View
 //                                     style={[
 //                                       styles.metadataBadge,
@@ -478,15 +488,9 @@
 //                                       {activity.metadata.materialCount} items
 //                                     </Text>
 //                                   </View>
-//                                 )}
-//                                 {/* {activity.metadata?.amount && (
-//                                   <View style={[styles.metadataBadge, { backgroundColor: '#BBF7D0' }]}>
-//                                     <Text style={[styles.metadataBadgeText, { color: '#059669' }]}>
-//                                       ${activity.metadata.amount.toLocaleString()}
-//                                     </Text>
-//                                   </View>
-//                                 )} */}
-//                                 {activity.metadata?.status && (
+//                                 ) : null}
+
+//                                 {activity.metadata?.status ? (
 //                                   <View
 //                                     style={[
 //                                       styles.metadataBadge,
@@ -515,13 +519,13 @@
 //                                               : '#6B7280',
 //                                         },
 //                                       ]}>
-//                                       {activity.metadata.status.replace(
+//                                       {String(activity.metadata.status).replace(
 //                                         '-',
 //                                         ' ',
 //                                       )}
 //                                     </Text>
 //                                   </View>
-//                                 )}
+//                                 ) : null}
 //                               </View>
 //                             </View>
 //                           </View>
@@ -533,7 +537,6 @@
 //               )}
 //             </View>
 //           </View>
-
 //           <View style={styles.bottomSpacer} />
 //         </View>
 //       </ScrollView>
@@ -541,6 +544,7 @@
 //   );
 // };
 
+// // ---------------- Styles (same as your original) ----------------
 // const styles = StyleSheet.create({
 //   container: {
 //     flex: 1,
@@ -613,7 +617,7 @@
 //     gap: 16,
 //   },
 //   summaryItem: {
-//     width: '30%',
+//     width: widthPercentageToDP(38),
 //     alignItems: 'center',
 //   },
 //   summaryItemIcon: {
@@ -843,7 +847,8 @@
 // });
 
 // export default JobActivityLogScreen;
-import React, {useState, useMemo, useEffect} from 'react';
+
+import React, {useState, useEffect, useMemo} from 'react';
 import {
   View,
   Text,
@@ -853,40 +858,53 @@ import {
   StatusBar,
   SafeAreaView,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {getJobActivity} from '../config/apiConfig';
+import {useSelector} from 'react-redux';
+import {widthPercentageToDP} from '../utils';
 
 const {width} = Dimensions.get('window');
 
 const JobActivityLogScreen = ({navigation, route}) => {
-  const {job} = route?.params || {};
-  const [selectedJob] = useState(job || null);
+  const {job: routeJob} = route?.params || {};
+  const token = useSelector(state => state.user.token);
+  const [jobData, setJobData] = useState(null);
   const [jobActivities, setJobActivities] = useState([]);
-  console.log('jobjobjob', job);
+  const [jobTotalTime, setJobTotalTime] = useState();
+  const [jobTotalOrders, setJobTotalOrders] = useState([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const jobId = routeJob?.id || jobData?.id;
+  console.log('jobdata>>>', jobData);
 
   // ---------------- Helpers ----------------
   const stripMicroseconds = iso => String(iso || '').replace(/\.\d+/, '');
-
   const toSeconds = (hhmmss = '00:00:00') => {
     const [hh = '0', mm = '0', ss = '0'] = String(hhmmss).split(':');
-    const h = parseInt(hh, 10) || 0;
-    const m = parseInt(mm, 10) || 0;
-    const s = parseInt(ss, 10) || 0;
-    return h * 3600 + m * 60 + s;
+    return (
+      (parseInt(hh, 10) || 0) * 3600 +
+      (parseInt(mm, 10) || 0) * 60 +
+      (parseInt(ss, 10) || 0)
+    );
   };
-
   const secondsToHours = (sec = 0) => +(sec / 3600).toFixed(2);
-
   const safeISO = d => {
     if (!d) return null;
     const date = new Date(d);
     return isNaN(date) ? null : date.toISOString();
   };
-
+  const getOnlyDate = d => {
+    if (!d) return null;
+    const date = new Date(d);
+    if (isNaN(date)) return null;
+    return date.toISOString().split('T')[0]; // returns "YYYY-MM-DD"
+  };
   const joinDateTimeToISO = (dateStr, timeStr) => {
     if (!dateStr || !timeStr) return null;
-    // Create ISO in local time (acceptable for display; if you need exact TZ, adapt here)
     const isoRaw = `${dateStr}T${timeStr}`;
     const d = new Date(isoRaw);
     return isNaN(d) ? null : d.toISOString();
@@ -903,49 +921,72 @@ const JobActivityLogScreen = ({navigation, route}) => {
     return allStarts[0] || null;
   };
 
-  // Build timeline dynamically from job object
+  // ---------------- Fetch Job ----------------
   useEffect(() => {
-    if (!job) return;
+    if (!jobId) return;
 
-    const createdISO = safeISO(stripMicroseconds(job.created_at));
-    const completedISO = safeISO(stripMicroseconds(job.updated_at));
-    const timesheets = Array.isArray(job.labor_timesheets)
-      ? job.labor_timesheets
+    const fetchJobActivity = async () => {
+      try {
+        setLoading(true);
+        const res = await getJobActivity(jobId, token);
+        if (res?.success && res?.data) {
+          setJobData(res?.data?.job);
+          setJobTotalTime(res?.data?.regular_hours?.formatted);
+          setJobTotalOrders(res?.data?.total_orders);
+        }
+        console.log('fetchJobActivityfetchJobActivity', res, jobId);
+      } catch (error) {
+        console.log('Error fetching job activity:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Only fetch if jobData not passed via route
+    if (!jobData) fetchJobActivity();
+  }, [jobId]);
+
+  // ---------------- Build Timeline ----------------
+  useEffect(() => {
+    if (!jobData) return;
+
+    const createdISO = getOnlyDate(jobData.created_at);
+    const completedISO = safeISO(stripMicroseconds(jobData.updated_at));
+    const timesheets = Array.isArray(jobData.labor_timesheets)
+      ? jobData.labor_timesheets
       : [];
 
     const dynamicActivities = [];
 
-    // 1) Job Created
+    // Job Created
     if (createdISO) {
       dynamicActivities.push({
         id: 'job_created',
-        jobId: job.id,
         type: 'job_created',
         title: 'Job Created',
-        description: `Job ${job.job_title || `#${job.id}`} was created.`,
+        description: `Job ${jobData.job_title} was created.`,
         timestamp: createdISO,
-        user: job?.created_by_user?.full_name || 'System',
-        metadata: {status: job.status || 'pending'},
+        user: jobData.created_by_user?.full_name || 'System',
+        metadata: {status: jobData.status || 'pending'},
       });
     }
 
-    // 2) Job Started (earliest start across timesheets)
+    // Job Started
     const earliestStartISO = getEarliestStartISO(timesheets);
     if (earliestStartISO) {
       dynamicActivities.push({
         id: 'job_started',
-        jobId: job.id,
         type: 'job_started',
         title: 'Job Started',
-        description: 'Teams started working on the job.',
+        description: 'Team started working on the job.',
         timestamp: earliestStartISO,
-        user: job?.assigned_lead_labor?.[0]?.user?.full_name || 'Lead',
+        user: jobData.assigned_lead_labor?.[0]?.user?.full_name || 'Lead',
         metadata: {status: 'in-progress'},
       });
     }
 
-    // 3) Timesheet → Labour Hours (+ optional Timesheet Submitted)
-    timesheets.forEach((ts, idx) => {
+    // Labour hours
+    timesheets?.forEach((ts, idx) => {
       const workedSeconds = toSeconds(ts.work_hours || '00:00:00');
       const hours = secondsToHours(workedSeconds);
       const tsStartISO =
@@ -955,7 +996,6 @@ const JobActivityLogScreen = ({navigation, route}) => {
 
       dynamicActivities.push({
         id: `labour_${idx + 1}`,
-        jobId: job.id,
         type: 'labour_hours',
         title: 'Labour Hours Logged',
         description: `${ts.labor_name || 'Technician'} logged ${hours}h on ${
@@ -972,7 +1012,6 @@ const JobActivityLogScreen = ({navigation, route}) => {
         if (updISO) {
           dynamicActivities.push({
             id: `timesheet_${idx + 1}`,
-            jobId: job.id,
             type: 'timesheet_submitted',
             title: 'Timesheet Submitted',
             description: `Timesheet updated/submitted by ${
@@ -986,16 +1025,15 @@ const JobActivityLogScreen = ({navigation, route}) => {
       }
     });
 
-    // 4) Job Completed
-    if ((job.status || '').toLowerCase() === 'completed' && completedISO) {
+    // Job Completed
+    if ((jobData.status || '').toLowerCase() === 'completed' && completedISO) {
       dynamicActivities.push({
         id: 'job_completed',
-        jobId: job.id,
         type: 'job_completed',
         title: 'Job Completed',
         description: 'Job marked as completed.',
         timestamp: completedISO,
-        user: job?.assigned_lead_labor?.[0]?.user?.full_name || 'Lead',
+        user: jobData.assigned_lead_labor?.[0]?.user?.full_name || 'Lead',
         metadata: {status: 'completed'},
       });
     }
@@ -1004,40 +1042,31 @@ const JobActivityLogScreen = ({navigation, route}) => {
     dynamicActivities.sort(
       (a, b) => new Date(a.timestamp) - new Date(b.timestamp),
     );
-
     setJobActivities(dynamicActivities);
-  }, [job]);
+  }, [jobData]);
 
-  // Summary (Total Spent Hours from all timesheets)
+  // ---------------- Summary ----------------
   const summaryStats = useMemo(() => {
-    const timesheets = Array.isArray(job?.labor_timesheets)
-      ? job.labor_timesheets
+    const timesheets = Array.isArray(jobData?.labor_timesheets)
+      ? jobData.labor_timesheets
       : [];
     const totalSpentSeconds = timesheets.reduce(
       (sum, ts) => sum + toSeconds(ts.work_hours || '00:00:00'),
       0,
     );
 
-    // Placeholder for materials/orders aggregation if needed later
-    const totalOrders = job?.orders?.length;
-    const totalAmount = 0;
-    const totalMaterials = 0;
-
     return {
       totalHours: secondsToHours(totalSpentSeconds),
-      totalOrders,
-      totalAmount,
-      totalMaterials,
+      totalOrders: jobData?.total_orders || 0,
     };
-  }, [job]);
+  }, [jobData]);
 
-  // UI helpers
+  // ---------------- UI helpers ----------------
   const getActivityConfig = type => {
     switch (type) {
       case 'job_created':
         return {
           iconName: 'business',
-          iconLib: 'material',
           color: '#3B82F6',
           bgColor: '#EFF6FF',
           borderColor: '#DBEAFE',
@@ -1045,7 +1074,6 @@ const JobActivityLogScreen = ({navigation, route}) => {
       case 'job_started':
         return {
           iconName: 'play-arrow',
-          iconLib: 'material',
           color: '#10B981',
           bgColor: '#F0FDF4',
           borderColor: '#BBF7D0',
@@ -1053,7 +1081,6 @@ const JobActivityLogScreen = ({navigation, route}) => {
       case 'labour_hours':
         return {
           iconName: 'schedule',
-          iconLib: 'material',
           color: '#F59E0B',
           bgColor: '#FFFBEB',
           borderColor: '#FED7AA',
@@ -1061,23 +1088,13 @@ const JobActivityLogScreen = ({navigation, route}) => {
       case 'timesheet_submitted':
         return {
           iconName: 'description',
-          iconLib: 'material',
           color: '#8B5CF6',
           bgColor: '#F5F3FF',
           borderColor: '#DDD6FE',
         };
-      case 'material_ordered':
-        return {
-          iconName: 'inventory',
-          iconLib: 'material',
-          color: '#6366F1',
-          bgColor: '#EEF2FF',
-          borderColor: '#C7D2FE',
-        };
       case 'job_completed':
         return {
           iconName: 'check-circle',
-          iconLib: 'material',
           color: '#059669',
           bgColor: '#ECFDF5',
           borderColor: '#A7F3D0',
@@ -1085,7 +1102,6 @@ const JobActivityLogScreen = ({navigation, route}) => {
       default:
         return {
           iconName: 'warning',
-          iconLib: 'material',
           color: '#6B7280',
           bgColor: '#F9FAFB',
           borderColor: '#E5E7EB',
@@ -1109,12 +1125,21 @@ const JobActivityLogScreen = ({navigation, route}) => {
     };
   };
 
-  const renderIcon = (iconName, iconLib, size, color) => {
-    if (iconLib === 'ionicon') {
-      return <Ionicons name={iconName} size={size} color={color} />;
-    }
-    return <Icon name={iconName} size={size} color={color} />;
-  };
+  const renderIcon = (iconName, size, color) => (
+    <Icon name={iconName} size={size} color={color} />
+  );
+
+  if (loading && !jobData) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator
+          size="large"
+          color="#3B82F6"
+          style={{flex: 1, justifyContent: 'center'}}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1127,14 +1152,12 @@ const JobActivityLogScreen = ({navigation, route}) => {
           onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Job Activity Log</Text>
           <Text style={styles.headerSubtitle}>
-            {selectedJob ? `#${selectedJob.id}` : 'Job Activities'}
+            {jobData?.job_title || 'Job Activities'}
           </Text>
         </View>
-
         <View style={styles.headerSpacer} />
       </View>
 
@@ -1149,7 +1172,6 @@ const JobActivityLogScreen = ({navigation, route}) => {
               <Text style={styles.summaryTitle}>Activity Summary</Text>
             </View>
             <View style={styles.summaryGrid}>
-              {/* Total Spent Hours */}
               <View style={styles.summaryItem}>
                 <View
                   style={[
@@ -1158,13 +1180,10 @@ const JobActivityLogScreen = ({navigation, route}) => {
                   ]}>
                   <Icon name="schedule" size={24} color="#C2410C" />
                 </View>
-                <Text style={styles.summaryItemValue}>
-                  {summaryStats.totalHours}h
-                </Text>
+                <Text style={styles.summaryItemValue}>{jobTotalTime}</Text>
                 <Text style={styles.summaryItemLabel}>Total Spent Hours</Text>
               </View>
 
-              {/* Total Number of Orders (placeholder) */}
               <View style={styles.summaryItem}>
                 <View
                   style={[
@@ -1173,32 +1192,13 @@ const JobActivityLogScreen = ({navigation, route}) => {
                   ]}>
                   <Icon name="inventory" size={24} color="#4338CA" />
                 </View>
-                <Text style={styles.summaryItemValue}>
-                  {summaryStats.totalOrders}
-                </Text>
-                <Text style={styles.summaryItemLabel}>
-                  Total Number of Orders
-                </Text>
-              </View>
-
-              {/* Materials Ordered (placeholder) */}
-              <View style={styles.summaryItem}>
-                <View
-                  style={[
-                    styles.summaryItemIcon,
-                    {backgroundColor: '#DDD6FE'},
-                  ]}>
-                  <Icon name="build" size={24} color="#7C3AED" />
-                </View>
-                <Text style={styles.summaryItemValue}>
-                  {summaryStats.totalMaterials}
-                </Text>
-                <Text style={styles.summaryItemLabel}>Materials Ordered</Text>
+                <Text style={styles.summaryItemValue}>{jobTotalOrders}</Text>
+                <Text style={styles.summaryItemLabel}>Total Orders</Text>
               </View>
             </View>
           </View>
 
-          {/* Activity Timeline */}
+          {/* Timeline */}
           <View style={styles.timelineCard}>
             <View style={styles.timelineHeader}>
               <Icon name="timeline" size={24} color="#3B82F6" />
@@ -1218,30 +1218,21 @@ const JobActivityLogScreen = ({navigation, route}) => {
                 </View>
               ) : (
                 <View style={styles.timeline}>
-                  {/* Timeline line */}
                   <View style={styles.timelineLine} />
-
                   {jobActivities.map((activity, index) => {
                     const config = getActivityConfig(activity.type);
                     const {date, time} = formatTimestamp(activity.timestamp);
 
                     return (
                       <View key={activity.id} style={styles.timelineItem}>
-                        {/* Timeline dot */}
                         <View
                           style={[
                             styles.timelineDot,
                             {backgroundColor: config.color},
                           ]}>
-                          {renderIcon(
-                            config.iconName,
-                            config.iconLib,
-                            24,
-                            '#FFFFFF',
-                          )}
+                          {renderIcon(config.iconName, 24, '#FFFFFF')}
                         </View>
 
-                        {/* Activity content */}
                         <View
                           style={[
                             styles.activityContent,
@@ -1263,7 +1254,7 @@ const JobActivityLogScreen = ({navigation, route}) => {
                               </Text>
                               <View style={styles.activityTimestamp}>
                                 <Text style={styles.activityDate}>{date}</Text>
-                                <Text style={styles.activityTime}>{time}</Text>
+                                {/* <Text style={styles.activityTime}>{time}</Text> */}
                               </View>
                             </View>
 
@@ -1271,7 +1262,6 @@ const JobActivityLogScreen = ({navigation, route}) => {
                               {activity.description}
                             </Text>
 
-                            {/* Activity metadata */}
                             <View style={styles.activityFooter}>
                               <View style={styles.activityUser}>
                                 <Icon name="person" size={16} color="#6B7280" />
@@ -1280,7 +1270,6 @@ const JobActivityLogScreen = ({navigation, route}) => {
                                 </Text>
                               </View>
 
-                              {/* Metadata badges */}
                               <View style={styles.metadataBadges}>
                                 {activity.metadata?.hours ? (
                                   <View
@@ -1294,22 +1283,6 @@ const JobActivityLogScreen = ({navigation, route}) => {
                                         {color: '#C2410C'},
                                       ]}>
                                       {activity.metadata.hours}h
-                                    </Text>
-                                  </View>
-                                ) : null}
-
-                                {activity.metadata?.materialCount ? (
-                                  <View
-                                    style={[
-                                      styles.metadataBadge,
-                                      {backgroundColor: '#C7D2FE'},
-                                    ]}>
-                                    <Text
-                                      style={[
-                                        styles.metadataBadgeText,
-                                        {color: '#4338CA'},
-                                      ]}>
-                                      {activity.metadata.materialCount} items
                                     </Text>
                                   </View>
                                 ) : null}
@@ -1361,6 +1334,7 @@ const JobActivityLogScreen = ({navigation, route}) => {
               )}
             </View>
           </View>
+
           <View style={styles.bottomSpacer} />
         </View>
       </ScrollView>
@@ -1368,12 +1342,9 @@ const JobActivityLogScreen = ({navigation, route}) => {
   );
 };
 
-// ---------------- Styles (same as your original) ----------------
+// ---------------- Styles (updated slightly) ----------------
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
+  container: {flex: 1, backgroundColor: '#F9FAFB'},
   header: {
     backgroundColor: '#3B82F6',
     flexDirection: 'row',
@@ -1381,69 +1352,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
-  backButton: {
-    padding: 8,
-    borderRadius: 8,
-  },
-  headerContent: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#BFDBFE',
-    marginTop: 2,
-  },
-  headerSpacer: {
-    width: 40,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 16,
-  },
+  backButton: {padding: 8, borderRadius: 8},
+  headerContent: {flex: 1, alignItems: 'center'},
+  headerTitle: {fontSize: 20, fontWeight: '600', color: '#FFFFFF'},
+  headerSubtitle: {fontSize: 14, color: '#BFDBFE', marginTop: 2},
+  headerSpacer: {width: 40},
+  scrollView: {flex: 1},
+  content: {padding: 16},
   summaryCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
     elevation: 6,
   },
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
+  summaryHeader: {flexDirection: 'row', alignItems: 'center', marginBottom: 20},
   summaryTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
     marginLeft: 12,
   },
-  summaryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  summaryItem: {
-    width: '30%',
-    alignItems: 'center',
-  },
+  summaryGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 16},
+  summaryItem: {width: widthPercentageToDP(38), alignItems: 'center'},
   summaryItemIcon: {
     width: 64,
     height: 64,
@@ -1469,10 +1401,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
     elevation: 6,
   },
   timelineHeader: {
@@ -1486,13 +1414,8 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     marginLeft: 12,
   },
-  timelineContent: {
-    flex: 1,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 48,
-  },
+  timelineContent: {flex: 1},
+  emptyState: {alignItems: 'center', paddingVertical: 48},
   emptyStateTitle: {
     fontSize: 20,
     fontWeight: '600',
@@ -1506,9 +1429,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  timeline: {
-    position: 'relative',
-  },
+  timeline: {position: 'relative'},
   timelineLine: {
     position: 'absolute',
     left: 28,
@@ -1532,19 +1453,13 @@ const styles = StyleSheet.create({
     zIndex: 1,
     marginRight: 16,
   },
-  activityContent: {
-    flex: 1,
-  },
+  activityContent: {flex: 1},
   activityContentBorder: {
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
     paddingBottom: 24,
   },
-  activityCard: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-  },
+  activityCard: {borderWidth: 1, borderRadius: 12, padding: 16},
   activityHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1558,19 +1473,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
-  activityTimestamp: {
-    alignItems: 'flex-end',
-  },
-  activityDate: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  activityTime: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
-  },
+  activityTimestamp: {alignItems: 'flex-end'},
+  activityDate: {fontSize: 14, fontWeight: '600', color: '#1F2937'},
+  activityTime: {fontSize: 12, color: '#6B7280', marginTop: 2},
   activityDescription: {
     fontSize: 16,
     color: '#374151',
@@ -1584,90 +1489,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  activityUser: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  activityUserText: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  metadataBadges: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  metadataBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  metadataBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  quickActionsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  quickActionsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  quickActionsTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1F2937',
-    marginLeft: 12,
-  },
-  quickActionsList: {
-    gap: 12,
-  },
-  quickActionButton: {
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    padding: 16,
-    backgroundColor: '#FAFAFA',
-  },
-  quickActionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  quickActionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickActionTextContainer: {
-    flex: 1,
-  },
-  quickActionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  quickActionSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  bottomSpacer: {
-    height: 32,
-  },
+  activityUser: {flexDirection: 'row', alignItems: 'center', gap: 8},
+  activityUserText: {fontSize: 14, color: '#6B7280', fontWeight: '500'},
+  metadataBadges: {flexDirection: 'row', flexWrap: 'wrap', gap: 6},
+  metadataBadge: {paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16},
+  metadataBadgeText: {fontSize: 12, fontWeight: '600'},
+  bottomSpacer: {height: 32},
 });
 
 export default JobActivityLogScreen;

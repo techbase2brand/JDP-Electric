@@ -372,6 +372,39 @@ export const getJobById = async (jobId, token) => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
+export const getJobBluesheets = async (jobId, token) => {
+  try {
+    const res = await api.get(`/job/getJobBluesheets/${jobId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data; // { data: {...} }
+  } catch (error) {
+    console.error(
+      'Error fetching job by id:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
+
+export const getJobActivity = async (jobId, token) => {
+  try {
+    const res = await api.get(`/job/getJobActivity/${jobId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data; // { data: {...} }
+  } catch (error) {
+    console.error(
+      'Error fetching job by id:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
 
 // custom product
 export const createProduct = async (payload, token) => {
@@ -503,21 +536,17 @@ export const submitBluesheetComplete = async (payload, token) => {
   }
 };
 
+// blue sheet
 
-// blue sheet 
+export const getBlueSheets = async token => {
+  console.log('token', token);
 
-export const getBlueSheets = async (token) => {
-  console.log("token",token);
-  
   try {
-    const res = await api.get(
-      `/bluesheet/lead-labor/bluesheets`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const res = await api.get(`/bluesheet/lead-labor/bluesheets`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
     return res.data;
   } catch (error) {
     console.error(

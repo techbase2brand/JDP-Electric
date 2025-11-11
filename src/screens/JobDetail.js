@@ -102,17 +102,16 @@ const JobDetailScreen = ({
   // job: propJob,
 }) => {
   const navigation = useNavigation();
-  // const job =route?.params?.job
+  const job = route?.params?.job;
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
   const canViewOrders = useHasPermission('orders', 'view');
   const canViewBlueSheet = useHasPermission('bluesheet', 'view');
-  console.log('job>>>>>', job);
 
   const [timerSession, setTimerSession] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTimerId, setActiveTimerId] = useState('');
-  const [job, setJob] = useState(null);
+  // const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -139,25 +138,25 @@ const JobDetailScreen = ({
       })
       .catch(err => Alert.alert('Error', err.message));
   };
-  useEffect(() => {
-    const fetchJobDetails = async () => {
-      try {
-        setLoading(true);
-        const res = await getJobById(jobId, token);
-        console.log('viewjob >.', res);
+  // useEffect(() => {
+  //   const fetchJobDetails = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const res = await getJobById(jobId, token);
+  //       console.log('viewjob >.', res);
 
-        setJob(res?.data);
-      } catch (err) {
-        setError(err.message || 'Failed to fetch job details');
-      } finally {
-        setLoading(false);
-      }
-    };
+  //       setJob(res?.data);
+  //     } catch (err) {
+  //       setError(err.message || 'Failed to fetch job details');
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    if (jobId && token) {
-      fetchJobDetails();
-    }
-  }, [jobId, token]);
+  //   if (jobId && token) {
+  //     fetchJobDetails();
+  //   }
+  // }, [jobId, token]);
   // Timer effect
   useEffect(() => {
     let interval;
@@ -206,154 +205,154 @@ const JobDetailScreen = ({
   //   );
   // }
 
-  if (loading) {
-    return (
-      <Skeleton
-        isLoading={false}
-        duration={1200}
-        animationType="shiver"
-        animationDirection="horizontalRight"
-        boneColor="#E1E9EE"
-        highlightColor="#F2F8FC"
-        containerStyle={{
-          flex: 1,
-          backgroundColor: Colors.background,
-          padding: 16,
-        }}>
-        {/* Header Skeleton */}
-        <View
-          style={{
-            height: 60,
-            borderRadius: 8,
-            backgroundColor: '#E1E9EE',
-            marginBottom: 20,
-          }}
-        />
+  // if (loading) {
+  //   return (
+  //     <Skeleton
+  //       isLoading={false}
+  //       duration={1200}
+  //       animationType="shiver"
+  //       animationDirection="horizontalRight"
+  //       boneColor="#E1E9EE"
+  //       highlightColor="#F2F8FC"
+  //       containerStyle={{
+  //         flex: 1,
+  //         backgroundColor: Colors.background,
+  //         padding: 16,
+  //       }}>
+  //       {/* Header Skeleton */}
+  //       <View
+  //         style={{
+  //           height: 60,
+  //           borderRadius: 8,
+  //           backgroundColor: '#E1E9EE',
+  //           marginBottom: 20,
+  //         }}
+  //       />
 
-        {/* Priority / Badge Skeleton */}
-        <View
-          style={{
-            height: 40,
-            borderRadius: 8,
-            backgroundColor: '#E1E9EE',
-            marginBottom: 20,
-          }}
-        />
+  //       {/* Priority / Badge Skeleton */}
+  //       <View
+  //         style={{
+  //           height: 40,
+  //           borderRadius: 8,
+  //           backgroundColor: '#E1E9EE',
+  //           marginBottom: 20,
+  //         }}
+  //       />
 
-        {/* Actions Card Skeleton */}
-        <View
-          style={{
-            height: 120,
-            borderRadius: 12,
-            backgroundColor: '#E1E9EE',
-            marginBottom: 20,
-          }}
-        />
+  //       {/* Actions Card Skeleton */}
+  //       <View
+  //         style={{
+  //           height: 120,
+  //           borderRadius: 12,
+  //           backgroundColor: '#E1E9EE',
+  //           marginBottom: 20,
+  //         }}
+  //       />
 
-        {/* Job Details Card Skeleton */}
-        <View
-          style={{
-            height: 180,
-            borderRadius: 12,
-            backgroundColor: '#E1E9EE',
-            marginBottom: 20,
-          }}
-        />
+  //       {/* Job Details Card Skeleton */}
+  //       <View
+  //         style={{
+  //           height: 180,
+  //           borderRadius: 12,
+  //           backgroundColor: '#E1E9EE',
+  //           marginBottom: 20,
+  //         }}
+  //       />
 
-        {/* Customer Card Skeleton */}
-        <View
-          style={{
-            height: 140,
-            borderRadius: 12,
-            backgroundColor: '#E1E9EE',
-            marginBottom: 20,
-          }}
-        />
+  //       {/* Customer Card Skeleton */}
+  //       <View
+  //         style={{
+  //           height: 140,
+  //           borderRadius: 12,
+  //           backgroundColor: '#E1E9EE',
+  //           marginBottom: 20,
+  //         }}
+  //       />
 
-        {/* Location Card Skeleton */}
-        <View
-          style={{
-            height: 100,
-            borderRadius: 12,
-            backgroundColor: '#E1E9EE',
-            marginBottom: 20,
-          }}
-        />
+  //       {/* Location Card Skeleton */}
+  //       <View
+  //         style={{
+  //           height: 100,
+  //           borderRadius: 12,
+  //           backgroundColor: '#E1E9EE',
+  //           marginBottom: 20,
+  //         }}
+  //       />
 
-        {/* Materials Card Skeleton (if canViewOrders) */}
-        {canViewOrders && (
-          <View
-            style={{
-              height: 140,
-              borderRadius: 12,
-              backgroundColor: '#E1E9EE',
-              marginBottom: 20,
-            }}
-          />
-        )}
+  //       {/* Materials Card Skeleton (if canViewOrders) */}
+  //       {canViewOrders && (
+  //         <View
+  //           style={{
+  //             height: 140,
+  //             borderRadius: 12,
+  //             backgroundColor: '#E1E9EE',
+  //             marginBottom: 20,
+  //           }}
+  //         />
+  //       )}
 
-        {/* Special Instructions Skeleton */}
-        {job?.notes && (
-          <View
-            style={{
-              height: 80,
-              borderRadius: 12,
-              backgroundColor: '#E1E9EE',
-              marginBottom: 20,
-            }}
-          />
-        )}
+  //       {/* Special Instructions Skeleton */}
+  //       {job?.notes && (
+  //         <View
+  //           style={{
+  //             height: 80,
+  //             borderRadius: 12,
+  //             backgroundColor: '#E1E9EE',
+  //             marginBottom: 20,
+  //           }}
+  //         />
+  //       )}
 
-        {/* Additional Actions Skeleton */}
-        {canViewBlueSheet && (
-          <View
-            style={{
-              height: 100,
-              borderRadius: 12,
-              backgroundColor: '#E1E9EE',
-              marginBottom: 20,
-            }}
-          />
-        )}
-      </Skeleton>
-    );
-  }
+  //       {/* Additional Actions Skeleton */}
+  //       {canViewBlueSheet && (
+  //         <View
+  //           style={{
+  //             height: 100,
+  //             borderRadius: 12,
+  //             backgroundColor: '#E1E9EE',
+  //             marginBottom: 20,
+  //           }}
+  //         />
+  //       )}
+  //     </Skeleton>
+  //   );
+  // }
 
-  if (!job) {
-    return (
-      <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+  // if (!job) {
+  //   return (
+  //     <View style={styles.container}>
+  //       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
 
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => (onBack ? onBack() : navigation.goBack())}>
-            <Icon name="arrow-back" size={24} color={Colors.white} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Job Not Found</Text>
-          <View style={styles.headerSpacer} />
-        </View>
+  //       {/* Header */}
+  //       <View style={styles.header}>
+  //         <TouchableOpacity
+  //           style={styles.backButton}
+  //           onPress={() => (onBack ? onBack() : navigation.goBack())}>
+  //           <Icon name="arrow-back" size={24} color={Colors.white} />
+  //         </TouchableOpacity>
+  //         <Text style={styles.headerTitle}>Job Not Found</Text>
+  //         <View style={styles.headerSpacer} />
+  //       </View>
 
-        <View style={styles.errorContainer}>
-          <Icon name="error-outline" size={64} color={Colors.textLight} />
-          <Text style={styles.errorTitle}>Job Not Found</Text>
-          <Text style={styles.errorSubtitle}>
-            The requested job could not be found.
-          </Text>
-          <TouchableOpacity
-            style={[styles.primaryButton, {width: widthPercentageToDP(40)}]}
-            onPress={() =>
-              onNavigate
-                ? onNavigate('JobStack')
-                : navigation.navigate('JobStack')
-            }>
-            <Text style={styles.primaryButtonText}>View All Jobs</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
+  //       <View style={styles.errorContainer}>
+  //         <Icon name="error-outline" size={64} color={Colors.textLight} />
+  //         <Text style={styles.errorTitle}>Job Not Found</Text>
+  //         <Text style={styles.errorSubtitle}>
+  //           The requested job could not be found.
+  //         </Text>
+  //         <TouchableOpacity
+  //           style={[styles.primaryButton, {width: widthPercentageToDP(40)}]}
+  //           onPress={() =>
+  //             onNavigate
+  //               ? onNavigate('JobStack')
+  //               : navigation.navigate('JobStack')
+  //           }>
+  //           <Text style={styles.primaryButtonText}>View All Jobs</Text>
+  //         </TouchableOpacity>
+  //       </View>
+  //     </View>
+  //   );
+  // }
 
   const getPriorityConfig = priority => {
     switch (priority) {
@@ -432,9 +431,7 @@ const JobDetailScreen = ({
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
-
       {/* Header */}
-
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Icon name="arrow-back" size={24} color={Colors.white} />
@@ -463,7 +460,6 @@ const JobDetailScreen = ({
       </View> */}
 
       {/* Timer Display */}
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Primary Actions */}
         <View style={styles.card}>
@@ -528,7 +524,7 @@ const JobDetailScreen = ({
                       Array.isArray(job?.assigned_labor) && (
                         <Text style={styles.infoText}>
                           {job?.assigned_labor
-                            .map(labor => labor.user?.full_name)
+                            ?.map(labor => labor.user?.full_name)
                             .join(', ')}
                         </Text>
                       )}
