@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "55007327977",
+    "project_id": "jdp-electric",
+    "storage_bucket": "jdp-electric.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55007327977:android:5ee934213a164c30622278",
+        "android_client_info": {
+          "package_name": "com.electrician"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0qEOp0vupbswQfefkARSGKSili9bQA2U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

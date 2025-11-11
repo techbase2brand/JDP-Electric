@@ -337,7 +337,7 @@
 
 // export default LoginScreen;
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -366,14 +366,31 @@ const LoginScreen = ({navigation}) => {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [fcmToken, setFcmToken] = useState('');
   const [loading, setLoading] = useState(false);
-  console.log('loginErrorloginError>>', loginError, email, password);
+  console.log('loginErrorloginError>>', fcmToken, Platform.OS);
 
   const validateEmail = email => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
+  useEffect(() => {
+    const fetchFcmToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('fcmToken');
+        if (token) {
+          console.log('FCM token (from storage):', token);
+          setFcmToken(token);
+        } else {
+          console.log('No FCM token found in storage');
+        }
+      } catch (error) {
+        console.log('Error fetching FCM token:', error);
+      }
+    };
 
+    fetchFcmToken();
+  }, []);
   const handleLogin = async () => {
     setLoginError('');
     setEmailError('');
@@ -418,6 +435,8 @@ const LoginScreen = ({navigation}) => {
         email: email.trim().toLowerCase(),
         password,
         login_by: 'app',
+        push_token: fcmToken,
+        push_platform: Platform.OS,
       });
       console.log('response>>>', response.data.data);
       const {token, user, permissions} = response?.data?.data || {};

@@ -69,6 +69,7 @@ import {
   Platform,
   SafeAreaView,
   View,
+  PermissionsAndroid,
 } from 'react-native';
 import {whiteColor} from './src/constants/Color';
 import {
@@ -83,6 +84,7 @@ import MainTabNavigator from './src/navigations/MainTabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {NavigationContainer} from '@react-navigation/native';
 import 'react-native-get-random-values';
+import messaging from '@react-native-firebase/messaging';
 
 // ✅ Redux imports
 import {Provider, useDispatch, useSelector} from 'react-redux';
@@ -151,16 +153,7 @@ const AppContent = () => {
     }
   };
 
-  // useEffect(() => {
-  //   // ✅ Global logout handler set
-  //   global.handleLogout = () => {
-  //     dispatch(logout());
-  //     navigationRef.current?.reset({
-  //       index: 0,
-  //       routes: [{name: 'AuthStack'}],
-  //     });
-  //   };
-  // }, []);
+  
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -176,7 +169,84 @@ const AppContent = () => {
     };
     checkLogin();
   }, []);
+  useEffect(() => {
+    const requestPermissions = async () => {
+      if (Platform.OS === 'ios') {
+        await requestUserIosPermission();
+      } else {
+        await requestNotificationPermission();
+      }
+    };
+    requestPermissions();
+  }, []);
+  const requestNotificationPermission = async () => {
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+          {
+            title: 'Notification Permission',
+            message: 'This app would like to send you notifications.',
+            buttonPositive: 'Allow',
+            buttonNegative: 'Deny',
+          },
+        );
 
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          getFcmToken();
+          console.log('Notification permission granted');
+        } else {
+          console.log('Notification permission denied');
+          Alert.alert(
+            'Permission Denied',
+            'You will not receive notifications.',
+          );
+        }
+      } catch (err) {
+        console.warn('Permission error:', err);
+      }
+    }
+  };
+  const requestUserIosPermission = async () => {
+    const authStatus = await messaging().requestPermission();
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+    if (enabled) {
+      console.log('iOS Notification permission granted:', authStatus);
+      getFcmToken();
+    } else {
+      console.log('iOS Notification permission denied:', authStatus);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+    });
+
+    return unsubscribe;
+  }, []);
+
+ const getFcmToken = async () => {
+  try {
+    const existingToken = await AsyncStorage.getItem('fcmToken');
+    if (existingToken) {
+      console.log('FCM token (from storage):', existingToken);
+      return existingToken;
+    }
+
+    const token = await messaging().getToken();
+    if (token) {
+      console.log('New FCM token:', token);
+      await AsyncStorage.setItem('fcmToken', token);
+      return token;
+    }
+  } catch (error) {
+    console.log('Error getting FCM token:', error);
+  }
+};
   return (
     <SafeAreaView style={[flex, {backgroundColor: whiteColor}]}>
       <KeyboardAvoidingView
