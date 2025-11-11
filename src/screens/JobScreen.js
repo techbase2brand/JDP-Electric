@@ -1841,7 +1841,7 @@ const JobListingScreen = ({navigation, route}) => {
         <View style={styles.actionsSection}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => handleCall(job?.customer?.phone)}>
+            onPress={() => handleCall(job?.customer?.phone || job?.contractor?.phone )}>
             <Ionicons name="call" size={20} color={COLORS.primary} />
             <Text style={styles.actionText}>Call</Text>
           </TouchableOpacity>

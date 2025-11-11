@@ -107,6 +107,7 @@ const JobDetailScreen = ({
   const token = useSelector(state => state.user.token);
   const canViewOrders = useHasPermission('orders', 'view');
   const canViewBlueSheet = useHasPermission('bluesheet', 'view');
+  console.log('job', job);
 
   const [timerSession, setTimerSession] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -440,7 +441,7 @@ const JobDetailScreen = ({
           <Text style={styles.headerTitle} numberOfLines={1}>
             {job?.job_title}
           </Text>
-          <Text style={styles.headerSubtitle}>#{job?.id}</Text>
+          {/* <Text style={styles.headerSubtitle}>{job?.job_title}</Text> */}
         </View>
         <TouchableOpacity
           style={styles.editButton}
@@ -519,8 +520,15 @@ const JobDetailScreen = ({
                 <View style={styles.infoItem}>
                   <Text style={styles.infoLabel}>Assigned To :</Text>
                   <View style={styles.infoWithIcon}>
-                    {/* Sare full_name comma se join karke dikhana */}
-                    {job?.assigned_labor &&
+                    {/* {job?.assigned_lead_labor &&
+                      Array.isArray(job?.assigned_lead_labor) && (
+                        <Text style={styles.infoText}>
+                          {job?.assigned_lead_labor
+                            ?.map(labor => labor.user?.full_name)
+                            .join(', ')}
+                        </Text>
+                      )} <Text>,</Text> */}
+                      {job?.assigned_labor &&
                       Array.isArray(job?.assigned_labor) && (
                         <Text style={styles.infoText}>
                           {job?.assigned_labor
@@ -558,13 +566,16 @@ const JobDetailScreen = ({
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Icon name="person" size={20} color={Colors.primary} />
-            <Text style={styles.cardTitle}>Customer</Text>
+            <Text style={styles.cardTitle}>
+              {job?.customer?.customer_name ? 'Customer' : 'Contractor'}
+            </Text>
           </View>
           <View style={styles.cardContent}>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Name</Text>
               <Text style={styles.infoText}>
-                {job?.customer?.customer_name || 'N/A'}
+                {job?.customer?.customer_name ||
+                  job?.contractor?.contractor_name}
               </Text>
             </View>
 
@@ -572,7 +583,9 @@ const JobDetailScreen = ({
               <View style={styles.customerContactItem}>
                 <View style={styles.contactInfo}>
                   <Text style={styles.infoLabel}>Phone</Text>
-                  <Text style={styles.infoText}>{job?.customer?.phone}</Text>
+                  <Text style={styles.infoText}>
+                    {job?.customer?.phone || job?.contractor?.phone}
+                  </Text>
                 </View>
                 <TouchableOpacity
                   style={styles.contactButton}

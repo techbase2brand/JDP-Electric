@@ -545,7 +545,7 @@ const MapScreen = ({route, navigation}) => {
               'Geofence Alert 🚨',
               'You are within 100 meters of destination!',
             );
-            navigation.navigate('JobDetail', {job});
+            // navigation.navigate('JobDetail', {job});
           }
         }
       },
@@ -647,7 +647,7 @@ const MapScreen = ({route, navigation}) => {
         <TouchableOpacity
           style={styles.actionButton}
           onPress={() =>
-            handleCall(job?.job?.customer?.phone || job?.customer?.phone)
+            handleCall(job?.contractor?.phone|| job?.customer?.phone)
           }>
           <Ionicons name="call" size={20} color="#fff" />
           <Text style={{color: '#fff', fontWeight: '800'}}>Call</Text>

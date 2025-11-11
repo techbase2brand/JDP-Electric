@@ -1068,7 +1068,7 @@ const JobTimesheet = ({navigation, route, user}) => {
 
       const payload = buildBluesheetPayload();
       if (!payload.labor_entries.length && !payload.material_entries.length) {
-        Alert.alert('Empty', 'Nothing to submit for the selected date.');
+         Alert.alert('Empty', 'No entries found. Please add labor or material details before submitting.');
         return;
       }
 
@@ -1486,7 +1486,7 @@ const JobTimesheet = ({navigation, route, user}) => {
                 styles.submitButton,
                 (isReadOnly() || loading) && {opacity: 0.5},
               ]}
-              disabled={isReadOnly() || loading}
+              disabled={isReadOnly() ||  loading}
               onPress={handleSubmitForApproval}>
               {loading ? (
                 <ActivityIndicator color="#fff" />

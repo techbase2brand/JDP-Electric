@@ -9,6 +9,7 @@ import {
   StatusBar,
   Image,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import {tabColor, whiteColor} from '../constants/Color';
 import Feather from 'react-native-vector-icons/Feather';
@@ -36,7 +37,11 @@ import {
 } from '../assests/images';
 import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
-import {getJobs, getlabourJobs} from '../config/apiConfig';
+import {
+  getJobs,
+  getlabourJobs,
+  getNotificationsByUser,
+} from '../config/apiConfig';
 import {useFocusEffect} from '@react-navigation/native';
 
 const HomeScreen = ({navigation}) => {
@@ -46,14 +51,14 @@ const HomeScreen = ({navigation}) => {
   const laborId = user?.labor?.id;
   const canViewCreateJob = useHasPermission('jobs', 'view');
 
+  const userId = user.id;
   const [loading, setLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [dashboardData, setDashboardData] = useState();
-
+  const [unreadCount, setUnreadCount] = useState(0);
   const [todayDueJobs, setTodayDueJobs] = useState([]);
-  console.log('todayDueJobstodayDueJobs', todayDueJobs);
 
-  console.log('jobsssshome', jobs);
+  console.log('unreadCountunreadCount>>,', unreadCount);
 
   const statsData = [
     {
@@ -153,54 +158,54 @@ const HomeScreen = ({navigation}) => {
       estimatedHours: 8,
     },
   ];
-  useEffect(() => {
-    const fetchJobs = async () => {
-      if (loading) return;
-      setLoading(true);
-      try {
-        const res =
-          user?.management_type === 'lead_labor'
-            ? await getJobs(leadLaborId, 1, 10, token)
-            : await getlabourJobs(laborId, 1, 10, token);
+  // useEffect(() => {
+  //   const fetchJobs = async () => {
+  //     if (loading) return;
+  //     setLoading(true);
+  //     try {
+  //       const res =
+  //         user?.management_type === 'lead_labor'
+  //           ? await getJobs(leadLaborId, 1, 10, token)
+  //           : await getlabourJobs(laborId, 1, 10, token);
 
-        const newJobs = res?.data?.jobs ?? [];
-        setDashboardData(res?.data)
-        console.log('newJobsnewJobs>>', res?.data);
+  //       const newJobs = res?.data?.jobs ?? [];
+  //       setDashboardData(res?.data);
+  //       console.log('newJobsnewJobs>>', res?.data);
 
-        setJobs(newJobs);
-      } catch (err) {
-        console.error('Error fetching jobs:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchJobs();
-  }, []);
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchJobs = async () => {
-  //       if (loading) return;
-  //       setLoading(true);
-  //       try {
-  //         const res =
-  //           user?.management_type === 'lead_labor'
-  //             ? await getJobs(leadLaborId, 1, 10, token)
-  //             : await getlabourJobs(laborId, 1, 10, token);
+  //       setJobs(newJobs);
+  //     } catch (err) {
+  //       console.error('Error fetching jobs:', err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchJobs();
+  // }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchJobs = async () => {
+        if (loading) return;
+        setLoading(true);
+        try {
+          const res =
+            user?.management_type === 'lead_labor'
+              ? await getJobs(leadLaborId, 1, 10, token)
+              : await getlabourJobs(laborId, 1, 10, token);
 
-  //         const newJobs = res?.data?.jobs ?? [];
-  //         setDashboardData(res?.data);
-  //         console.log('newJobsnewJobs>>', res?.data);
-  //         setJobs(newJobs);
-  //       } catch (err) {
-  //         console.error('Error fetching jobs:', err);
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     };
+          const newJobs = res?.data?.jobs ?? [];
+          setDashboardData(res?.data);
+          console.log('newJobsnewJobs>>', res?.data);
+          setJobs(newJobs);
+        } catch (err) {
+          console.error('Error fetching jobs:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-  //     fetchJobs();
-  //   }, [user, leadLaborId, laborId, token]),
-  // );
+      fetchJobs();
+    }, [user, leadLaborId, laborId, token]),
+  );
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]; // e.g. "2025-11-07"
 
@@ -208,9 +213,35 @@ const HomeScreen = ({navigation}) => {
       const createdDate = item?.created_at?.split('T')[0];
       return createdDate === today;
     });
-
     setTodayDueJobs(filtered);
   }, [jobs]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadInitial();
+    }, [user, leadLaborId, laborId, token]),
+  );
+  // useEffect(() => {
+  //   loadInitial();
+  // }, []);
+
+  const loadInitial = async () => {
+    setLoading(true);
+
+    try {
+      const res = await getNotificationsByUser(userId, 1, 200, token);
+      // res.data.items per your example
+      const items = res?.data?.items ?? [];
+      console.log('home', res?.data?.pagination?.unread_count);
+
+      setUnreadCount(res?.data?.pagination?.unread_count || 0);
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', err?.message || 'Unable to load notifications');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleQuickActionPress = title => {
     if (title == 'Create Job') {
@@ -330,21 +361,24 @@ const HomeScreen = ({navigation}) => {
               <Feather name="user" size={18} color={tabColor} />{' '}
             </Text>
             <Text style={styles.jobDetailText}>
-              {job?.customer?.customer_name}
+              {job?.customer?.customer_name || job?.contractor?.contractor_name}
             </Text>
           </View>
           <View style={styles.jobDetailRow}>
             <Text style={styles.jobDetailIcon}>
-              <Ionicons name="timer-outline" size={18} color={tabColor} />
+              {/* <Ionicons name="timer-outline" size={18} color={tabColor} /> */}
             </Text>
-            <Text style={styles.jobDetailText}>{job.estimated_hours}hrs</Text>
+            <Text style={styles.jobDetailText}></Text>
           </View>
         </View>
         <View style={styles.jobDetailRow}>
           <Text style={styles.jobDetailIcon}>
             <Feather name="map-pin" size={18} color={tabColor} />
           </Text>
-          <Text style={styles.jobDetailText}>{job?.address}</Text>
+          <Text
+            style={[styles.jobDetailText, {width: widthPercentageToDP(50)}]}>
+            {job?.address}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -474,6 +508,7 @@ const HomeScreen = ({navigation}) => {
                 </Text>
                 <View style={styles.onlineIndicator} />
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.notificationButton}
                 onPress={() => navigation.navigate('NotificationScreen')}>
@@ -482,9 +517,11 @@ const HomeScreen = ({navigation}) => {
                   size={24}
                   color={whiteColor}
                 />
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationCount}>3</Text>
-                </View>
+                {unreadCount !== 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationCount}>{unreadCount}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -541,7 +578,7 @@ const HomeScreen = ({navigation}) => {
                   Today's Jobs
                 </Text>
                 <View style={styles.countBadge}>
-                  <Text style={styles.countText}>{todayDueJobs?.length}</Text>
+                  <Text style={styles.countText}>{jobs.length}</Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => navigation.navigate('JobStack')}>
@@ -550,10 +587,10 @@ const HomeScreen = ({navigation}) => {
             </View>
             {loading ? (
               <ActivityIndicator size="large" color="#3B82F6" />
-            ) : todayDueJobs?.length === 0 ? (
+            ) : jobs?.length === 0 ? (
               renderEmptyState()
             ) : (
-              todayDueJobs?.map(renderJobCard)
+              jobs?.slice(0, 10).map(renderJobCard)
             )}
           </View>
 
