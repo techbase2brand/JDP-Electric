@@ -107,7 +107,7 @@ const JobDetailScreen = ({
   const token = useSelector(state => state.user.token);
   const canViewOrders = useHasPermission('orders', 'view');
   const canViewBlueSheet = useHasPermission('bluesheet', 'view');
-  console.log('job', job);
+  const [showFullDesc, setShowFullDesc] = useState(false);
 
   const [timerSession, setTimerSession] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -497,9 +497,28 @@ const JobDetailScreen = ({
             <Text style={styles.cardTitle}>Job Details</Text>
           </View>
           <View style={styles.cardContent}>
+            {/* <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Description</Text>
+              <Text style={styles.infoText} numberOfLines={4}>
+                {job?.description}
+              </Text> */}
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Description</Text>
-              <Text style={styles.infoText}>{job?.description}</Text>
+              <Text
+                style={styles.infoText}
+                numberOfLines={showFullDesc ? 0 : 4}>
+                {job?.description || 'No description available'}
+              </Text>
+
+              {job?.description?.length > 150 && ( 
+                <TouchableOpacity
+                  onPress={() => setShowFullDesc(prev => !prev)}>
+                  <Text
+                    style={{color: Colors.primary, marginTop: 4, fontWeight: '700'}}>
+                    {showFullDesc ? 'Read Less' : 'Read More'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <View style={styles.infoRow}>
@@ -516,11 +535,17 @@ const JobDetailScreen = ({
                   </Text>
                 </View>
               </View> */}
-              <View style={styles.infoColumn}>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Assigned To :</Text>
-                  <View style={styles.infoWithIcon}>
-                    {/* {job?.assigned_lead_labor &&
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                }}>
+                <View style={styles.infoColumn}>
+                  <View style={styles.infoItem}>
+                    <Text style={styles.infoLabel}>Assigned To :</Text>
+                    <View style={styles.infoWithIcon}>
+                      {/* {job?.assigned_lead_labor &&
                       Array.isArray(job?.assigned_lead_labor) && (
                         <Text style={styles.infoText}>
                           {job?.assigned_lead_labor
@@ -528,22 +553,26 @@ const JobDetailScreen = ({
                             .join(', ')}
                         </Text>
                       )} <Text>,</Text> */}
+                      {/* <Text style={styles.infoText}>
+                      {job?.created_by_user?.full_name}
+                    </Text> */}
                       {job?.assigned_labor &&
-                      Array.isArray(job?.assigned_labor) && (
-                        <Text style={styles.infoText}>
-                          {job?.assigned_labor
-                            ?.map(labor => labor.user?.full_name)
-                            .join(', ')}
-                        </Text>
-                      )}
+                        Array.isArray(job?.assigned_labor) && (
+                          <Text style={styles.infoText}>
+                            {job?.assigned_labor
+                              ?.map(labor => labor.user?.full_name)
+                              .join(', ')}
+                          </Text>
+                        )}
+                    </View>
                   </View>
                 </View>
-              </View>
-              <View style={styles.infoColumn}>
-                <Text style={styles.infoLabel}>Scheduled</Text>
-                <View style={styles.infoWithIcon}>
-                  <Icon name="event" size={16} color={Colors.textSecondary} />
-                  <Text style={styles.infoText}>{job?.due_date}</Text>
+                <View style={styles.infoColumn}>
+                  <Text style={styles.infoLabel}>Scheduled</Text>
+                  <View style={styles.infoWithIcon}>
+                    <Icon name="event" size={16} color={Colors.textSecondary} />
+                    <Text style={styles.infoText}>{job?.due_date}</Text>
+                  </View>
                 </View>
               </View>
             </View>
@@ -589,17 +618,50 @@ const JobDetailScreen = ({
                 </View>
                 <TouchableOpacity
                   style={styles.contactButton}
-                  onPress={() => {
-                    const phoneNumber = 'tel:+1334444477';
-                    Linking.canOpenURL(phoneNumber)
-                      .then(supported => {
-                        if (!supported) {
-                          Alert.alert('Error', 'Unable to open dialer');
-                        } else {
-                          return Linking.openURL(phoneNumber);
-                        }
-                      })
-                      .catch(err => Alert.alert('Error', err.message));
+                  // onPress={() => {
+                  //   const phoneNumber =
+                  //     job?.customer?.phone || job?.contractor?.phone;
+                  //   // const phoneNumber = 'tel:+1334444477';
+                  //   Linking.canOpenURL(phoneNumber)
+                  //     .then(supported => {
+                  //       if (!supported) {
+                  //         Alert.alert('Error', 'Unable to open dialer');
+                  //       } else {
+                  //         const telURL = `tel:${phoneNumber}`;
+                  //         Linking.openURL(telURL).catch(() => {
+                  //           Alert.alert('Error', 'Unable to open phone dialer');
+                  //         });
+                  //       }
+                  //     })
+                  //     .catch(err => Alert.alert('Error', err.message));
+                  // }}
+                  onPress={async () => {
+                    try {
+                      const phoneNumber =
+                        job?.customer?.phone || job?.contractor?.phone;
+
+                      if (!phoneNumber) {
+                        Alert.alert('Error', 'No phone number available');
+                        return;
+                      }
+
+                      // 🧹 Clean number and prepare tel link
+                      const cleanedNumber = phoneNumber.replace(/[^0-9+]/g, '');
+                      const telURL = `tel:${cleanedNumber}`;
+
+                      const supported = await Linking.canOpenURL(telURL);
+                      if (supported) {
+                        await Linking.openURL(telURL);
+                      } else {
+                        Alert.alert('Error', 'Unable to open phone dialer');
+                      }
+                    } catch (err) {
+                      console.error('Call error:', err);
+                      Alert.alert(
+                        'Error',
+                        'Something went wrong while trying to call',
+                      );
+                    }
                   }}>
                   <Icon name="phone" size={16} color={Colors.white} />
                   <Text style={styles.contactButtonText}>Call</Text>
@@ -979,7 +1041,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   infoColumn: {
-    flex: 1,
+    // flex: 1,
   },
   infoLabel: {
     fontSize: 14,
@@ -1026,7 +1088,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.success,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
+    justifyContent: 'center',
+    // paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
     gap: Spacing.xs,

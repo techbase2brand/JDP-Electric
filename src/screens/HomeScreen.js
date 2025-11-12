@@ -63,7 +63,7 @@ const HomeScreen = ({navigation}) => {
   const statsData = [
     {
       key: 'total',
-      title: 'Active Jobs',
+      title: 'Total Jobs',
       value: dashboardData?.summary?.total_jobs || 0,
       subtitle: "Today's schedule",
       icon: <Feather name="activity" size={24} color={whiteColor} />,
@@ -194,7 +194,7 @@ const HomeScreen = ({navigation}) => {
 
           const newJobs = res?.data?.jobs ?? [];
           setDashboardData(res?.data);
-          console.log('newJobsnewJobs>>', res?.data);
+          console.log('newJobsnewJobs>>', res);
           setJobs(newJobs);
         } catch (err) {
           console.error('Error fetching jobs:', err);
@@ -332,11 +332,18 @@ const HomeScreen = ({navigation}) => {
       key={job.id}
       style={styles.jobCard}>
       <View style={styles.jobHeader}>
-        <View style={styles.jobHeaderLeft}>
-          <Text style={styles.jobId}>{job.job_title}</Text>
+        <View
+          style={[
+            styles.jobHeaderLeft,
+            {width: '100%', justifyContent: 'space-between'},
+          ]}>
+          <Text style={[styles.jobId, {width: '50%'}]}>{job.job_title}</Text>
           <View style={[styles.statusBadge, {backgroundColor: '#E3F2FD'}]}>
             <Text style={[styles.statusText, {color: job.statusColor}]}>
-              {job?.status}
+              {(job?.status == 'in_progress'
+                ? 'In Progress'
+                : job?.status || ''
+              ).toUpperCase()}
             </Text>
           </View>
           {/* <View style={[styles.priorityBadge, {backgroundColor: '#ECEEF2'}]}>
@@ -347,7 +354,9 @@ const HomeScreen = ({navigation}) => {
         </View>
       </View>
       {/* <Text style={styles.jobTitle}>{job.title}</Text> */}
-      <Text style={styles.jobDescription}>{job.description}</Text>
+      <Text style={styles.jobDescription} numberOfLines={3}>
+        {job.description}
+      </Text>
       <View style={styles.jobDetails}>
         <View
           style={{
@@ -358,7 +367,8 @@ const HomeScreen = ({navigation}) => {
           }}>
           <View style={styles.jobDetailRow}>
             <Text style={styles.jobDetailIcon}>
-              <Feather name="user" size={18} color={tabColor} />{' '}
+              <MaterialIcons name="person" size={20} color={tabColor} />
+              {/* <Feather name="user" size={18} color={tabColor} />{' '} */}
             </Text>
             <Text style={styles.jobDetailText}>
               {job?.customer?.customer_name || job?.contractor?.contractor_name}
@@ -373,7 +383,7 @@ const HomeScreen = ({navigation}) => {
         </View>
         <View style={styles.jobDetailRow}>
           <Text style={styles.jobDetailIcon}>
-            <Feather name="map-pin" size={18} color={tabColor} />
+            <MaterialIcons name="place" size={20} color={tabColor} />
           </Text>
           <Text
             style={[styles.jobDetailText, {width: widthPercentageToDP(50)}]}>
@@ -484,19 +494,6 @@ const HomeScreen = ({navigation}) => {
           <View style={[styles.headerCircle, styles.bottomLeftCircle]} />
           {/* <View style={styles.header}> */}
           <View style={styles.headerContent}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.greeting}>
-                {greeting}, {user?.full_name}!
-              </Text>
-              <View style={styles.roleContainer}>
-                <View style={styles.roleBadge}>
-                  <Text style={styles.roleText}>Lead Labor</Text>
-                </View>
-                <Text style={[styles.dateText, {color: '#fff'}]}>
-                  • {today}
-                </Text>
-              </View>
-            </View>
             <View style={styles.headerRight}>
               <TouchableOpacity
                 style={styles.avatar}
@@ -508,6 +505,19 @@ const HomeScreen = ({navigation}) => {
                 </Text>
                 <View style={styles.onlineIndicator} />
               </TouchableOpacity>
+              <View style={styles.headerLeft}>
+                <Text style={styles.greeting}>
+                  {greeting}, {user?.full_name}!
+                </Text>
+                <View style={styles.roleContainer}>
+                  <View style={styles.roleBadge}>
+                    <Text style={styles.roleText}>Lead Labor</Text>
+                  </View>
+                  <Text style={[styles.dateText, {color: '#fff'}]}>
+                    • {today}
+                  </Text>
+                </View>
+              </View>
 
               <TouchableOpacity
                 style={styles.notificationButton}
@@ -741,8 +751,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',

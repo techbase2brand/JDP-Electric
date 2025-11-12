@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   Pressable,
   TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -209,6 +210,7 @@ const LabourSearchDropdown = ({token, selectedEmployee, onSelectEmployee}) => {
 /* ======================
    LABOUR MODAL
 ====================== */
+
 const LabourModal = ({
   visible,
   setShowAddLabour,
@@ -225,98 +227,100 @@ const LabourModal = ({
       setShowAddLabour(false);
       setTempLabourData({});
     }}>
-    <View style={styles.modalOverlay}>
-      <View style={styles.modalContent}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
-          <ScrollView
-            contentContainerStyle={styles.modalBody}
-            keyboardShouldPersistTaps="handled">
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {tempLabourData?.id &&
-                String(tempLabourData.id).startsWith('labour-')
-                  ? 'Add Labour Entry'
-                  : 'Edit Labour Entry'}
-              </Text>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ScrollView
+              contentContainerStyle={styles.modalBody}
+              keyboardShouldPersistTaps="handled">
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {tempLabourData?.id &&
+                  String(tempLabourData.id).startsWith('labour-')
+                    ? 'Add Labour Entry'
+                    : 'Edit Labour Entry'}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowAddLabour(false);
+                    setTempLabourData({});
+                  }}>
+                  <Text style={styles.modalCloseButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Employee</Text>
+                <LabourSearchDropdown
+                  token={token}
+                  selectedEmployee={
+                    tempLabourData.employeeId
+                      ? {
+                          id: tempLabourData.employeeId,
+                          label: tempLabourData.employeeName,
+                        }
+                      : null
+                  }
+                  onSelectEmployee={emp =>
+                    setTempLabourData(prev => ({
+                      ...prev,
+                      employeeName: emp.label,
+                      employeeId: emp.id,
+                      _selectedEmployee: emp.raw,
+                    }))
+                  }
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>
+                  Regular Hours (e.g., 8 or 2.5)
+                </Text>
+                <TextInput
+                  style={styles.formInput}
+                  keyboardType="decimal-pad"
+                  value={
+                    tempLabourData.regular_hours_input === '' ||
+                    tempLabourData.regular_hours_input === undefined
+                      ? ''
+                      : String(tempLabourData.regular_hours_input)
+                  }
+                  onChangeText={text =>
+                    setTempLabourData(prev => ({
+                      ...prev,
+                      regular_hours_input: text,
+                    }))
+                  }
+                />
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
               <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
                 onPress={() => {
                   setShowAddLabour(false);
                   setTempLabourData({});
                 }}>
-                <Text style={styles.modalCloseButton}>✕</Text>
+                <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={handleSaveLabour}>
+                <Text style={styles.modalButtonTextPrimary}>Save</Text>
               </TouchableOpacity>
             </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Employee</Text>
-              <LabourSearchDropdown
-                token={token}
-                selectedEmployee={
-                  tempLabourData.employeeId
-                    ? {
-                        id: tempLabourData.employeeId,
-                        label: tempLabourData.employeeName,
-                      }
-                    : null
-                }
-                onSelectEmployee={emp =>
-                  setTempLabourData(prev => ({
-                    ...prev,
-                    employeeName: emp.label,
-                    employeeId: emp.id,
-                    _selectedEmployee: emp.raw,
-                  }))
-                }
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>
-                Regular Hours (e.g., 8 or 2.5)
-              </Text>
-              <TextInput
-                style={styles.formInput}
-                keyboardType="decimal-pad"
-                value={
-                  tempLabourData.regular_hours_input === '' ||
-                  tempLabourData.regular_hours_input === undefined
-                    ? ''
-                    : String(tempLabourData.regular_hours_input)
-                }
-                onChangeText={text => {
-                  // only store decimal-hours text here
-                  setTempLabourData(prev => ({
-                    ...prev,
-                    regular_hours_input: text, // user input (decimal)
-                  }));
-                }}
-              />
-            </View>
-          </ScrollView>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonSecondary]}
-              onPress={() => {
-                setShowAddLabour(false);
-                setTempLabourData({});
-              }}>
-              <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonPrimary]}
-              onPress={handleSaveLabour}>
-              <Text style={styles.modalButtonTextPrimary}>Save</Text>
-            </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      </View>
-    </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   </Modal>
 );
-// YYYY-MM-DD extractor (local-safe)
+
 const _toYMD = val => {
   if (typeof val === 'string' && val.length >= 10) {
     // handle "2025-10-27" or "2025-10-27T12:09:13..."
@@ -334,6 +338,132 @@ const sameDay = (a, b) => _toYMD(a) === _toYMD(b);
 /* ======================
    MATERIAL MODAL
 ====================== */
+// const MaterialModal = ({
+//   visible,
+//   onClose,
+//   tempMaterialData,
+//   setTempMaterialData,
+//   handleSaveMaterial,
+//   setShowAddMaterial,
+// }) => (
+//   <Modal visible={visible} animationType="slide" transparent>
+//     <View style={styles.modalOverlay}>
+//       <View style={styles.modalContent}>
+//         <View style={styles.modalHeader}>
+//           <Text style={styles.modalTitle}>
+//             {tempMaterialData?.id &&
+//             String(tempMaterialData.id).startsWith('material-')
+//               ? 'Add Material Entry'
+//               : 'Edit Material Entry'}
+//           </Text>
+//           <TouchableOpacity onPress={onClose}>
+//             <Text style={styles.modalCloseButton}>✕</Text>
+//           </TouchableOpacity>
+//         </View>
+
+//         <ScrollView style={styles.modalBody}>
+//           <View style={styles.formGroup}>
+//             <Text style={styles.formLabel}>Material Name</Text>
+//             <TextInput
+//               style={styles.formInput}
+//               placeholder="Enter material name"
+//               value={tempMaterialData.name || ''}
+//               onChangeText={text =>
+//                 setTempMaterialData(prev => ({...prev, name: text}))
+//               }
+//             />
+//           </View>
+
+//           <View style={styles.formGroup}>
+//             <Text style={styles.formLabel}>Unit</Text>
+//             <TextInput
+//               style={styles.formInput}
+//               placeholder="pieces, feet, etc."
+//               value={tempMaterialData.unit || ''}
+//               onChangeText={text =>
+//                 setTempMaterialData(prev => ({...prev, unit: text}))
+//               }
+//             />
+//           </View>
+
+//           <View style={styles.formGroup}>
+//             <Text style={styles.formLabel}>Total Ordered</Text>
+//             <TextInput
+//               style={styles.formInput}
+//               keyboardType="numeric"
+//               value={
+//                 tempMaterialData.totalOrdered === undefined
+//                   ? ''
+//                   : String(tempMaterialData.totalOrdered)
+//               }
+//               onChangeText={text =>
+//                 setTempMaterialData(prev => ({
+//                   ...prev,
+//                   totalOrdered: text === '' ? '' : parseFloat(text) || 0,
+//                 }))
+//               }
+//             />
+//           </View>
+
+//           <View style={styles.formGroup}>
+//             <Text style={styles.formLabel}>Quantity Used</Text>
+//             <TextInput
+//               style={styles.formInput}
+//               keyboardType="numeric"
+//               value={
+//                 tempMaterialData.amountUsed === undefined
+//                   ? ''
+//                   : String(tempMaterialData.amountUsed)
+//               }
+//               onChangeText={text =>
+//                 setTempMaterialData(prev => ({
+//                   ...prev,
+//                   amountUsed: text === '' ? '' : parseFloat(text) || 0,
+//                 }))
+//               }
+//             />
+//           </View>
+
+//           <View style={styles.formGroup}>
+//             <Text style={styles.formLabel}>Unit Cost</Text>
+//             <TextInput
+//               style={styles.formInput}
+//               keyboardType="numeric"
+//               value={
+//                 tempMaterialData.unitCost === undefined
+//                   ? ''
+//                   : String(tempMaterialData.unitCost)
+//               }
+//               onChangeText={text =>
+//                 setTempMaterialData(prev => ({
+//                   ...prev,
+//                   unitCost: text === '' ? '' : parseFloat(text) || 0,
+//                 }))
+//               }
+//             />
+//           </View>
+//         </ScrollView>
+
+//         <View style={styles.modalFooter}>
+//           <TouchableOpacity
+//             style={[styles.modalButton, styles.modalButtonSecondary]}
+//             onPress={() => {
+//               setShowAddMaterial(false);
+//               setTempMaterialData({});
+//             }}>
+//             <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+//           </TouchableOpacity>
+//           <TouchableOpacity
+//             style={[styles.modalButton, styles.modalButtonPrimary]}
+//             onPress={handleSaveMaterial}>
+//             <Text style={styles.modalButtonTextPrimary}>Save</Text>
+//           </TouchableOpacity>
+//         </View>
+//       </View>
+//     </View>
+//   </Modal>
+// );
+
 const MaterialModal = ({
   visible,
   onClose,
@@ -343,123 +473,131 @@ const MaterialModal = ({
   setShowAddMaterial,
 }) => (
   <Modal visible={visible} animationType="slide" transparent>
-    <View style={styles.modalOverlay}>
-      <View style={styles.modalContent}>
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>
-            {tempMaterialData?.id &&
-            String(tempMaterialData.id).startsWith('material-')
-              ? 'Add Material Entry'
-              : 'Edit Material Entry'}
-          </Text>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.modalCloseButton}>✕</Text>
-          </TouchableOpacity>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {tempMaterialData?.id &&
+                String(tempMaterialData.id).startsWith('material-')
+                  ? 'Add Material Entry'
+                  : 'Edit Material Entry'}
+              </Text>
+              <TouchableOpacity onPress={onClose}>
+                <Text style={styles.modalCloseButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.modalBody}
+              keyboardShouldPersistTaps="handled">
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Material Name</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="Enter material name"
+                  value={tempMaterialData.name || ''}
+                  onChangeText={text =>
+                    setTempMaterialData(prev => ({...prev, name: text}))
+                  }
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Unit</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder="pieces, feet, etc."
+                  value={tempMaterialData.unit || ''}
+                  onChangeText={text =>
+                    setTempMaterialData(prev => ({...prev, unit: text}))
+                  }
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Total Ordered</Text>
+                <TextInput
+                  style={styles.formInput}
+                  keyboardType="numeric"
+                  value={
+                    tempMaterialData.totalOrdered === undefined
+                      ? ''
+                      : String(tempMaterialData.totalOrdered)
+                  }
+                  onChangeText={text =>
+                    setTempMaterialData(prev => ({
+                      ...prev,
+                      totalOrdered: text === '' ? '' : parseFloat(text) || 0,
+                    }))
+                  }
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Quantity Used</Text>
+                <TextInput
+                  style={styles.formInput}
+                  keyboardType="numeric"
+                  value={
+                    tempMaterialData.amountUsed === undefined
+                      ? ''
+                      : String(tempMaterialData.amountUsed)
+                  }
+                  onChangeText={text =>
+                    setTempMaterialData(prev => ({
+                      ...prev,
+                      amountUsed: text === '' ? '' : parseFloat(text) || 0,
+                    }))
+                  }
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Unit Cost</Text>
+                <TextInput
+                  style={styles.formInput}
+                  keyboardType="numeric"
+                  value={
+                    tempMaterialData.unitCost === undefined
+                      ? ''
+                      : String(tempMaterialData.unitCost)
+                  }
+                  onChangeText={text =>
+                    setTempMaterialData(prev => ({
+                      ...prev,
+                      unitCost: text === '' ? '' : parseFloat(text) || 0,
+                    }))
+                  }
+                />
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => {
+                  setShowAddMaterial(false);
+                  setTempMaterialData({});
+                }}>
+                <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={handleSaveMaterial}>
+                <Text style={styles.modalButtonTextPrimary}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-
-        <ScrollView style={styles.modalBody}>
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Material Name</Text>
-            <TextInput
-              style={styles.formInput}
-              placeholder="Enter material name"
-              value={tempMaterialData.name || ''}
-              onChangeText={text =>
-                setTempMaterialData(prev => ({...prev, name: text}))
-              }
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Unit</Text>
-            <TextInput
-              style={styles.formInput}
-              placeholder="pieces, feet, etc."
-              value={tempMaterialData.unit || ''}
-              onChangeText={text =>
-                setTempMaterialData(prev => ({...prev, unit: text}))
-              }
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Total Ordered</Text>
-            <TextInput
-              style={styles.formInput}
-              keyboardType="numeric"
-              value={
-                tempMaterialData.totalOrdered === undefined
-                  ? ''
-                  : String(tempMaterialData.totalOrdered)
-              }
-              onChangeText={text =>
-                setTempMaterialData(prev => ({
-                  ...prev,
-                  totalOrdered: text === '' ? '' : parseFloat(text) || 0,
-                }))
-              }
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Quantity Used</Text>
-            <TextInput
-              style={styles.formInput}
-              keyboardType="numeric"
-              value={
-                tempMaterialData.amountUsed === undefined
-                  ? ''
-                  : String(tempMaterialData.amountUsed)
-              }
-              onChangeText={text =>
-                setTempMaterialData(prev => ({
-                  ...prev,
-                  amountUsed: text === '' ? '' : parseFloat(text) || 0,
-                }))
-              }
-            />
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Unit Cost</Text>
-            <TextInput
-              style={styles.formInput}
-              keyboardType="numeric"
-              value={
-                tempMaterialData.unitCost === undefined
-                  ? ''
-                  : String(tempMaterialData.unitCost)
-              }
-              onChangeText={text =>
-                setTempMaterialData(prev => ({
-                  ...prev,
-                  unitCost: text === '' ? '' : parseFloat(text) || 0,
-                }))
-              }
-            />
-          </View>
-        </ScrollView>
-
-        <View style={styles.modalFooter}>
-          <TouchableOpacity
-            style={[styles.modalButton, styles.modalButtonSecondary]}
-            onPress={() => {
-              setShowAddMaterial(false);
-              setTempMaterialData({});
-            }}>
-            <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.modalButton, styles.modalButtonPrimary]}
-            onPress={handleSaveMaterial}>
-            <Text style={styles.modalButtonTextPrimary}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   </Modal>
 );
-
 /* ======================
    MAIN SCREEN
 ====================== */
@@ -510,7 +648,8 @@ const JobTimesheet = ({navigation, route, user}) => {
       try {
         // fetch for current date so route-seeding uses that data immediately
         const res = await getJobBluesheets(jobId, token);
-        // res might be { success, message, data: { labor_timesheets: [...], orders: [...] } }
+        console.log('reessss', res);
+
         setBulesheetData(res?.data ?? {}); // keep shape similar to previous code
       } catch (error) {
         console.log('Error fetching timesheet:', error);
@@ -995,80 +1134,19 @@ const JobTimesheet = ({navigation, route, user}) => {
     setShowMatTooltip(null);
   };
 
-  /* ========= SUBMIT (one per day) ========= */
-  // const handleSubmitForApproval = async () => {
-  //   try {
-  //     if (locked) {
-  //       Alert.alert(
-  //         'Already Submitted',
-  //         'Aaj ki bluesheet submit ho chuki hai.',
-  //       );
-  //       return;
-  //     }
-  //     const payload = buildBluesheetPayload();
-  //     if (!payload.labor_entries.length && !payload.material_entries.length) {
-  //       Alert.alert('Empty', 'Nothing to submit for the selected date.');
-  //       return;
-  //     }
-
-  //     await submitBluesheetComplete(payload, token);
-
-  //     await AsyncStorage.setItem(
-  //       submitKey(currentJobId, timesheetData.date),
-  //       'true',
-  //     );
-  //     setIsSubmittedForDay(true);
-
-  //     await AsyncStorage.removeItem(tsKey(currentJobId, timesheetData.date));
-
-  //     setTimesheetData(prev => ({
-  //       ...prev,
-  //       status: 'submitted',
-  //       submittedAt: new Date().toISOString(),
-  //       rejectionReason: undefined,
-  //     }));
-  //     Alert.alert('Success', 'Bluesheet submitted for approval');
-  //   } catch (err) {
-  //     const msg = err?.message || 'Failed to submit bluesheet';
-  //     if (
-  //       /already.*submitted|duplicate/i.test(
-  //         String(err?.message || err?.error || ''),
-  //       )
-  //     ) {
-  //       await AsyncStorage.setItem(
-  //         submitKey(currentJobId, timesheetData.date),
-  //         'true',
-  //       );
-  //       setIsSubmittedForDay(true);
-  //       await AsyncStorage.removeItem(tsKey(currentJobId, timesheetData.date));
-  //       setTimesheetData(prev => ({
-  //         ...prev,
-  //         status: 'submitted',
-  //         submittedAt: prev.submittedAt || new Date().toISOString(),
-  //       }));
-  //       Alert.alert(
-  //         'Already Submitted',
-  //         'Aaj ki bluesheet pehle hi submit ho chuki hai.',
-  //       );
-  //       return;
-  //     }
-  //     Alert.alert('Error', msg);
-  //   }
-  // };
-
   const handleSubmitForApproval = async () => {
     try {
       if (locked) {
-        Alert.alert(
-          'Already Submitted',
-          'Aaj ki bluesheet submit ho chuki hai.',
-        );
+        Alert.alert('Already Submitted');
         return;
       }
 
       const payload = buildBluesheetPayload();
       if (!payload.labor_entries.length && !payload.material_entries.length) {
-         Alert.alert('Empty', 'No entries found. Please add labor or material details before submitting.');
+        Alert.alert(
+          'Empty',
+          'No entries found. Please add labor or material details before submitting.',
+        );
         return;
       }
 
@@ -1090,7 +1168,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         submittedAt: new Date().toISOString(),
         rejectionReason: undefined,
       }));
-
+      navigation.goBack();
       Alert.alert('Success', 'Bluesheet submitted for approval');
     } catch (err) {
       const msg = err?.message || 'Failed to submit bluesheet';
@@ -1187,22 +1265,33 @@ const JobTimesheet = ({navigation, route, user}) => {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {isReadOnly() && (
-          <View style={[styles.statusCard, {marginBottom: 0}]}>
-            <View style={styles.approvalInfo}>
-              <Text style={styles.approvalIcon}>ℹ️</Text>
-              <View style={styles.approvalText}>
-                <Text style={styles.approvalTitle}>
-                  The blue sheet for today has been submitted.
-                </Text>
-                <Text style={styles.approvalDetails}>
-                  The next submission will be enabled for tomorrow.
-                </Text>
+          <View>
+            <View
+              style={[
+                styles.statusCard,
+                {
+                  display: 'flex',
+                  justifyContent: 'center',
+                },
+              ]}>
+              <View style={styles.approvalInfo}>
+                <Text style={styles.approvalIcon}>ℹ️</Text>
+                <View style={styles.approvalText}>
+                  <Text style={styles.approvalTitle}>
+                    The blue sheet for today has been submitted.
+                  </Text>
+                  <Text style={styles.approvalDetails}>
+                    The next submission will be enabled for tomorrow.
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
         )}
 
         {/* LABOUR */}
+        {/* {!isReadOnly && (
+        <View> */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Feather name="clock" size={20} color={Colors.primary} />
@@ -1226,101 +1315,113 @@ const JobTimesheet = ({navigation, route, user}) => {
               )}
             </View>
 
-            {timesheetData?.labourEntries.map(entry => {
-              const isTooltipVisible = showTooltip === entry.id;
-              return (
-                <View key={entry.id} style={styles.tableRow}>
-                  <Text style={[styles.tableCell, {flex: 1}]}>
-                    {entry.employeeName}
-                  </Text>
-                  {/* <Text style={[styles.tableCell, {flex: 1}]}>
+            {timesheetData?.labourEntries?.length > 0 ? (
+              timesheetData?.labourEntries?.map(entry => {
+                const isTooltipVisible = showTooltip === entry.id;
+                return (
+                  <View key={entry.id} style={styles.tableRow}>
+                    <Text style={[styles.tableCell, {flex: 1}]}>
+                      {entry.employeeName}
+                    </Text>
+                    {/* <Text style={[styles.tableCell, {flex: 1}]}>
                   {entry.role || 'Labor'}
                 </Text> */}
-                  <Text style={[styles.tableCell, {flex: 1}]}>
-                    {normalizeToHMS(
-                      entry.regular_hours_input ??
-                        entry.regular_hours_hms ??
-                        entry.regularHours,
-                    )}
-                  </Text>
-                  {canEdit() && (
-                    // <View
-                    //   style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
-                    //   <TouchableOpacity
-                    //     style={styles.editButton}
-                    //     onPress={() => {
-                    //       const hms = normalizeToHMS(
-                    //         entry.regular_hours_input ??
-                    //           entry.regular_hours_hms ??
-                    //           entry.regularHours,
-                    //       );
-                    //       const safe = {
-                    //         ...entry,
-                    //         regular_hours_input:
-                    //           entry.regular_hours_input ?? hmsToDecimalStr(hms),
-                    //         regular_hours_hms: hms,
-                    //         regularHours: hms,
-                    //       };
-                    //       setTempLabourData(safe);
-                    //       setShowAddLabour(true);
-                    //     }}>
-                    //     <MaterialIcons
-                    //       name="edit"
-                    //       size={20}
-                    //       color={Colors.primary}
-                    //     />
-                    //   </TouchableOpacity>
-                    //   <TouchableOpacity
-                    //     style={styles.deleteButton}
-                    //     onPress={() => handleDeleteLabour(entry.id)}>
-                    //     <MaterialIcons
-                    //       name="delete"
-                    //       size={20}
-                    //       color={'#dc2626'}
-                    //     />
-                    //   </TouchableOpacity>
-                    // </View>
-                    <View
-                      style={[
-                        styles.tableCell,
-                        {flex: 1, flexDirection: 'row', position: 'relative'},
-                      ]}>
-                      {/* 3 Dots */}
-                      <TouchableOpacity
-                        onPress={() => setShowTooltip(entry.id)}
-                        style={{padding: 4}}>
-                        <MaterialIcons
-                          name="more-vert"
-                          size={22}
-                          color="#555"
-                        />
-                      </TouchableOpacity>
+                    <Text style={[styles.tableCell, {flex: 1}]}>
+                      {normalizeToHMS(
+                        entry.regular_hours_input ??
+                          entry.regular_hours_hms ??
+                          entry.regularHours,
+                      )}
+                    </Text>
+                    {canEdit() && (
+                      // <View
+                      //   style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
+                      //   <TouchableOpacity
+                      //     style={styles.editButton}
+                      //     onPress={() => {
+                      //       const hms = normalizeToHMS(
+                      //         entry.regular_hours_input ??
+                      //           entry.regular_hours_hms ??
+                      //           entry.regularHours,
+                      //       );
+                      //       const safe = {
+                      //         ...entry,
+                      //         regular_hours_input:
+                      //           entry.regular_hours_input ?? hmsToDecimalStr(hms),
+                      //         regular_hours_hms: hms,
+                      //         regularHours: hms,
+                      //       };
+                      //       setTempLabourData(safe);
+                      //       setShowAddLabour(true);
+                      //     }}>
+                      //     <MaterialIcons
+                      //       name="edit"
+                      //       size={20}
+                      //       color={Colors.primary}
+                      //     />
+                      //   </TouchableOpacity>
+                      //   <TouchableOpacity
+                      //     style={styles.deleteButton}
+                      //     onPress={() => handleDeleteLabour(entry.id)}>
+                      //     <MaterialIcons
+                      //       name="delete"
+                      //       size={20}
+                      //       color={'#dc2626'}
+                      //     />
+                      //   </TouchableOpacity>
+                      // </View>
+                      <View
+                        style={[
+                          styles.tableCell,
+                          {
+                            flex: 1,
+                            flexDirection: 'row',
+                            position: 'relative',
+                          },
+                        ]}>
+                        {/* 3 Dots */}
+                        <TouchableOpacity
+                          onPress={() => setShowTooltip(entry.id)}
+                          style={{padding: 4}}>
+                          <MaterialIcons
+                            name="more-vert"
+                            size={22}
+                            color="#555"
+                          />
+                        </TouchableOpacity>
 
-                      {/* Tooltip */}
-                      {isTooltipVisible && (
-                        <View style={styles.tooltipBox}>
-                          <TouchableOpacity
-                            onPress={() => handleEdit(entry)}
-                            style={styles.tooltipItem}>
-                            <Text
-                              style={[styles.tooltipText, {color: 'green'}]}>
-                              Edit
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
+                        {/* Tooltip */}
+                        {isTooltipVisible && (
+                          <View style={styles.tooltipBox}>
+                            <TouchableOpacity
+                              onPress={() => handleEdit(entry)}
+                              style={styles.tooltipItem}>
+                              <Text
+                                style={[styles.tooltipText, {color: 'green'}]}>
+                                Edit
+                              </Text>
+                            </TouchableOpacity>
+                            {/* <TouchableOpacity
                             onPress={() => handleDelete(entry)}
                             style={styles.tooltipItem}>
                             <Text style={[styles.tooltipText, {color: 'red'}]}>
                               Delete
                             </Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
-                  )}
-                </View>
-              );
-            })}
+                          </TouchableOpacity> */}
+                          </View>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            ) : (
+              <View style={{padding: 10, alignItems: 'center'}}>
+                <Text style={{color: '#777', fontStyle: 'italic'}}>
+                  No labours data found
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -1349,94 +1450,106 @@ const JobTimesheet = ({navigation, route, user}) => {
               )}
             </View>
 
-            {timesheetData?.materialEntries?.map(material => {
-              const isTooltipVisible = showMatTooltip === material.id;
-              return (
-                <View key={material?.id} style={styles.tableRow}>
-                  <Text style={[styles.tableCell, {flex: 1}]}>
-                    {material?.name}
-                  </Text>
-                  <Text style={[styles.tableCell, {flex: 1}]}>
-                    {material?.totalOrdered} {material?.unit}
-                  </Text>
-                  <Text style={[styles.tableCell, {flex: 1}]}>
-                    {material?.amountUsed} {material?.unit}
-                  </Text>
-                  <Text style={[styles.tableCell, {flex: 1}]}>
-                    {material?.totalOrdered - material?.amountUsed || 0}{' '}
-                    {material?.unit}
-                  </Text>
-                  {canEdit() && (
-                    // <View
-                    //   style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
-                    //   <TouchableOpacity
-                    //     style={styles.editButton}
-                    //     onPress={() => {
-                    //       setTempMaterialData(material);
-                    //       setShowAddMaterial(true);
-                    //     }}>
-                    //     <MaterialIcons
-                    //       name="edit"
-                    //       size={20}
-                    //       color={Colors.primary}
-                    //     />
-                    //   </TouchableOpacity>
-                    //   <TouchableOpacity
-                    //     style={styles.deleteButton}
-                    //     onPress={() => handleDeleteMaterial(material.id)}>
-                    //     <MaterialIcons
-                    //       name="delete"
-                    //       size={20}
-                    //       color={'#dc2626'}
-                    //     />
-                    //   </TouchableOpacity>
-                    // </View>
-                    <View
-                      style={[
-                        styles.tableCell,
-                        {flex: 1, flexDirection: 'row', position: 'relative'},
-                      ]}>
-                      {/* 3 Dots */}
-                      <TouchableOpacity
-                        onPress={() => setShowMatTooltip(material.id)}
-                        style={{padding: 4}}>
-                        <MaterialIcons
-                          name="more-vert"
-                          size={22}
-                          color="#555"
-                        />
-                      </TouchableOpacity>
+            {timesheetData?.materialEntries?.length > 0 ? (
+              timesheetData?.materialEntries?.map(material => {
+                const isTooltipVisible = showMatTooltip === material.id;
+                return (
+                  <View key={material?.id} style={styles.tableRow}>
+                    <Text style={[styles.tableCell, {flex: 1}]}>
+                      {material?.name}
+                    </Text>
+                    <Text style={[styles.tableCell, {flex: 1}]}>
+                      {material?.totalOrdered} {material?.unit}
+                    </Text>
+                    <Text style={[styles.tableCell, {flex: 1}]}>
+                      {material?.amountUsed} {material?.unit}
+                    </Text>
+                    <Text style={[styles.tableCell, {flex: 1}]}>
+                      {material?.totalOrdered - material?.amountUsed || 0}{' '}
+                      {material?.unit}
+                    </Text>
+                    {canEdit() && (
+                      // <View
+                      //   style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
+                      //   <TouchableOpacity
+                      //     style={styles.editButton}
+                      //     onPress={() => {
+                      //       setTempMaterialData(material);
+                      //       setShowAddMaterial(true);
+                      //     }}>
+                      //     <MaterialIcons
+                      //       name="edit"
+                      //       size={20}
+                      //       color={Colors.primary}
+                      //     />
+                      //   </TouchableOpacity>
+                      //   <TouchableOpacity
+                      //     style={styles.deleteButton}
+                      //     onPress={() => handleDeleteMaterial(material.id)}>
+                      //     <MaterialIcons
+                      //       name="delete"
+                      //       size={20}
+                      //       color={'#dc2626'}
+                      //     />
+                      //   </TouchableOpacity>
+                      // </View>
+                      <View
+                        style={[
+                          styles.tableCell,
+                          {
+                            flex: 1,
+                            flexDirection: 'row',
+                            position: 'relative',
+                          },
+                        ]}>
+                        {/* 3 Dots */}
+                        <TouchableOpacity
+                          onPress={() => setShowMatTooltip(material.id)}
+                          style={{padding: 4}}>
+                          <MaterialIcons
+                            name="more-vert"
+                            size={22}
+                            color="#555"
+                          />
+                        </TouchableOpacity>
 
-                      {/* Tooltip */}
-                      {isTooltipVisible && (
-                        <View style={styles.tooltipBox}>
-                          <TouchableOpacity
-                            // onPress={()=>handleMaterialEdit(material)}
-                            onPress={() => {
-                              setTempMaterialData(material);
-                              setShowAddMaterial(true);
-                              setShowMatTooltip(null);
-                            }}
-                            style={styles.tooltipItem}>
-                            <Text
-                              style={[styles.tooltipText, {color: 'green'}]}>
-                              Edit
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
+                        {/* Tooltip */}
+                        {isTooltipVisible && (
+                          <View style={styles.tooltipBox}>
+                            <TouchableOpacity
+                              // onPress={()=>handleMaterialEdit(material)}
+                              onPress={() => {
+                                setTempMaterialData(material);
+                                setShowAddMaterial(true);
+                                setShowMatTooltip(null);
+                              }}
+                              style={styles.tooltipItem}>
+                              <Text
+                                style={[styles.tooltipText, {color: 'green'}]}>
+                                Edit
+                              </Text>
+                            </TouchableOpacity>
+                            {/* <TouchableOpacity
                             onPress={() => handleDeleteMaterial(material.id)}
                             style={styles.tooltipItem}>
                             <Text style={[styles.tooltipText, {color: 'red'}]}>
                               Delete
                             </Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
-                  )}
-                </View>
-              );
-            })}
+                          </TouchableOpacity> */}
+                          </View>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            ) : (
+              <View style={{padding: 10, alignItems: 'center'}}>
+                <Text style={{color: '#777', fontStyle: 'italic'}}>
+                  No material data found
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -1486,7 +1599,7 @@ const JobTimesheet = ({navigation, route, user}) => {
                 styles.submitButton,
                 (isReadOnly() || loading) && {opacity: 0.5},
               ]}
-              disabled={isReadOnly() ||  loading}
+              disabled={isReadOnly() || loading}
               onPress={handleSubmitForApproval}>
               {loading ? (
                 <ActivityIndicator color="#fff" />
@@ -1500,6 +1613,8 @@ const JobTimesheet = ({navigation, route, user}) => {
             </TouchableOpacity>
           </View>
         </View>
+        {/* </View>
+         )} */}
 
         <View style={{height: 28}} />
       </ScrollView>

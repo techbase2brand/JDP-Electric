@@ -31,8 +31,6 @@ const EditProfileScreen = ({navigation}) => {
   const [allLabourData, setAllLabourData] = useState();
   const [avatarUri, setAvatarUri] = useState(null);
 
-  console.log('user:::', allLabourData);
-
   const [formData, setFormData] = useState();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -81,13 +79,14 @@ const EditProfileScreen = ({navigation}) => {
         if (user?.management_type === 'lead_labor') {
           const leadLabor = await getLeadLaborById(user?.lead_labor?.id, token);
           profileData = leadLabor?.data;
+          console.log('profi;eFDAta', profileData?.users?.photo_url);
         } else {
           const labor = await getLaborById(user?.labor?.id, token);
           profileData = labor?.data;
         }
 
         setAllLabourData(profileData);
-        setAvatarUri(profileData?.photo_url);
+        setAvatarUri(profileData?.users?.photo_url);
         // API response se formData set karo
         setFormData({
           full_name: profileData?.users?.full_name || '',
@@ -99,7 +98,7 @@ const EditProfileScreen = ({navigation}) => {
           status: profileData?.users?.status || '',
           role: profileData?.users?.role || '',
           dob: formatDate(profileData?.dob || ''),
-          photo_url: profileData?.photo_url || '',
+          photo_url: profileData?.users?.photo_url || '',
           supervisor: profileData?.supervisor?.full_name || '',
         });
       } catch (err) {
@@ -163,7 +162,6 @@ const EditProfileScreen = ({navigation}) => {
         });
       }
       // }
-      console.log('formform>>>', form);
 
       let response;
       if (user?.management_type === 'lead_labor') {
@@ -274,20 +272,19 @@ const EditProfileScreen = ({navigation}) => {
           <View style={styles.profileSection}>
             <View style={styles.avatarContainer}>
               <View style={styles.avatar}>
-                {avatarUri ? (
-                  <Image source={{uri: avatarUri}} style={styles.avatarImage} />
+                { avatarUri ? (
+                  <Image
+                    source={{uri:avatarUri}}
+                    style={styles.avatarImage}
+                  />
                 ) : (
                   <Text style={styles.avatarText}>
-                    <Text style={styles.avatarText}>
-                      {formData?.full_name
-                        ? formData.full_name
-                            .split(' ')
-                            .map(n => n[0])
-                            .join('')
-                            .toUpperCase()
-                        : ''}
-                    </Text>
-                    {/* {formData?.full_name?.split?.map(n => n[0])?.join} */}
+                    {formData?.full_name
+                      ? formData.full_name
+                          .split(' ')
+                          .map(n => n[0]?.toUpperCase())
+                          .join('')
+                      : ''}
                   </Text>
                 )}
               </View>

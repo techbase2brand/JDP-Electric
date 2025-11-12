@@ -315,13 +315,13 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                 <Text style={styles.emptyStateIcon}>📋</Text>
                 <Text style={styles.emptyStateTitle}>
                   {searchQuery
-                    ? 'No matching timesheets found'
-                    : 'No timesheets found'}
+                    ? 'No matching BlueSheets found'
+                    : 'No BlueSheets found'}
                 </Text>
                 <Text style={styles.emptyStateSubtitle}>
                   {searchQuery
                     ? 'Try adjusting your search terms or filters.'
-                    : 'Timesheets will appear here once they are submitted.'}
+                    : 'BlueSheets will appear here once they are submitted.'}
                 </Text>
               </View>
             ) : (
@@ -333,7 +333,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                     <View style={styles.timesheetHeader}>
                       <View style={styles.timesheetTitleContainer}>
                         <View style={styles.timesheetBadges}>
-                          <Text style={styles.timesheetId}>
+                          <Text style={[styles.timesheetId,{width:"60%"}]}>
                             {timesheet?.job?.job_title}
                           </Text>
                           <View
@@ -355,35 +355,17 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                               {timesheet?.status?.toUpperCase() || 'Pending'}
                             </Text>
                           </View>
-                          {/* <View
-                          style={[
-                            styles.priorityBadge,
-                            getPriorityColor(timesheet.priority),
-                          ]}>
-                          <Text
-                            style={[
-                              styles.priorityBadgeText,
-                              {
-                                color: getPriorityColor(timesheet.priority)
-                                  .color,
-                              },
-                            ]}>
-                            {timesheet.priority.toUpperCase()}
-                          </Text>
-                        </View> */}
                         </View>
-                        <Text style={styles.timesheetTitle}>
-                          {timesheet.jobTitle}
-                        </Text>
+                      
                         <View
                           style={{
                             display: 'flex',
                             flexDirection: 'row',
                             justifyContent: 'space-between',
                           }}>
-                          <Text style={styles.timesheetCustomer}>
+                          {/* <Text style={styles.timesheetCustomer}>
                             {timesheet?.job?.customer?.customer_name}
-                          </Text>
+                          </Text> */}
                           {/* <TouchableOpacity
                           onPress={() => toggleJobExpansion(timesheet.id)}>
                           <MaterialIcons
@@ -402,6 +384,9 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
 
                     {/* Details Grid */}
                     {/* {isExpanded && ( */}
+                    {/* <Text style={styles.timesheetCustomer}>
+                            {timesheet?.job?.customer?.customer_name}
+                          </Text> */}
                     <View style={styles.detailsGrid}>
                       <View style={styles.detailRow}>
                         <View style={styles.detailItem}>
@@ -750,15 +735,17 @@ const styles = StyleSheet.create({
   },
   timesheetHeader: {
     marginBottom: 12,
+    width:"100%",
   },
   timesheetTitleContainer: {
     flex: 1,
+    flexDirection:"row",
+    justifyContent:"space-between",
   },
   timesheetBadges: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
-    flexWrap: 'wrap',
   },
   timesheetId: {
     fontSize: 16,

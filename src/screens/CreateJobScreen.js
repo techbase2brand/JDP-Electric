@@ -18,6 +18,8 @@ import {
   findNodeHandle,
   UIManager,
   ActivityIndicator,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -49,6 +51,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   const GOOGLE_MAPS_APIKEY = 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI';
 
   const scrollRef = useRef(null);
+  const googleRef = useRef(null);
+
   const fieldPositions = useRef({});
   const isFetchingMoreRef = useRef(false);
 
@@ -84,21 +88,6 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
-  // const handleSelect = member => {
-  //   const isSelected = formData.assignedTo.includes(member?.users?.full_name);
-
-  //   if (isSelected) {
-  //     updateFormData(
-  //       'assignedTo',
-  //       formData.assignedTo.filter(name => name !== member?.users?.full_name),
-  //     );
-  //   } else {
-  //     updateFormData('assignedTo', [
-  //       ...formData.assignedTo,
-  //       member?.users?.full_name,
-  //     ]);
-  //   }
-  // };
   const handleSelect = member => {
     const laborId = member?.id; // <- API se aata id use karein
     const isSelected = formData.assignedTo.includes(laborId);
@@ -160,6 +149,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   const [selected, setSelected] = useState('customer'); // ✅ Customer default
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [selectedContractorId, setSelectedContractorId] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   console.log('selectedselected>>', selected);
 
   //  Load from AsyncStorage on mount
@@ -297,98 +287,98 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   // };
 
   // ✅ Search text change
+  // const handleChange = text => {
+  //   setSearch(text);
+  //   setFormData({...formData, customerName: text});
+
+  //   // Check if typed text matches any customer exactly
+  //   const matchedCustomer = customers.find(
+  //     c => c.customer_name.toLowerCase() === text.toLowerCase(),
+  //   );
+
+  //   if (matchedCustomer) {
+  //     // Valid customer selected
+  //     setSelectedCustomerId(matchedCustomer.id);
+  //     setSelectedCustomer(matchedCustomer.customer_name);
+  //     if (validationErrors.customerName) {
+  //       setValidationErrors(prev => ({...prev, customerName: ''}));
+  //     }
+  //   } else {
+  //     // Invalid or partial input
+  //     setSelectedCustomerId(null);
+  //     setSelectedCustomer('');
+  //     setValidationErrors(prev => ({
+  //       ...prev,
+  //       customerName: text || 'Please enter a valid customer',
+  //     }));
+  //   }
+
+  //   // Filter dropdown for autocomplete
+  //   if (text.length > 0) {
+  //     const matches = customers.filter(c =>
+  //       c.customer_name.toLowerCase().includes(text.toLowerCase()),
+  //     );
+  //     setFiltered(matches);
+  //     setShowDropdown(true);
+  //   } else {
+  //     setShowDropdown(false);
+  //   }
+  // };
+
+  // const handleSelectName = name => {
+  //   setSearch(name);
+  //   const chosen = customers.find(
+  //     c => c.customer_name.toLowerCase() === name.toLowerCase(),
+  //   );
+  //   setSelectedCustomerId(chosen?.id || null);
+  //   setSelectedCustomer(name);
+  //   setFormData(prev => ({...prev, customerName: name}));
+  //   setShowDropdown(false);
+
+  //   // Clear validation since a valid customer was selected
+  //   if (validationErrors.customerName) {
+  //     setValidationErrors(prev => ({...prev, customerName: ''}));
+  //   }
+  // };
   const handleChange = text => {
     setSearch(text);
-    setFormData({...formData, customerName: text});
+    setFormData(prev => ({...prev, customerName: text}));
 
-    if (validationErrors.customerName) {
-      setValidationErrors(prev => ({...prev, customerName: ''}));
+    // Reset selection if user types after selecting
+    if (selectedCustomerId) {
+      setSelectedCustomerId(null);
+      setSelectedCustomer('');
     }
 
+    // Filter dropdown
     if (text.length > 0) {
-      const matches = customers.filter(
-        c => c?.customer_name?.toLowerCase()?.includes(text?.toLowerCase()), // 👈 frontend filter
+      const matches = customers.filter(c =>
+        c.customer_name.toLowerCase().includes(text.toLowerCase()),
       );
       setFiltered(matches);
       setShowDropdown(true);
     } else {
       setShowDropdown(false);
     }
+
+    // Show live error if nothing selected
+    setValidationErrors(prev => ({
+      ...prev,
+      customerName: 'Please select a customer from the list',
+    }));
   };
 
-  // ✅ Select customer
-  // replace your handleSelectName
   const handleSelectName = name => {
     setSearch(name);
-    const chosen = customers.find(c => c?.customer_name === name);
-    setSelectedCustomerId(chosen?.id || null);
+    const chosen = customers.find(
+      c => c.customer_name.toLowerCase() === name.toLowerCase(),
+    );
+    if (chosen) {
+      setSelectedCustomerId(chosen.id); // ✅ only set on selection
+      setSelectedCustomer(chosen.customer_name);
+      setValidationErrors(prev => ({...prev, customerName: ''}));
+    }
     setFormData(prev => ({...prev, customerName: name}));
-    setShowDropdown(false);
-  };
-
-  // const handleSelectName = name => {
-  //   setSearch(name);
-  //   setFormData({...formData, customerName: name});
-  //   setShowDropdown(false);
-  // };
-  //  Contractors
-  const fetchContractors = async (pageNo = 1) => {
-    if (!token || loading || !contractorHasMore) return;
-    try {
-      setLoading(true);
-      const res = await getContractors(pageNo, 10, token);
-      console.log('Contractors:', res.data.contractors);
-      console.log('pageno', pageNo);
-
-      if (pageNo === 1) {
-        setContractors(res?.data?.contractors || []);
-        // setContractorFiltered(res?.data?.contractors || []);
-      } else {
-        setContractors(prev => [...prev, ...res?.data?.contractors]);
-      }
-
-      setContractorHasMore(res?.data?.contractors?.length > 0);
-      setLoading(false);
-    } catch (err) {
-      setLoading(false);
-      setContractorHasMore(false);
-      console.error(err);
-    }
-  };
-
-  // ✅ Select Contractors
-  const handleContractorChange = text => {
-    setContractorSearch(text);
-    setFormData({...formData, contractorName: text});
-
-    if (validationErrors.contractorName) {
-      setValidationErrors(prev => ({...prev, contractorName: ''}));
-    }
-
-    if (text.length > 0) {
-      const matches = contractors.filter(c =>
-        c?.contractor_name?.toLowerCase()?.includes(text?.toLowerCase()),
-      );
-      setContractorFiltered(matches);
-      setShowContractorDropdown(true);
-    } else {
-      setShowContractorDropdown(false);
-    }
-  };
-  const handleSelectContractor = name => {
-    setContractorSearch(name);
-    setFormData({...formData, contractorName: name});
-    setShowContractorDropdown(false);
-  };
-
-  const handleAddIfNotExist = async () => {
-    if (search.trim().length === 0) return;
-
-    if (!customers.includes(search)) {
-      const newList = [...customers, search];
-      await saveCustomers(newList);
-    }
-    setFormData({...formData, customerName: search});
     setShowDropdown(false);
   };
 
@@ -418,22 +408,6 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     }
   };
 
-  // ✅ Select labor
-  // const handleSelectLabor = name => {
-  //   setSelectedLabor(name);
-  //   setFormData({...formData, laborName: name});
-  //   setShowLaborDropdown(false);
-  // };
-
-  // Mock team members for assignment
-  const teamMembers = [
-    {id: '1', name: 'Mike Wilson', role: 'Labor'},
-    {id: '2', name: 'Lisa Rodriguez', role: 'Labor'},
-    {id: '3', name: 'David Chen', role: 'Labor'},
-    {id: '4', name: 'Tom Anderson', role: 'Labor'},
-    {id: '5', name: 'James Mitchell', role: 'Labor'},
-  ];
-
   const priorityOptions = [
     {
       value: 'low',
@@ -455,28 +429,6 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     },
   ];
 
-  const timeSlots = [
-    '08:00',
-    '08:30',
-    '09:00',
-    '09:30',
-    '10:00',
-    '10:30',
-    '11:00',
-    '11:30',
-    '12:00',
-    '12:30',
-    '13:00',
-    '13:30',
-    '14:00',
-    '14:30',
-    '15:00',
-    '15:30',
-    '16:00',
-    '16:30',
-    '17:00',
-    '17:30',
-  ];
   const onChange = (event, selectedDate, type) => {
     if (type === 'scheduledDate') {
       setShowDatePicker(false);
@@ -632,8 +584,9 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
         if (!formData.title.trim()) errors.title = 'Job title is required';
         if (!formData.description.trim())
           errors.description = 'Job description is required';
-        if (!formData.customerName.trim())
-          errors.customerName = 'Customer name is required';
+        if (!selectedCustomer || !formData.customerName.trim()) {
+          errors.customerName = 'Please select a customer';
+        }
         if (!formData.customerPhone.trim())
           errors.customerPhone = 'Customer phone is required';
         if (!formData.customerAddress.trim())
@@ -718,19 +671,38 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     return Object.keys(errors).length === 0;
   };
 
+  // const nextStep = async () => {
+  //   if (validateStep(currentStep)) {
+  //     try {
+  //       if (currentStep === 1) {
+
+  //       }
+  //     } catch (err) {
+  //       console.log('❌ handleAddCustomer error:', err);
+  //     } finally {
+  //       // ✅ Step change hamesha hoga
+  //       setCurrentStep(prev => Math.min(prev + 1, 3));
+  //     }
+  //   }
+  // };
+
   const nextStep = async () => {
-    if (validateStep(currentStep)) {
-      try {
-        if (currentStep === 1) {
-          await handleAddCustomer(); // ✅ API call
-        }
-      } catch (err) {
-        console.log('❌ handleAddCustomer error:', err);
-        // yaha chaho to user ko alert bhi dikha sakte ho
-      } finally {
-        // ✅ Step change hamesha hoga
-        setCurrentStep(prev => Math.min(prev + 1, 3));
+    if (!selectedCustomerId) {
+      setValidationErrors(prev => ({
+        ...prev,
+        customerName: 'Please select a customer from the list',
+      }));
+      return; // Stop step change
+    }
+
+    try {
+      if (currentStep === 1) {
+        // Step 1 logic
       }
+    } catch (err) {
+      console.log('❌ handleAddCustomer error:', err);
+    } finally {
+      setCurrentStep(prev => Math.min(prev + 1, 3));
     }
   };
 
@@ -766,42 +738,42 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   //     });
   //   }
   // }, [validationErrors]);
-  const handleAddCustomer = async () => {
-    try {
-      // 1. Check if customer exists in current list
-      const existing = customers.find(
-        c =>
-          c.customer_name?.toLowerCase() ===
-          formData.customerName?.trim().toLowerCase(),
-      );
+  // const handleAddCustomer = async () => {
+  //   try {
+  //     // 1. Check if customer exists in current list
+  //     const existing = customers.find(
+  //       c =>
+  //         c.customer_name?.toLowerCase() ===
+  //         formData.customerName?.trim().toLowerCase(),
+  //     );
 
-      if (existing) {
-        console.log('✅ Customer already exists:', existing);
-        // agar customer mil gaya to directly state update kar do (id bhi rakh lo)
-        setSelectedCustomerId(existing.id);
-        return existing;
-      }
+  //     if (existing) {
+  //       console.log('✅ Customer already exists:', existing);
+  //       // agar customer mil gaya to directly state update kar do (id bhi rakh lo)
+  //       setSelectedCustomerId(existing.id);
+  //       return existing;
+  //     }
 
-      // 2. Agar exist nahi karta to create karo
-      const payload = {
-        customer_name: formData.customerName,
-        email: formData.customerEmail,
-        phone: formData.customerPhone,
-        address: formData.customerAddress,
-      };
-      console.log('Creating new customer payload::', payload);
+  //     // 2. Agar exist nahi karta to create karo
+  //     const payload = {
+  //       customer_name: formData.customerName,
+  //       email: formData.customerEmail,
+  //       phone: formData.customerPhone,
+  //       address: formData.customerAddress,
+  //     };
+  //     console.log('Creating new customer payload::', payload);
 
-      const res = await createCustomer(payload, token);
-      console.log('✅ Customer Created:', res);
+  //     const res = await createCustomer(payload, token);
+  //     console.log('✅ Customer Created:', res);
 
-      // naya add hone ke baad list refresh karo
-      fetchCustomers(1);
+  //     // naya add hone ke baad list refresh karo
+  //     fetchCustomers(1);
 
-      return res;
-    } catch (err) {
-      console.log('❌ Error in handleAddCustomer:', err);
-    }
-  };
+  //     return res;
+  //   } catch (err) {
+  //     console.log('❌ Error in handleAddCustomer:', err);
+  //   }
+  // };
 
   const buildJobPayload = () => {
     const leadIds =
@@ -1094,26 +1066,6 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               </View>
             )}
           </View>
-
-          {/* <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Priority Level</Text>
-            {renderDropdown(
-              formData.priority,
-              priorityOptions,
-              value => updateFormData('priority', value),
-              showPriorityDropdown,
-              () => setShowPriorityDropdown(!showPriorityDropdown),
-              'Select priority',
-              option =>
-                option && (
-                  <View style={styles.priorityDisplayContainer}>
-                    <Text style={styles.dropdownButtonText}>
-                      {option.label}
-                    </Text>
-                  </View>
-                ),
-            )}
-          </View> */}
         </View>
 
         {/* Customer Information */}
@@ -1146,32 +1098,6 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 setShowDropdown(true);
               }}
             />
-            {/* <TouchableOpacity
-                style={[
-                  styles.inputContainer,
-                  validationErrors.customerName && styles.inputContainerError,
-                  {
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  },
-                ]}
-                activeOpacity={0.7}
-                onPress={() => {
-                  setFiltered(customers); // ✅ All customers dikhao
-                  setShowDropdown(!showDropdown); // ✅ Toggle dropdown
-                }}>
-                <Text style={{color: search ? '#000' : '#999'}}>
-                  {search || 'Select Customer'}
-                </Text>
-
-                <Icon
-                  name={
-                    showDropdown ? 'keyboard-arrow-up' : 'keyboard-arrow-down'
-                  }
-                  size={24}
-                />
-              </TouchableOpacity> */}
 
             {/* Validation Error */}
             {validationErrors.customerName && (
@@ -1181,22 +1107,6 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 </Text>
               </View>
             )}
-
-            {/* {showDropdown && filtered.length > 0 && (
-              <View style={styles.dropdownWrapper}>
-                <FlatList
-                  data={filtered}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={({item}) => (
-                    <TouchableOpacity
-                      style={styles.customerItem}
-                      onPress={() => handleSelectName(item)}>
-                      <Text style={styles.customerText}>{item}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            )} */}
             {showDropdown && filtered.length > 0 && (
               <View style={styles.dropdownWrapper}>
                 <FlatList
@@ -1205,7 +1115,10 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                   renderItem={({item}) => (
                     <TouchableOpacity
                       style={styles.customerItem}
-                      onPress={() => handleSelectName(item.customer_name)}>
+                      onPress={() => {
+                        handleSelectName(item.customer_name),
+                          Keyboard.dismiss();
+                      }}>
                       <Text style={styles.customerText}>
                         {item.customer_name}
                       </Text>
@@ -1436,6 +1349,49 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               </View>
             )}
           </View>
+
+          {/* <View style={{flex: 1, position: 'relative', zIndex: 999}}>
+            
+            <GooglePlacesAutocomplete
+              placeholder="Search address"
+              fetchDetails={true} // ✅ gives full place details like lat/lng
+              onPress={(data, details = null) => {
+                Keyboard.dismiss();
+                console.log('===== Google Autocomplete Response =====');
+                console.log('Data:', data); // main place object
+                console.log('Details:', details); // full place details (geometry, etc.)
+                console.log('========================================');
+                // setAddress(data.description);
+              }}
+              predefinedPlaces={[]}
+              enablePoweredByContainer={false}
+              query={{
+                key: GOOGLE_MAPS_APIKEY,
+                language: 'en',
+              }}
+              textInputProps={{
+                // value: address,
+                onChangeText: text => {
+                  // setAddress(text);
+                  console.log('User typing:', text);
+                },
+              }}
+              styles={{
+                textInput: {
+                  color: '#000',
+                  borderColor: '#ccc',
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  paddingHorizontal: 10,
+                },
+                listView: {
+                  backgroundColor: '#fff',
+                  zIndex: 9999,
+                },
+              }}
+            />
+          </View> */}
+
           {/* <View style={{flex: 1, padding: 10}}>
             <GooglePlacesAutocomplete
               placeholder="Search location"
@@ -2181,7 +2137,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                       year: 'numeric',
                     },
                   )}{' '}
-                  at {formData.scheduledTime}
+                  {/* at {formData.scheduledTime} */}
                 </Text>
               </View>
               <View style={styles.reviewSection}>
@@ -2230,12 +2186,12 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               ))}
             </View>
 
-            <View style={styles.timeSummary}>
+            {/* <View style={styles.timeSummary}>
               <Text style={styles.reviewLabel}>Estimated Time</Text>
               <Text style={styles.reviewValue}>
                 {formData.estimatedHours} hours
               </Text>
-            </View>
+            </View> */}
             {/* <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Estimated Cost</Text>
               <View style={styles.inputContainer}>
@@ -2814,6 +2770,7 @@ const styles = StyleSheet.create({
   dateTimeGrid: {
     flexDirection: 'row',
     gap: 20,
+    justifyContent: 'space-between',
   },
   teamSummary: {
     gap: 12,

@@ -922,7 +922,7 @@
 // });
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -932,17 +932,24 @@ import {
   StatusBar,
   Alert,
   Modal,
+  Image,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useDispatch, useSelector} from 'react-redux';
 import {logout} from '../redux/userSlice';
-import {logoutApi} from '../config/apiConfig';
+import {getLaborById, getLeadLaborById, logoutApi} from '../config/apiConfig';
 
 const ProfileScreen = ({navigation}) => {
   const dispatch = useDispatch();
+  const [allLabourData, setAllLabourData] = useState();
+  const [avatarUri, setAvatarUri] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  console.log('allLabourDataallLabourData', allLabourData, avatarUri);
+
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
+  console.log('users', user);
 
   // const {user, logout} = useAuth();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -1082,7 +1089,30 @@ const ProfileScreen = ({navigation}) => {
     }
     setModalVisible(true);
   };
+  useEffect(() => {
+    const fetchProfiles = async () => {
+      try {
+        let profileData;
+        if (user?.management_type === 'lead_labor') {
+          const leadLabor = await getLeadLaborById(user?.lead_labor?.id, token);
+          profileData = leadLabor?.data;
+          console.log('profi;eFDAta', profileData?.users?.photo_url);
+        } else {
+          const labor = await getLaborById(user?.labor?.id, token);
+          profileData = labor?.data;
+        }
 
+        setAllLabourData(profileData);
+        setAvatarUri(profileData?.users?.photo_url);
+        // API response se formData set karo
+      } catch (err) {
+        console.error('Error fetching profiles:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfiles();
+  }, []);
   return (
     <View style={styles.container}>
       {/* <StatusBar backgroundColor="#2563eb" barStyle="light-content" /> */}
@@ -1108,25 +1138,35 @@ const ProfileScreen = ({navigation}) => {
         {/* User Info Card */}
         <View style={styles.userCard}>
           <View style={styles.userInfo}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {user?.full_name ? user.full_name.charAt(0).toUpperCase() : 'P'}
-              </Text>
-            </View>
+            {user?.photo_url ? (
+              <Image source={{uri: avatarUri}} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {user?.full_name
+                    ? user.full_name.charAt(0).toUpperCase()
+                    : 'P'}
+                </Text>
+              </View>
+            )}
             <View style={styles.userDetails}>
-              <Text style={styles.userName}>{user?.full_name}</Text>
-              <Text style={styles.userEmail}>{user?.email}</Text>
+              <Text style={styles.userName}>
+                {allLabourData?.users?.full_name}
+              </Text>
+              <Text style={styles.userEmail}>
+                {allLabourData?.users?.email}
+              </Text>
               <View style={styles.userBadges}>
                 {user?.management_type == 'lead_labor' && (
                   <View style={styles.roleBadge}>
                     <Text style={styles.roleBadgeText}>{'Lead'}</Text>
                   </View>
                 )}
-                <View style={styles.departmentBadge}>
+                {/* <View style={styles.departmentBadge}>
                   <Text style={styles.departmentBadgeText}>
                     Electrical Services
                   </Text>
-                </View>
+                </View> */}
               </View>
             </View>
           </View>
@@ -1293,6 +1333,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
+  },
+  avatarImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 50,
+    resizeMode: 'cover',
+    marginRight: 16,
   },
   header: {
     // paddingTop: 20,

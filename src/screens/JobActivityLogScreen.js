@@ -949,15 +949,12 @@ const JobActivityLogScreen = ({navigation, route}) => {
   // ---------------- Build Timeline ----------------
   useEffect(() => {
     if (!jobData) return;
-
     const createdISO = getOnlyDate(jobData.created_at);
     const completedISO = safeISO(stripMicroseconds(jobData.updated_at));
     const timesheets = Array.isArray(jobData.labor_timesheets)
       ? jobData.labor_timesheets
       : [];
-
     const dynamicActivities = [];
-
     // Job Created
     if (createdISO) {
       dynamicActivities.push({

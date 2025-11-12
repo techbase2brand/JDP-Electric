@@ -119,7 +119,7 @@ export default function BluesheetSubmission({
         {/* Team Hours */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Team Hours</Text>
-          {teamMembers.map((member) => (
+          {teamMembers?.map((member) => (
             <View key={member.id} style={styles.teamMemberRow}>
               <Text style={styles.memberName}>{member.name}</Text>
               <Text style={styles.memberHours}>{member.hours} hours</Text>
@@ -143,7 +143,7 @@ export default function BluesheetSubmission({
           <Text style={styles.sectionTitle}>Additional Notes</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            value={formData.additionalNotes}
+            // value={formData.additionalNotes}
             onChangeText={(text) => setFormData({...formData, additionalNotes: text})}
             placeholder="Any additional comments, issues, or recommendations..."
             placeholderTextColor="#9CA3AF"

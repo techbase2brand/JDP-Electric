@@ -1489,11 +1489,11 @@ const ActivitySummaryScreen = ({navigation}) => {
             </View>
 
             {/* Scheduled */}
-            <View style={styles.expandedItem}>
+            {/* <View style={styles.expandedItem}>
               <Icon name="schedule" size={16} color="#6B7280" />
               <Text style={styles.expandedLabel}>Scheduled:</Text>
               <Text style={styles.expandedValue}>{scheduledTime}</Text>
-            </View>
+            </View> */}
 
             {/* Assigned */}
             <View style={styles.expandedItem}>
@@ -1506,9 +1506,9 @@ const ActivitySummaryScreen = ({navigation}) => {
 
             {/* Timesheets (matched only) */}
             <View style={[styles.timeDetailsContainer, {marginTop: 4}]}>
-              <Text style={{fontSize: 13, color: '#6B7280', marginBottom: 8}}>
+              {/* <Text style={{fontSize: 13, color: '#6B7280', marginBottom: 8}}>
                 Matched Timesheets
-              </Text>
+              </Text> */}
               {Array.isArray(job?.labor_timesheets) &&
                 job.labor_timesheets
                   .filter(ts => {
@@ -1653,7 +1653,7 @@ const ActivitySummaryScreen = ({navigation}) => {
               ) : !hasMore ? (
                 <View style={{paddingVertical: 12, alignItems: 'center'}}>
                   <Text style={{fontSize: 12, color: '#9CA3AF'}}>
-                    No more jobs
+                    {/* No more jobs */}
                   </Text>
                 </View>
               ) : null

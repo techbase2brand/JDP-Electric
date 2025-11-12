@@ -32,7 +32,7 @@
     "react-native-geocoding": "^0.5.0",
     "react-native-gesture-handler": "^2.25.0",
     "react-native-get-random-values": "^1.11.0",
-    "react-native-google-places-autocomplete": "^2.5.7",
+    "react-native-google-places-autocomplete": "^2.5.6",
     "react-native-image-picker": "^8.2.1",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-maps": "^1.24.13",

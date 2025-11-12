@@ -101,7 +101,7 @@ export default function FloatingTimer() {
   const {elapsedTime, isRunning} = useSelector(state => state.timer);
   const navigation = useNavigation();
   const [jobId , setJobId] = useState();
-  console.log('joidjoid', jobId);
+  console.log('floting>>>', jobId);
 
   const position = useRef(new Animated.ValueXY({x: 300, y: 600})).current;
   const lastTap = useRef(0);
@@ -175,7 +175,7 @@ useEffect(() => {
           if (now - lastTap.current < 300) {
             // double tap future feature
           } else {
-            navigation.navigate('TimerScreen', {jobId:jobIdRef.current});
+            navigation.navigate('TimerScreen', {jobId:jobId});
           }
           lastTap.current = now;
         }

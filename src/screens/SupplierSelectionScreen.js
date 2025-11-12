@@ -873,6 +873,8 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
 
   // default (paginated) list
   const [supplierss, setSuppliers] = useState([]);
+  console.log("supplierss>",supplierss);
+  
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
@@ -1079,8 +1081,8 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
           </Text>
         </View>
         <View style={styles.statusContainer}>
-          <View style={[styles.statusDot, {backgroundColor: '#10b981'}]} />
-          <Text style={[styles.statusText, {color: '#10b981'}]}>Open</Text>
+          {/* <View style={[styles.statusDot, {backgroundColor: '#10b981'}]} />
+          <Text style={[styles.statusText, {color: '#10b981'}]}>Open</Text> */}
         </View>
       </View>
 
@@ -1094,8 +1096,8 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
 
       {/* Hours (mock) */}
       <View style={styles.hoursContainer}>
-        <Icon name="schedule" size={16} color="#6b7280" />
-        <Text style={styles.hoursText}>24/7 Open</Text>
+        {/* <Icon name="schedule" size={16} color="#6b7280" />
+        <Text style={styles.hoursText}>24/7 Open</Text> */}
       </View>
 
       {/* Actions */}

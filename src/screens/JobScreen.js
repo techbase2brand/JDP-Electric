@@ -1624,17 +1624,40 @@ const JobListingScreen = ({navigation, route}) => {
   };
 
   // ---------- tabs
+  // const tabs = useMemo(() => {
+  //   const counts = jobs?.reduce((acc, j) => {
+  //     const s = j?.status || 'unknown';
+  //     acc[s] = (acc[s] || 0) + 1;
+  //     return acc;
+  //   }, {});
+  //   const dynamic = Object.keys(counts || {}).map(k => ({
+  //     key: k,
+  //     label: k.charAt(0).toUpperCase() + k.slice(1),
+  //     count: counts[k],
+  //   }));
+  //   return [{key: 'all', label: 'All', count: jobs?.length || 0}, ...dynamic];
+  // }, [jobs]);
   const tabs = useMemo(() => {
     const counts = jobs?.reduce((acc, j) => {
       const s = j?.status || 'unknown';
       acc[s] = (acc[s] || 0) + 1;
       return acc;
     }, {});
-    const dynamic = Object.keys(counts || {}).map(k => ({
-      key: k,
-      label: k.charAt(0).toUpperCase() + k.slice(1),
-      count: counts[k],
-    }));
+
+    const dynamic = Object.keys(counts || {}).map(k => {
+      // Format label: convert underscores to spaces + capitalize words
+      const formattedLabel = k
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+
+      return {
+        key: k,
+        label: formattedLabel,
+        count: counts[k],
+      };
+    });
+
     return [{key: 'all', label: 'All', count: jobs?.length || 0}, ...dynamic];
   }, [jobs]);
 
@@ -1656,7 +1679,7 @@ const JobListingScreen = ({navigation, route}) => {
 
       <View style={styles.headerCenter}>
         <Text style={styles.headerTitle}>Job Management</Text>
-        <Text style={styles.headerSubtitle}>
+        {/* <Text style={styles.headerSubtitle}>
           {isSearching
             ? searchLoading
               ? 'Searching…'
@@ -1664,7 +1687,7 @@ const JobListingScreen = ({navigation, route}) => {
             : `${filteredJobs.length} ${activeTab} ${
                 filteredJobs.length === 1 ? 'job' : 'jobs'
               }`}
-        </Text>
+        </Text> */}
       </View>
 
       {canViewCreateJob && (
@@ -1731,7 +1754,7 @@ const JobListingScreen = ({navigation, route}) => {
                     styles.tabBadgeText,
                     activeTab === tab.key && styles.activeTabBadgeText,
                   ]}>
-                  {tab.count}
+                  {tab?.count}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -1758,7 +1781,10 @@ const JobListingScreen = ({navigation, route}) => {
                   {backgroundColor: getStatusColor(job?.status)},
                 ]}>
                 <Text style={styles.statusText}>
-                  {(job?.status || '').toUpperCase()}
+                  {(job?.status == 'in_progress'
+                    ? 'In Progress'
+                    : job?.status || ''
+                  ).toUpperCase()}
                 </Text>
               </View>
               {/* <View
@@ -1777,7 +1803,11 @@ const JobListingScreen = ({navigation, route}) => {
 
         <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
           <View>
-            <Text style={styles.jobTitle}>{job?.job_title || job?.title}</Text>
+            <Text
+              style={[styles.jobTitle, {width: widthPercentageToDP(60)}]}
+              numberOfLines={1}>
+              {job?.job_title || job?.title}
+            </Text>
           </View>
           <TouchableOpacity
             onPress={() => toggleJobExpansion(job?.id ?? job?._id)}>
@@ -1795,7 +1825,8 @@ const JobListingScreen = ({navigation, route}) => {
               fontWeight: '500',
               color: COLORS.gray900,
               marginBottom: 12,
-            }}>
+            }}
+            numberOfLines={3}>
             {job?.description}
           </Text>
         )}
@@ -1827,13 +1858,26 @@ const JobListingScreen = ({navigation, route}) => {
               </Text>
             </View>
 
-            <View style={styles.assignedSection}>
-              <Ionicons name="people" size={16} color={COLORS.gray500} />
-              <Text style={styles.assignedText}>
-                Assigned to:{' '}
-                {job?.assigned_labor?.map(l => l?.user?.full_name).join(', ') ||
-                  'N/A'}
-              </Text>
+            <View
+              style={[
+                styles.assignedSection,
+                {width: widthPercentageToDP(50)},
+              ]}>
+              <View style={{flexDirection: 'row'}}>
+                <Ionicons name="people" size={16} color={COLORS.gray500} />
+                <Text style={styles.assignedText}>
+                  Assigned by: {job?.created_by_user?.full_name}
+                  {/* {job?.assigned_labor?.map(l => l?.user?.full_name).join(', ') ||
+                  'N/A'} */}
+                </Text>
+              </View>
+              {/* <View style={{flexDirection: 'row'}}>
+                <Ionicons name="people" size={16} color={COLORS.gray500} />
+                <Text style={styles.assignedText}>
+                  Assigned by: {job?.created_by_user?.full_name}
+                
+                </Text>
+              </View> */}
             </View>
           </View>
         )}
@@ -1841,7 +1885,9 @@ const JobListingScreen = ({navigation, route}) => {
         <View style={styles.actionsSection}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => handleCall(job?.customer?.phone || job?.contractor?.phone )}>
+            onPress={() =>
+              handleCall(job?.customer?.phone || job?.contractor?.phone)
+            }>
             <Ionicons name="call" size={20} color={COLORS.primary} />
             <Text style={styles.actionText}>Call</Text>
           </TouchableOpacity>
@@ -1894,7 +1940,7 @@ const JobListingScreen = ({navigation, route}) => {
           alignItems: 'center',
           paddingHorizontal: 16,
         }}>
-        <View style={{width: widthPercentageToDP(80)}}>
+        <View style={{width: widthPercentageToDP(90)}}>
           {renderSearchBar()}
         </View>
 
@@ -2037,6 +2083,7 @@ const styles = {
 
   searchContainer: {
     backgroundColor: COLORS.white,
+    width:"100%",
     paddingTop: 16,
     paddingBottom: 8,
   },
@@ -2142,6 +2189,7 @@ const styles = {
 
   assignedSection: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     gap: 8,
     marginBottom: 12,
