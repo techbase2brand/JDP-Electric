@@ -1264,7 +1264,7 @@ const ProfileScreen = ({navigation}) => {
         <View style={styles.versionContainer}>
           <Text style={styles.versionText}>JDP Electrics v1.0.0</Text>
           <Text style={styles.versionSubtext}>
-            © 2024 JDP Electric. All rights reserved.
+            © 2025  JDP Electric. All rights reserved.
           </Text>
         </View>
       </ScrollView>

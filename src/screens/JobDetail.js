@@ -108,6 +108,7 @@ const JobDetailScreen = ({
   const canViewOrders = useHasPermission('orders', 'view');
   const canViewBlueSheet = useHasPermission('bluesheet', 'view');
   const [showFullDesc, setShowFullDesc] = useState(false);
+  console.log('detailjob', job);
 
   const [timerSession, setTimerSession] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -510,11 +511,15 @@ const JobDetailScreen = ({
                 {job?.description || 'No description available'}
               </Text>
 
-              {job?.description?.length > 150 && ( 
+              {job?.description?.length > 150 && (
                 <TouchableOpacity
                   onPress={() => setShowFullDesc(prev => !prev)}>
                   <Text
-                    style={{color: Colors.primary, marginTop: 4, fontWeight: '700'}}>
+                    style={{
+                      color: Colors.primary,
+                      marginTop: 4,
+                      fontWeight: '700',
+                    }}>
                     {showFullDesc ? 'Read Less' : 'Read More'}
                   </Text>
                 </TouchableOpacity>
@@ -693,7 +698,7 @@ const JobDetailScreen = ({
         {/* Materials */}
         {/* {job.materials && job.materials.length > 0 && ( */}
         {/* {user?.role == 'Lead Labour' && ( */}
-        {canViewOrders && (
+        {/* {canViewOrders && (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Icon name="inventory" size={20} color={Colors.primary} />
@@ -718,7 +723,41 @@ const JobDetailScreen = ({
               </TouchableOpacity>
             </View>
           </View>
-        )}
+        )} */}
+
+        {canViewOrders &&
+          !(
+            Array.isArray(job?.bluesheets) &&
+            job?.bluesheets?.some(
+              item => item?.date === new Date().toISOString().split('T')[0],
+            )
+          ) && (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Icon name="inventory" size={20} color={Colors.primary} />
+                <Text style={styles.cardTitle}>Required Materials</Text>
+              </View>
+              <View style={styles.cardContent}>
+                {job?.requiredMaterials?.map((material, idx) => (
+                  <View key={idx} style={styles.materialItem}>
+                    <Text style={styles.materialName}>{material.name}</Text>
+                    <Text style={styles.materialQuantity}>
+                      {material.quantity} {material.unit}
+                    </Text>
+                  </View>
+                ))}
+                <TouchableOpacity
+                  style={styles.outlineButton}
+                  onPress={() =>
+                    handleNavigate('SupplierSelectionScreen', {job})
+                  }>
+                  <Icon name="shopping-cart" size={20} color={Colors.primary} />
+                  <Text style={styles.outlineButtonText}>Order Materials</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
         {/* )} */}
         {/* )} */}
 

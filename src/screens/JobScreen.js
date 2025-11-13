@@ -1864,12 +1864,12 @@ const JobListingScreen = ({navigation, route}) => {
                 {width: widthPercentageToDP(50)},
               ]}>
               <View style={{flexDirection: 'row'}}>
-                <Ionicons name="people" size={16} color={COLORS.gray500} />
+                {/* <Ionicons name="people" size={16} color={COLORS.gray500} />
                 <Text style={styles.assignedText}>
                   Assigned by: {job?.created_by_user?.full_name}
-                  {/* {job?.assigned_labor?.map(l => l?.user?.full_name).join(', ') ||
-                  'N/A'} */}
-                </Text>
+                  {job?.assigned_labor?.map(l => l?.user?.full_name).join(', ') ||
+                  'N/A'}
+                </Text> */}
               </View>
               {/* <View style={{flexDirection: 'row'}}>
                 <Ionicons name="people" size={16} color={COLORS.gray500} />

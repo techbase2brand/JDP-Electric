@@ -27,7 +27,7 @@ const TermsConditionsScreen = ({navigation}) => {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.lastUpdated}>Last updated: January 15, 2024</Text>
+          <Text style={styles.lastUpdated}>Last updated: January 15, 2025</Text>
 
           <Text style={styles.sectionTitle}>1. Acceptance of Terms</Text>
           <Text style={styles.paragraph}>

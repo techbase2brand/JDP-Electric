@@ -686,22 +686,51 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   //   }
   // };
 
+  // const nextStep = async () => {
+  //   if (!selectedCustomerId) {
+  //     setValidationErrors(prev => ({
+  //       ...prev,
+  //       customerName: 'Please select a customer from the list',
+  //     }));
+  //     return; // Stop step change
+  //   }
+
+  //   try {
+  //     if (currentStep === 1) {
+  //       // Step 1 logic
+  //     }
+  //   } catch (err) {
+  //     console.log('❌ handleAddCustomer error:', err);
+  //   } finally {
+  //     setCurrentStep(prev => Math.min(prev + 1, 3));
+  //   }
+  // };
   const nextStep = async () => {
+    // Run validation for current step
+    const isValid = validateStep(currentStep);
+
+    // If invalid, stop step change
+    if (!isValid) {
+      return;
+    }
+
+    // Additionally check customer selection
     if (!selectedCustomerId) {
       setValidationErrors(prev => ({
         ...prev,
         customerName: 'Please select a customer from the list',
       }));
-      return; // Stop step change
+      return;
     }
 
     try {
       if (currentStep === 1) {
-        // Step 1 logic
+        // Step 1 logic here
       }
     } catch (err) {
       console.log('❌ handleAddCustomer error:', err);
     } finally {
+      // Proceed to next step only if validation passed
       setCurrentStep(prev => Math.min(prev + 1, 3));
     }
   };
@@ -996,7 +1025,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
       <ScrollView
         ref={scrollRef}
         style={styles.stepContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         {/* Basic Information */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
@@ -1014,7 +1044,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
           </View> */}
           <View
             style={styles.formGroup}
-            ref={ref => (fieldPositions.current['title'] = ref)}>
+            // ref={ref => (fieldPositions.current['title'] = ref)}
+          >
             <Text style={styles.formLabel}>Job Title *</Text>
             <View
               style={[
@@ -1039,7 +1070,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
 
           <View
             style={styles.formGroup}
-            ref={ref => (fieldPositions.current['description'] = ref)}>
+            // ref={ref => (fieldPositions.current['description'] = ref)}
+          >
             <Text style={styles.formLabel}>Job Description *</Text>
             <View
               style={[
@@ -1801,16 +1833,23 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   };
 
   const renderResourcesStep = () => (
-    <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
-      {/* Team Assignment */}
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Icon name="groups" size={24} color="#3B82F6" />
-          <Text style={styles.sectionTitle}>Team Assignment</Text>
-        </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{flex: 1}}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // adjust as per header height
+    >
+      <ScrollView
+        style={styles.stepContent}
+        showsVerticalScrollIndicator={false}>
+        {/* Team Assignment */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Icon name="groups" size={24} color="#3B82F6" />
+            <Text style={styles.sectionTitle}>Team Assignment</Text>
+          </View>
 
-        <Text style={styles.formLabel}>Assigned Team Members *</Text>
-        {/* <View style={styles.teamMembersList}>
+          <Text style={styles.formLabel}>Assigned Team Members *</Text>
+          {/* <View style={styles.teamMembersList}>
           {teamMembers.map(member => (
             <TouchableOpacity
               key={member.id}
@@ -1851,96 +1890,98 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             </TouchableOpacity>
           ))}
         </View> */}
-        <View style={styles.container}>
-          {/* Dropdown Header */}
+          <View style={styles.container}>
+            {/* Dropdown Header */}
 
-          <TouchableOpacity style={styles.dropdownItem}>
-            <View
-              style={[
-                styles.checkboxChecked1,
-                {
-                  width: 20,
-                  height: 20,
-                  borderWidth: 1,
-                  borderColor: '#aaa',
-                  marginRight: 10,
-                  borderRadius: 4,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                },
-              ]}>
-              <Icon name="check" size={16} color="white" />
-            </View>
-            <View style={styles.memberInfo1}>
-              <Text style={styles.memberName1}>{user?.full_name}</Text>
-              <Text style={styles.memberRole1}>
-                {user?.management_type == 'lead_labor' && 'Lead Labor'}
+            <TouchableOpacity style={styles.dropdownItem}>
+              <View
+                style={[
+                  styles.checkboxChecked1,
+                  {
+                    width: 20,
+                    height: 20,
+                    borderWidth: 1,
+                    borderColor: '#aaa',
+                    marginRight: 10,
+                    borderRadius: 4,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  },
+                ]}>
+                <Icon name="check" size={16} color="white" />
+              </View>
+              <View style={styles.memberInfo1}>
+                <Text style={styles.memberName1}>{user?.full_name}</Text>
+                <Text style={styles.memberRole1}>
+                  {user?.management_type == 'lead_labor' && 'Lead Labor'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.dropdownHeader}
+              onPress={toggleDropdown}>
+              <Text style={styles.headerText}>
+                {formData?.assignedTo?.length > 0
+                  ? labors
+                      .filter(labor => formData.assignedTo.includes(labor.id))
+                      .map(labor => labor.users?.full_name)
+                      .join(', ')
+                  : 'Select Members'}
               </Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.dropdownHeader}
-            onPress={toggleDropdown}>
-            <Text style={styles.headerText}>
-              {formData?.assignedTo?.length > 0
-                ? labors
-                    .filter(labor => formData.assignedTo.includes(labor.id))
-                    .map(labor => labor.users?.full_name)
-                    .join(', ')
-                : 'Select Members'}
-            </Text>
-            <Icon
-              name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
-              size={24}
-            />
-          </TouchableOpacity>
-
-          {/* Dropdown List */}
-          {isOpen && (
-            <View style={styles.dropdownList}>
-              <FlatList
-                data={labors}
-                keyExtractor={item => item.id.toString()}
-                renderItem={({item}) => {
-                  const isSelected = formData.assignedTo.includes(item?.id);
-                  return (
-                    <TouchableOpacity
-                      style={styles.dropdownItem}
-                      onPress={() => handleSelect(item)}>
-                      <View
-                        style={[
-                          styles.checkbox1,
-                          isSelected && styles.checkboxChecked1,
-                        ]}>
-                        {isSelected && (
-                          <Icon name="check" size={16} color="white" />
-                        )}
-                      </View>
-                      <View style={styles.memberInfo1}>
-                        <Text style={styles.memberName1}>
-                          {item?.users?.full_name}
-                        </Text>
-                        <Text style={styles.memberRole1}>
-                          {item?.users?.role}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                }}
+              <Icon
+                name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+                size={24}
               />
+            </TouchableOpacity>
+
+            {/* Dropdown List */}
+            {isOpen && (
+              <View style={styles.dropdownList}>
+                <FlatList
+                  data={labors}
+                  keyExtractor={item => item.id.toString()}
+                  renderItem={({item}) => {
+                    const isSelected = formData.assignedTo.includes(item?.id);
+                    return (
+                      <TouchableOpacity
+                        style={styles.dropdownItem}
+                        onPress={() => handleSelect(item)}>
+                        <View
+                          style={[
+                            styles.checkbox1,
+                            isSelected && styles.checkboxChecked1,
+                          ]}>
+                          {isSelected && (
+                            <Icon name="check" size={16} color="white" />
+                          )}
+                        </View>
+                        <View style={styles.memberInfo1}>
+                          <Text style={styles.memberName1}>
+                            {item?.users?.full_name}
+                          </Text>
+                          <Text style={styles.memberRole1}>
+                            {item?.users?.role}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+              </View>
+            )}
+          </View>
+          {validationErrors.assignedTo && (
+            <View style={styles.errorContainer}>
+              <Icon name="error" size={16} color="#ef4444" />
+              <Text style={styles.errorText}>
+                {validationErrors.assignedTo}
+              </Text>
             </View>
           )}
         </View>
-        {validationErrors.assignedTo && (
-          <View style={styles.errorContainer}>
-            <Icon name="error" size={16} color="#ef4444" />
-            <Text style={styles.errorText}>{validationErrors.assignedTo}</Text>
-          </View>
-        )}
-      </View>
 
-      {/* Time Estimation */}
-      {/* <View style={styles.sectionCard}>
+        {/* Time Estimation */}
+        {/* <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <Icon name="timer" size={24} color="#3B82F6" />
           <Text style={styles.sectionTitle}>Time Estimation</Text>
@@ -1984,30 +2025,31 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
         </View>
       </View> */}
 
-      {/* Additional Notes */}
-      <View style={styles.sectionCard}>
-        <View style={styles.sectionHeader}>
-          <Icon name="note" size={24} color="#3B82F6" />
-          <Text style={styles.sectionTitle}>Additional Notes</Text>
-        </View>
+        {/* Additional Notes */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Icon name="note" size={24} color="#3B82F6" />
+            <Text style={styles.sectionTitle}>Additional Notes</Text>
+          </View>
 
-        <View style={styles.formGroup}>
-          <Text style={styles.formLabel}>Special Instructions or Notes</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={[styles.formInput, styles.textArea]}
-              value={formData.notes}
-              onChangeText={text => updateFormData('notes', text)}
-              placeholder="Any special instructions, safety requirements, or additional notes..."
-              placeholderTextColor="#9ca3af"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
+          <View style={styles.formGroup}>
+            <Text style={styles.formLabel}>Special Instructions or Notes</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[styles.formInput, styles.textArea]}
+                value={formData.notes}
+                onChangeText={text => updateFormData('notes', text)}
+                placeholder="Any special instructions, safety requirements, or additional notes..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
           </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 
   const renderReviewStep = () => {
@@ -2066,8 +2108,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             <Text style={styles.reviewTitle}>{formData.title}</Text>
             <Text style={styles.reviewDescription}>{formData.description}</Text>
 
-            <View style={styles.priorityBadge}>
-              <Icon
+            {/* <View style={styles.priorityBadge}> */}
+            {/* <Icon
                 name={
                   priorityOptions.find(p => p.value === formData.priority)
                     ?.icon || 'trending-flat'
@@ -2077,13 +2119,13 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                   priorityOptions.find(p => p.value === formData.priority)
                     ?.color || '#f59e0b'
                 }
-              />
-              <Text style={styles.priorityBadgeText}>
+              /> */}
+            {/* <Text style={styles.priorityBadgeText}>
                 {formData.priority.charAt(0).toUpperCase() +
                   formData.priority.slice(1)}{' '}
                 Priority
-              </Text>
-            </View>
+              </Text> */}
+            {/* </View> */}
 
             <View style={styles.reviewGrid}>
               <View style={styles.reviewSection}>
@@ -2141,14 +2183,14 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 </Text>
               </View>
               <View style={styles.reviewSection}>
-                <Text style={styles.reviewLabel}>Due Date</Text>
+                {/* <Text style={styles.reviewLabel}>Due Date</Text>
                 <Text style={styles.reviewValue}>
                   {new Date(formData.dueDate).toLocaleDateString('en-US', {
                     month: 'numeric', // "August"
                     day: 'numeric',
                     year: 'numeric',
                   })}
-                </Text>
+                </Text> */}
               </View>
             </View>
           </View>
@@ -2254,11 +2296,14 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
         style={{height: heightPercentageToDP(86), backgroundColor:"red"}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}> */}
       <View style={styles.content}>
+        <View style={{height:heightPercentageToDP(75)}}>
+
         {renderProgressIndicator()}
         {renderStepTitle()}
         {currentStep === 1 && renderJobDetailsStep()}
         {currentStep === 2 && renderResourcesStep()}
         {currentStep === 3 && renderReviewStep()}
+        </View>
 
         {/* Navigation Buttons */}
         <View style={styles.navigationButtons}>
@@ -2286,7 +2331,6 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               style={[styles.navButton, styles.submitButton]}
               onPress={submitJob}
               disabled={isSubmitting}>
-              {/* <Icon name="check" size={20} color="white" /> */}
               <Text style={styles.submitButtonText}>
                 {isSubmitting ? (
                   <ActivityIndicator color="#fff" />

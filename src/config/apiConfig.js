@@ -99,7 +99,7 @@ export const logoutApi = async token => {
 //  Get Lead Labor by ID
 export const getLeadLaborById = async (id, token) => {
   try {
-    const res = await api.get(`/lead-labor/getLeadLaborById/${id}`, {
+    const res = await api.get(`/lead-labor/getLeadLaborByIdForMobile/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`, // if auth required
       },
@@ -113,7 +113,7 @@ export const getLeadLaborById = async (id, token) => {
 //  Get Labor by ID
 export const getLaborById = async (id, token) => {
   try {
-    const res = await api.get(`/labor/getLaborById/${id}`, {
+    const res = await api.get(`/labor/getLaborByIdForMobile/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`, // if auth required
       },
@@ -557,43 +557,82 @@ export const getBlueSheets = async token => {
   }
 };
 
+export const getNotificationsByUser = async (
+  userId,
+  page = 1,
+  limit = 20,
+  token,
+  filter = 'all',
+) => {
+  console.log('userIduserIduserId>>>>>', userId, page, token, limit, filter);
 
-export const getNotificationsByUser = async (userId, page = 1, limit = 20, token, filter = 'all') => {
-  console.log("userIduserIduserId>>>>>",userId,page,token,limit,filter);
-  
   try {
     // if your backend supports status filter, pass it; otherwise backend will ignore and we'll filter on client
     const statusQuery = filter === 'unread' ? '&status=unread' : '';
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const res = await api.get(`/notifications/user/${userId}?page=${page}&limit=${limit}${statusQuery}`, { headers });
+    const headers = token ? {Authorization: `Bearer ${token}`} : {};
+    const res = await api.get(
+      `/notifications/user/${userId}?page=${page}&limit=${limit}${statusQuery}`,
+      {headers},
+    );
     return res.data; // returns the whole response JSON you showed
   } catch (error) {
-    console.error('Error fetching notifications:', error.response?.data || error.message);
-    throw error.response?.data || { message: 'Something went wrong while fetching notifications' };
+    console.error(
+      'Error fetching notifications:',
+      error.response?.data || error.message,
+    );
+    throw (
+      error.response?.data || {
+        message: 'Something went wrong while fetching notifications',
+      }
+    );
   }
 };
 
 // mark notification as read - uses PUT endpoint
 export const markNotificationAsRead = async (recipientId, token = null) => {
   try {
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const headers = token ? {Authorization: `Bearer ${token}`} : {};
     // endpoint: /notifications/markNotificationAsRead/56/read
-    const res = await api.put(`/notifications/markNotificationAsRead/${recipientId}/read`, null, { headers });
+    const res = await api.put(
+      `/notifications/markNotificationAsRead/${recipientId}/read`,
+      null,
+      {headers},
+    );
     return res.data;
   } catch (error) {
-    console.error('Error marking notification read:', error.response?.data || error.message);
-    throw error.response?.data || { message: 'Something went wrong while marking notification read' };
+    console.error(
+      'Error marking notification read:',
+      error.response?.data || error.message,
+    );
+    throw (
+      error.response?.data || {
+        message: 'Something went wrong while marking notification read',
+      }
+    );
   }
 };
 
 // delete recipient (delete notification for that recipient)
-export const deleteNotificationRecipient = async (recipientId, token = null) => {
+export const deleteNotificationRecipient = async (
+  recipientId,
+  token = null,
+) => {
   try {
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const res = await api.delete(`/notifications/deleteNotificationRecipient/${recipientId}`, { headers });
+    const headers = token ? {Authorization: `Bearer ${token}`} : {};
+    const res = await api.delete(
+      `/notifications/deleteNotificationRecipient/${recipientId}`,
+      {headers},
+    );
     return res.data;
   } catch (error) {
-    console.error('Error deleting notification recipient:', error.response?.data || error.message);
-    throw error.response?.data || { message: 'Something went wrong while deleting notification' };
+    console.error(
+      'Error deleting notification recipient:',
+      error.response?.data || error.message,
+    );
+    throw (
+      error.response?.data || {
+        message: 'Something went wrong while deleting notification',
+      }
+    );
   }
 };

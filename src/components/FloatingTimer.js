@@ -140,6 +140,8 @@ const jobIdRef = useRef(jobId);
 // Update ref whenever state changes
 useEffect(() => {
   jobIdRef.current = jobId;
+  console.log("jobIdRef.current>>",jobId);
+  
 }, [jobId]);
   const panResponder = useRef(
     PanResponder.create({
@@ -175,7 +177,7 @@ useEffect(() => {
           if (now - lastTap.current < 300) {
             // double tap future feature
           } else {
-            navigation.navigate('TimerScreen', {jobId:jobId});
+            navigation.navigate('TimerScreen', {jobId});
           }
           lastTap.current = now;
         }

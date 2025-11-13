@@ -689,13 +689,14 @@ const styles = StyleSheet.create({
   header: {
     // backgroundColor: '#432DD7',
     // paddingHorizontal: 16,
-    paddingTop: 16,
+
     paddingBottom: 24,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },
   headerContent: {
     flexDirection: 'row',
+    paddingTop: 16,
     paddingHorizontal: 16,
     justifyContent: 'space-between',
     alignItems: 'flex-start',

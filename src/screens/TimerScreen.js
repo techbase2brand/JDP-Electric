@@ -63,14 +63,20 @@ export default function TimerScreen({navigation, route}) {
   const token = useSelector(state => state.user?.token);
   const user = useSelector(state => state.user?.user);
   const dispatch = useDispatch();
+  const [stroageJobId, setStroageJobId] = useState(null);
 
   useEffect(() => {
+    const getIdFromstroage = async () => {
+      const activeJobId = await AsyncStorage.getItem('activeJobId');
+      setStroageJobId(activeJobId);
+    };
+    getIdFromstroage();
     // console.log('Received jobId:', route?.params?.jobId);
-  }, [route?.params?.jobId]);
+  }, [route?.params?.jobId, route]);
   const job = route?.params?.job;
-  // console.log('Received jobId:', Number(route?.params?.jobId), job?.id);
+  console.log('Received jobId:', Number(stroageJobId), job?.id);
 
-  const jobId = job?.id || Number(route?.params?.jobId);
+  const jobId = job?.id || Number(stroageJobId);
 
   const [startISO, setStartISO] = useState(null);
   const [pauseList, setPauseList] = useState([]);
@@ -295,7 +301,11 @@ export default function TimerScreen({navigation, route}) {
         const bPauses = await bufferGet(LS_KEYS.pauses);
         if (bStart) setStartISO(bStart);
         if (bPauses) setPauseList(bPauses);
-
+        const bCurrentPause = await bufferGet('ts_buffer_currentPause');
+        if (bCurrentPause?.startedAt && bCurrentPause?.title) {
+          setCurrentPauseStartedAt(bCurrentPause.startedAt);
+          setCurrentPauseTitle(bCurrentPause.title);
+        }
         await bufferSet(LS_KEYS.jobId, String(jobId || ''));
         await tryFlushPending(); // in case something was pending
       } catch {}
@@ -398,33 +408,6 @@ export default function TimerScreen({navigation, route}) {
     }
   };
 
-  // ---------- PAUSE CONFIRM ----------
-  // const handleConfirmPause = async () => {
-  //   if (!pauseReason) return;
-  //   try {
-  //     setPauseConfirmLoading(true);
-
-  //     const startedAt = Date.now();
-  //     setCurrentPauseStartedAt(startedAt);
-  //     setCurrentPauseTitle(pauseReason);
-
-  //     dispatch(pauseTimerWithBackground());
-  //     setPauseModal(false);
-  //     setPauseNotes('');
-
-  //     // placeholder duration 00:00:00 will be converted on resume
-  //     const placeholder = {title: pauseReason, duration: toHHMMSS(0)};
-  //     const cached = (await bufferGet(LS_KEYS.pauses)) || [];
-  //     const newPauses = [...cached, placeholder];
-  //     setPauseList(newPauses);
-  //     await bufferSet(LS_KEYS.pauses, newPauses);
-  //     await bufferSet(LS_KEYS.elapsedOnResume, elapsedTime);
-  //   } catch (err) {
-  //     console.log('Confirm pause failed:', err?.message);
-  //   } finally {
-  //     setPauseConfirmLoading(false);
-  //   }
-  // };
   const handleConfirmPause = async () => {
     if (!pauseReason) return;
     try {
@@ -433,7 +416,10 @@ export default function TimerScreen({navigation, route}) {
       const startedAt = Date.now();
       setCurrentPauseStartedAt(startedAt);
       setCurrentPauseTitle(pauseReason);
-
+      await bufferSet('ts_buffer_currentPause', {
+        startedAt: startedAt,
+        title: pauseReason,
+      });
       dispatch(pauseTimerWithBackground());
       setPauseModal(false);
 
@@ -449,7 +435,7 @@ export default function TimerScreen({navigation, route}) {
       setPauseList(newPauses);
       await bufferSet(LS_KEYS.pauses, newPauses);
       await bufferSet(LS_KEYS.elapsedOnResume, elapsedTime);
-      // setPauseNotes('');
+      setPauseNotes('');
     } catch (err) {
       console.log('Confirm pause failed:', err?.message);
     } finally {
@@ -499,6 +485,7 @@ export default function TimerScreen({navigation, route}) {
 
         setCurrentPauseStartedAt(null);
         setCurrentPauseTitle(null);
+        await bufferDel('ts_buffer_currentPause');
       }
       dispatch(resumeTimerWithBackground());
     } catch (e) {
@@ -582,13 +569,12 @@ export default function TimerScreen({navigation, route}) {
     item => item?.created_at.split('T')[0] === todays,
   );
   const isTodayCompleted =
-    lastTimesheet?.job_status == 'completed' &&
-    lastTimesheet?.date == today &&
+    (lastTimesheet?.job_status == 'completed' &&
+      lastTimesheet?.date == today) ||
     isTodayCreated;
 
   console.log(
     'lastTimesheetlastTimesheetlastTimesheet',
-
     isTodayCompleted,
     isTodayCreated,
   );
@@ -855,13 +841,15 @@ export default function TimerScreen({navigation, route}) {
                   </TouchableOpacity>
                 ))}
 
-                <TextInput
-                  style={styles.input}
-                  placeholder="Additional notes..."
-                  value={pauseNotes}
-                  onChangeText={setPauseNotes}
-                  editable={pauseReason == 'Other'}
-                />
+                {pauseReason == 'Other' && (
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Additional notes..."
+                    value={pauseNotes}
+                    onChangeText={setPauseNotes}
+                    editable={pauseReason == 'Other'}
+                  />
+                )}
 
                 <View style={styles.modalBtnRow}>
                   <CustomButton

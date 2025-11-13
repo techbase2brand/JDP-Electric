@@ -1444,7 +1444,7 @@ const ActivitySummaryScreen = ({navigation}) => {
       <View key={job.id} style={styles.jobCard}>
         <TouchableOpacity
           style={styles.jobCardHeader}
-          onPress={() => toggleJobExpansion(job.id)}>
+          onPress={() => toggleJobExpansion(job?.id)}>
           <View style={styles.jobCardMain}>
             <View style={styles.jobCardInfo}>
               <View />
@@ -1466,7 +1466,9 @@ const ActivitySummaryScreen = ({navigation}) => {
             </View>
             <View style={styles.jobCardRight}>
               <View style={styles.hoursContainer}>
-                <Text style={styles.hoursText}>{matchedHoursStr}h</Text>
+                {matchedHoursStr !== 0 && (
+                  <Text style={styles.hoursText}>{`${matchedHoursStr}h`}</Text>
+                )}
               </View>
               <Icon
                 name={isExpanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
@@ -1505,10 +1507,8 @@ const ActivitySummaryScreen = ({navigation}) => {
             </View>
 
             {/* Timesheets (matched only) */}
-            <View style={[styles.timeDetailsContainer, {marginTop: 4}]}>
-              {/* <Text style={{fontSize: 13, color: '#6B7280', marginBottom: 8}}>
-                Matched Timesheets
-              </Text> */}
+            {/* <View style={[styles.timeDetailsContainer, {marginTop: 4}]}>
+             
               {Array.isArray(job?.labor_timesheets) &&
                 job.labor_timesheets
                   .filter(ts => {
@@ -1522,7 +1522,6 @@ const ActivitySummaryScreen = ({navigation}) => {
                     return matchLabor || matchLead;
                   })
                   .map((ts, idx) => {
-                    // UPDATED: robust seconds for both "HH:MM:SS" OR numeric
                     const secs =
                       toSeconds(ts?.work_activity) || toSeconds(ts?.work_hours);
                     const hrs = secondsToHoursDecimal(secs, 2);
@@ -1548,7 +1547,7 @@ const ActivitySummaryScreen = ({navigation}) => {
                   No timesheets
                 </Text>
               )}
-            </View>
+            </View> */}
           </View>
         )}
       </View>

@@ -585,14 +585,14 @@ const openEmail = () => {
       color: Colors.warning,
       action: openEmail,
     },
-    {
-      id: '3',
-      title: 'User Guide',
-      description: 'View the complete user manual',
-      icon: 'book',
-      color: Colors.error,
-      action: () => Alert.alert('User Guide', 'Opening user guide...'),
-    },
+    // {
+    //   id: '3',
+    //   title: 'User Guide',
+    //   description: 'View the complete user manual',
+    //   icon: 'book',
+    //   color: Colors.error,
+    //   action: () => Alert.alert('User Guide', 'Opening user guide...'),
+    // },
   ];
 
   const faqs = [
@@ -642,7 +642,7 @@ const openEmail = () => {
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Get Help</Text>
       <View style={styles.optionsGrid}>
-        {supportOptions.map(option => (
+        {supportOptions?.map(option => (
           <TouchableOpacity
             key={option.id}
             style={styles.optionCard}
@@ -666,7 +666,7 @@ const openEmail = () => {
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
       <View style={styles.faqList}>
-        {faqs.map(faq => (
+        {faqs?.map(faq => (
           <TouchableOpacity
             key={faq.id}
             style={styles.faqItem}
@@ -725,7 +725,7 @@ const openEmail = () => {
         contentContainerStyle={styles.scrollContent}>
         {renderSupportOptions()}
         {renderFAQ()}
-        {renderEmergencyContact()}
+        {/* {renderEmergencyContact()} */}
       </ScrollView>
     </View>
   );
@@ -771,9 +771,9 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: Spacing.md,
   },
-  optionsGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 2},
+  optionsGrid: {flexDirection: 'row', justifyContent:"space-between", gap: 2},
   optionCard: {
-    width: '32%',
+    width: '50%',
     alignItems: 'center',
     padding: Spacing.md,
     backgroundColor: Colors.backgroundLight,
