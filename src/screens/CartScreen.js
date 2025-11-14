@@ -618,10 +618,10 @@ const CartScreen = ({onBack, onNavigate, route}) => {
               <Text style={styles.summaryLabel}>Total Items</Text>
               <Text style={styles.summaryValue}>{getTotalItems()}</Text>
             </View>
-            <View style={styles.summaryRow}>
+            {/* <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Unique Products</Text>
               <Text style={styles.summaryValue}>{cartItems.length}</Text>
-            </View>
+            </View> */}
             <View style={styles.summaryDivider} />
             {/* <View style={styles.summaryRow}>
               <Text style={styles.summaryTotalLabel}>Total</Text>

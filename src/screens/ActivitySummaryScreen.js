@@ -966,6 +966,7 @@ import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {useSelector} from 'react-redux';
 import {getJobs, getlabourJobs} from '../config/apiConfig';
+import {useFocusEffect} from '@react-navigation/native';
 
 const {width, height} = Dimensions.get('window');
 
@@ -1112,10 +1113,11 @@ const ActivitySummaryScreen = ({navigation}) => {
     initialLoaded,
   ]);
 
-  useEffect(() => {
-    fetchJobs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchJobs(); // runs every time screen-focused
+    }, []),
+  );
 
   // ---------- Filter by date period (using job.due_date primarily; fallback created_at)
   const inRange = (d, from, to) => {

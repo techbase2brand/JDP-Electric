@@ -216,6 +216,7 @@ export default function TimerScreen({navigation, route}) {
       TimerModule?.endActivity?.();
     } catch {}
   };
+
   const buildLaborTimesheetPayload = ({
     totalMs = 0,
     pauseList = [],
@@ -495,37 +496,116 @@ export default function TimerScreen({navigation, route}) {
     }
   };
   // ---------- COMPLETE ----------
+  // const handleComplete = async () => {
+  //   try {
+  //     setCompleteLoading(true);
+  //     const jobIdForApi = storedJobId ?? job?.id ?? job?.job?.id;
+  //     const end = new Date().toISOString();
+
+  //     //  USE BUFFERED START (never override) to avoid start=end bug
+  //     const persistedStart =
+  //       (await bufferGet(LS_KEYS.start, false)) ||
+  //       startISO ||
+  //       new Date().toISOString();
+  //     const bufferedPauses = (await bufferGet(LS_KEYS.pauses)) || pauseList;
+
+  //     const payload = buildLaborTimesheetPayload({
+  //       totalMs: elapsedTime,
+  //       pauseList: bufferedPauses,
+  //       startISO: persistedStart,
+  //       endISO: end,
+  //       markCompleted: true,
+  //     });
+
+  //     //  single-hit strategy + offline queue
+  //     try {
+  //       await updateWorkData(jobIdForApi, payload, token);
+  //     } catch (e) {
+  //       await enqueuePending(payload);
+  //     }
+
+  //     await tryFlushPending(); // try once more
+
+  //     // Clean up buffers after completion
+  //     await AsyncStorage.removeItem('activeJobId');
+  //     await bufferDel(LS_KEYS.start);
+  //     await bufferDel(LS_KEYS.pauses);
+  //     await bufferDel(LS_KEYS.elapsedOnResume);
+  //     await bufferDel(LS_KEYS.pending);
+  //     await bufferDel(LS_KEYS.jobId);
+
+  //     dispatch(stopTimerWithBackground());
+  //     endLiveActivity();
+  //     setCompleteModal(false);
+  //     Alert.alert('Success', 'Work data updated successfully.');
+  //     fetchJobDetails();
+  //   } catch (err) {
+  //     console.log('Error completing job', err);
+  //     Alert.alert('Error', err?.message || 'Failed to update work data');
+  //   } finally {
+  //     setCompleteLoading(false);
+  //   }
+  // };
+
   const handleComplete = async () => {
     try {
       setCompleteLoading(true);
       const jobIdForApi = storedJobId ?? job?.id ?? job?.job?.id;
       const end = new Date().toISOString();
 
-      //  USE BUFFERED START (never override) to avoid start=end bug
+      // 👉 fetch original start time
       const persistedStart =
         (await bufferGet(LS_KEYS.start, false)) ||
         startISO ||
         new Date().toISOString();
-      const bufferedPauses = (await bufferGet(LS_KEYS.pauses)) || pauseList;
 
+      let bufferedPauses = (await bufferGet(LS_KEYS.pauses)) || pauseList;
+
+      let finalElapsed = elapsedTime;
+
+      if (currentPauseStartedAt && currentPauseTitle) {
+        await bufferDel('ts_buffer_startPayload');
+        const durSec = Math.max(
+          1,
+          Math.floor((Date.now() - currentPauseStartedAt) / 1000),
+        );
+        const finalPause = {
+          title: currentPauseTitle,
+          duration: toHHMMSS(durSec * 1000),
+          note: pauseReason === 'Other' ? pauseNotes : '',
+        };
+
+        bufferedPauses.push(finalPause);
+
+        await bufferSet(LS_KEYS.pauses, bufferedPauses);
+
+        finalElapsed = finalElapsed; // existing time (s)
+
+        // Pause state reset
+        setCurrentPauseStartedAt(null);
+        setCurrentPauseTitle(null);
+        await bufferDel('ts_buffer_currentPause');
+      }
+      bufferedPauses = bufferedPauses.filter(p => p.duration !== '00:00:00');
+      // ----------------------------------------------------
+      await bufferDel(LS_KEYS.pending);
       const payload = buildLaborTimesheetPayload({
-        totalMs: elapsedTime,
+        totalMs: finalElapsed,
         pauseList: bufferedPauses,
         startISO: persistedStart,
         endISO: end,
         markCompleted: true,
       });
 
-      //  single-hit strategy + offline queue
       try {
         await updateWorkData(jobIdForApi, payload, token);
       } catch (e) {
-        await enqueuePending(payload);
+        // await enqueuePending(payload);
       }
 
-      await tryFlushPending(); // try once more
+      await tryFlushPending();
 
-      // Clean up buffers after completion
+      // buffer cleanup
       await AsyncStorage.removeItem('activeJobId');
       await bufferDel(LS_KEYS.start);
       await bufferDel(LS_KEYS.pauses);
@@ -536,10 +616,10 @@ export default function TimerScreen({navigation, route}) {
       dispatch(stopTimerWithBackground());
       endLiveActivity();
       setCompleteModal(false);
+
       Alert.alert('Success', 'Work data updated successfully.');
       fetchJobDetails();
     } catch (err) {
-      console.log('Error completing job', err);
       Alert.alert('Error', err?.message || 'Failed to update work data');
     } finally {
       setCompleteLoading(false);
@@ -755,8 +835,14 @@ export default function TimerScreen({navigation, route}) {
                         </Text>
                       ) : null}
                     </View>
-                    <Text style={styles.logTime}>
+                    {/* <Text style={styles.logTime}>
                       {item?.duration ?? item?.time ?? '--:--:--'}
+                    </Text> */}
+                    <Text style={styles.logTime}>
+                      {item?.duration === '00:00:00' ||
+                      item?.time === '00:00:00'
+                        ? 'Start'
+                        : item?.duration ?? item?.time ?? '--:--:--'}
                     </Text>
                   </View>
                 )}

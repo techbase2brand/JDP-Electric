@@ -58,7 +58,7 @@ const HomeScreen = ({navigation}) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [todayDueJobs, setTodayDueJobs] = useState([]);
 
-  console.log('unreadCountunreadCount>>,', unreadCount);
+  console.log('unreadCountunreadCount>>,', user);
 
   const statsData = [
     {
@@ -511,7 +511,11 @@ const HomeScreen = ({navigation}) => {
                 </Text>
                 <View style={styles.roleContainer}>
                   <View style={styles.roleBadge}>
-                    <Text style={styles.roleText}>Lead Labor</Text>
+                    <Text style={styles.roleText}>
+                      {user?.management_type == 'lead_labor'
+                        ? 'Lead Labor'
+                        : 'Labor'}
+                    </Text>
                   </View>
                   <Text style={[styles.dateText, {color: '#fff'}]}>
                     • {today}

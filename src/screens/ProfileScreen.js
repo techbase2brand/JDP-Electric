@@ -922,7 +922,7 @@
 // });
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -939,6 +939,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useDispatch, useSelector} from 'react-redux';
 import {logout} from '../redux/userSlice';
 import {getLaborById, getLeadLaborById, logoutApi} from '../config/apiConfig';
+import {useFocusEffect} from '@react-navigation/native';
 
 const ProfileScreen = ({navigation}) => {
   const dispatch = useDispatch();
@@ -1089,30 +1090,36 @@ const ProfileScreen = ({navigation}) => {
     }
     setModalVisible(true);
   };
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        let profileData;
-        if (user?.management_type === 'lead_labor') {
-          const leadLabor = await getLeadLaborById(user?.lead_labor?.id, token);
-          profileData = leadLabor?.data;
-          console.log('profi;eFDAta', profileData?.users?.photo_url);
-        } else {
-          const labor = await getLaborById(user?.labor?.id, token);
-          profileData = labor?.data;
-        }
 
-        setAllLabourData(profileData);
-        setAvatarUri(profileData?.users?.photo_url);
-        // API response se formData set karo
-      } catch (err) {
-        console.error('Error fetching profiles:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchProfiles();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchProfiles = async () => {
+        try {
+          let profileData;
+          if (user?.management_type === 'lead_labor') {
+            const leadLabor = await getLeadLaborById(
+              user?.lead_labor?.id,
+              token,
+            );
+            profileData = leadLabor?.data;
+            console.log('profi;eFDAta', profileData?.users?.photo_url);
+          } else {
+            const labor = await getLaborById(user?.labor?.id, token);
+            profileData = labor?.data;
+          }
+
+          setAllLabourData(profileData);
+          setAvatarUri(profileData?.users?.photo_url);
+          // API response se formData set karo
+        } catch (err) {
+          console.error('Error fetching profiles:', err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchProfiles();
+    }, []),
+  );
   return (
     <View style={styles.container}>
       {/* <StatusBar backgroundColor="#2563eb" barStyle="light-content" /> */}
@@ -1159,7 +1166,7 @@ const ProfileScreen = ({navigation}) => {
               <View style={styles.userBadges}>
                 {user?.management_type == 'lead_labor' && (
                   <View style={styles.roleBadge}>
-                    <Text style={styles.roleBadgeText}>{'Lead'}</Text>
+                    <Text style={styles.roleBadgeText}>{'Lead Labor'}</Text>
                   </View>
                 )}
                 {/* <View style={styles.departmentBadge}>
@@ -1264,7 +1271,7 @@ const ProfileScreen = ({navigation}) => {
         <View style={styles.versionContainer}>
           <Text style={styles.versionText}>JDP Electrics v1.0.0</Text>
           <Text style={styles.versionSubtext}>
-            © 2025  JDP Electric. All rights reserved.
+            © 2025 JDP Electric. All rights reserved.
           </Text>
         </View>
       </ScrollView>
