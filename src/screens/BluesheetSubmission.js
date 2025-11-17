@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ export default function BluesheetSubmission({
   selectedJob,
   onNavigate,
   onSubmit,
-  navigation
+  navigation,
 }) {
   const [formData, setFormData] = useState({
     workDescription: '',
@@ -25,8 +25,8 @@ export default function BluesheetSubmission({
   });
 
   const [teamMembers] = useState([
-    { id: '1', name: 'Mike Wilson', hours: '8.0' },
-    { id: '2', name: 'Sarah Johnson', hours: '7.5' },
+    {id: '1', name: 'Mike Wilson', hours: '8.0'},
+    {id: '2', name: 'Sarah Johnson', hours: '7.5'},
   ]);
 
   const handleSubmit = () => {
@@ -44,14 +44,14 @@ export default function BluesheetSubmission({
       'Submit Bluesheet',
       'Are you sure you want to submit this bluesheet?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        {text: 'Cancel', style: 'cancel'},
         {
           text: 'Submit',
           onPress: () => {
             const submissionData = {
               ...formData,
               jobId: selectedJob?.id,
-              status:"pending",
+              status: 'pending',
               teamMembers,
               submittedAt: new Date().toISOString(),
             };
@@ -60,7 +60,7 @@ export default function BluesheetSubmission({
             onNavigate('dashboard');
           },
         },
-      ]
+      ],
     );
   };
 
@@ -75,7 +75,9 @@ export default function BluesheetSubmission({
         <View style={styles.headerRight} />
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}>
         {/* Job Information */}
         {selectedJob && (
           <View style={styles.section}>
@@ -83,7 +85,9 @@ export default function BluesheetSubmission({
             <View style={styles.jobInfo}>
               <Text style={styles.jobId}>{selectedJob.id}</Text>
               <Text style={styles.jobTitle}>{selectedJob.title}</Text>
-              <Text style={styles.customerName}>{selectedJob.customer?.name}</Text>
+              <Text style={styles.customerName}>
+                {selectedJob.customer?.name}
+              </Text>
             </View>
           </View>
         )}
@@ -94,7 +98,9 @@ export default function BluesheetSubmission({
           <TextInput
             style={[styles.input, styles.textArea]}
             value={formData.workDescription}
-            onChangeText={(text) => setFormData({...formData, workDescription: text})}
+            onChangeText={text =>
+              setFormData({...formData, workDescription: text})
+            }
             placeholder="Describe the work performed in detail..."
             placeholderTextColor="#9CA3AF"
             multiline
@@ -108,7 +114,9 @@ export default function BluesheetSubmission({
           <TextInput
             style={[styles.input, styles.textArea]}
             value={formData.materialsUsed}
-            onChangeText={(text) => setFormData({...formData, materialsUsed: text})}
+            onChangeText={text =>
+              setFormData({...formData, materialsUsed: text})
+            }
             placeholder="List materials used (quantity, description, part numbers)..."
             placeholderTextColor="#9CA3AF"
             multiline
@@ -119,7 +127,7 @@ export default function BluesheetSubmission({
         {/* Team Hours */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Team Hours</Text>
-          {teamMembers?.map((member) => (
+          {teamMembers?.map(member => (
             <View key={member.id} style={styles.teamMemberRow}>
               <Text style={styles.memberName}>{member.name}</Text>
               <Text style={styles.memberHours}>{member.hours} hours</Text>
@@ -130,7 +138,9 @@ export default function BluesheetSubmission({
             <TextInput
               style={styles.hoursInput}
               value={formData.laborHours}
-              onChangeText={(text) => setFormData({...formData, laborHours: text})}
+              onChangeText={text =>
+                setFormData({...formData, laborHours: text})
+              }
               placeholder="0.0"
               placeholderTextColor="#9CA3AF"
               keyboardType="numeric"
@@ -144,7 +154,9 @@ export default function BluesheetSubmission({
           <TextInput
             style={[styles.input, styles.textArea]}
             // value={formData.additionalNotes}
-            onChangeText={(text) => setFormData({...formData, additionalNotes: text})}
+            onChangeText={text =>
+              setFormData({...formData, additionalNotes: text})
+            }
             placeholder="Any additional comments, issues, or recommendations..."
             placeholderTextColor="#9CA3AF"
             multiline
@@ -155,11 +167,18 @@ export default function BluesheetSubmission({
         {/* Signatures */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Signatures</Text>
-          
+
           <TouchableOpacity
-            style={[styles.signatureButton, formData.customerSignature && styles.signedButton]}
-            onPress={() => setFormData({...formData, customerSignature: !formData.customerSignature})}
-          >
+            style={[
+              styles.signatureButton,
+              formData.customerSignature && styles.signedButton,
+            ]}
+            onPress={() =>
+              setFormData({
+                ...formData,
+                customerSignature: !formData.customerSignature,
+              })
+            }>
             <Text style={styles.signatureIcon}>
               {formData.customerSignature ? '✅' : '✍️'}
             </Text>
@@ -167,9 +186,16 @@ export default function BluesheetSubmission({
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.signatureButton, formData.technicianSignature && styles.signedButton]}
-            onPress={() => setFormData({...formData, technicianSignature: !formData.technicianSignature})}
-          >
+            style={[
+              styles.signatureButton,
+              formData.technicianSignature && styles.signedButton,
+            ]}
+            onPress={() =>
+              setFormData({
+                ...formData,
+                technicianSignature: !formData.technicianSignature,
+              })
+            }>
             <Text style={styles.signatureIcon}>
               {formData.technicianSignature ? '✅' : '✍️'}
             </Text>
@@ -182,7 +208,9 @@ export default function BluesheetSubmission({
           <Text style={styles.sectionTitle}>Safety Checklist</Text>
           <View style={styles.checklistItem}>
             <Text style={styles.checklistIcon}>✅</Text>
-            <Text style={styles.checklistText}>All electrical connections secured</Text>
+            <Text style={styles.checklistText}>
+              All electrical connections secured
+            </Text>
           </View>
           <View style={styles.checklistItem}>
             <Text style={styles.checklistIcon}>✅</Text>
@@ -190,11 +218,15 @@ export default function BluesheetSubmission({
           </View>
           <View style={styles.checklistItem}>
             <Text style={styles.checklistIcon}>✅</Text>
-            <Text style={styles.checklistText}>Work area cleaned and restored</Text>
+            <Text style={styles.checklistText}>
+              Work area cleaned and restored
+            </Text>
           </View>
           <View style={styles.checklistItem}>
             <Text style={styles.checklistIcon}>✅</Text>
-            <Text style={styles.checklistText}>Customer walkthrough completed</Text>
+            <Text style={styles.checklistText}>
+              Customer walkthrough completed
+            </Text>
           </View>
         </View>
 
@@ -211,7 +243,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-    paddingBottom:100
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',

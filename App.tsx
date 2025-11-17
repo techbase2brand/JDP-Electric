@@ -239,7 +239,6 @@ const AppContent = () => {
 
     const token = await messaging().getToken();
     if (token) {
-      console.log('New FCM token:', token);
       await AsyncStorage.setItem('fcmToken', token);
       return token;
     }

@@ -636,3 +636,29 @@ export const deleteNotificationRecipient = async (
     );
   }
 };
+
+//  deactivate account api
+
+export const deactivateAccount = async (token, userId) => {
+  try {
+    const headers = token ? {Authorization: `Bearer ${token}`} : {};
+
+    const res = await api.put(
+      `/auth/deactivate-account`,
+      {user_id: userId}, // ✅ BODY
+      {headers}, // ✅ HEADERS
+    );
+
+    return res.data;
+  } catch (error) {
+    console.error(
+      'Error deactivating account:',
+      error.response?.data || error.message,
+    );
+    throw (
+      error.response?.data || {
+        message: 'Something went wrong while deactivating account',
+      }
+    );
+  }
+};

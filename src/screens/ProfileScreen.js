@@ -938,7 +938,12 @@ import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useDispatch, useSelector} from 'react-redux';
 import {logout} from '../redux/userSlice';
-import {getLaborById, getLeadLaborById, logoutApi} from '../config/apiConfig';
+import {
+  deactivateAccount,
+  getLaborById,
+  getLeadLaborById,
+  logoutApi,
+} from '../config/apiConfig';
 import {useFocusEffect} from '@react-navigation/native';
 
 const ProfileScreen = ({navigation}) => {
@@ -1062,6 +1067,28 @@ const ProfileScreen = ({navigation}) => {
       navigation.navigate('PrivacyPolicy');
     } else if (option.title === 'Help & Support') {
       navigation.navigate('SupportScreen');
+    }
+  };
+  const handleDeleteAccount = async () => {
+    try {
+      if (!token) {
+        Alert.alert('Error', 'Token not found');
+        return;
+      }
+
+      const userId = user?.id || user?.users?.id; // jo bhi actual id ho
+      console.log('Deleting User ID:', userId);
+
+      const response = await deactivateAccount(token, userId);
+
+      Alert.alert('Success', 'Your account has been deleted');
+
+      dispatch(logout());
+      AsyncStorage.setItem('isLoggedIn', 'false');
+
+      navigation.navigate('AuthStack');
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to delete account');
     }
   };
 
@@ -1308,24 +1335,21 @@ const ProfileScreen = ({navigation}) => {
                 ]}
                 onPress={() => {
                   setModalVisible(false);
-                  if (modalConfig.type === 'signout') {
+                  if (modalConfig?.type === 'signout') {
                     handleLogout();
                     // // logout();
                     // dispatch(logout());
                     AsyncStorage.setItem('isLoggedIn', 'false');
                     // navigation.navigate('AuthStack');
-                  } else if (modalConfig.type === 'delete') {
+                  } else if (modalConfig?.type === 'delete') {
                     // Here you can call real delete API
-                    Alert.alert(
-                      'Deleted',
-                      'Your account has been deleted (simulated)',
-                    );
+                    handleDeleteAccount();
                     // logout(); // logout after delete
                     AsyncStorage.setItem('isLoggedIn', 'false');
                   }
                 }}>
                 <Text style={styles.confirmButtonText}>
-                  {modalConfig.confirmText}
+                  {modalConfig?.confirmText}
                 </Text>
               </TouchableOpacity>
             </View>

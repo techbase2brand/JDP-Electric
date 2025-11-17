@@ -1100,7 +1100,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   disabledInput: {
-    backgroundColor: '#a5a7a8ff',
+    backgroundColor: '#e5e8eaff',
     color: '#000',
   },
   avatarImage: {

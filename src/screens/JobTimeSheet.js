@@ -26,6 +26,7 @@ import {
   getJobBluesheets,
   submitBluesheetComplete,
 } from '../config/apiConfig';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {widthPercentageToDP} from '../utils';
 
 /* ======================
@@ -105,7 +106,124 @@ const submitKey = (jobId, date) => `ts:${jobId}:${date}:submitted`;
 /* ======================
    SEARCH DROPDOWN
 ====================== */
-const LabourSearchDropdown = ({token, selectedEmployee, onSelectEmployee}) => {
+// const LabourSearchDropdown = ({
+//   token,
+//   selectedEmployee,
+//   onSelectEmployee,
+//   disabled = false,
+//   existingEmployeeIds = [],
+//   currentEditingEmployeeId = null,
+// }) => {
+//   const [open, setOpen] = useState(false);
+//   const [query, setQuery] = useState('');
+//   const [items, setItems] = useState([]);
+//   const [page, setPage] = useState(1);
+//   const [hasMore, setHasMore] = useState(true);
+//   const [loading, setLoading] = useState(false);
+
+//   useEffect(() => {
+//     setQuery(selectedEmployee?.label || '');
+//   }, [selectedEmployee]);
+
+//   const fetchPage = async (pageNo = 1) => {
+//     if (!token) return;
+//     try {
+//       setLoading(true);
+//       const res = await getAllLabor(pageNo, 10, token);
+//       const data = res?.data?.data || [];
+//       setItems(prev => (pageNo === 1 ? data : [...prev, ...data]));
+//       setHasMore(Array.isArray(data) ? data.length > 0 : false);
+//       setPage(pageNo);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+//   useEffect(() => {
+//     if (open) fetchPage(1);
+//   }, [open]);
+
+//   const debouncedSetQuery = useMemo(
+//     () => debounce(txt => setQuery(txt), 300),
+//     [],
+//   );
+//   const filtered = useMemo(() => {
+//     if (!query?.trim()) return items;
+//     const q = query.toLowerCase();
+//     return items.filter(
+//       it =>
+//         it?.users?.full_name?.toLowerCase()?.includes(q) ||
+//         it?.name?.toLowerCase()?.includes(q),
+//     );
+//   }, [items, query]);
+//   console.log('queryqueryquery', query);
+
+//   return (
+//     <View style={{position: 'relative'}}>
+//       <TextInput
+//         style={styles.formInput}
+//         placeholder="Search employee"
+//         value={query}
+//         onFocus={() => setOpen(true)}
+//         onChangeText={txt => {
+//           if (!open) setOpen(true);
+//           debouncedSetQuery(txt);
+//           setQuery(txt);
+//         }}
+//       />
+//       {open && (
+//         <View style={styles.dropdownSheet}>
+//           <ScrollView
+//             keyboardShouldPersistTaps="handled"
+//             style={{maxHeight: 240}}>
+//             {filtered?.map(emp => {
+//               const label =
+//                 emp?.users?.full_name || emp?.name || 'Unknown Employee';
+//               const id = emp?.id || emp?._id || emp?.employee_id || '';
+//               return (
+//                 <TouchableOpacity
+//                   key={String(id)}
+//                   style={styles.dropdownItem}
+//                   onPress={() => {
+//                     onSelectEmployee({id, label, raw: emp});
+//                     setQuery(label);
+//                     setOpen(false);
+//                   }}>
+//                   <Text style={styles.dropdownItemText}>{label}</Text>
+//                 </TouchableOpacity>
+//               );
+//             })}
+//             {loading && (
+//               <View style={styles.dropdownLoader}>
+//                 <ActivityIndicator />
+//               </View>
+//             )}
+//             {!loading && hasMore && (
+//               <TouchableOpacity
+//                 style={styles.dropdownLoadMore}
+//                 onPress={() => fetchPage(page + 1)}>
+//                 <Text style={styles.dropdownLoadMoreText}>Load more…</Text>
+//               </TouchableOpacity>
+//             )}
+//           </ScrollView>
+//           <TouchableOpacity
+//             style={{alignItems: 'center', paddingVertical: 8}}
+//             onPress={() => setOpen(false)}>
+//             <Text style={{color: '#334155'}}>Close</Text>
+//           </TouchableOpacity>
+//         </View>
+//       )}
+//     </View>
+//   );
+// };
+// REPLACE the LabourSearchDropdown definition with this code
+const LabourSearchDropdown = ({
+  token,
+  selectedEmployee,
+  onSelectEmployee,
+  disabled = false,
+  existingEmployeeIds = [], // <-- array of employeeId strings that are already added for the day
+  currentEditingEmployeeId = null, // <-- id of the employee currently being edited (if any)
+}) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [items, setItems] = useState([]);
@@ -154,14 +272,17 @@ const LabourSearchDropdown = ({token, selectedEmployee, onSelectEmployee}) => {
         style={styles.formInput}
         placeholder="Search employee"
         value={query}
-        onFocus={() => setOpen(true)}
+        editable={!disabled}
+        onFocus={() => {
+          if (!disabled) setOpen(true);
+        }}
         onChangeText={txt => {
-          if (!open) setOpen(true);
+          if (!open && !disabled) setOpen(true);
           debouncedSetQuery(txt);
           setQuery(txt);
         }}
       />
-      {open && (
+      {open && !disabled && (
         <View style={styles.dropdownSheet}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
@@ -169,17 +290,38 @@ const LabourSearchDropdown = ({token, selectedEmployee, onSelectEmployee}) => {
             {filtered?.map(emp => {
               const label =
                 emp?.users?.full_name || emp?.name || 'Unknown Employee';
-              const id = emp?.id || emp?._id || emp?.employee_id || '';
+              const id = emp?.id ?? emp?._id ?? emp?.employee_id ?? '';
+              const idStr = String(id);
+              const alreadyAdded = existingEmployeeIds
+                .map(String)
+                .includes(idStr);
+
               return (
                 <TouchableOpacity
                   key={String(id)}
                   style={styles.dropdownItem}
                   onPress={() => {
+                    // If this id is already added and it's NOT the one currently being edited, block selection
+                    if (
+                      alreadyAdded &&
+                      String(currentEditingEmployeeId) !== idStr
+                    ) {
+                      Alert.alert(
+                        'Error',
+                        'This employee is already added for the day',
+                      );
+                      return;
+                    }
                     onSelectEmployee({id, label, raw: emp});
                     setQuery(label);
                     setOpen(false);
                   }}>
-                  <Text style={styles.dropdownItemText}>{label}</Text>
+                  <Text style={styles.dropdownItemText}>
+                    {label}
+                    {alreadyAdded && String(currentEditingEmployeeId) !== idStr
+                      ? ' (already added)'
+                      : ''}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
@@ -211,120 +353,324 @@ const LabourSearchDropdown = ({token, selectedEmployee, onSelectEmployee}) => {
    LABOUR MODAL
 ====================== */
 
+// const LabourModal = ({
+//   visible,
+//   setShowAddLabour,
+//   tempLabourData,
+//   setTempLabourData,
+//   handleSaveLabour,
+//   token,
+// }) => (
+//   <Modal
+//     visible={visible}
+//     animationType="slide"
+//     transparent
+//     onRequestClose={() => {
+//       setShowAddLabour(false);
+//       setTempLabourData({});
+//     }}>
+//     <KeyboardAvoidingView
+//       style={{flex: 1}}
+//       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+//       keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}>
+//       <TouchableWithoutFeedback
+//         onPress={() => {
+//           setShowAddLabour(false), Keyboard.dismiss;
+//         }}>
+//         <View style={styles.modalOverlay}>
+//           <View style={styles.modalContent}>
+//             <ScrollView
+//               contentContainerStyle={styles.modalBody}
+//               keyboardShouldPersistTaps="handled">
+//               <View style={styles.modalHeader}>
+//                 <Text style={styles.modalTitle}>
+//                   {tempLabourData?.id &&
+//                   String(tempLabourData.id).startsWith('labour-')
+//                     ? 'Add Labour Entry'
+//                     : 'Edit Labour Entry'}
+//                 </Text>
+//                 <TouchableOpacity
+//                   onPress={() => {
+//                     setShowAddLabour(false);
+//                     setTempLabourData({});
+//                   }}>
+//                   <Text style={styles.modalCloseButton}>✕</Text>
+//                 </TouchableOpacity>
+//               </View>
+
+//               <View style={styles.formGroup}>
+//                 <Text style={styles.formLabel}>Employee</Text>
+//                 <LabourSearchDropdown
+//                   token={token}
+//                   selectedEmployee={
+//                     tempLabourData.employeeId
+//                       ? {
+//                           id: tempLabourData.employeeId,
+//                           label: tempLabourData.employeeName,
+//                         }
+//                       : null
+//                   }
+//                   onSelectEmployee={emp =>
+//                     setTempLabourData(prev => ({
+//                       ...prev,
+//                       employeeName: emp.label,
+//                       employeeId: emp.id,
+//                       _selectedEmployee: emp.raw,
+//                     }))
+//                   }
+//                   tempLabourData={tempLabourData}
+//                 />
+//               </View>
+
+//               <View style={styles.formGroup}>
+//                 <Text style={styles.formLabel}>
+//                   Regular Hours (e.g., 8 or 2.5)
+//                 </Text>
+//                 <TextInput
+//                   style={styles.formInput}
+//                   keyboardType="decimal-pad"
+//                   value={
+//                     tempLabourData.regular_hours_input === '' ||
+//                     tempLabourData.regular_hours_input === undefined
+//                       ? ''
+//                       : String(tempLabourData.regular_hours_input)
+//                   }
+//                   onChangeText={text =>
+//                     setTempLabourData(prev => ({
+//                       ...prev,
+//                       regular_hours_input: text,
+//                     }))
+//                   }
+//                 />
+//               </View>
+//             </ScrollView>
+
+//             <View style={styles.modalFooter}>
+//               <TouchableOpacity
+//                 style={[styles.modalButton, styles.modalButtonSecondary]}
+//                 onPress={() => {
+//                   setShowAddLabour(false);
+//                   setTempLabourData({});
+//                 }}>
+//                 <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+//               </TouchableOpacity>
+//               <TouchableOpacity
+//                 style={[styles.modalButton, styles.modalButtonPrimary]}
+//                 onPress={handleSaveLabour}>
+//                 <Text style={styles.modalButtonTextPrimary}>Save</Text>
+//               </TouchableOpacity>
+//             </View>
+//           </View>
+//         </View>
+//       </TouchableWithoutFeedback>
+//     </KeyboardAvoidingView>
+//   </Modal>
+// );
 const LabourModal = ({
   visible,
   setShowAddLabour,
   tempLabourData,
   setTempLabourData,
   handleSaveLabour,
+  timesheetData,
   token,
-}) => (
-  <Modal
-    visible={visible}
-    animationType="slide"
-    transparent
-    onRequestClose={() => {
-      setShowAddLabour(false);
-      setTempLabourData({});
-    }}>
-    <KeyboardAvoidingView
-      style={{flex: 1}}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}>
-      <TouchableWithoutFeedback
-        onPress={() => {
-          setShowAddLabour(false), Keyboard.dismiss;
-        }}
-        //  onPress={Keyboard.dismiss}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <ScrollView
-              contentContainerStyle={styles.modalBody}
-              keyboardShouldPersistTaps="handled">
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {tempLabourData?.id &&
-                  String(tempLabourData.id).startsWith('labour-')
-                    ? 'Add Labour Entry'
-                    : 'Edit Labour Entry'}
-                </Text>
+  showTimePicker,
+  setShowTimePicker,
+}) => {
+  const [pickerValue, setPickerValue] = useState(new Date());
+  const existingIds = (timesheetData?.labourEntries || []).map(e =>
+    String(e.employeeId || ''),
+  );
+  const currentEditId = tempLabourData?.employeeId
+    ? String(tempLabourData.employeeId)
+    : null;
+  // determine if this is an existing (editable) entry or a new one
+  const isNewEntry =
+    String(tempLabourData?.id || '').startsWith('labour-') ||
+    !tempLabourData?.id;
+
+  useEffect(() => {
+    // sync picker initial value from hms / input
+    if (tempLabourData?.regular_hours_hms) {
+      const [hh, mm] = (tempLabourData.regular_hours_hms || '00:00:00')
+        .split(':')
+        .map(Number);
+      const d = new Date();
+      d.setHours(hh || 0, mm || 0, 0, 0);
+      setPickerValue(d);
+    } else if (tempLabourData?.regular_hours_input) {
+      const hms = normalizeToHMS(tempLabourData.regular_hours_input);
+      const [hh, mm] = hms.split(':').map(Number);
+      const d = new Date();
+      d.setHours(hh || 0, mm || 0, 0, 0);
+      setPickerValue(d);
+    } else {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      setPickerValue(d);
+    }
+  }, [
+    visible,
+    tempLabourData?.regular_hours_hms,
+    tempLabourData?.regular_hours_input,
+  ]);
+
+  const onChangePicker = (event, selectedDate) => {
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false); // auto-hide on android
+    }
+    if (event?.type === 'dismissed') return;
+    const d = selectedDate || pickerValue;
+    if (!d) return;
+    const h = d.getHours();
+    const m = d.getMinutes();
+    const hStr = String(h).padStart(2, '0');
+    const mStr = String(m).padStart(2, '0');
+    const hms = `${hStr}:${mStr}:00`;
+    setPickerValue(d);
+    setTempLabourData(prev => ({
+      ...prev,
+      regular_hours_hms: hms,
+      regular_hours_input: hmsToDecimalStr(hms),
+    }));
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={() => {
+        setShowAddLabour(false);
+        setTempLabourData({});
+      }}>
+      <KeyboardAvoidingView
+        style={{flex: 1}}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            setShowAddLabour(false);
+            Keyboard.dismiss();
+          }}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <ScrollView
+                contentContainerStyle={styles.modalBody}
+                keyboardShouldPersistTaps="handled">
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>
+                    {tempLabourData?.id &&
+                    String(tempLabourData.id).startsWith('labour-')
+                      ? 'Add Labour Entry'
+                      : 'Edit Labour Entry'}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowAddLabour(false);
+                      setTempLabourData({});
+                      setShowTimePicker(false);
+                    }}>
+                    <Text style={styles.modalCloseButton}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>Employee</Text>
+
+                  {isNewEntry ? (
+                    // new -> allow search dropdown
+                    <LabourSearchDropdown
+                      token={token}
+                      selectedEmployee={
+                        tempLabourData.employeeId
+                          ? {
+                              id: tempLabourData.employeeId,
+                              label: tempLabourData.employeeName,
+                            }
+                          : null
+                      }
+                      onSelectEmployee={emp =>
+                        setTempLabourData(prev => ({
+                          ...prev,
+                          employeeName: emp.label,
+                          employeeId: emp.id,
+                          _selectedEmployee: emp.raw,
+                        }))
+                      }
+                      tempLabourData={tempLabourData}
+                      disabled={false}
+                      existingEmployeeIds={existingIds}
+                      currentEditingEmployeeId={currentEditId}
+                    />
+                  ) : (
+                    // existing -> show read-only TextInput (react-only)
+                    <TextInput
+                      style={styles.formInput}
+                      value={tempLabourData.employeeName || ''}
+                      editable={false} // read-only for edit case
+                    />
+                  )}
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel}>Regular Hours (HH:MM)</Text>
+
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setShowTimePicker(true)}>
+                    <View pointerEvents="none">
+                      <TextInput
+                        style={styles.formInput}
+                        editable={false}
+                        value={
+                          tempLabourData.regular_hours_hms
+                            ? tempLabourData.regular_hours_hms.slice(0, 5)
+                            : tempLabourData.regular_hours_input
+                            ? normalizeToHMS(
+                                tempLabourData.regular_hours_input,
+                              ).slice(0, 5)
+                            : ''
+                        }
+                        placeholder="Select hours & minutes"
+                      />
+                    </View>
+                  </TouchableOpacity>
+
+                  {showTimePicker && (
+                    <DateTimePicker
+                      value={pickerValue || new Date()}
+                      mode="time"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      is24Hour={true}
+                      onChange={onChangePicker}
+                    />
+                  )}
+                </View>
+              </ScrollView>
+
+              <View style={styles.modalFooter}>
                 <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonSecondary]}
                   onPress={() => {
                     setShowAddLabour(false);
                     setTempLabourData({});
                   }}>
-                  <Text style={styles.modalCloseButton}>✕</Text>
+                  <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonPrimary]}
+                  onPress={handleSaveLabour}>
+                  <Text style={styles.modalButtonTextPrimary}>Save</Text>
                 </TouchableOpacity>
               </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Employee</Text>
-                <LabourSearchDropdown
-                  token={token}
-                  selectedEmployee={
-                    tempLabourData.employeeId
-                      ? {
-                          id: tempLabourData.employeeId,
-                          label: tempLabourData.employeeName,
-                        }
-                      : null
-                  }
-                  onSelectEmployee={emp =>
-                    setTempLabourData(prev => ({
-                      ...prev,
-                      employeeName: emp.label,
-                      employeeId: emp.id,
-                      _selectedEmployee: emp.raw,
-                    }))
-                  }
-                />
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>
-                  Regular Hours (e.g., 8 or 2.5)
-                </Text>
-                <TextInput
-                  style={styles.formInput}
-                  keyboardType="decimal-pad"
-                  value={
-                    tempLabourData.regular_hours_input === '' ||
-                    tempLabourData.regular_hours_input === undefined
-                      ? ''
-                      : String(tempLabourData.regular_hours_input)
-                  }
-                  onChangeText={text =>
-                    setTempLabourData(prev => ({
-                      ...prev,
-                      regular_hours_input: text,
-                    }))
-                  }
-                />
-              </View>
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSecondary]}
-                onPress={() => {
-                  setShowAddLabour(false);
-                  setTempLabourData({});
-                }}>
-                <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonPrimary]}
-                onPress={handleSaveLabour}>
-                <Text style={styles.modalButtonTextPrimary}>Save</Text>
-              </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
-  </Modal>
-);
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+};
 
 const _toYMD = val => {
   if (typeof val === 'string' && val.length >= 10) {
@@ -343,132 +689,6 @@ const sameDay = (a, b) => _toYMD(a) === _toYMD(b);
 /* ======================
    MATERIAL MODAL
 ====================== */
-// const MaterialModal = ({
-//   visible,
-//   onClose,
-//   tempMaterialData,
-//   setTempMaterialData,
-//   handleSaveMaterial,
-//   setShowAddMaterial,
-// }) => (
-//   <Modal visible={visible} animationType="slide" transparent>
-//     <View style={styles.modalOverlay}>
-//       <View style={styles.modalContent}>
-//         <View style={styles.modalHeader}>
-//           <Text style={styles.modalTitle}>
-//             {tempMaterialData?.id &&
-//             String(tempMaterialData.id).startsWith('material-')
-//               ? 'Add Material Entry'
-//               : 'Edit Material Entry'}
-//           </Text>
-//           <TouchableOpacity onPress={onClose}>
-//             <Text style={styles.modalCloseButton}>✕</Text>
-//           </TouchableOpacity>
-//         </View>
-
-//         <ScrollView style={styles.modalBody}>
-//           <View style={styles.formGroup}>
-//             <Text style={styles.formLabel}>Material Name</Text>
-//             <TextInput
-//               style={styles.formInput}
-//               placeholder="Enter material name"
-//               value={tempMaterialData.name || ''}
-//               onChangeText={text =>
-//                 setTempMaterialData(prev => ({...prev, name: text}))
-//               }
-//             />
-//           </View>
-
-//           <View style={styles.formGroup}>
-//             <Text style={styles.formLabel}>Unit</Text>
-//             <TextInput
-//               style={styles.formInput}
-//               placeholder="pieces, feet, etc."
-//               value={tempMaterialData.unit || ''}
-//               onChangeText={text =>
-//                 setTempMaterialData(prev => ({...prev, unit: text}))
-//               }
-//             />
-//           </View>
-
-//           <View style={styles.formGroup}>
-//             <Text style={styles.formLabel}>Total Ordered</Text>
-//             <TextInput
-//               style={styles.formInput}
-//               keyboardType="numeric"
-//               value={
-//                 tempMaterialData.totalOrdered === undefined
-//                   ? ''
-//                   : String(tempMaterialData.totalOrdered)
-//               }
-//               onChangeText={text =>
-//                 setTempMaterialData(prev => ({
-//                   ...prev,
-//                   totalOrdered: text === '' ? '' : parseFloat(text) || 0,
-//                 }))
-//               }
-//             />
-//           </View>
-
-//           <View style={styles.formGroup}>
-//             <Text style={styles.formLabel}>Quantity Used</Text>
-//             <TextInput
-//               style={styles.formInput}
-//               keyboardType="numeric"
-//               value={
-//                 tempMaterialData.amountUsed === undefined
-//                   ? ''
-//                   : String(tempMaterialData.amountUsed)
-//               }
-//               onChangeText={text =>
-//                 setTempMaterialData(prev => ({
-//                   ...prev,
-//                   amountUsed: text === '' ? '' : parseFloat(text) || 0,
-//                 }))
-//               }
-//             />
-//           </View>
-
-//           <View style={styles.formGroup}>
-//             <Text style={styles.formLabel}>Unit Cost</Text>
-//             <TextInput
-//               style={styles.formInput}
-//               keyboardType="numeric"
-//               value={
-//                 tempMaterialData.unitCost === undefined
-//                   ? ''
-//                   : String(tempMaterialData.unitCost)
-//               }
-//               onChangeText={text =>
-//                 setTempMaterialData(prev => ({
-//                   ...prev,
-//                   unitCost: text === '' ? '' : parseFloat(text) || 0,
-//                 }))
-//               }
-//             />
-//           </View>
-//         </ScrollView>
-
-//         <View style={styles.modalFooter}>
-//           <TouchableOpacity
-//             style={[styles.modalButton, styles.modalButtonSecondary]}
-//             onPress={() => {
-//               setShowAddMaterial(false);
-//               setTempMaterialData({});
-//             }}>
-//             <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
-//           </TouchableOpacity>
-//           <TouchableOpacity
-//             style={[styles.modalButton, styles.modalButtonPrimary]}
-//             onPress={handleSaveMaterial}>
-//             <Text style={styles.modalButtonTextPrimary}>Save</Text>
-//           </TouchableOpacity>
-//         </View>
-//       </View>
-//     </View>
-//   </Modal>
-// );
-
 const MaterialModal = ({
   visible,
   onClose,
@@ -611,8 +831,6 @@ const MaterialModal = ({
 ====================== */
 const JobTimesheet = ({navigation, route, user}) => {
   const token = useSelector(state => state.user.token);
-
-  // NO global caching of route params (prevents carry-over)
   const routeParams = route?.params || {};
   const jobId = route?.params?.job?.id;
   const jobFromRoute = routeParams?.data || routeParams?.job || {};
@@ -641,6 +859,7 @@ const JobTimesheet = ({navigation, route, user}) => {
     materialEntries: [],
     additionalCharges: [],
   }));
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   // current jobId used EVERYWHERE
   const currentJobId = React.useMemo(
@@ -651,6 +870,12 @@ const JobTimesheet = ({navigation, route, user}) => {
     labor_timesheets: [],
     orders: [],
   });
+  const existingIds = (timesheetData?.labourEntries || []).map(e =>
+    String(e.employeeId || ''),
+  );
+  const currentEditId = tempLabourData?.employeeId
+    ? String(tempLabourData.employeeId)
+    : null;
 
   useEffect(() => {
     const fetchTimesheet = async () => {
@@ -672,7 +897,7 @@ const JobTimesheet = ({navigation, route, user}) => {
   }, [currentJobId, timesheetData.date, token]);
 
   // storage key per job+date
-  const storageKeyRef = useRef(tsKey(currentJobId, timesheetData.date));
+  const storageKeyRef = useRef(tsKey(currentJobId, timesheetData?.date));
 
   const loadFromStorageOrSeed = async (job, date) => {
     try {
@@ -1053,6 +1278,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         tempLabourData?.regularHours ??
         '00:00:00',
     };
+    setShowTimePicker(false);
     setTimesheetData(prev => {
       const exists = prev.labourEntries.some(
         e => String(e.id) === String(normalized.id),
@@ -1070,37 +1296,6 @@ const JobTimesheet = ({navigation, route, user}) => {
     });
     setShowAddLabour(false);
     setTempLabourData({});
-  };
-
-  const handleDeleteLabour = id => {
-    if (locked) return;
-    setTimesheetData(prev => {
-      const next = {
-        ...prev,
-        labourEntries: prev.labourEntries.filter(
-          e => String(e.id) !== String(id),
-        ),
-      };
-      persistLocalState(next);
-      return next;
-    });
-  };
-
-  /* ========= MATERIAL CRUD ========= */
-  const handleAddMaterial = () => {
-    if (locked) return;
-    setTempMaterialData({
-      id: `material-${Date.now()}`,
-      name: '',
-      unit: 'pieces',
-      totalOrdered: 0,
-      amountUsed: 0,
-      unitCost: 0,
-      productId: null,
-      supplierOrderId: '',
-      returnToWarehouse: false,
-    });
-    setShowAddMaterial(true);
   };
 
   const handleSaveMaterial = () => {
@@ -1126,21 +1321,6 @@ const JobTimesheet = ({navigation, route, user}) => {
     });
     setShowAddMaterial(false);
     setTempMaterialData({});
-  };
-
-  const handleDeleteMaterial = id => {
-    if (locked) return;
-    setTimesheetData(prev => {
-      const next = {
-        ...prev,
-        materialEntries: prev.materialEntries.filter(
-          e => String(e.id) !== String(id),
-        ),
-      };
-      persistLocalState(next);
-      return next;
-    });
-    setShowMatTooltip(null);
   };
 
   const handleSubmitForApproval = async () => {
@@ -1177,7 +1357,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         submittedAt: new Date().toISOString(),
         rejectionReason: undefined,
       }));
-      navigation.navigate("HomeScreen");
+      navigation.navigate('HomeScreen');
       Alert.alert('Success', 'Bluesheet submitted for approval');
     } catch (err) {
       const msg = err?.message || 'Failed to submit bluesheet';
@@ -1249,7 +1429,7 @@ const JobTimesheet = ({navigation, route, user}) => {
   };
 
   const handleDelete = entry => {
-    handleDeleteLabour(entry.id);
+    // handleDeleteLabour(entry.id);
     setShowMenu(false);
     setShowTooltip(null);
   };
@@ -1702,6 +1882,9 @@ const JobTimesheet = ({navigation, route, user}) => {
           setTempLabourData={setTempLabourData}
           handleSaveLabour={handleSaveLabour}
           token={token}
+          timesheetData={timesheetData}
+          showTimePicker={showTimePicker}
+          setShowTimePicker={setShowTimePicker}
         />
         <MaterialModal
           visible={showAddMaterial}
@@ -1790,7 +1973,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     minHeight: 96,
   },
-  actionButtons: {gap: 12},
+  actionButtons: {},
   submitButton: {
     backgroundColor: '#3B82F6',
     paddingVertical: 16,
@@ -1937,58 +2120,57 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
   },
- confirmModalOverlay: {
-  flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.5)',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-confirmModal: {
-  width: '80%',
-  backgroundColor: '#fff',
-  borderRadius: 12,
-  padding: 20,
-  elevation: 5,
-},
-confirmTitle: {
-  fontSize: 18,
-  fontWeight: '600',
-  color: '#111',
-  marginBottom: 10,
-  textAlign: 'center',
-},
-confirmMessage: {
-  fontSize: 15,
-  color: '#555',
-  textAlign: 'center',
-  marginBottom: 20,
-},
-confirmButtons: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-},
-confirmBtn: {
-  flex: 1,
-  paddingVertical: 10,
-  borderRadius: 8,
-  alignItems: 'center',
-  marginHorizontal: 5,
-},
-cancelBtn: {
-  backgroundColor: '#e5e7eb',
-},
-okBtn: {
-  backgroundColor: '#3B82F6',
-},
-cancelText: {
-  color: '#111',
-  fontWeight: '500',
-},
-okText: {
-  color: '#fff',
-  fontWeight: '600',
-},
-
+  confirmModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmModal: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    elevation: 5,
+  },
+  confirmTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  confirmMessage: {
+    fontSize: 15,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  cancelBtn: {
+    backgroundColor: '#e5e7eb',
+  },
+  okBtn: {
+    backgroundColor: '#3B82F6',
+  },
+  cancelText: {
+    color: '#111',
+    fontWeight: '500',
+  },
+  okText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
 });
 
 export default JobTimesheet;
