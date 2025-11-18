@@ -72,7 +72,7 @@ export default function TimerScreen({navigation, route}) {
     };
     getIdFromstroage();
     // console.log('Received jobId:', route?.params?.jobId);
-  }, [route?.params?.jobId, route]);
+  }, [stroageJobId]);
   const job = route?.params?.job;
   console.log('Received jobId:', Number(stroageJobId), job?.id);
 
@@ -313,7 +313,7 @@ export default function TimerScreen({navigation, route}) {
       fetchJobDetails();
     };
     boot();
-  }, []);
+  }, [stroageJobId]);
   useEffect(() => {
     const getData = async () => {
       const bufferToday = await loadTodayActivityFromBuffer();
@@ -340,6 +340,7 @@ export default function TimerScreen({navigation, route}) {
   const fetchJobDetails = async () => {
     try {
       setLoading(true);
+
       const res = await getJobById(jobId, token);
       const data = res?.data || {};
       console.log('resjobdata', res);

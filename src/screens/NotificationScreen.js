@@ -622,7 +622,7 @@ const NotificationScreen = ({route}) => {
   const navigation = useNavigation();
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
-  const userId = user.id; 
+  const userId = user?.id;
 
   const [allNotifications, setAllNotifications] = useState([]); // all notifications from API
   const [notifications, setNotifications] = useState([]); // filtered notifications
@@ -656,9 +656,10 @@ const NotificationScreen = ({route}) => {
     try {
       const res = await getNotificationsByUser(userId, 1, limit, token, 'all'); // fetch all
       const items = res?.data?.items ?? [];
-      setAllNotifications(items); // store full list
+      console.log('items>>>>', items);
+      setAllNotifications(items);
       setUnreadCount(items.filter(i => i.status === 'unread').length);
-      setNotifications(items); // show all initially
+      setNotifications(items);
       const totalPages = res?.data?.pagination?.total_pages ?? 1;
       setHasNextPage(1 < totalPages);
     } catch (err) {
@@ -674,7 +675,13 @@ const NotificationScreen = ({route}) => {
     setLoadingMore(true);
     const nextPage = page + 1;
     try {
-      const res = await getNotificationsByUser(userId, nextPage, limit, token, 'all'); // fetch all
+      const res = await getNotificationsByUser(
+        userId,
+        nextPage,
+        limit,
+        token,
+        'all',
+      ); // fetch all
       const items = res?.data?.items ?? [];
       setAllNotifications(prev => [...prev, ...items]); // update full list
 
@@ -682,13 +689,18 @@ const NotificationScreen = ({route}) => {
       if (filter === 'all') {
         setNotifications(prev => [...prev, ...items]);
       } else if (filter === 'unread') {
-        setNotifications(prev => [...prev, ...items.filter(n => n.status === 'unread')]);
+        setNotifications(prev => [
+          ...prev,
+          ...items.filter(n => n.status === 'unread'),
+        ]);
       }
 
       const totalPages = res?.data?.pagination?.total_pages ?? nextPage;
       setHasNextPage(nextPage < totalPages);
       setPage(nextPage);
-      setUnreadCount(prev => prev + items.filter(i => i.status === 'unread').length);
+      setUnreadCount(
+        prev => prev + items.filter(i => i.status === 'unread').length,
+      );
     } catch (err) {
       console.error(err);
     } finally {
@@ -717,12 +729,17 @@ const NotificationScreen = ({route}) => {
       }
 
       const customLink = recipient.notification?.custom_link;
-      if (customLink) {
-        // navigation.navigate('WebViewScreen', { url: customLink });
-      } else if (recipient.notification?.job_id || recipient.relatedJobId) {
-        // navigation.navigate('JobDetailScreen', { jobId: recipient.notification.job_id || recipient.relatedJobId });
+      // console.log("customLinkcustomLink",recipient.notification?.job_id);
+
+      // if (customLink) {
+      //   // navigation.navigate('WebViewScreen', { url: customLink });
+      // } else
+      if (recipient.notification?.job_id || recipient.relatedJobId) {
+        navigation.navigate('JobStack', {
+          jobId: recipient.notification.job_id || recipient.relatedJobId,
+        });
       } else {
-        navigation.navigate('NotificationDetailScreen', {recipient});
+        // navigation.navigate('NotificationDetailScreen', {recipient});
       }
     } catch (err) {
       console.error(err);
@@ -834,7 +851,9 @@ const NotificationScreen = ({route}) => {
   const formatTimestamp = timestamp => {
     if (!timestamp) return '';
     const utcDate = new Date(timestamp);
-    const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+    const localDate = new Date(
+      utcDate.getTime() - utcDate.getTimezoneOffset() * 60000,
+    );
     const now = new Date();
     const diffInMs = now.getTime() - localDate.getTime();
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
@@ -1021,19 +1040,59 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   notificationContent: {flex: 1},
-  notificationTitleRow: {flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.xs},
-  notificationTitle: {fontSize: 16, fontWeight: '500', color: Colors.text, flex: 1},
+  notificationTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.text,
+    flex: 1,
+  },
   unreadTitle: {fontWeight: '600'},
-  unreadDot: {width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.primary, marginLeft: Spacing.sm},
-  notificationMessage: {fontSize: 14, color: Colors.textSecondary, lineHeight: 20, marginBottom: Spacing.sm},
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+    marginLeft: Spacing.sm,
+  },
+  notificationMessage: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: Spacing.sm,
+  },
   notificationTime: {fontSize: 12, color: Colors.textLight},
-  actionRequired: {flexDirection: 'row', alignItems: 'center', marginTop: Spacing.sm, gap: Spacing.xs},
+  actionRequired: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+    gap: Spacing.xs,
+  },
   actionRequiredText: {fontSize: 12, color: Colors.error, fontWeight: '500'},
   deleteButton: {padding: Spacing.xs},
-  emptyContainer: {flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl},
-  emptyTitle: {fontSize: 20, fontWeight: 'bold', color: Colors.text, marginTop: Spacing.lg, marginBottom: Spacing.sm},
-  emptySubtitle: {fontSize: 16, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22},
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  emptySubtitle: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
 });
 
 export default NotificationScreen;
-
