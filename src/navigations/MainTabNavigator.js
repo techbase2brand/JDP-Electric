@@ -40,7 +40,10 @@ export default function MainTabNavigator() {
       tabBar={props => <CustomTabBar {...props} icons={icons} />}
       screenOptions={{
         headerShown: false,
-      }}>
+        tabBarHideOnKeyboard: true,
+      }}
+      
+      >
       <Tab.Screen name="Home" component={HomeStack} />
       {canViewBlueSheet && (
         <Tab.Screen name="BlueSheet" component={TimeSheetStack} />

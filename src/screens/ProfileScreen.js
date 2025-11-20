@@ -955,7 +955,7 @@ const ProfileScreen = ({navigation}) => {
 
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
-  console.log('users', user);
+  console.log('users', user?.labor?.id);
 
   // const {user, logout} = useAuth();
   const [showSignOutModal, setShowSignOutModal] = useState(false);

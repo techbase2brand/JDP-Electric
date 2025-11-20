@@ -878,7 +878,7 @@ const EditProfileScreen = ({navigation}) => {
                 style={styles.changePhotoButton}
                 onPress={handleImagePicker}>
                 <Icon name="camera-alt" size={20} color="#2563eb" />
-                <Text style={styles.changePhotoText}>Change Photo</Text>
+                <Text style={styles.changePhotoText}>Change image</Text>
               </TouchableOpacity>
             </View>
           </View>

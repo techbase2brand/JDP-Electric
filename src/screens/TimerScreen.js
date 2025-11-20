@@ -91,8 +91,8 @@ export default function TimerScreen({navigation, route}) {
   console.log(
     'lastActivityLoglastActivityLog',
     lastActivityLog,
-    activityLog,
-    lastTodayActivityLog,
+    // activityLog,
+    // lastTodayActivityLog,
   );
 
   // Modals
@@ -554,7 +554,7 @@ export default function TimerScreen({navigation, route}) {
       const jobIdForApi = storedJobId ?? job?.id ?? job?.job?.id;
       const end = new Date().toISOString();
 
-      // 👉 fetch original start time
+      //  fetch original start time
       const persistedStart =
         (await bufferGet(LS_KEYS.start, false)) ||
         startISO ||
@@ -654,6 +654,27 @@ export default function TimerScreen({navigation, route}) {
       lastTimesheet?.date == today) ||
     isTodayCreated;
 
+  const toSeconds = time => {
+    const [h, m, s] = time.split(':').map(Number);
+    return h * 3600 + m * 60 + s;
+  };
+
+  // Total seconds
+  const totalSeconds = lastActivityLog.reduce(
+    (sum, item) => sum + toSeconds(item.duration),
+    0,
+  );
+
+  // Convert seconds → HH:MM:SS
+  const formatTimes = sec => {
+    const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+    const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  };
+
+  const totalDuration = formatTimes(totalSeconds);
+  console.log(totalDuration);
   console.log(
     'lastTimesheetlastTimesheetlastTimesheet',
     isTodayCompleted,
@@ -848,6 +869,17 @@ export default function TimerScreen({navigation, route}) {
                   </View>
                 )}
               />
+              <View
+                style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                <Text
+                  style={[styles.logTime, {marginTop: 10, color: '#4CAF50'}]}>
+                  Total{' '}
+                </Text>
+                <Text
+                  style={[styles.logTime, {marginTop: 10, color: '#4CAF50'}]}>
+                  {totalDuration}
+                </Text>
+              </View>
             </View>
           )}
 
@@ -876,7 +908,11 @@ export default function TimerScreen({navigation, route}) {
                     <Text style={[styles.logTitle]}>
                       End: {item.end ?? '--:--:--'}
                     </Text>
-                    <Text style={[styles.logTime, {marginTop: 10}]}>
+                    <Text
+                      style={[
+                        styles.logTime,
+                        {marginTop: 10, color: '#4CAF50'},
+                      ]}>
                       Total: {item.totalSec}
                     </Text>
                   </View>
