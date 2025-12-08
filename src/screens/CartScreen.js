@@ -449,7 +449,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                 ) : (
                   <Text style={styles.saveButtonText}>Add Material</Text>
                 )}
-              </TouchableOpacity> 
+              </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
         </View>

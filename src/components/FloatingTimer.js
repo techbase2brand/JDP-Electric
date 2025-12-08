@@ -101,7 +101,6 @@ export default function FloatingTimer() {
   const {elapsedTime, isRunning} = useSelector(state => state.timer);
   const navigation = useNavigation();
   const [jobId , setJobId] = useState();
-  console.log('floting>>>', jobId);
 
   const position = useRef(new Animated.ValueXY({x: 300, y: 600})).current;
   const lastTap = useRef(0);
@@ -140,7 +139,6 @@ const jobIdRef = useRef(jobId);
 // Update ref whenever state changes
 useEffect(() => {
   jobIdRef.current = jobId;
-  console.log("jobIdRef.current>>",jobId);
   
 }, [jobId]);
   const panResponder = useRef(

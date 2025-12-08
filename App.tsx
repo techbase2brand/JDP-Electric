@@ -86,20 +86,21 @@ import {NavigationContainer} from '@react-navigation/native';
 import 'react-native-get-random-values';
 import messaging from '@react-native-firebase/messaging';
 
-// ✅ Redux imports
+//  Redux imports
 import {Provider, useDispatch, useSelector} from 'react-redux';
 import {PersistGate} from 'redux-persist/integration/react';
 import {store, persistor} from './src/redux/store';
 import FloatingTimer from './src/components/FloatingTimer';
+import notifee from '@notifee/react-native';
 import {
   startBackgroundTimer,
   stopBackgroundTimer,
 } from './src/NotificationService';
 import {logout} from './src/redux/userSlice';
 import {logoutApi} from './src/config/apiConfig';
+import {useNotifications} from './src/hooks/useNotifications';
 
 const {flex} = BaseStyle;
-
 const AppContent = () => {
   // const {DynamicIslandModule} = NativeModules;
   const navigationRef = useRef();
@@ -126,9 +127,50 @@ const AppContent = () => {
   const user = useSelector(state => state.user.user);
   const dispatch = useDispatch();
   const token = useSelector(state => state.user.token);
-  const {isRunning} = useSelector((state: any) => state.timer);
-  console.log('useruser', user, token);
+  const {isRunning, elapsedTime} = useSelector((state: any) => state.timer);
+  console.log('useruser', user, token, isRunning, elapsedTime);
+  const userId = user.id;
 
+  const {unreadCount} = useNotifications(userId);
+  useEffect(() => {
+    updateBadge(unreadCount);
+  }, [unreadCount]);
+  const updateBadge = async count => {
+    try {
+      await notifee.setBadgeCount(count);
+    } catch (e) {
+      console.log('Badge update error:', e);
+    }
+  };
+
+  useEffect(() => {
+    messaging().onNotificationOpenedApp(remoteMessage => {
+      console.log('App opened from background state:', remoteMessage);
+
+      handleNavigation(remoteMessage.data);
+    });
+
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage) {
+          console.log('Opened from quit state:', remoteMessage);
+          handleNavigation(remoteMessage.data);
+        }
+      });
+  }, []);
+
+  const handleNavigation = data => {
+    if (!data) return;
+
+    // if (data.type === 'chat') {
+    navigationRef.current?.navigate('JobStack');
+    // }
+
+    // if (data.type === 'post') {
+    //   navigationRef.current?.navigate('PostDetailsScreen', { postId: data.postId });
+    // }
+  };
   useEffect(() => {
     if (isRunning) {
       console.log('Starting background timer', isRunning);
@@ -153,7 +195,6 @@ const AppContent = () => {
     }
   };
 
-  
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -225,27 +266,26 @@ const AppContent = () => {
     // const unsubscribe = messaging().onMessage(async remoteMessage => {
     //   Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
     // });
-
     // return unsubscribe;
   }, []);
 
- const getFcmToken = async () => {
-  try {
-    const existingToken = await AsyncStorage.getItem('fcmToken');
-    if (existingToken) {
-      console.log('FCM token (from storage):', existingToken);
-      return existingToken;
-    }
+  const getFcmToken = async () => {
+    try {
+      const existingToken = await AsyncStorage.getItem('fcmToken');
+      if (existingToken) {
+        console.log('FCM token (from storage):', existingToken);
+        return existingToken;
+      }
 
-    const token = await messaging().getToken();
-    if (token) {
-      await AsyncStorage.setItem('fcmToken', token);
-      return token;
+      const token = await messaging().getToken();
+      if (token) {
+        await AsyncStorage.setItem('fcmToken', token);
+        return token;
+      }
+    } catch (error) {
+      console.log('Error getting FCM token:', error);
     }
-  } catch (error) {
-    console.log('Error getting FCM token:', error);
-  }
-};
+  };
   return (
     <SafeAreaView style={[flex, {backgroundColor: whiteColor}]}>
       <KeyboardAvoidingView

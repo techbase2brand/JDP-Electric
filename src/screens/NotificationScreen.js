@@ -876,7 +876,6 @@ const NotificationScreen = ({route}) => {
           onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
-
         <Text style={styles.headerTitle}>Notifications</Text>
         <Text></Text>
       </View>
