@@ -647,8 +647,9 @@ export default function TimerScreen({navigation, route}) {
   const todays = new Date().toISOString().split('T')[0];
 
   const isTodayCreated = jobData?.bluesheets?.some(
-    item => item?.created_at.split('T')[0] === todays,
+    item => item?.created_at.split('T')[0] == todays,
   );
+
   const isTodayCompleted =
     (lastTimesheet?.job_status == 'completed' &&
       lastTimesheet?.date == today) ||
@@ -679,6 +680,7 @@ export default function TimerScreen({navigation, route}) {
     'lastTimesheetlastTimesheetlastTimesheet',
     isTodayCompleted,
     isTodayCreated,
+    lastTimesheet,
   );
   const renderHeader = () => (
     <View style={styles.header}>

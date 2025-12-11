@@ -945,6 +945,7 @@ import {
   logoutApi,
 } from '../config/apiConfig';
 import {useFocusEffect} from '@react-navigation/native';
+import {widthPercentageToDP} from '../utils';
 
 const ProfileScreen = ({navigation}) => {
   const dispatch = useDispatch();
@@ -1157,13 +1158,15 @@ const ProfileScreen = ({navigation}) => {
         start={{x: 0, y: 0}}
         end={{x: 1, y: 0}}
         style={styles.header}>
-        <View style={styles.headerContent}>
+        <View style={[styles.headerContent, {}]}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={[styles.backButton, {width: widthPercentageToDP(30)}]}
             onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={24} color="#ffffff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={[styles.headerTitle, {width: widthPercentageToDP(30)}]}>
+            Profile
+          </Text>
           {/* <TouchableOpacity style={styles.editButton}>
             <Icon name="edit" size={20} color="#ffffff" />
           </TouchableOpacity> */}
@@ -1387,6 +1390,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 20,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   editButton: {
     padding: 8,

@@ -129,11 +129,13 @@ const AppContent = () => {
   const token = useSelector(state => state.user.token);
   const {isRunning, elapsedTime} = useSelector((state: any) => state.timer);
   console.log('useruser', user, token, isRunning, elapsedTime);
-  const userId = user.id;
+  const userId = user?.id;
 
   const {unreadCount} = useNotifications(userId);
   useEffect(() => {
-    updateBadge(unreadCount);
+    if (user !== null) {
+      updateBadge(unreadCount);
+    }
   }, [unreadCount]);
   const updateBadge = async count => {
     try {
@@ -164,7 +166,7 @@ const AppContent = () => {
     if (!data) return;
 
     // if (data.type === 'chat') {
-    navigationRef.current?.navigate('JobStack');
+    navigationRef.current?.navigate('NotificationScreen');
     // }
 
     // if (data.type === 'post') {

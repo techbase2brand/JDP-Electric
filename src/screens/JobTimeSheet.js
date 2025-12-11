@@ -27,7 +27,7 @@ import {
   submitBluesheetComplete,
 } from '../config/apiConfig';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {widthPercentageToDP} from '../utils';
+import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 
 /* ======================
    THEME
@@ -854,7 +854,7 @@ const JobTimesheet = ({navigation, route, user}) => {
     jobId: jobFromRoute?.id || timesheetFromRoute.jobId || 'unknown',
     date: timesheetFromRoute.date || todayISO,
     status: 'draft',
-    jobNotes: 'Main electrical work and installation',
+    jobNotes: '',
     labourEntries: [],
     materialEntries: [],
     additionalCharges: [],
@@ -1357,8 +1357,8 @@ const JobTimesheet = ({navigation, route, user}) => {
         submittedAt: new Date().toISOString(),
         rejectionReason: undefined,
       }));
-      navigation.navigate('HomeScreen');
-      Alert.alert('Success', 'Bluesheet submitted for approval');
+      navigation.navigate('TimeSheetStack');
+      // Alert.alert('Success', 'Bluesheet submitted for approval');
     } catch (err) {
       const msg = err?.message || 'Failed to submit bluesheet';
 
@@ -1460,9 +1460,17 @@ const JobTimesheet = ({navigation, route, user}) => {
           </View>
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={[styles.content]}
+          showsVerticalScrollIndicator={false}>
           {isReadOnly() && (
-            <View>
+            <View
+              style={{
+                flex: 1,
+                height: heightPercentageToDP(100),
+                display: 'flex',
+                justifyContent: 'center',
+              }}>
               <View
                 style={[
                   styles.statusCard,
@@ -1471,7 +1479,16 @@ const JobTimesheet = ({navigation, route, user}) => {
                     justifyContent: 'center',
                   },
                 ]}>
-                <View style={styles.approvalInfo}>
+                <View
+                  style={[
+                    styles.approvalInfo,
+                    {
+                      height: '25%',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                  ]}>
                   <Text style={styles.approvalIcon}>ℹ️</Text>
                   <View style={styles.approvalText}>
                     <Text style={styles.approvalTitle}>
@@ -1488,107 +1505,111 @@ const JobTimesheet = ({navigation, route, user}) => {
 
           {/* LABOUR */}
           {/* {!isReadOnly && (
-        <View> */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Feather name="clock" size={20} color={Colors.primary} />
-              <Text style={styles.sectionTitle}>Labour Hours</Text>
-              {canEdit() && (
-                <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={handleAddLabour}>
-                  <Text style={styles.addButtonText}>+</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+           */}
+          {canEdit() && (
+            <View>
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <Feather name="clock" size={20} color={Colors.primary} />
+                  <Text style={styles.sectionTitle}>Labour Hours</Text>
+                  {canEdit() && (
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={handleAddLabour}>
+                      <Text style={styles.addButtonText}>+</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
 
-            <View style={styles.tableContainer}>
-              <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderText, {flex: 1}]}>
-                  Employee
-                </Text>
-                {/* <Text style={[styles.tableHeaderText, {flex: 1}]}>Role</Text> */}
-                <Text style={[styles.tableHeaderText, {flex: 1}]}>Reg.hrs</Text>
-                {canEdit() && (
-                  <Text style={[styles.tableHeaderText, {flex: 1}]}>
-                    Actions
-                  </Text>
-                )}
-              </View>
-
-              {timesheetData?.labourEntries?.length > 0 ? (
-                timesheetData?.labourEntries?.map(entry => {
-                  const isTooltipVisible = showTooltip === entry.id;
-                  return (
-                    <View key={entry.id} style={styles.tableRow}>
-                      <Text style={[styles.tableCell, {flex: 1}]}>
-                        {entry.employeeName}
+                <View style={styles.tableContainer}>
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                      Employee
+                    </Text>
+                    {/* <Text style={[styles.tableHeaderText, {flex: 1}]}>Role</Text> */}
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                      Reg.hrs
+                    </Text>
+                    {canEdit() && (
+                      <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                        Actions
                       </Text>
-                      {/* <Text style={[styles.tableCell, {flex: 1}]}>
+                    )}
+                  </View>
+
+                  {timesheetData?.labourEntries?.length > 0 ? (
+                    timesheetData?.labourEntries?.map(entry => {
+                      const isTooltipVisible = showTooltip === entry.id;
+                      return (
+                        <View key={entry.id} style={styles.tableRow}>
+                          <Text style={[styles.tableCell, {flex: 1}]}>
+                            {entry.employeeName}
+                          </Text>
+                          {/* <Text style={[styles.tableCell, {flex: 1}]}>
                   {entry.role || 'Labor'}
                 </Text> */}
-                      <Text style={[styles.tableCell, {flex: 1}]}>
-                        {normalizeToHMS(
-                          entry.regular_hours_input ??
-                            entry.regular_hours_hms ??
-                            entry.regularHours,
-                        )}
-                      </Text>
-                      {canEdit() && (
-                        // <View
-                        //   style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
-                        //   <TouchableOpacity
-                        //     style={styles.editButton}
-                        //     onPress={() => {
-                        //       const hms = normalizeToHMS(
-                        //         entry.regular_hours_input ??
-                        //           entry.regular_hours_hms ??
-                        //           entry.regularHours,
-                        //       );
-                        //       const safe = {
-                        //         ...entry,
-                        //         regular_hours_input:
-                        //           entry.regular_hours_input ?? hmsToDecimalStr(hms),
-                        //         regular_hours_hms: hms,
-                        //         regularHours: hms,
-                        //       };
-                        //       setTempLabourData(safe);
-                        //       setShowAddLabour(true);
-                        //     }}>
-                        //     <MaterialIcons
-                        //       name="edit"
-                        //       size={20}
-                        //       color={Colors.primary}
-                        //     />
-                        //   </TouchableOpacity>
-                        //   <TouchableOpacity
-                        //     style={styles.deleteButton}
-                        //     onPress={() => handleDeleteLabour(entry.id)}>
-                        //     <MaterialIcons
-                        //       name="delete"
-                        //       size={20}
-                        //       color={'#dc2626'}
-                        //     />
-                        //   </TouchableOpacity>
-                        // </View>
-                        <View
-                          style={[
-                            styles.tableCell,
-                            {
-                              flex: 1,
-                              flexDirection: 'row',
-                              position: 'relative',
-                            },
-                          ]}>
-                          {/* 3 Dots */}
-                          <TouchableOpacity
-                            onPress={() => handleEdit(entry)}
-                            style={{padding: 4}}>
-                            <Feather name="edit" size={22} color="#555" />
-                          </TouchableOpacity>
+                          <Text style={[styles.tableCell, {flex: 1}]}>
+                            {normalizeToHMS(
+                              entry.regular_hours_input ??
+                                entry.regular_hours_hms ??
+                                entry.regularHours,
+                            )}
+                          </Text>
+                          {canEdit() && (
+                            // <View
+                            //   style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
+                            //   <TouchableOpacity
+                            //     style={styles.editButton}
+                            //     onPress={() => {
+                            //       const hms = normalizeToHMS(
+                            //         entry.regular_hours_input ??
+                            //           entry.regular_hours_hms ??
+                            //           entry.regularHours,
+                            //       );
+                            //       const safe = {
+                            //         ...entry,
+                            //         regular_hours_input:
+                            //           entry.regular_hours_input ?? hmsToDecimalStr(hms),
+                            //         regular_hours_hms: hms,
+                            //         regularHours: hms,
+                            //       };
+                            //       setTempLabourData(safe);
+                            //       setShowAddLabour(true);
+                            //     }}>
+                            //     <MaterialIcons
+                            //       name="edit"
+                            //       size={20}
+                            //       color={Colors.primary}
+                            //     />
+                            //   </TouchableOpacity>
+                            //   <TouchableOpacity
+                            //     style={styles.deleteButton}
+                            //     onPress={() => handleDeleteLabour(entry.id)}>
+                            //     <MaterialIcons
+                            //       name="delete"
+                            //       size={20}
+                            //       color={'#dc2626'}
+                            //     />
+                            //   </TouchableOpacity>
+                            // </View>
+                            <View
+                              style={[
+                                styles.tableCell,
+                                {
+                                  flex: 1,
+                                  flexDirection: 'row',
+                                  position: 'relative',
+                                },
+                              ]}>
+                              {/* 3 Dots */}
+                              <TouchableOpacity
+                                onPress={() => handleEdit(entry)}
+                                style={{padding: 4}}>
+                                <Feather name="edit" size={22} color="#555" />
+                              </TouchableOpacity>
 
-                          {/* Tooltip */}
-                          {/* {isTooltipVisible && (
+                              {/* Tooltip */}
+                              {/* {isTooltipVisible && (
                             <View style={styles.tooltipBox}>
                               <TouchableOpacity
                                 onPress={() => handleEdit(entry)}
@@ -1604,113 +1625,119 @@ const JobTimesheet = ({navigation, route, user}) => {
                             
                             </View>
                           )} */}
+                            </View>
+                          )}
                         </View>
-                      )}
+                      );
+                    })
+                  ) : (
+                    <View style={{padding: 10, alignItems: 'center'}}>
+                      <Text style={{color: '#777', fontStyle: 'italic'}}>
+                        No labours data found
+                      </Text>
                     </View>
-                  );
-                })
-              ) : (
-                <View style={{padding: 10, alignItems: 'center'}}>
-                  <Text style={{color: '#777', fontStyle: 'italic'}}>
-                    No labours data found
-                  </Text>
+                  )}
                 </View>
-              )}
-            </View>
-          </View>
+              </View>
 
-          {/* MATERIALS */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Feather name="box" size={20} color={Colors.primary} />
-              <Text style={styles.sectionTitle}>Materials</Text>
-              {/* {canEdit() && (
+              {/* MATERIALS */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <Feather name="box" size={20} color={Colors.primary} />
+                  <Text style={styles.sectionTitle}>Materials</Text>
+                  {/* {canEdit() && (
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={handleAddMaterial}>
                 <Text style={styles.addButtonText}>+</Text>
               </TouchableOpacity>
             )} */}
-            </View>
+                </View>
 
-            <View style={styles.tableContainer}>
-              <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderText, {flex: 1}]}>Title</Text>
-                <Text style={[styles.tableHeaderText, {flex: 1}]}>Qty</Text>
-                <Text style={[styles.tableHeaderText, {flex: 1}]}>Used</Text>
-                <Text style={[styles.tableHeaderText, {flex: 1}]}>Rest</Text>
-                {canEdit() && (
-                  <Text style={[styles.tableHeaderText, {flex: 1}]}>
-                    Actions
-                  </Text>
-                )}
-              </View>
+                <View style={styles.tableContainer}>
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                      Title
+                    </Text>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>Qty</Text>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                      Used
+                    </Text>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                      Rest
+                    </Text>
+                    {canEdit() && (
+                      <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                        Actions
+                      </Text>
+                    )}
+                  </View>
 
-              {timesheetData?.materialEntries?.length > 0 ? (
-                timesheetData?.materialEntries?.map(material => {
-                  const isTooltipVisible = showMatTooltip === material.id;
-                  return (
-                    <View key={material?.id} style={styles.tableRow}>
-                      <Text style={[styles.tableCell, {flex: 1}]}>
-                        {material?.name}
-                      </Text>
-                      <Text style={[styles.tableCell, {flex: 1}]}>
-                        {material?.totalOrdered} {material?.unit}
-                      </Text>
-                      <Text style={[styles.tableCell, {flex: 1}]}>
-                        {material?.amountUsed} {material?.unit}
-                      </Text>
-                      <Text style={[styles.tableCell, {flex: 1}]}>
-                        {material?.totalOrdered - material?.amountUsed || 0}{' '}
-                        {material?.unit}
-                      </Text>
-                      {canEdit() && (
-                        // <View
-                        //   style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
-                        //   <TouchableOpacity
-                        //     style={styles.editButton}
-                        //     onPress={() => {
-                        //       setTempMaterialData(material);
-                        //       setShowAddMaterial(true);
-                        //     }}>
-                        //     <MaterialIcons
-                        //       name="edit"
-                        //       size={20}
-                        //       color={Colors.primary}
-                        //     />
-                        //   </TouchableOpacity>
-                        //   <TouchableOpacity
-                        //     style={styles.deleteButton}
-                        //     onPress={() => handleDeleteMaterial(material.id)}>
-                        //     <MaterialIcons
-                        //       name="delete"
-                        //       size={20}
-                        //       color={'#dc2626'}
-                        //     />
-                        //   </TouchableOpacity>
-                        // </View>
-                        <View
-                          style={[
-                            styles.tableCell,
-                            {
-                              flex: 1,
-                              flexDirection: 'row',
-                              position: 'relative',
-                            },
-                          ]}>
-                          {/* 3 Dots */}
-                          <TouchableOpacity
-                            onPress={() => {
-                              setTempMaterialData(material);
-                              setShowAddMaterial(true);
-                              setShowMatTooltip(null);
-                            }}
-                            style={{padding: 4}}>
-                            <Feather name="edit" size={22} color="#555" />
-                          </TouchableOpacity>
+                  {timesheetData?.materialEntries?.length > 0 ? (
+                    timesheetData?.materialEntries?.map(material => {
+                      const isTooltipVisible = showMatTooltip === material.id;
+                      return (
+                        <View key={material?.id} style={styles.tableRow}>
+                          <Text style={[styles.tableCell, {flex: 1}]}>
+                            {material?.name}
+                          </Text>
+                          <Text style={[styles.tableCell, {flex: 1}]}>
+                            {material?.totalOrdered} {material?.unit}
+                          </Text>
+                          <Text style={[styles.tableCell, {flex: 1}]}>
+                            {material?.amountUsed} {material?.unit}
+                          </Text>
+                          <Text style={[styles.tableCell, {flex: 1}]}>
+                            {material?.totalOrdered - material?.amountUsed || 0}{' '}
+                            {material?.unit}
+                          </Text>
+                          {canEdit() && (
+                            // <View
+                            //   style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
+                            //   <TouchableOpacity
+                            //     style={styles.editButton}
+                            //     onPress={() => {
+                            //       setTempMaterialData(material);
+                            //       setShowAddMaterial(true);
+                            //     }}>
+                            //     <MaterialIcons
+                            //       name="edit"
+                            //       size={20}
+                            //       color={Colors.primary}
+                            //     />
+                            //   </TouchableOpacity>
+                            //   <TouchableOpacity
+                            //     style={styles.deleteButton}
+                            //     onPress={() => handleDeleteMaterial(material.id)}>
+                            //     <MaterialIcons
+                            //       name="delete"
+                            //       size={20}
+                            //       color={'#dc2626'}
+                            //     />
+                            //   </TouchableOpacity>
+                            // </View>
+                            <View
+                              style={[
+                                styles.tableCell,
+                                {
+                                  flex: 1,
+                                  flexDirection: 'row',
+                                  position: 'relative',
+                                },
+                              ]}>
+                              {/* 3 Dots */}
+                              <TouchableOpacity
+                                onPress={() => {
+                                  setTempMaterialData(material);
+                                  setShowAddMaterial(true);
+                                  setShowMatTooltip(null);
+                                }}
+                                style={{padding: 4}}>
+                                <Feather name="edit" size={22} color="#555" />
+                              </TouchableOpacity>
 
-                          {/* Tooltip */}
-                          {/* {isTooltipVisible && (
+                              {/* Tooltip */}
+                              {/* {isTooltipVisible && (
                             <View style={styles.tooltipBox}>
                               <TouchableOpacity
                                 onPress={() => {
@@ -1730,70 +1757,70 @@ const JobTimesheet = ({navigation, route, user}) => {
                             
                             </View>
                           )} */}
+                            </View>
+                          )}
                         </View>
-                      )}
+                      );
+                    })
+                  ) : (
+                    <View style={{padding: 10, alignItems: 'center'}}>
+                      <Text style={{color: '#777', fontStyle: 'italic'}}>
+                        No material data found
+                      </Text>
                     </View>
-                  );
-                })
-              ) : (
-                <View style={{padding: 10, alignItems: 'center'}}>
-                  <Text style={{color: '#777', fontStyle: 'italic'}}>
-                    No material data found
-                  </Text>
+                  )}
                 </View>
-              )}
-            </View>
-          </View>
-
-          {/* NOTES + SUBMIT */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <MaterialIcons
-                name="edit-note"
-                size={24}
-                color={Colors.primary}
-              />
-              <Text style={styles.sectionTitle}>Job Notes</Text>
-            </View>
-            <TextInput
-              style={styles.notesInput}
-              value={timesheetData.jobNotes}
-              editable={!isReadOnly()}
-              onChangeText={text => {
-                setTimesheetData(prev => ({...prev, jobNotes: text}));
-                persistNotesDebounced(text);
-              }}
-              placeholder="Add any additional notes about the job..."
-              multiline
-              numberOfLines={4}
-            />
-          </View>
-
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <MaterialIcons
-                name="summarize"
-                size={24}
-                color={Colors.primary}
-              />
-              <Text style={styles.sectionTitle}>Summary</Text>
-            </View>
-            <View style={styles.summaryBreakdown}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Total Labour:</Text>
-                <Text style={styles.summaryValue}>
-                  {timesheetData.labourEntries.length}
-                </Text>
               </View>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Material:</Text>
-                <Text style={styles.summaryValue}>
-                  {timesheetData.materialEntries.length}
-                </Text>
+
+              {/* NOTES + SUBMIT */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <MaterialIcons
+                    name="edit-note"
+                    size={24}
+                    color={Colors.primary}
+                  />
+                  <Text style={styles.sectionTitle}>Job Notes</Text>
+                </View>
+                <TextInput
+                  style={styles.notesInput}
+                  value={timesheetData.jobNotes}
+                  editable={!isReadOnly()}
+                  onChangeText={text => {
+                    setTimesheetData(prev => ({...prev, jobNotes: text}));
+                    persistNotesDebounced(text);
+                  }}
+                  placeholder="Add any additional notes about the job..."
+                  multiline
+                  numberOfLines={4}
+                />
               </View>
-              <View style={styles.summaryDivider} />
-            </View>
-            {/* <View style={styles.actionButtons}>
+
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <MaterialIcons
+                    name="summarize"
+                    size={24}
+                    color={Colors.primary}
+                  />
+                  <Text style={styles.sectionTitle}>Summary</Text>
+                </View>
+                <View style={styles.summaryBreakdown}>
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Total Labour:</Text>
+                    <Text style={styles.summaryValue}>
+                      {timesheetData.labourEntries.length}
+                    </Text>
+                  </View>
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Material:</Text>
+                    <Text style={styles.summaryValue}>
+                      {timesheetData.materialEntries.length}
+                    </Text>
+                  </View>
+                  <View style={styles.summaryDivider} />
+                </View>
+                {/* <View style={styles.actionButtons}>
               <TouchableOpacity
                 style={[
                   styles.submitButton,
@@ -1812,64 +1839,66 @@ const JobTimesheet = ({navigation, route, user}) => {
                 )}
               </TouchableOpacity>
             </View> */}
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.submitButton,
-                  (isReadOnly() || loading) && {opacity: 0.5},
-                ]}
-                disabled={isReadOnly() || loading}
-                onPress={() => setShowConfirmModal(true)}>
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.submitButtonText}>
-                    {isReadOnly()
-                      ? 'Submitted (come back tomorrow)'
-                      : 'Submit for Approval'}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-          <Modal
-            visible={showConfirmModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowConfirmModal(false)}>
-            <TouchableWithoutFeedback
-              onPress={() => setShowConfirmModal(false)}>
-              <View style={styles.confirmModalOverlay}>
-                <TouchableWithoutFeedback>
-                  <View style={styles.confirmModal}>
-                    <Text style={styles.confirmTitle}>Confirm Submission</Text>
-                    <Text style={styles.confirmMessage}>
-                      Are you sure you want to submit this blue sheet for
-                      approval?
-                    </Text>
-                    <View style={styles.confirmButtons}>
-                      <TouchableOpacity
-                        style={[styles.confirmBtn, styles.cancelBtn]}
-                        onPress={() => setShowConfirmModal(false)}>
-                        <Text style={styles.cancelText}>Cancel</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.confirmBtn, styles.okBtn]}
-                        onPress={() => {
-                          setShowConfirmModal(false);
-                          handleSubmitForApproval();
-                        }}>
-                        <Text style={styles.okText}>Yes, Submit</Text>
-                      </TouchableOpacity>
-                    </View>
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity
+                    style={[
+                      styles.submitButton,
+                      (isReadOnly() || loading) && {opacity: 0.5},
+                    ]}
+                    disabled={isReadOnly() || loading}
+                    onPress={() => setShowConfirmModal(true)}>
+                    {loading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.submitButtonText}>
+                        {isReadOnly()
+                          ? 'Submitted (come back tomorrow)'
+                          : 'Submit for Approval'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <Modal
+                visible={showConfirmModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowConfirmModal(false)}>
+                <TouchableWithoutFeedback
+                  onPress={() => setShowConfirmModal(false)}>
+                  <View style={styles.confirmModalOverlay}>
+                    <TouchableWithoutFeedback>
+                      <View style={styles.confirmModal}>
+                        <Text style={styles.confirmTitle}>
+                          Confirm Submission
+                        </Text>
+                        <Text style={styles.confirmMessage}>
+                          Are you sure you want to submit this blue sheet for
+                          approval?
+                        </Text>
+                        <View style={styles.confirmButtons}>
+                          <TouchableOpacity
+                            style={[styles.confirmBtn, styles.cancelBtn]}
+                            onPress={() => setShowConfirmModal(false)}>
+                            <Text style={styles.cancelText}>Cancel</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.confirmBtn, styles.okBtn]}
+                            onPress={() => {
+                              setShowConfirmModal(false);
+                              handleSubmitForApproval();
+                            }}>
+                            <Text style={styles.okText}>Yes, Submit</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </TouchableWithoutFeedback>
                   </View>
                 </TouchableWithoutFeedback>
-              </View>
-            </TouchableWithoutFeedback>
-          </Modal>
-
-          {/* </View>
-         )} */}
+              </Modal>
+            </View>
+          )}
 
           <View style={{height: 28}} />
         </ScrollView>
@@ -1929,7 +1958,7 @@ const styles = StyleSheet.create({
   },
   addButtonText: {fontSize: 18, color: '#fff', fontWeight: '600'},
   content: {flex: 1},
-  statusCard: {margin: 16},
+  statusCard: {margin: 16, height: heightPercentageToDP(50)},
   approvalInfo: {
     backgroundColor: '#dcfce7',
     borderLeftWidth: 4,

@@ -982,7 +982,7 @@ const ActivitySummaryScreen = ({navigation}) => {
   const token = useSelector(state => state.user.token);
   const leadLaborId = user?.lead_labor?.id;
   const laborId = user?.labor?.id;
-  console.log('leadLaborIdleadLaborId', leadLaborId, laborId);
+  console.log('leadLaborIdleadLaborId', leadLaborId, laborId, user);
 
   // -------- UI State
   const [filterPeriod, setFilterPeriod] = useState('all');
@@ -1055,6 +1055,7 @@ const ActivitySummaryScreen = ({navigation}) => {
       // UPDATED: handle "HH:MM:SS" or numeric seconds
       const secs = matched.reduce((sum, ts) => {
         const waSecs = toSeconds(ts?.work_activity);
+
         if (waSecs > 0) return sum + waSecs;
         const whSecs = toSeconds(ts?.work_hours);
         return sum + whSecs;
@@ -1073,7 +1074,6 @@ const ActivitySummaryScreen = ({navigation}) => {
       : [];
     return tss.some(ts => String(ts?.job_status).toLowerCase() === 'completed');
   }, []);
-  console.log('jobss', jobs);
 
   // API fetch: first page 20, next pages 10
   const fetchJobs = useCallback(async () => {
@@ -1131,12 +1131,12 @@ const ActivitySummaryScreen = ({navigation}) => {
   const filteredJobs = useMemo(() => {
     if (!Array.isArray(jobs) || jobs.length === 0) return [];
 
-    // if (!filterPeriod || filterPeriod === 'all') {
-    //   return jobs.filter(j => {
-    //     const when = j?.due_date || j?.created_at || j?.updated_at;
-    //     return when ? inRange(when, fromDate, toDate) : true;
-    //   });
-    // }
+    if (!filterPeriod || filterPeriod === 'all') {
+      return jobs.filter(j => {
+        const when = j?.due_date || j?.created_at || j?.updated_at;
+        return when ? inRange(when, fromDate, toDate) : true;
+      });
+    }
     if (!filterPeriod || filterPeriod === 'all') {
       return jobs;
     }
@@ -1420,9 +1420,17 @@ const ActivitySummaryScreen = ({navigation}) => {
   );
 
   const renderJobCard = ({item: job}) => {
-    const isExpanded = expandedJobId === job.id;
+    console.log('jobjob>>', job);
+
+    const isExpanded = expandedJobId === job?.id;
     const matchedSecs = getMatchedTimesheetsSeconds(job);
     const matchedHoursStr = secondsToHoursDecimal(matchedSecs, 2); // show hours on card
+    console.log(
+      'matchedHoursStr>>',
+      matchedHoursStr,
+      'matchedSecs',
+      matchedSecs,
+    );
 
     const customerName =
       job?.customer?.customer_name || job?.customer?.company_name || '-';
@@ -1468,7 +1476,7 @@ const ActivitySummaryScreen = ({navigation}) => {
             </View>
             <View style={styles.jobCardRight}>
               <View style={styles.hoursContainer}>
-                {matchedHoursStr !== 0 && (
+                {matchedHoursStr !== '0.00' && (
                   <Text style={styles.hoursText}>{`${matchedHoursStr}h`}</Text>
                 )}
               </View>

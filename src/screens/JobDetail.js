@@ -434,19 +434,29 @@ const JobDetailScreen = ({
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+      <View style={[styles.header]}>
+        <TouchableOpacity
+          style={[
+            styles.backButton,
+            { width: widthPercentageToDP(30)},
+          ]}
+          onPress={handleBack}>
           <Icon name="arrow-back" size={24} color={Colors.white} />
         </TouchableOpacity>
-        <View style={styles.headerCenter}>
+        <View
+          style={[
+            styles.headerCenter,
+            { width: widthPercentageToDP(30)},
+          ]}>
           <Text style={styles.headerTitle} numberOfLines={1}>
             {job?.job_title}
           </Text>
           {/* <Text style={styles.headerSubtitle}>{job?.job_title}</Text> */}
         </View>
         <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => handleNavigate('JobStack')}>
+          style={[styles.editButton,{ width: widthPercentageToDP(30)}]}
+          // onPress={() => handleNavigate('JobStack')}
+          >
           {/* <Icon name="edit" size={20} color={Colors.white} /> */}
         </TouchableOpacity>
       </View>
@@ -504,10 +514,10 @@ const JobDetailScreen = ({
                 {job?.description}
               </Text> */}
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Description</Text>
+              <Text style={styles.infoLabel}>Description:</Text>
               <Text
-                style={styles.infoText}
-                numberOfLines={showFullDesc ? 0 : 4}>
+                style={[styles.infoText,{width:widthPercentageToDP(60)}]}
+                numberOfLines={showFullDesc ? 2 : 4}>
                 {job?.description || 'No description available'}
               </Text>
 
@@ -606,7 +616,7 @@ const JobDetailScreen = ({
           </View>
           <View style={styles.cardContent}>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Name</Text>
+              <Text style={styles.infoLabel}>Name:</Text>
               <Text style={styles.infoText}>
                 {job?.customer?.customer_name ||
                   job?.contractor?.contractor_name}
@@ -1073,6 +1083,8 @@ const styles = StyleSheet.create({
   // Info Items
   infoItem: {
     marginBottom: Spacing.md,
+     flexDirection: 'row',
+     gap:5
   },
   infoRow: {
     flexDirection: 'row',

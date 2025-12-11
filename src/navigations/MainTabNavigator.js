@@ -41,9 +41,7 @@ export default function MainTabNavigator() {
       screenOptions={{
         headerShown: false,
         tabBarHideOnKeyboard: true,
-      }}
-      
-      >
+      }}>
       <Tab.Screen name="Home" component={HomeStack} />
       {canViewBlueSheet && (
         <Tab.Screen name="BlueSheet" component={TimeSheetStack} />

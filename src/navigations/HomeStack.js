@@ -27,6 +27,7 @@ import JobTimesheet from '../screens/JobTimeSheet';
 import SupplierSelectionScreen from '../screens/SupplierSelectionScreen';
 import JobActivityLogScreen from '../screens/JobActivityLogScreen';
 import TimeSheetStack from './TimeSheetStack';
+import TimesheetScreen from '../screens/TimeSheetScreen';
 
 const Stack = createStackNavigator();
 
@@ -37,19 +38,38 @@ export default function HomeStack() {
       <Stack.Screen name="JobStack" component={JobsScreen} />
       <Stack.Screen name="JobTimesheet" component={JobTimesheet} />
       <Stack.Screen name="CreateJobScreen" component={CreateJobScreen} />
-      <Stack.Screen name="ActivitySummaryScreen" component={ActivitySummaryScreen} />
+      <Stack.Screen
+        name="ActivitySummaryScreen"
+        component={ActivitySummaryScreen}
+      />
       <Stack.Screen name="ReportsScreen" component={ReportsScreen} />
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
       <Stack.Screen name="SupportScreen" component={SupportScreen} />
-      <Stack.Screen name="JobDetail" component={JobDetail} options={{ tabBarStyle: { display: 'none' } }} />
+      <Stack.Screen
+        name="JobDetail"
+        component={JobDetail}
+        options={{tabBarStyle: {display: 'none'}}}
+      />
       <Stack.Screen name="MapScreen" component={MapScreen} />
-      <Stack.Screen name="BluesheetSubmission" component={BluesheetSubmission} />
+      <Stack.Screen
+        name="BluesheetSubmission"
+        component={BluesheetSubmission}
+      />
       <Stack.Screen name="OrderProducts" component={OrderProducts} />
-      <Stack.Screen name="JobActivityLogScreen" component={JobActivityLogScreen} />
-      <Stack.Screen name="SupplierSelectionScreen" component={SupplierSelectionScreen} />
-      <Stack.Screen name="OrderConfirmationScreen" component={OrderConfirmationScreen} />
+      <Stack.Screen
+        name="JobActivityLogScreen"
+        component={JobActivityLogScreen}
+      />
+      <Stack.Screen
+        name="SupplierSelectionScreen"
+        component={SupplierSelectionScreen}
+      />
+      <Stack.Screen
+        name="OrderConfirmationScreen"
+        component={OrderConfirmationScreen}
+      />
       <Stack.Screen name="OrderHistoryScreen" component={OrderHistoryScreen} />
-        <Stack.Screen name="TimeSheetStack" component={TimeSheetStack} />
+      <Stack.Screen name="TimeSheetStack" component={TimeSheetStack} />
 
       <Stack.Screen name="CartScreen" component={CartScreen} />
       <Stack.Screen name="TimerScreen" component={TimerScreen} />

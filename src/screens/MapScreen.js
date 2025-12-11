@@ -41,7 +41,7 @@ const MapScreen = ({route, navigation}) => {
   const [startCoordinates, setStartCoordinates] = useState(null);
   const [destinationCoordinates, setDestinationCoordinates] = useState(null);
   const [alertShown, setAlertShown] = useState(false);
-  console.log('destinationCoordinates>>', destinationCoordinates);
+  console.log('destinationCoordinates>>', job);
 
   // Current location fetch
   const getCurrentLocation = async () => {
@@ -134,6 +134,52 @@ const MapScreen = ({route, navigation}) => {
   const handleCall = phoneNumber => {
     Linking.openURL(`tel:${phoneNumber}`);
   };
+  const openMaps = async address => {
+    
+    try {
+      const query = encodeURIComponent(address.trim());
+
+      // Platform-specific preferred URL schemes
+      const iosUrl = `maps://?q=${query}`; // opens Apple Maps
+      const androidGeo = `geo:0,0?q=${query}`; // opens Google Maps or any map app supporting geo:
+      const googleMapsWeb = `https://www.google.com/maps/search/?api=1&query=${query}`; // fallback web
+
+      // Try platform-specific preferred first
+      let urlToOpen = googleMapsWeb;
+
+      if (Platform.OS === 'ios') {
+        // prefer Apple Maps scheme; if not available, fallback to google maps web
+        const canOpenIos = await Linking.canOpenURL(iosUrl);
+        urlToOpen = canOpenIos ? iosUrl : googleMapsWeb;
+      } else {
+        // Android: try geo: scheme first
+        const canOpenGeo = await Linking.canOpenURL(androidGeo);
+        urlToOpen = canOpenGeo ? androidGeo : googleMapsWeb;
+      }
+
+      const supported = await Linking.canOpenURL(urlToOpen);
+      if (!supported) {
+        // As a last fallback, try web Google Maps
+        if (
+          urlToOpen !== googleMapsWeb &&
+          (await Linking.canOpenURL(googleMapsWeb))
+        ) {
+          await Linking.openURL(googleMapsWeb);
+        } else {
+          Alert.alert(
+            'No map app',
+            'No app available to open maps on this device.',
+          );
+        }
+        return;
+      }
+
+      await Linking.openURL(urlToOpen);
+    } catch (err) {
+      console.warn('Failed to open map url:', err);
+      Alert.alert('Error', 'Unable to open map app.');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -184,7 +230,7 @@ const MapScreen = ({route, navigation}) => {
       )}
 
       <View style={styles.bottomCard}>
-        <Text style={{fontWeight: '700', marginVertical: 4}} numberOfLines={1}>
+        <Text style={{fontWeight: '700', marginVertical: 0}} numberOfLines={1}>
           {job?.job?.job_title || job?.job_title}
         </Text>
         {/* <Text style={{textAlign: 'center', fontSize: 12}}>
@@ -208,7 +254,8 @@ const MapScreen = ({route, navigation}) => {
           }}>
           Customer Name:{' '}
           <Text style={{fontWeight: '400'}}>
-            {job?.job?.customer?.customer_name || job?.customer?.customer_name}
+            {job?.job?.customer?.customer_name ||
+              job?.job?.contractor?.contractor_name}
           </Text>
         </Text>
         <Text
@@ -223,14 +270,30 @@ const MapScreen = ({route, navigation}) => {
             {job?.job?.address || job?.address}
           </Text>
         </Text>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() =>
-            handleCall(job?.contractor?.phone || job?.customer?.phone)
-          }>
-          <Ionicons name="call" size={20} color="#fff" />
-          <Text style={{color: '#fff', fontWeight: '800'}}>Call</Text>
-        </TouchableOpacity>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginTop: 10,
+            width: widthPercentageToDP(90),
+          }}>
+          <TouchableOpacity
+            onPress={()=>openMaps(job?.job?.address)}
+            style={[styles.actionButton,{backgroundColor: '#0b69ff',}]}
+            activeOpacity={0.7}>
+            <Text style={[styles.label]}>{'Redirect to Map'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() =>
+              handleCall(
+                job?.job?.contractor?.phone || job?.job?.customer?.phone,
+              )
+            }>
+            <Ionicons name="call" size={20} color="#fff" />
+            <Text style={{color: '#fff', fontWeight: '800'}}>Call</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -240,12 +303,27 @@ export default MapScreen;
 
 const styles = StyleSheet.create({
   container: {flex: 1, position: 'relative'},
+  button: {
+    backgroundColor: '#0b69ff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    width:"40%"
+  },
+  label: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   headerRow: {position: 'absolute', top: 10, left: 10, zIndex: 99999},
   map: {flex: 1},
   bottomCard: {
     zIndex: 99999,
     borderRadius: 20,
-    height: heightPercentageToDP(30),
+    height: heightPercentageToDP(25),
     width: widthPercentageToDP(100),
     backgroundColor: '#fff',
     alignItems: 'center',
@@ -261,13 +339,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'absolute',
-    top: 50,
-    right: 10,
+    // position: 'absolute',
+    // top: 50,
+    // right: 10,
     backgroundColor: '#10B981',
     gap: 4,
     borderRadius: 10,
-    width: widthPercentageToDP(20),
+    width: widthPercentageToDP(42),
     paddingVertical: 8,
   },
 });

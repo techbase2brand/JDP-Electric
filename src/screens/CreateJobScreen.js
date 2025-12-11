@@ -49,7 +49,6 @@ const customers = [
 
 const CreateJobScreen = ({navigation, onCreateJob}) => {
   const GOOGLE_MAPS_APIKEY = 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI';
-
   const scrollRef = useRef(null);
   const googleRef = useRef(null);
 
@@ -150,6 +149,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [selectedContractorId, setSelectedContractorId] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [showPlaces, setShowPlaces] = useState(true);
+
   console.log('selectedselected>>', selected);
 
   //  Load from AsyncStorage on mount
@@ -1026,7 +1027,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
         ref={scrollRef}
         style={styles.stepContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        // keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always">
         {/* Basic Information */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
@@ -1335,7 +1337,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             )}
           </View>
 
-          <View
+          {/* <View
             style={styles.formGroup}
             ref={ref => (fieldPositions.current['customerAddress'] = ref)}>
             <Text style={styles.formLabel}>Address *</Text>
@@ -1380,96 +1382,75 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 </Text>
               </View>
             )}
+          </View> */}
+
+          <View
+            style={styles.formGroup}
+            ref={ref => (fieldPositions.current['customerAddress'] = ref)}>
+            <Text style={styles.formLabel}>Address *</Text>
+            <View
+              style={[
+                styles.inputContainer,
+                validationErrors.customerAddress && styles.inputContainerError,
+                ,
+                {paddingHorizontal: 0},
+              ]}>
+              <Icon
+                name="place"
+                size={20}
+                color="#9ca3af"
+                style={styles.inputIcon}
+              />
+
+              {showPlaces && (
+                <GooglePlacesAutocomplete
+                  ref={googleRef}
+                  placeholder="Enter customer address"
+                  fetchDetails={true}
+                  enablePoweredByContainer={false}
+                  query={{
+                    key: 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI',
+                    language: 'en',
+                    components: 'country:us',
+                  }}
+                  onPress={(data, details) => {
+                    const fullAddress = data.description;
+
+                    updateFormData('customerAddress', fullAddress);
+
+                    // input me text set karein
+                    googleRef.current?.setAddressText(fullAddress);
+
+                    // 👇 MAGIC — Autocomplete ko 50ms ke liye unmount karo
+                    setShowPlaces(false);
+                    setTimeout(() => setShowPlaces(true), 50);
+                  }}
+                  textInputProps={{
+                    value: formData.customerAddress,
+                    onChangeText: text =>
+                      updateFormData('customerAddress', text),
+                  }}
+                  styles={{
+                    listView: {
+                      maxHeight: 200,
+                      zIndex: 9999, // 👈 Ye bohot important hai
+                      elevation: 10,
+                    },
+                  }}
+                />
+              )}
+            </View>
+            {validationErrors.customerAddress && (
+              <View style={styles.errorContainer}>
+                <Icon name="error" size={16} color="#ef4444" />
+                <Text style={styles.errorText}>
+                  {validationErrors.customerAddress}
+                </Text>
+              </View>
+            )}
           </View>
-
-          {/* <View style={{flex: 1, position: 'relative', zIndex: 999}}>
-            
-            <GooglePlacesAutocomplete
-              placeholder="Search address"
-              fetchDetails={true} // ✅ gives full place details like lat/lng
-              onPress={(data, details = null) => {
-                Keyboard.dismiss();
-                console.log('===== Google Autocomplete Response =====');
-                console.log('Data:', data); // main place object
-                console.log('Details:', details); // full place details (geometry, etc.)
-                console.log('========================================');
-                // setAddress(data.description);
-              }}
-              predefinedPlaces={[]}
-              enablePoweredByContainer={false}
-              query={{
-                key: GOOGLE_MAPS_APIKEY,
-                language: 'en',
-              }}
-              textInputProps={{
-                // value: address,
-                onChangeText: text => {
-                  // setAddress(text);
-                  console.log('User typing:', text);
-                },
-              }}
-              styles={{
-                textInput: {
-                  color: '#000',
-                  borderColor: '#ccc',
-                  borderWidth: 1,
-                  borderRadius: 8,
-                  paddingHorizontal: 10,
-                },
-                listView: {
-                  backgroundColor: '#fff',
-                  zIndex: 9999,
-                },
-              }}
-            />
-          </View> */}
-
-          {/* <View style={{flex: 1, padding: 10}}>
-            <GooglePlacesAutocomplete
-              placeholder="Search location"
-              fetchDetails={true}
-              onPress={(data, details = null) => {
-                console.log('Selected:', data.description);
-              }}
-              query={{
-                key: GOOGLE_MAPS_APIKEY,
-                language: 'en',
-              }}
-              debounce={200}
-              enablePoweredByContainer={false}
-              textInputProps={{
-                onFocus: () => {},
-                onBlur: () => {},
-                placeholderTextColor: '#999',
-              }}
-              GooglePlacesDetailsQuery={{
-                fields: 'geometry',
-              }}
-              styles={{
-                container: {flex: 0},
-                textInputContainer: {
-                  width: '100%',
-                },
-                textInput: {
-                  height: 44,
-                  color: '#000',
-                  fontSize: 16,
-                  borderColor: '#ccc',
-                  borderWidth: 1,
-                  borderRadius: 8,
-                  paddingHorizontal: 10,
-                },
-                listView: {
-                  backgroundColor: 'white',
-                  borderRadius: 8,
-                  elevation: 4,
-                  zIndex: 10,
-                },
-              }}
-            />
-          </View> */}
-
-          {/* <View
+        </View>
+        {/* <View
             style={styles.formGroup}
             ef={ref => (fieldPositions.current['city'] = ref)}>
             <Text style={styles.formLabel}>City </Text>
@@ -1506,7 +1487,6 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             )}
           
           </View> */}
-        </View>
 
         {/* Billing Address */}
         <View style={styles.sectionCard}>
@@ -2296,13 +2276,12 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
         style={{height: heightPercentageToDP(86), backgroundColor:"red"}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}> */}
       <View style={styles.content}>
-        <View style={{height:heightPercentageToDP(75)}}>
-
-        {renderProgressIndicator()}
-        {renderStepTitle()}
-        {currentStep === 1 && renderJobDetailsStep()}
-        {currentStep === 2 && renderResourcesStep()}
-        {currentStep === 3 && renderReviewStep()}
+        <View style={{height: heightPercentageToDP(75)}}>
+          {renderProgressIndicator()}
+          {renderStepTitle()}
+          {currentStep === 1 && renderJobDetailsStep()}
+          {currentStep === 2 && renderResourcesStep()}
+          {currentStep === 3 && renderReviewStep()}
         </View>
 
         {/* Navigation Buttons */}

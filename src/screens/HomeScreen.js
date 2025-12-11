@@ -64,7 +64,6 @@ const HomeScreen = ({navigation}) => {
   // const [unreadCount, setUnreadCount] = useState(0);
   const [todayDueJobs, setTodayDueJobs] = useState([]);
 
-  console.log('unreadCountunreadCount>>,', user);
 
   const statsData = [
     {
