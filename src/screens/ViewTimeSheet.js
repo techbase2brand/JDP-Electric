@@ -40,7 +40,7 @@ const TimesheetScreen = ({navigation, route, job}) => {
         jobId: timesheet.jobId,
         date: timesheet.date,
         status: timesheet.status,
-        jobNotes: 'Main electrical work and installation',
+        jobNotes: timesheet?.jobNotes,
         submittedAt: timesheet.submittedAt,
         approvedAt: timesheet.approvedAt,
         approvedBy: timesheet.approvedBy,
@@ -96,7 +96,7 @@ const TimesheetScreen = ({navigation, route, job}) => {
       jobId: job?.id || 'unknown',
       date: new Date().toISOString().split('T')[0],
       status: 'draft',
-      jobNotes: 'Main electrical work and installation',
+      jobNotes: '',
       labourEntries: [
         {
           id: '1',
@@ -108,7 +108,7 @@ const TimesheetScreen = ({navigation, route, job}) => {
           regularRate: user?.management_type === 'lead_labor' ? 35 : 28,
           overtimeRate: user?.management_type === 'lead_labor' ? 52.5 : 42,
           totalCost: user?.management_type === 'lead_labor' ? 280 : 224,
-          notes: 'Main electrical work and installation',
+          notes: '',
         },
       ],
       materialEntries: [

@@ -219,6 +219,8 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       const fetchBlueSheet = async () => {
         if (loading) return;
         setLoading(true);
+        console.log("token>>>",token);
+        
         try {
           const res = await getBlueSheets(token);
           const blue = Array.isArray(res)

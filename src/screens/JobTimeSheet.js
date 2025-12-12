@@ -1059,8 +1059,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         await AsyncStorage.setItem(
           key,
           JSON.stringify({
-            jobNotes:
-              saved?.jobNotes ?? 'Main electrical work and installation',
+            jobNotes: saved?.jobNotes,
             labourEntries: mergedLabour,
             materialEntries: mergedMaterials,
           }),
@@ -1071,7 +1070,7 @@ const JobTimesheet = ({navigation, route, user}) => {
 
       // --- No storage: seed from route and persist ---
       const toStore = {
-        jobNotes: 'Main electrical work and installation',
+        // jobNotes: 'Main electrical work and installation',
         labourEntries: routeLabour,
         materialEntries: routeMaterials,
       };
@@ -1339,7 +1338,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         return;
       }
 
-      setLoading(true); // start loading
+      setLoading(true);
 
       await submitBluesheetComplete(payload, token);
 
@@ -1380,7 +1379,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         }));
         Alert.alert(
           'Already Submitted',
-          'Aaj ki bluesheet pehle hi submit ho chuki hai.',
+          // 'Aaj ki bluesheet pehle hi submit ho chuki hai.',
         );
         return;
       }
