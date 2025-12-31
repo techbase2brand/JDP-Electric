@@ -43,7 +43,7 @@ import {
   getNotificationsByUser,
 } from '../config/apiConfig';
 import {useFocusEffect} from '@react-navigation/native';
-import { useNotifications } from '../hooks/useNotifications';
+import {useNotifications} from '../hooks/useNotifications';
 
 const HomeScreen = ({navigation}) => {
   const user = useSelector(state => state.user.user);
@@ -53,17 +53,15 @@ const HomeScreen = ({navigation}) => {
   const canViewCreateJob = useHasPermission('jobs', 'view');
 
   const userId = user.id;
-  
-    const { unreadCount } = useNotifications(userId);
-  console.log("unreadCount",unreadCount);
 
+  const {unreadCount} = useNotifications(userId);
+  console.log('unreadCount', unreadCount);
 
   const [loading, setLoading] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [dashboardData, setDashboardData] = useState();
   // const [unreadCount, setUnreadCount] = useState(0);
   const [todayDueJobs, setTodayDueJobs] = useState([]);
-
 
   const statsData = [
     {

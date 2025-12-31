@@ -70,6 +70,7 @@ import {
   SafeAreaView,
   View,
   PermissionsAndroid,
+  StatusBar,
 } from 'react-native';
 import {whiteColor} from './src/constants/Color';
 import {
@@ -99,6 +100,7 @@ import {
 import {logout} from './src/redux/userSlice';
 import {logoutApi} from './src/config/apiConfig';
 import {useNotifications} from './src/hooks/useNotifications';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 const {flex} = BaseStyle;
 const AppContent = () => {
@@ -162,17 +164,31 @@ const AppContent = () => {
       });
   }, []);
 
+  //   const handleNavigation = data => {
+  //     if (!data) return;
+  // console.log("datata>>>",data);
+
+  //     if (data?.custom_link !== '/') {
+  //     navigationRef.current?.navigate('NotificationScreen');
+  //     }else{
+  //       navigationRef.current?.navigate('JobStack');
+  //     }
+  //   };
   const handleNavigation = data => {
     if (!data) return;
 
-    // if (data.type === 'chat') {
-    navigationRef.current?.navigate('NotificationScreen');
-    // }
+    console.log('datata>>>', data);
 
-    // if (data.type === 'post') {
-    //   navigationRef.current?.navigate('PostDetailsScreen', { postId: data.postId });
-    // }
+    const link = data?.custom_link || '';
+
+    // agar link "/jobs" se start hota hai
+    if (link.startsWith('/jobs')) {
+      navigationRef.current?.navigate('JobStack');
+    } else {
+      navigationRef.current?.navigate('NotificationScreen');
+    }
   };
+
   useEffect(() => {
     if (isRunning) {
       console.log('Starting background timer', isRunning);

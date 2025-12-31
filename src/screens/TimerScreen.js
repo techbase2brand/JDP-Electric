@@ -673,18 +673,21 @@ export default function TimerScreen({navigation, route}) {
     const s = String(sec % 60).padStart(2, '0');
     return `${h}:${m}:${s}`;
   };
-
-  const totalDuration = formatTimes(totalSeconds);
+  const totalSecondss = lastTodayActivityLog.reduce(
+    (sum, item) => sum + toSeconds(item.duration),
+    0,
+  );
+  const totalDuration = formatTimes(totalSecondss || totalSeconds);
   console.log(totalDuration);
   console.log(
     'lastTimesheetlastTimesheetlastTimesheet',
-    isTodayCompleted,
-    isTodayCreated,
-    lastTimesheet,
+    // lastActivityLog,
+    lastTodayActivityLog,
+    totalDuration,
+    totalSeconds,
   );
   const renderHeader = () => (
     <View style={styles.header}>
-      0
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}>
@@ -842,34 +845,38 @@ export default function TimerScreen({navigation, route}) {
                     : lastTodayActivityLog
                 }
                 keyExtractor={(_, index) => index.toString()}
-                renderItem={({item}) => (
-                  <View style={styles.logItem}>
-                    <View style={{flex: 1}}>
-                      <Text
-                        style={[
-                          styles.logTitle,
-                          {color: item.color || '#333'},
-                        ]}>
-                        {item?.title}
-                      </Text>
-                      {item?.note ? (
+                renderItem={({item}) => {
+                  console.log('item>>>>>>>', item);
+
+                  return (
+                    <View style={styles.logItem}>
+                      <View style={{flex: 1}}>
                         <Text
-                          style={{fontSize: 12, color: '#555', marginTop: 2}}>
-                          {item?.note}
+                          style={[
+                            styles.logTitle,
+                            {color: item.color || '#333'},
+                          ]}>
+                          {item?.title}
                         </Text>
-                      ) : null}
-                    </View>
-                    {/* <Text style={styles.logTime}>
+                        {item?.note ? (
+                          <Text
+                            style={{fontSize: 12, color: '#555', marginTop: 2}}>
+                            {item?.note}
+                          </Text>
+                        ) : null}
+                      </View>
+                      {/* <Text style={styles.logTime}>
                       {item?.duration ?? item?.time ?? '--:--:--'}
                     </Text> */}
-                    <Text style={styles.logTime}>
-                      {item?.duration === '00:00:00' ||
-                      item?.time === '00:00:00'
-                        ? 'Start'
-                        : item?.duration ?? item?.time ?? '--:--:--'}
-                    </Text>
-                  </View>
-                )}
+                      <Text style={styles.logTime}>
+                        {item?.duration === '00:00:00' ||
+                        item?.time === '00:00:00'
+                          ? 'Start'
+                          : item?.duration ?? item?.time ?? '--:--:--'}
+                      </Text>
+                    </View>
+                  );
+                }}
               />
               <View
                 style={{flexDirection: 'row', justifyContent: 'space-between'}}>
@@ -891,35 +898,39 @@ export default function TimerScreen({navigation, route}) {
             <FlatList
               data={allSummaries}
               keyExtractor={(_, index) => index.toString()}
-              renderItem={({item}) => (
-                <View style={styles.logItem}>
-                  <View style={{flex: 1}}>
-                    <Text style={[styles.logTitle]}>
-                      Start: {item.start || '--:--:--'}
-                    </Text>
+              renderItem={({item}) => {
+                console.log('itemmm', item);
 
-                    <Text style={[styles.logTitle, {marginTop: 10}]}>
-                      Date: {item.date || '--'}
-                    </Text>
-                    {/* <Text style={[styles.logTitle, {marginTop: 10}]}>
+                return (
+                  <View style={styles.logItem}>
+                    <View style={{flex: 1}}>
+                      <Text style={[styles.logTitle]}>
+                        Start: {item.start || '--:--:--'}
+                      </Text>
+
+                      <Text style={[styles.logTitle, {marginTop: 10}]}>
+                        Date: {item.date || '--'}
+                      </Text>
+                      {/* <Text style={[styles.logTitle, {marginTop: 10}]}>
                       End: {item.end ?? '--:--:--'}
                     </Text>
                      */}
+                    </View>
+                    <View style={{alignItems: 'flex-end'}}>
+                      <Text style={[styles.logTitle]}>
+                        End: {item.end ?? '--:--:--'}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.logTime,
+                          {marginTop: 10, color: '#4CAF50'},
+                        ]}>
+                        Total: {item.totalSec}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={{alignItems: 'flex-end'}}>
-                    <Text style={[styles.logTitle]}>
-                      End: {item.end ?? '--:--:--'}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.logTime,
-                        {marginTop: 10, color: '#4CAF50'},
-                      ]}>
-                      Total: {item.totalSec}
-                    </Text>
-                  </View>
-                </View>
-              )}
+                );
+              }}
               ListEmptyComponent={() => (
                 <View style={{alignItems: 'center', padding: 20}}>
                   <Feather name="activity" size={40} color="#9ca3af" />
