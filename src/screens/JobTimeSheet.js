@@ -643,6 +643,7 @@ const LabourModal = ({
                       mode="time"
                       display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                       is24Hour={true}
+                      locale="en_GB"
                       onChange={onChangePicker}
                     />
                   )}

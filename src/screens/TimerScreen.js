@@ -74,7 +74,7 @@ export default function TimerScreen({navigation, route}) {
     // console.log('Received jobId:', route?.params?.jobId);
   }, [stroageJobId]);
   const job = route?.params?.job;
-  console.log('Received jobId:', Number(stroageJobId), job?.id);
+  console.log('Received jobId:', job);
 
   const jobId = job?.id || Number(stroageJobId);
 
@@ -725,13 +725,27 @@ export default function TimerScreen({navigation, route}) {
               <View
                 style={{
                   display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'flex-end',
+                  // flexDirection: 'row',
+                  alignItems: 'center',
                   marginBottom: 20,
-                  gap: 6,
+                  // gap: 6,
                 }}>
-                <Icon name="timer" size={20} color="#000" />
-                <Text style={styles.summaryTitle}>Time Summary</Text>
+                <View style={{flexDirection: 'row', gap: 4}}>
+                  <Icon name="timer" size={20} color="#000" />
+                  <Text style={styles.summaryTitle}>Time Summary</Text>
+                </View>
+                <View style={{flexDirection: 'row', gap: 2, marginVertical:4}}>
+                  <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
+                    Job Name:{' '}
+                  </Text>
+                  <Text style={styles.headerTitle}> {job?.job_title}</Text>
+                </View>
+                <View style={{flexDirection: 'row', gap: 2}}>
+                  <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
+                    Job Address:{' '}
+                  </Text>
+                  <Text style={styles.headerTitle}> {job?.address}</Text>
+                </View>
               </View>
 
               <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>

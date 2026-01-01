@@ -436,27 +436,20 @@ const JobDetailScreen = ({
       {/* Header */}
       <View style={[styles.header]}>
         <TouchableOpacity
-          style={[
-            styles.backButton,
-            { width: widthPercentageToDP(30)},
-          ]}
+          style={[styles.backButton, {width: widthPercentageToDP(30)}]}
           onPress={handleBack}>
           <Icon name="arrow-back" size={24} color={Colors.white} />
         </TouchableOpacity>
-        <View
-          style={[
-            styles.headerCenter,
-            { width: widthPercentageToDP(30)},
-          ]}>
+        <View style={[styles.headerCenter, {width: widthPercentageToDP(30)}]}>
           <Text style={styles.headerTitle} numberOfLines={1}>
             {job?.job_title}
           </Text>
           {/* <Text style={styles.headerSubtitle}>{job?.job_title}</Text> */}
         </View>
         <TouchableOpacity
-          style={[styles.editButton,{ width: widthPercentageToDP(30)}]}
+          style={[styles.editButton, {width: widthPercentageToDP(30)}]}
           // onPress={() => handleNavigate('JobStack')}
-          >
+        >
           {/* <Icon name="edit" size={20} color={Colors.white} /> */}
         </TouchableOpacity>
       </View>
@@ -516,7 +509,7 @@ const JobDetailScreen = ({
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Description:</Text>
               <Text
-                style={[styles.infoText,{width:widthPercentageToDP(60)}]}
+                style={[styles.infoText, {width: widthPercentageToDP(60)}]}
                 numberOfLines={showFullDesc ? 2 : 4}>
                 {job?.description || 'No description available'}
               </Text>
@@ -537,43 +530,32 @@ const JobDetailScreen = ({
             </View>
 
             <View style={styles.infoRow}>
-              {/* <View style={styles.infoColumn}>
-                <Text style={styles.infoLabel}>Estimated Time</Text>
-                <View style={styles.infoWithIcon}>
-                  <Icon
-                    name="schedule"
-                    size={16}
-                    color={Colors.textSecondary}
-                  />
-                  <Text style={styles.infoText}>
-                    {job?.estimated_hours || 'N/A'} hr
-                  </Text>
-                </View>
-              </View> */}
               <View
                 style={{
-                  flexDirection: 'row',
+                  // flexDirection: 'row',
                   justifyContent: 'space-between',
-                  width: '100%',
                 }}>
-                <View style={styles.infoColumn}>
-                  <View style={styles.infoItem}>
+                <View
+                  style={[
+                    styles.infoColumn,
+                    {width: widthPercentageToDP(100)},
+                  ]}>
+                  <View style={[styles.infoItem]}>
                     <Text style={styles.infoLabel}>Assigned To :</Text>
                     <View style={styles.infoWithIcon}>
-                      {/* {job?.assigned_lead_labor &&
-                      Array.isArray(job?.assigned_lead_labor) && (
-                        <Text style={styles.infoText}>
-                          {job?.assigned_lead_labor
-                            ?.map(labor => labor.user?.full_name)
-                            .join(', ')}
-                        </Text>
-                      )} <Text>,</Text> */}
-                      {/* <Text style={styles.infoText}>
-                      {job?.created_by_user?.full_name}
-                    </Text> */}
+                      {job?.assigned_lead_labor &&
+                        Array.isArray(job?.assigned_lead_labor) && (
+                          <Text style={styles.infoText}>
+                            {job?.assigned_lead_labor
+                              ?.map(labor => labor.user?.full_name)
+                              .join(', ')}
+                          </Text>
+                        )}
+
                       {job?.assigned_labor &&
                         Array.isArray(job?.assigned_labor) && (
                           <Text style={styles.infoText}>
+                            ,
                             {job?.assigned_labor
                               ?.map(labor => labor.user?.full_name)
                               .join(', ')}
@@ -582,7 +564,8 @@ const JobDetailScreen = ({
                     </View>
                   </View>
                 </View>
-                <View style={styles.infoColumn}>
+                <View
+                  style={[styles.infoColumn, {width: widthPercentageToDP(50)}]}>
                   <Text style={styles.infoLabel}>Scheduled</Text>
                   <View style={styles.infoWithIcon}>
                     <Icon name="event" size={16} color={Colors.textSecondary} />
@@ -1083,11 +1066,11 @@ const styles = StyleSheet.create({
   // Info Items
   infoItem: {
     marginBottom: Spacing.md,
-     flexDirection: 'row',
-     gap:5
+    flexDirection: 'row',
+    gap: 5,
   },
   infoRow: {
-    flexDirection: 'row',
+    // flexDirection: 'row',
     gap: Spacing.md,
     marginBottom: Spacing.md,
   },
@@ -1103,11 +1086,14 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 16,
     color: Colors.text,
+    flexWrap: 'wrap', // 🔥 line break allow
+    flexShrink: 1,
   },
   infoWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
+    flex: 1,
   },
 
   // Avatar

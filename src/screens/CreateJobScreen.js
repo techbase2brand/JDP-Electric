@@ -1418,10 +1418,8 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
 
                     updateFormData('customerAddress', fullAddress);
 
-                    // input me text set karein
                     googleRef.current?.setAddressText(fullAddress);
 
-                    // 👇 MAGIC — Autocomplete ko 50ms ke liye unmount karo
                     setShowPlaces(false);
                     setTimeout(() => setShowPlaces(true), 50);
                   }}
@@ -1433,7 +1431,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                   styles={{
                     listView: {
                       maxHeight: 200,
-                      zIndex: 9999, // 👈 Ye bohot important hai
+                      zIndex: 9999,
                       elevation: 10,
                     },
                   }}
@@ -1509,7 +1507,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
             </View>
           </View>
 
-          {!formData.sameAsCustomer ? (
+          {!formData?.sameAsCustomer ? (
             <>
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Billing Contact Name *</Text>
