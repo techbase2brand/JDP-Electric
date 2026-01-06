@@ -873,8 +873,8 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
 
   // default (paginated) list
   const [supplierss, setSuppliers] = useState([]);
-  console.log("supplierss>",supplierss);
-  
+  console.log('supplierss>', job);
+
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
@@ -1196,7 +1196,13 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
           onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Select Supplier</Text>
+        <View>
+          <Text style={styles.headerTitle}>Select Supplier</Text>
+          <Text style={[styles.headerTitle, {textAlign: 'center'}]}>
+            {job?.job?.job_title}
+          </Text>
+        </View>
+
         <View style={styles.headerButton} />
       </View>
 

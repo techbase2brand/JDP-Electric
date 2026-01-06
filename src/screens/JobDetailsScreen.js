@@ -158,7 +158,7 @@ const JobDetailsScreen = ({navigation, route}) => {
           data={itemsUsed}
           renderItem={renderItemUsed}
           keyExtractor={item => item.id}
-          scrollEnabled={false} // scrolling disable taaki parent scroll le
+          scrollEnabled={false} 
         />
       </View>
       <View style={{margin: 10, marginHorizontal: 20}}>
