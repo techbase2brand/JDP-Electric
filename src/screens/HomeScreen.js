@@ -18,6 +18,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Entypo from 'react-native-vector-icons/Entypo';
+// import crashlytics from '@react-native-firebase/crashlytics';
 
 import LinearGradient from 'react-native-linear-gradient';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
@@ -470,6 +471,21 @@ const HomeScreen = ({navigation}) => {
       <Text style={styles.emptyTitle}>No jobs found</Text>
     </View>
   );
+
+  // const testCrashlytics = () => {
+  //   Alert.alert('Test Crash', 'Are you sure you want to crash the app?', [
+  //     {text: 'Cancel', style: 'cancel'},
+  //     {
+  //       text: 'Crash',
+  //       style: 'destructive',
+  //       onPress: () => {
+  //         crashlytics().log('🧪 Manual test crash from HomeScreen');
+  //         crashlytics().setAttribute('test_button', 'home_screen');
+  //         crashlytics().crash(); // 🔥 App crash karega
+  //       },
+  //     },
+  //   ]);
+  // };
   const date = new Date();
 
   // Greeting logic
@@ -551,7 +567,20 @@ const HomeScreen = ({navigation}) => {
             </View>
           </View>
         </LinearGradient>
-
+        {/* <View style={{marginTop: 16}}>
+          <TouchableOpacity
+            onPress={testCrashlytics}
+            style={{
+              backgroundColor: '#DC2626',
+              paddingVertical: 14,
+              borderRadius: 10,
+              alignItems: 'center',
+            }}>
+            <Text style={{color: '#fff', fontWeight: '600'}}>
+              🧪 Test Crashlytics
+            </Text>
+          </TouchableOpacity>
+        </View> */}
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Stats Cards */}
           {/* <View style={styles.statsContainer}>

@@ -61,7 +61,7 @@
 
 // export default App;
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -101,7 +101,7 @@ import {logout} from './src/redux/userSlice';
 import {logoutApi} from './src/config/apiConfig';
 import {useNotifications} from './src/hooks/useNotifications';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-
+import crashlytics from '@react-native-firebase/crashlytics';
 const {flex} = BaseStyle;
 const AppContent = () => {
   // const {DynamicIslandModule} = NativeModules;
@@ -146,6 +146,76 @@ const AppContent = () => {
       console.log('Badge update error:', e);
     }
   };
+
+  // ============================================
+  // TEST CRASHLYTICS - Uncomment to test automatic crash
+  // ============================================
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     console.log('🧪 [TEST] Triggering test crash in 5 seconds...');
+  //     crashlytics().setAttribute('test_crash', 'true');
+  //     crashlytics().log('Test crash triggered automatically from App.tsx');
+  //     crashlytics().crash();
+  //   }, 5000);
+
+  //   return () => clearTimeout(timer);
+  // }, []);
+
+  // Initialize Crashlytics (App Start पर)
+  useEffect(() => {
+    const initializeCrashlytics = async () => {
+      try {
+        await crashlytics().setCrashlyticsCollectionEnabled(true);
+        console.log('✅ [CRASHLYTICS] Initialized');
+      } catch (e) {
+        console.log('❌ [CRASHLYTICS] Init Error:', e);
+      }
+    };
+
+    initializeCrashlytics();
+  }, []);
+
+  // 🟦 2️⃣ Set User Data in Crashlytics (Login / Logout)
+  useEffect(() => {
+    if (user && user.id) {
+      console.log('user::::', user);
+
+      try {
+        crashlytics().setUserId(String(user.id));
+
+        if (user.email) crashlytics().setAttribute('user_email', user.email);
+        if (user.name) crashlytics().setAttribute('user_name', user.full_name);
+
+        console.log('✅ [CRASHLYTICS] User Set:', user.email || user.id);
+      } catch (e) {
+        console.log('❌ [CRASHLYTICS] User Error:', e);
+      }
+    } else {
+      // logout पर Clear
+      try {
+        crashlytics().setUserId('');
+        crashlytics().setAttribute('user_email', '');
+        crashlytics().setAttribute('user_name', '');
+      } catch (e) {
+        console.log('❌ [CRASHLYTICS] Clear User Error:', e);
+      }
+    }
+  }, [user]);
+
+  // 🟦 3️⃣ Track Screen Name for Crashlytics
+  const handleNavigationStateChange = useCallback(() => {
+    try {
+      if (navigationRef.current) {
+        const currentRoute = navigationRef.current.getCurrentRoute();
+        if (currentRoute) {
+          crashlytics().setAttribute('current_screen', currentRoute.name);
+          console.log('📍 [CRASHLYTICS] Screen:', currentRoute.name);
+        }
+      }
+    } catch (e) {
+      console.log('❌ [CRASHLYTICS] Screen Tracking Error:', e);
+    }
+  }, []);
 
   useEffect(() => {
     messaging().onNotificationOpenedApp(remoteMessage => {
@@ -304,6 +374,7 @@ const AppContent = () => {
       console.log('Error getting FCM token:', error);
     }
   };
+
   return (
     <SafeAreaView style={[flex, {backgroundColor: whiteColor}]}>
       <KeyboardAvoidingView
@@ -312,7 +383,9 @@ const AppContent = () => {
         }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
-        <NavigationContainer ref={navigationRef}>
+        <NavigationContainer
+          ref={navigationRef}
+          onStateChange={handleNavigationStateChange}>
           {isLoading ? (
             <SplashScreen />
           ) : userData ? (
