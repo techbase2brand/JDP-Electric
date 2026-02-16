@@ -27,6 +27,12 @@ import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
 import {getJobs, getlabourJobs, searchMyJobs} from '../config/apiConfig';
 
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
+
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
@@ -456,7 +462,7 @@ const JobListingScreen = ({navigation, route}) => {
         key={job?.id ?? job?._id}
         style={styles.jobCard}
         onPress={() => navigation.navigate('JobDetail', {job})}>
-        <View style={styles.jobCardHeader}>
+        {/* <View style={styles.jobCardHeader}>
           <View style={styles.jobCardTitleSection}>
             <Text style={styles.jobId}>{job?.jobId || ''}</Text>
             <View style={styles.jobStatusPriority}>
@@ -472,7 +478,7 @@ const JobListingScreen = ({navigation, route}) => {
                   ).toUpperCase()}
                 </Text>
               </View>
-              {/* <View
+              <View
                 style={[
                   styles.priorityBadge,
                   {backgroundColor: getPriorityColor(job?.priority)},
@@ -481,10 +487,10 @@ const JobListingScreen = ({navigation, route}) => {
                 <Text style={styles.priorityText}>
                   {(job?.priority || '').toUpperCase()}
                 </Text>
-              </View> */}
+              </View>
             </View>
           </View>
-        </View>
+        </View> */}
 
         <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
           <View>
@@ -492,6 +498,18 @@ const JobListingScreen = ({navigation, route}) => {
               style={[styles.jobTitle, {width: widthPercentageToDP(60)}]}
               numberOfLines={1}>
               {job?.job_title || job?.title}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.statusBadge,
+              {backgroundColor: getStatusColor(job?.status)},
+            ]}>
+            <Text style={styles.statusText}>
+              {(job?.status == 'in_progress'
+                ? 'In Progress'
+                : job?.status || ''
+              ).toUpperCase()}
             </Text>
           </View>
           <TouchableOpacity
@@ -615,131 +633,140 @@ const JobListingScreen = ({navigation, route}) => {
 
   // ---------- render
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
-      {renderHeader()}
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingHorizontal: 16,
-        }}>
-        <View style={{width: widthPercentageToDP(90)}}>
-          {renderSearchBar()}
-        </View>
+    <KeyboardAvoidingView
+      style={styles.safeArea}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+        {renderHeader()}
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+          }}>
+          <View style={{width: widthPercentageToDP(90)}}>
+            {renderSearchBar()}
+          </View>
 
-        {/* Filter modal trigger (optional) */}
-        <View style={styles.container}>
-          <Modal
-            transparent
-            visible={modalVisible}
-            animationType="slide"
-            onRequestClose={() => setModalVisible(false)}>
-            <View style={styles.modalBackground}>
-              <View style={styles.modalContainer}>
-                <Text style={styles.label}>Start Date</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowStartPicker(true);
-                    setShowEndPicker(false);
-                  }}
-                  style={styles.dateButton}>
-                  <Text>{startDate.toDateString()}</Text>
-                </TouchableOpacity>
-                {showStartPicker && (
-                  <DateTimePicker
-                    value={startDate}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={(e, d) => {
-                      setShowStartPicker(false);
-                      d && setStartDate(d);
-                    }}
-                  />
-                )}
-
-                <Text style={styles.label}>End Date</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setShowEndPicker(true);
-                    setShowStartPicker(false);
-                  }}
-                  style={styles.dateButton}>
-                  <Text>{endDate.toDateString()}</Text>
-                </TouchableOpacity>
-                {showEndPicker && (
-                  <DateTimePicker
-                    value={endDate}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={(e, d) => {
+          {/* Filter modal trigger (optional) */}
+          <View style={styles.container}>
+            <Modal
+              transparent
+              visible={modalVisible}
+              animationType="slide"
+              onRequestClose={() => setModalVisible(false)}>
+              <View style={styles.modalBackground}>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.label}>Start Date</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowStartPicker(true);
                       setShowEndPicker(false);
-                      d && setEndDate(d);
                     }}
+                    style={styles.dateButton}>
+                    <Text>{startDate.toDateString()}</Text>
+                  </TouchableOpacity>
+                  {showStartPicker && (
+                    <DateTimePicker
+                      value={startDate}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={(e, d) => {
+                        setShowStartPicker(false);
+                        d && setStartDate(d);
+                      }}
+                    />
+                  )}
+
+                  <Text style={styles.label}>End Date</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowEndPicker(true);
+                      setShowStartPicker(false);
+                    }}
+                    style={styles.dateButton}>
+                    <Text>{endDate.toDateString()}</Text>
+                  </TouchableOpacity>
+                  {showEndPicker && (
+                    <DateTimePicker
+                      value={endDate}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={(e, d) => {
+                        setShowEndPicker(false);
+                        d && setEndDate(d);
+                      }}
+                    />
+                  )}
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      setModalVisible(false);
+                    }}
+                    style={{
+                      marginTop: 20,
+                      backgroundColor: '#3B82F6',
+                      padding: 10,
+                      borderRadius: 10,
+                      alignItems: 'center',
+                    }}>
+                    <Text style={{color: 'white', fontWeight: 'bold'}}>
+                      Apply Filter
+                    </Text>
+                  </TouchableOpacity>
+
+                  <Button
+                    title="Cancel"
+                    color="red"
+                    onPress={() => setModalVisible(false)}
                   />
-                )}
-
-                <TouchableOpacity
-                  onPress={() => {
-                    setModalVisible(false);
-                  }}
-                  style={{
-                    marginTop: 20,
-                    backgroundColor: '#3B82F6',
-                    padding: 10,
-                    borderRadius: 10,
-                    alignItems: 'center',
-                  }}>
-                  <Text style={{color: 'white', fontWeight: 'bold'}}>
-                    Apply Filter
-                  </Text>
-                </TouchableOpacity>
-
-                <Button
-                  title="Cancel"
-                  color="red"
-                  onPress={() => setModalVisible(false)}
-                />
+                </View>
               </View>
-            </View>
-          </Modal>
+            </Modal>
+          </View>
         </View>
-      </View>
 
-      {renderTabs()}
+        {renderTabs()}
 
-      <FlatList
-        data={filteredJobs}
-        renderItem={renderJobCard}
-        keyExtractor={(item, index) =>
-          item?._id?.toString?.() || item?.id?.toString?.() || index.toString()
-        }
-        onEndReached={() => {
-          if (!isSearching) fetchJobs();
-        }}
-        onEndReachedThreshold={0.5}
-        refreshing={refreshing}
-        onRefresh={refreshJobs}
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingHorizontal: 16,
-          paddingBottom: 12,
-        }}
-        ListFooterComponent={
-          loading && !refreshing && filteredJobs.length > 0 ? (
-            <ActivityIndicator size="small" style={{margin: 10}} />
-          ) : null
-        }
-        ListEmptyComponent={
-          loading || refreshing || searchLoading ? (
-            <ActivityIndicator size="small" style={{marginTop: 40}} />
-          ) : (
-            renderEmptyState()
-          )
-        }
-      />
-    </SafeAreaView>
+        <FlatList
+          data={filteredJobs}
+          renderItem={renderJobCard}
+          keyExtractor={(item, index) =>
+            item?._id?.toString?.() ||
+            item?.id?.toString?.() ||
+            index.toString()
+          }
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          onEndReached={() => {
+            if (!isSearching) fetchJobs();
+          }}
+          onEndReachedThreshold={0.5}
+          refreshing={refreshing}
+          onRefresh={refreshJobs}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 16,
+            paddingBottom: 12,
+          }}
+          ListFooterComponent={
+            loading && !refreshing && filteredJobs.length > 0 ? (
+              <ActivityIndicator size="small" style={{margin: 10}} />
+            ) : null
+          }
+          ListEmptyComponent={
+            loading || refreshing || searchLoading ? (
+              <ActivityIndicator size="small" style={{marginTop: 40}} />
+            ) : (
+              renderEmptyState()
+            )
+          }
+        />
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -778,7 +805,7 @@ const styles = {
     backgroundColor: COLORS.gray50,
     borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: Platform.OS === 'android' ? 2 : 10,
   },
   searchInput: {flex: 1, fontSize: 16, color: COLORS.gray900, marginLeft: 8},
 
@@ -836,10 +863,16 @@ const styles = {
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.primary,
-    marginBottom: 4,
+    // marginBottom: 4,
   },
   jobStatusPriority: {flexDirection: 'row', gap: 8},
-  statusBadge: {paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6},
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    height: 23,
+    margin:5
+  },
   statusText: {fontSize: 10, fontWeight: '600', color: COLORS.white},
   priorityBadge: {
     flexDirection: 'row',

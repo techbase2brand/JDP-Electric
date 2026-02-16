@@ -349,6 +349,7 @@ import {
   Image,
   Platform,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -357,6 +358,7 @@ import {heightPercentageToDP as hp} from '../utils';
 import {useDispatch} from 'react-redux';
 import {setUser} from '../redux/userSlice';
 import {api, LOGIN_URL} from '../config/apiConfig';
+import {mediumGray} from '../constants/Color';
 
 const LoginScreen = ({navigation}) => {
   const dispatch = useDispatch();
@@ -464,9 +466,16 @@ const LoginScreen = ({navigation}) => {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
       <StatusBar backgroundColor="#f8fafc" barStyle="dark-content" />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={{flexGrow: 1}}>
         {/* Logo */}
         <View style={styles.logoSection}>
           <Image
@@ -493,6 +502,7 @@ const LoginScreen = ({navigation}) => {
             <TextInput
               style={styles.input}
               placeholder="Enter your email"
+              placeholderTextColor={mediumGray}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -514,6 +524,7 @@ const LoginScreen = ({navigation}) => {
             <TextInput
               style={styles.input}
               placeholder="Enter your password"
+              placeholderTextColor={mediumGray}
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -553,7 +564,7 @@ const LoginScreen = ({navigation}) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -580,12 +591,17 @@ const styles = StyleSheet.create({
     // marginVertical:10
   },
   inputIcon: {marginRight: 12},
-  input: {flex: 1, paddingVertical: 16, fontSize: 16, color: '#374151'},
+  input: {
+    flex: 1,
+    paddingVertical: Platform.OS === 'android' ? 8 : 16,
+    fontSize: 16,
+    color: '#374151',
+  },
   eyeIcon: {padding: 4},
   signInButton: {
     backgroundColor: '#3B82F6',
     borderRadius: 8,
-    paddingVertical: 16,
+    paddingVertical: Platform.OS === 'android' ? 10 : 16,
     alignItems: 'center',
     marginTop: 24,
   },

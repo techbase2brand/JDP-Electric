@@ -410,6 +410,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {MAIN_LOGO_IMAGE} from '../assests/images';
@@ -547,7 +548,8 @@ const ResetPasswordScreen = ({navigation, route}) => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
 
       {/* Header */}
@@ -559,21 +561,27 @@ const ResetPasswordScreen = ({navigation, route}) => {
         </TouchableOpacity>
       </View>
 
-      {/* Logo */}
-      <View style={styles.iconContainer}>
-        <Image
-          source={MAIN_LOGO_IMAGE}
-          style={{
-            width: '100%',
-            height: Platform.OS === 'android' ? hp(7) : hp(7),
-            resizeMode: 'contain',
-          }}
-        />
-      </View>
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={{flexGrow: 1}}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}>
+        {/* Logo */}
+        <View style={styles.iconContainer}>
+          <Image
+            source={MAIN_LOGO_IMAGE}
+            style={{
+              width: '100%',
+              height: Platform.OS === 'android' ? hp(7) : hp(7),
+              resizeMode: 'contain',
+            }}
+          />
+        </View>
 
-      {/* Step 1: OTP Section */}
-      {!isOtpVerified ? (
-        <View style={styles.content}>
+        {/* Step 1: OTP Section */}
+        {!isOtpVerified ? (
+          <View style={styles.content}>
           <Text style={styles.title}>Verify OTP</Text>
           <Text style={styles.subtitle}>
             Enter the 6-digit code sent to your email {email}.
@@ -586,6 +594,7 @@ const ResetPasswordScreen = ({navigation, route}) => {
               value={code}
               onChangeText={setCode}
               placeholder="Enter 6-digit code"
+              placeholderTextColor={Colors.textLight}
               keyboardType="numeric"
               maxLength={6}
             />
@@ -626,6 +635,7 @@ const ResetPasswordScreen = ({navigation, route}) => {
                 value={newPassword}
                 onChangeText={setNewPassword}
                 placeholder="Enter new password"
+                placeholderTextColor={Colors.textLight}
                 secureTextEntry={!showNewPassword}
               />
               <TouchableOpacity
@@ -647,6 +657,7 @@ const ResetPasswordScreen = ({navigation, route}) => {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 placeholder="Confirm password"
+                placeholderTextColor={Colors.textLight}
                 secureTextEntry={!showConfirmPassword}
               />
               <TouchableOpacity
@@ -670,6 +681,7 @@ const ResetPasswordScreen = ({navigation, route}) => {
           </TouchableOpacity>
         </View>
       )}
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -712,7 +724,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 8,
-    padding: 12,
+    padding: Platform.OS === 'android' ? 8 : 12,
     fontSize: 16,
   },
   passwordContainer: {
@@ -723,11 +735,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
   },
-  passwordInput: {flex: 1, fontSize: 16, paddingVertical: 12},
+  passwordInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: Platform.OS === 'android' ? 8 : 12,
+  },
   submitButton: {
     marginTop: 20,
     backgroundColor: Colors.primary,
-    padding: 14,
+    padding: Platform.OS === 'android' ? 10 : 14,
     borderRadius: 8,
     alignItems: 'center',
   },

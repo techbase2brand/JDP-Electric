@@ -7,7 +7,15 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
 
 export default function BluesheetSubmission({
   selectedJob,
@@ -65,7 +73,10 @@ export default function BluesheetSubmission({
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -77,7 +88,10 @@ export default function BluesheetSubmission({
 
       <ScrollView
         style={styles.content}
-        contentContainerStyle={styles.contentContainer}>
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}>
         {/* Job Information */}
         {selectedJob && (
           <View style={styles.section}>
@@ -235,7 +249,7 @@ export default function BluesheetSubmission({
           <Text style={styles.submitButtonText}>Submit Bluesheet</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

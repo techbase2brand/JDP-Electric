@@ -29,6 +29,12 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
+
 /* ======================
    THEME
 ====================== */
@@ -271,6 +277,7 @@ const LabourSearchDropdown = ({
       <TextInput
         style={styles.formInput}
         placeholder="Search employee"
+        placeholderTextColor="#9CA3AF"
         value={query}
         editable={!disabled}
         onFocus={() => {
@@ -633,6 +640,7 @@ const LabourModal = ({
                             : ''
                         }
                         placeholder="Select hours & minutes"
+                        placeholderTextColor="#9CA3AF"
                       />
                     </View>
                   </TouchableOpacity>
@@ -729,6 +737,7 @@ const MaterialModal = ({
                 <TextInput
                   style={styles.formInput}
                   placeholder="Enter material name"
+                  placeholderTextColor="#9CA3AF"
                   value={tempMaterialData.name || ''}
                   onChangeText={text =>
                     setTempMaterialData(prev => ({...prev, name: text}))
@@ -741,6 +750,7 @@ const MaterialModal = ({
                 <TextInput
                   style={styles.formInput}
                   placeholder="pieces, feet, etc."
+                  placeholderTextColor="#9CA3AF"
                   value={tempMaterialData.unit || ''}
                   onChangeText={text =>
                     setTempMaterialData(prev => ({...prev, unit: text}))
@@ -1341,7 +1351,7 @@ const JobTimesheet = ({navigation, route, user}) => {
 
       setLoading(true);
 
-      await submitBluesheetComplete(payload, token);
+      const response = await submitBluesheetComplete(payload, token);
 
       await AsyncStorage.setItem(
         submitKey(currentJobId, timesheetData.date),
@@ -1357,8 +1367,18 @@ const JobTimesheet = ({navigation, route, user}) => {
         submittedAt: new Date().toISOString(),
         rejectionReason: undefined,
       }));
-      navigation.navigate('TimeSheetStack');
-      // Alert.alert('Success', 'Bluesheet submitted for approval');
+      
+      // Show success alert with API response message
+      Alert.alert(
+        'Success',
+        response?.message || 'Bluesheet submitted successfully',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('TimeSheetStack'),
+          },
+        ],
+      );
     } catch (err) {
       const msg = err?.message || 'Failed to submit bluesheet';
 
@@ -1434,16 +1454,8 @@ const JobTimesheet = ({navigation, route, user}) => {
     setShowTooltip(null);
   };
   return (
-    <TouchableWithoutFeedback
-      onPress={() => {
-        // Keyboard.dismiss();
-        setShowTooltip(null);
-        setShowMatTooltip(null);
-        setShowAddLabour(false);
-        setShowAddMaterial(false);
-      }}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
 
         <View style={styles.header}>
           <View style={styles.headerTop}>
@@ -1461,8 +1473,12 @@ const JobTimesheet = ({navigation, route, user}) => {
         </View>
 
         <ScrollView
-          style={[styles.content]}
-          showsVerticalScrollIndicator={false}>
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          nestedScrollEnabled={true}
+          contentContainerStyle={{flexGrow: 1, paddingBottom: 28}}>
           {isReadOnly() && (
             <View
               style={{
@@ -1900,7 +1916,8 @@ const JobTimesheet = ({navigation, route, user}) => {
             </View>
           )}
 
-          <View style={{height: 28}} />
+          {/* bottom spacer (extra, contentContainerStyle already adds padding) */}
+          <View style={{height: 0}} />
         </ScrollView>
 
         {/* Modals */}
@@ -1924,7 +1941,6 @@ const JobTimesheet = ({navigation, route, user}) => {
           setShowAddMaterial={setShowAddMaterial}
         />
       </SafeAreaView>
-    </TouchableWithoutFeedback>
   );
 };
 
@@ -2041,8 +2057,9 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 20,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius:12,
+    paddingBottom: 20,
     minHeight: widthPercentageToDP(70),
     width: '100%',
   },
@@ -2050,7 +2067,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },

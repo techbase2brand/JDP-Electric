@@ -10,6 +10,8 @@ import {
   Modal,
   Alert,
   ActivityIndicator,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -17,6 +19,12 @@ import {useDispatch, useSelector} from 'react-redux';
 import DeviceInfo from 'react-native-device-info';
 import {createOrders} from '../config/apiConfig';
 import {clearCart} from '../redux/cartSlice';
+
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
 
 // Embedded Colors
 const Colors = {
@@ -196,7 +204,10 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
   );
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
 
       {/* Header */}
@@ -214,7 +225,12 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={{flexGrow: 1}}>
         {/* Order Summary Card */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
@@ -308,7 +324,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
 
       {/* Order Summary Modal */}
       {renderOrderSummaryModal()}
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -506,7 +522,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     padding: Spacing.md,
-    paddingBottom: 50,
+    paddingBottom: Platform.OS === 'android' ? 10 : 50,
   },
   placeOrderButton: {
     backgroundColor: Colors.primary,

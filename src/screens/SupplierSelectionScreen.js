@@ -813,6 +813,8 @@ import {
   FlatList,
   ActivityIndicator,
   TextInput,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -820,6 +822,12 @@ import {widthPercentageToDP} from '../utils';
 import {getSuppliers, searchSuppliers} from '../config/apiConfig';
 import {useSelector} from 'react-redux';
 import Geocoder from 'react-native-geocoding';
+
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 const COLORS = {
@@ -1159,6 +1167,8 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
           keyExtractor={(item, idx) => String(item?.id ?? `idx-${idx}`)}
           renderItem={renderSupplier}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           onEndReached={loadMore}
           onEndReachedThreshold={0.1}
           onMomentumScrollBegin={() => {
@@ -1187,28 +1197,33 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>Select Supplier</Text>
-          <Text style={[styles.headerTitle, {textAlign: 'center'}]}>
-            {job?.job?.job_title}
-          </Text>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
+      <SafeAreaView style={styles.container}>
+        <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Select Supplier</Text>
+            <Text style={[styles.headerTitle, {textAlign: 'center'}]}>
+              {job?.job?.job_title}
+            </Text>
+          </View>
+
+          <View style={styles.headerButton} />
         </View>
 
-        <View style={styles.headerButton} />
-      </View>
-
-      {/* Content */}
-      <View style={styles.content}>{renderListView()}</View>
-    </SafeAreaView>
+        {/* Content */}
+        <View style={styles.content}>{renderListView()}</View>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -1245,7 +1260,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gray50,
     borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: Platform.OS === 'android' ? 2 : 10,
   },
   searchInput: {flex: 1, fontSize: 16, color: COLORS.gray900, marginLeft: 8},
   searchInfoBar: {

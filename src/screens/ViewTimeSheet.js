@@ -222,7 +222,12 @@ const TimesheetScreen = ({navigation, route, job}) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        contentContainerStyle={{flexGrow: 1}}>
         {/* Status and Job Info */}
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
@@ -341,72 +346,51 @@ const TimesheetScreen = ({navigation, route, job}) => {
             <Text style={styles.sectionTitle}>Materials</Text>
           </View>
 
-          {timesheet?.material_entries?.map(material => (
-            <View key={material.id} style={styles.entryCard}>
-              <View style={styles.entryHeader}>
-                <View style={styles.entryInfo}>
-                  <Text style={styles.entryName}>{material.name}</Text>
-                  <Text style={styles.entryDetails}>
-                    Order ID: {material.supplier_order_id}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.materialGrid}>
-                <View style={styles.materialGridItem}>
-                  <Text style={styles.entryLabel}>Ordered:</Text>
-                  <Text style={styles.entryValue}>
-                    {material.quantity} {material.unit}
-                  </Text>
-                </View>
-                <View style={styles.materialGridItem}>
-                  <Text style={styles.entryLabel}>Used:</Text>
-                  <Text style={styles.entryValue}>
-                    {material.material_used} {material.unit}
-                  </Text>
-                </View>
-                <View style={styles.materialGridItem}>
-                  <Text style={styles.entryLabel}>Remaining:</Text>
-                  <Text style={styles.entryValue}>
-                    {material?.quantity - material.material_used}{' '}
-                    {material.unit}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.materialFooter}>
-                {/* <View style={styles.materialCost}>
-                  <Text style={styles.entryLabel}>Cost:</Text>
-                  <Text style={styles.entryValue}>
-                    ${material.totalCost.toFixed(2)}
-                  </Text>
-                </View> */}
-
-                {/* {material.amountRemaining > 0 && (
-                  <View style={styles.returnStatus}>
-                    <Text
-                      style={[
-                        styles.returnStatusText,
-                        material.returnToWarehouse
-                          ? styles.returnStatusWarehouse
-                          : styles.returnStatusSite,
-                      ]}>
-                      {material.returnToWarehouse
-                        ? '🏢 Return to Warehouse'
-                        : '🚛 Keep on Site'}
+          {timesheet?.material_entries?.length > 0 ? (
+            timesheet.material_entries.map(material => (
+              <View key={material.id} style={styles.entryCard}>
+                <View style={styles.entryHeader}>
+                  <View style={styles.entryInfo}>
+                    <Text style={styles.entryName}>{material.name}</Text>
+                    <Text style={styles.entryDetails}>
+                      Order ID: {material.supplier_order_id}
                     </Text>
                   </View>
-                )} */}
+                </View>
+
+                <View style={styles.materialGrid}>
+                  <View style={styles.materialGridItem}>
+                    <Text style={styles.entryLabel}>Ordered:</Text>
+                    <Text style={styles.entryValue}>
+                      {material.quantity} {material.unit}
+                    </Text>
+                  </View>
+
+                  <View style={styles.materialGridItem}>
+                    <Text style={styles.entryLabel}>Used:</Text>
+                    <Text style={styles.entryValue}>
+                      {material.material_used} {material.unit}
+                    </Text>
+                  </View>
+
+                  <View style={styles.materialGridItem}>
+                    <Text style={styles.entryLabel}>Remaining:</Text>
+                    <Text style={styles.entryValue}>
+                      {(material?.quantity || 0) -
+                        (material?.material_used || 0)}{' '}
+                      {material.unit}
+                    </Text>
+                  </View>
+                </View>
               </View>
+            ))
+          ) : (
+            <View style={{paddingVertical: 20, alignItems: 'center'}}>
+              <Text style={{color: '#6b7280', fontSize: 16}}>
+                No Data Available
+              </Text>
             </View>
-          ))}
-          {/* 
-          <View style={styles.sectionTotal}>
-            <Text style={styles.sectionTotalLabel}>Total Material Cost:</Text>
-            <Text style={[styles.sectionTotalValue, {fontSize: 20}]}>
-              ${totals.materials.toFixed(2)}
-            </Text>
-          </View> */}
+          )}
         </View>
 
         {/* Bottom spacing */}

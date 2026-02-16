@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {MAIN_LOGO_IMAGE} from '../assests/images';
@@ -162,6 +163,7 @@ const ForgotPasswordScreen = ({onSubmit, onBack, navigation}) => {
                 value={email}
                 onChangeText={setEmail}
                 placeholder="Enter your email address"
+                placeholderTextColor={Colors.textLight}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
@@ -220,10 +222,18 @@ const ForgotPasswordScreen = ({onSubmit, onBack, navigation}) => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
       {renderHeader()}
-      {renderContent()}
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={{flexGrow: 1}}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}>
+        {renderContent()}
+      </ScrollView>
       {/* {!isSubmitted && renderFooter()} */}
     </KeyboardAvoidingView>
   );
@@ -254,7 +264,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    paddingVertical: 16,
+     paddingVertical: Platform.OS === 'android' ? 8 : 16,
     fontSize: 16,
     color: '#374151',
   },
@@ -321,7 +331,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.primary,
     borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.md,
+     paddingVertical: Platform.OS === 'android' ? 10 : 16,
     paddingHorizontal: Spacing.xl,
     width: '100%',
     gap: Spacing.sm,

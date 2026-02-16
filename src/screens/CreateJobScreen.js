@@ -37,6 +37,12 @@ import {
 } from '../config/apiConfig';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
 
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
+
 const {width: screenWidth} = Dimensions.get('window');
 
 const customers = [

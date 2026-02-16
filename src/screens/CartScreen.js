@@ -24,6 +24,12 @@ import {addToCart, updateQuantity} from '../redux/cartSlice';
 import {createProduct} from '../config/apiConfig';
 import DeviceInfo from 'react-native-device-info';
 
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
+
 // Embedded Colors
 const Colors = {
   primary: '#3B82F6',
@@ -961,7 +967,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     padding: Spacing.md,
-    paddingBottom: 40,
+    paddingBottom: Platform.OS === 'android' ? 10 : 40,
   },
   actionButtons: {
     flexDirection: 'row',

@@ -133,6 +133,8 @@ export const updateLeadLaborProfile = async (id, formData, token) => {
         'Content-Type': 'multipart/form-data',
       },
     });
+    console.log("res.data",res.data);
+    
     return res.data;
   } catch (error) {
     throw error.response?.data || {message: 'Something went wrong'};

@@ -1,4 +1,4 @@
-const GOOGLE_MAPS_APIKEY = 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI';
+const GOOGLE_MAPS_APIKEY = 'AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE';
 
 import React, {useRef, useEffect, useState} from 'react';
 import {
@@ -43,30 +43,64 @@ const MapScreen = ({route, navigation}) => {
   const [alertShown, setAlertShown] = useState(false);
   console.log('destinationCoordinates>>', job);
 
-  // Current location fetch
-  const getCurrentLocation = async () => {
+  const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-        Alert.alert('Permission denied', 'Location permission is required');
-        return;
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message: 'App needs access to your location',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          return true;
+        } else {
+          Alert.alert('Permission Denied', 'Location permission is required');
+          return false;
+        }
+      } catch (err) {
+        console.warn(err);
+        return false;
       }
     }
+    return true; // iOS automatically handled
+  };
+
+  // Current location fetch
+  const getCurrentLocation = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) return;
 
     Geolocation.getCurrentPosition(
-      pos => {
+      position => {
+        console.log('SUCCESS:', position.coords);
+
         setStartCoordinates({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
         });
       },
       error => {
-        console.log(error);
-        Alert.alert('Error', 'Unable to fetch current location');
+        console.log('ERROR FULL:', error);
+
+        if (error.code === 1) {
+          Alert.alert('Permission Denied');
+        } else if (error.code === 2) {
+          Alert.alert('Position unavailable. Turn ON GPS.');
+        } else if (error.code === 3) {
+          Alert.alert('Location timeout. Move to open area.');
+        }
       },
-      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+      {
+        enableHighAccuracy: false, // 👈 CHANGE THIS
+        timeout: 40000, // 40 sec
+        maximumAge: 0,
+      },
     );
   };
 
@@ -78,6 +112,8 @@ const MapScreen = ({route, navigation}) => {
       )}&key=${GOOGLE_MAPS_APIKEY}`;
       const response = await fetch(url);
       const data = await response.json();
+      console.log('datttt::::', data);
+
       if (data.results?.length > 0) {
         const {lat, lng} = data.results[0].geometry.location;
         setDestinationCoordinates({latitude: lat, longitude: lng});
@@ -135,7 +171,6 @@ const MapScreen = ({route, navigation}) => {
     Linking.openURL(`tel:${phoneNumber}`);
   };
   const openMaps = async address => {
-    
     try {
       const query = encodeURIComponent(address.trim());
 
@@ -278,8 +313,8 @@ const MapScreen = ({route, navigation}) => {
             width: widthPercentageToDP(90),
           }}>
           <TouchableOpacity
-            onPress={()=>openMaps(job?.job?.address)}
-            style={[styles.actionButton,{backgroundColor: '#0b69ff',}]}
+            onPress={() => openMaps(job?.job?.address)}
+            style={[styles.actionButton, {backgroundColor: '#0b69ff'}]}
             activeOpacity={0.7}>
             <Text style={[styles.label]}>{'Redirect to Map'}</Text>
           </TouchableOpacity>
@@ -311,7 +346,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 2,
-    width:"40%"
+    width: '40%',
   },
   label: {
     color: '#fff',
@@ -323,7 +358,10 @@ const styles = StyleSheet.create({
   bottomCard: {
     zIndex: 99999,
     borderRadius: 20,
-    height: heightPercentageToDP(25),
+    height:
+      Platform.OS === 'android'
+        ? heightPercentageToDP(30)
+        : heightPercentageToDP(25),
     width: widthPercentageToDP(100),
     backgroundColor: '#fff',
     alignItems: 'center',

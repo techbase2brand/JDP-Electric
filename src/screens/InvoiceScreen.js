@@ -1681,6 +1681,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {MAIN_LOGO_IMAGE} from '../assests/images';
 import {heightPercentageToDP} from '../utils';
 
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
+
 // JDP Electrics Colors
 const COLORS = {
   primary: '#3B82F6',
@@ -2148,6 +2154,7 @@ const InvoiceManagementScreen = ({selectedJob, onNavigate, navigation}) => {
                 }
                 keyboardType="numeric"
                 placeholder="0.00"
+                placeholderTextColor={COLORS.gray400}
               />
             </View>
             <View style={styles.inputHalf}>
@@ -2165,6 +2172,7 @@ const InvoiceManagementScreen = ({selectedJob, onNavigate, navigation}) => {
                 }
                 keyboardType="numeric"
                 placeholder="0.00"
+                placeholderTextColor={COLORS.gray400}
               />
             </View>
           </View>
@@ -2178,6 +2186,7 @@ const InvoiceManagementScreen = ({selectedJob, onNavigate, navigation}) => {
                 updateInvoiceItem(item.id, 'item', text, 'labor')
               }
               placeholder="Service performed"
+              placeholderTextColor={COLORS.gray400}
             />
           </View>
 
@@ -2190,6 +2199,7 @@ const InvoiceManagementScreen = ({selectedJob, onNavigate, navigation}) => {
                 updateInvoiceItem(item.id, 'description', text, 'labor')
               }
               placeholder="Detailed work description"
+              placeholderTextColor={COLORS.gray400}
               multiline
               numberOfLines={3}
             />

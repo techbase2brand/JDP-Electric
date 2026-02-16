@@ -10,6 +10,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import {tabColor, whiteColor} from '../constants/Color';
 import Feather from 'react-native-vector-icons/Feather';
@@ -293,7 +294,11 @@ const HomeScreen = ({navigation}) => {
             },
           ]}>
           <Text style={styles.statsIcon}>{item.icon}</Text>
-          <Text style={[styles.statsTitle, {fontSize: 16, fontWeight: 700}]}>
+          <Text
+            style={[
+              styles.statsTitle,
+              {fontSize: Platform.OS === 'android' ? 14 : 16, fontWeight: 700},
+            ]}>
             {item.title}
           </Text>
         </View>
@@ -315,7 +320,7 @@ const HomeScreen = ({navigation}) => {
           width:
             index === quickActions.length - 1 && quickActions.length % 2 === 1
               ? '100%'
-              : '48%',
+              : '47.5%',
           // width: index === 2 ? '100%' : '48%'
         },
       ]}
@@ -329,6 +334,41 @@ const HomeScreen = ({navigation}) => {
       <Text style={styles.quickActionText}>{item.title}</Text>
     </TouchableOpacity>
   );
+  const COLORS = {
+    primary: '#3B82F6',
+    primaryDark: '#1E40AF',
+    primaryLight: '#93C5FD',
+    success: '#10B981',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    white: '#FFFFFF',
+    gray50: '#F9FAFB',
+    gray100: '#F3F4F6',
+    gray200: '#E5E7EB',
+    gray300: '#D1D5DB',
+    gray400: '#9CA3AF',
+    gray500: '#6B7280',
+    gray600: '#4B5563',
+    gray700: '#374151',
+    gray800: '#1F2937',
+    gray900: '#111827',
+    blue50: '#EFF6FF',
+    blue100: '#DBEAFE',
+  };
+  const getStatusColor = status => {
+    switch (status) {
+      case 'active':
+        return COLORS.primary;
+      case 'assigned':
+        return COLORS.warning;
+      case 'pending':
+        return COLORS.danger;
+      case 'completed':
+        return COLORS.success;
+      default:
+        return COLORS.gray500;
+    }
+  };
 
   const renderJobCard = job => (
     <TouchableOpacity
@@ -342,8 +382,12 @@ const HomeScreen = ({navigation}) => {
             {width: '100%', justifyContent: 'space-between'},
           ]}>
           <Text style={[styles.jobId, {width: '50%'}]}>{job.job_title}</Text>
-          <View style={[styles.statusBadge, {backgroundColor: '#E3F2FD'}]}>
-            <Text style={[styles.statusText, {color: job.statusColor}]}>
+          <View
+            style={[
+              styles.statusBadge,
+              {backgroundColor: getStatusColor(job?.status)},
+            ]}>
+            <Text style={[styles.statusText, {color: whiteColor}]}>
               {(job?.status == 'in_progress'
                 ? 'In Progress'
                 : job?.status || ''
@@ -726,7 +770,7 @@ const styles = StyleSheet.create({
     // backgroundColor: '#432DD7',
     // paddingHorizontal: 16,
 
-    paddingBottom: 24,
+    paddingBottom: Platform.OS === 'android' ? 0 : 24,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
   },

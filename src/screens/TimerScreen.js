@@ -12,6 +12,7 @@ import {
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -25,6 +26,12 @@ import Feather from 'react-native-vector-icons/Feather';
 import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getJobById, updateWorkData} from '../config/apiConfig';
+
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
 
 const pad2 = n => String(n).padStart(2, '0');
 const toHHMMSS = ms => {
@@ -50,7 +57,7 @@ const CustomButton = ({label, onPress, color, disabled, widthbtn, loading}) => (
       styles.btn,
       {
         backgroundColor: disabled || loading ? '#ccc' : color,
-        width: widthbtn && widthPercentageToDP(40),
+        width: widthbtn && widthPercentageToDP(38),
       },
     ]}
     onPress={onPress}>
@@ -314,6 +321,7 @@ export default function TimerScreen({navigation, route}) {
     };
     boot();
   }, [stroageJobId]);
+  
   useEffect(() => {
     const getData = async () => {
       const bufferToday = await loadTodayActivityFromBuffer();
@@ -719,129 +727,215 @@ export default function TimerScreen({navigation, route}) {
         </View>
       ) : (
         <>
-          {/* Timer Card */}
-          {!isTodayCompleted && (
-            <View style={styles.timerCard}>
-              <View
-                style={{
-                  display: 'flex',
-                  // flexDirection: 'row',
-                  alignItems: 'center',
-                  marginBottom: 20,
-                  // gap: 6,
-                }}>
-                <View style={{flexDirection: 'row', gap: 4}}>
-                  <Icon name="timer" size={20} color="#000" />
-                  <Text style={styles.summaryTitle}>Time Summary</Text>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{paddingBottom: 24}}>
+            {/* Timer Card */}
+            {!isTodayCompleted && (
+              <View style={styles.timerCard}>
+                <View
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginBottom: 20,
+                  }}>
+                  <View style={{flexDirection: 'row', gap: 4}}>
+                    <Icon name="timer" size={20} color="#000" />
+                    <Text style={styles.summaryTitle}>Time Summary</Text>
+                  </View>
+                  <View
+                    style={{flexDirection: 'row', gap: 2, marginVertical: 4}}>
+                    <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
+                      Job Name:{' '}
+                    </Text>
+                    <Text style={styles.headerTitle}> {job?.job_title}</Text>
+                  </View>
+                  <View style={{flexDirection: 'row', gap: 2}}>
+                    <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
+                      Job Address:{' '}
+                    </Text>
+                    <Text style={styles.headerTitle}> {job?.address}</Text>
+                  </View>
                 </View>
-                <View style={{flexDirection: 'row', gap: 2, marginVertical:4}}>
-                  <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
-                    Job Name:{' '}
-                  </Text>
-                  <Text style={styles.headerTitle}> {job?.job_title}</Text>
-                </View>
-                <View style={{flexDirection: 'row', gap: 2}}>
-                  <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
-                    Job Address:{' '}
-                  </Text>
-                  <Text style={styles.headerTitle}> {job?.address}</Text>
-                </View>
-              </View>
 
-              <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
-              <Text style={styles.statusText}>
-                {isRunning ? 'Running' : 'Paused'}
-              </Text>
+                <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
+                <Text style={styles.statusText}>
+                  {isRunning ? 'Running' : 'Paused'}
+                </Text>
 
-              {elapsedTime === 0 && !isRunning && (
-                <CustomButton
-                  label="Start Work"
-                  color="#4CAF50"
-                  onPress={handleStart}
-                  widthbtn={true}
-                  loading={startLoading}
-                  disabled={startLoading}
-                />
-              )}
-
-              {isRunning && (
-                <View style={styles.buttonRow}>
+                {elapsedTime === 0 && !isRunning && (
                   <CustomButton
-                    label="Pause"
-                    color="#FF9800"
-                    onPress={() => setPauseModal(true)}
-                    widthbtn={true}
-                    loading={false}
-                  />
-                  <CustomButton
-                    label="Complete"
-                    color="#F44336"
-                    onPress={() => setCompleteModal(true)}
-                    widthbtn={true}
-                    loading={completeLoading}
-                    disabled={completeLoading}
-                  />
-                </View>
-              )}
-
-              {!isRunning && elapsedTime > 0 && (
-                <View style={styles.buttonRow}>
-                  <CustomButton
-                    label="Resume"
+                    label="Start Work"
                     color="#4CAF50"
-                    onPress={handleResume}
+                    onPress={handleStart}
                     widthbtn={true}
-                    loading={resumeLoading}
-                    disabled={resumeLoading}
+                    loading={startLoading}
+                    disabled={startLoading}
                   />
-                  <CustomButton
-                    label="Complete"
-                    color="#F44336"
-                    onPress={() => setCompleteModal(true)}
-                    widthbtn={true}
-                    loading={completeLoading}
-                    disabled={completeLoading}
-                  />
-                </View>
-              )}
-            </View>
-          )}
+                )}
 
-          {/* Completed banner for today */}
-          {isTodayCompleted && (
-            <View style={styles.timerCard}>
-              <Text style={{color: '#2196F3', fontWeight: 'bold'}}>
-                Today Completed
-              </Text>
-              <Text style={{marginTop: 6, color: '#666', fontSize: 12}}>
-                Timer will be available after next day.
-              </Text>
-            </View>
-          )}
-
-          {/* Today's Activity Log (pauses only) */}
-          {(lastActivityLog?.length > 0 ||
-            lastTodayActivityLog?.length > 0) && (
-            <View style={[styles.logCard, {marginBottom: 20}]}>
-              <Text style={styles.sectionTitle}>Today's Activity Log</Text>
-              {/* <FlatList
-                data={
-                  lastActivityLog?.length > 0
-                    ? lastActivityLog
-                    : lastTodayActivityLog
-                }
-                keyExtractor={(_, index) => index.toString()}
-                renderItem={({item}) => (
-                  <View style={styles.logItem}>
-                    <Text
-                      style={[styles.logTitle, {color: item.color || '#333'}]}>
-                      {item?.title}
-                    </Text>
-                    <Text style={styles.logTime}>
-                      {item?.duration ?? item?.time ?? '--:--:--'}
-                    </Text>
+                {isRunning && (
+                  <View style={styles.buttonRow}>
+                    <CustomButton
+                      label="Pause"
+                      color="#FF9800"
+                      onPress={() => setPauseModal(true)}
+                      widthbtn={true}
+                      loading={false}
+                    />
+                    <CustomButton
+                      label="Complete"
+                      color="#F44336"
+                      onPress={() => setCompleteModal(true)}
+                      widthbtn={true}
+                      loading={completeLoading}
+                      disabled={completeLoading}
+                    />
                   </View>
                 )}
+
+                {!isRunning && elapsedTime > 0 && (
+                  <View style={styles.buttonRow}>
+                    <CustomButton
+                      label="Resume"
+                      color="#4CAF50"
+                      onPress={handleResume}
+                      widthbtn={true}
+                      loading={resumeLoading}
+                      disabled={resumeLoading}
+                    />
+                    <CustomButton
+                      label="Complete"
+                      color="#F44336"
+                      onPress={() => setCompleteModal(true)}
+                      widthbtn={true}
+                      loading={completeLoading}
+                      disabled={completeLoading}
+                    />
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Completed banner for today */}
+            {isTodayCompleted && (
+              <View style={styles.timerCard}>
+                <Text style={{color: '#2196F3', fontWeight: 'bold'}}>
+                  Today Completed
+                </Text>
+                <Text style={{marginTop: 6, color: '#666', fontSize: 12}}>
+                  Timer will be available after next day.
+                </Text>
+              </View>
+            )}
+
+            {/* Today's Activity Log (pauses only) */}
+            {(lastActivityLog?.length > 0 ||
+              lastTodayActivityLog?.length > 0) && (
+              <View style={[styles.logCard, {marginBottom: 20}]}>
+                <Text style={styles.sectionTitle}>Today's Activity Log</Text>
+                <FlatList
+                  data={
+                    lastActivityLog?.length > 0
+                      ? lastActivityLog
+                      : lastTodayActivityLog
+                  }
+                  keyExtractor={(_, index) => index.toString()}
+                  scrollEnabled={false}
+                  renderItem={({item}) => {
+                    console.log('item>>>>>>>', item);
+
+                    return (
+                      <View style={styles.logItem}>
+                        <View style={{flex: 1}}>
+                          <Text
+                            style={[
+                              styles.logTitle,
+                              {color: item.color || '#333'},
+                            ]}>
+                            {item?.title}
+                          </Text>
+                          {item?.note ? (
+                            <Text
+                              style={{
+                                fontSize: 12,
+                                color: '#555',
+                                marginTop: 2,
+                              }}>
+                              {item?.note}
+                            </Text>
+                          ) : null}
+                        </View>
+
+                        <Text style={styles.logTime}>
+                          {item?.duration === '00:00:00' ||
+                          item?.time === '00:00:00'
+                            ? 'Start'
+                            : item?.duration ?? item?.time ?? '--:--:--'}
+                        </Text>
+                      </View>
+                    );
+                  }}
+                />
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                  }}>
+                  <Text
+                    style={[
+                      styles.logTime,
+                      {marginTop: 10, color: '#4CAF50'},
+                    ]}>
+                    Total{' '}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.logTime,
+                      {marginTop: 10, color: '#4CAF50'},
+                    ]}>
+                    {totalDuration}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/*  All Activity Log — now shows start, end, total from API */}
+            <View style={styles.logCard}>
+              <Text style={styles.sectionTitle}>All Activity Log</Text>
+              <FlatList
+                data={allSummaries}
+                keyExtractor={(_, index) => index.toString()}
+                scrollEnabled={false}
+                renderItem={({item}) => {
+                  console.log('itemmm', item);
+
+                  return (
+                    <View style={styles.logItem}>
+                      <View style={{flex: 1}}>
+                        <Text style={[styles.logTitle]}>
+                          Start: {item.start || '--:--:--'}
+                        </Text>
+
+                        <Text style={[styles.logTitle, {marginTop: 10}]}>
+                          Date: {item.date || '--'}
+                        </Text>
+                      </View>
+                      <View style={{alignItems: 'flex-end'}}>
+                        <Text style={[styles.logTitle]}>
+                          End: {item.end ?? '--:--:--'}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.logTime,
+                            {marginTop: 10, color: '#4CAF50'},
+                          ]}>
+                          Total: {item.totalSec}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                }}
                 ListEmptyComponent={() => (
                   <View style={{alignItems: 'center', padding: 20}}>
                     <Feather name="activity" size={40} color="#9ca3af" />
@@ -851,110 +945,9 @@ export default function TimerScreen({navigation, route}) {
                     </Text>
                   </View>
                 )}
-              /> */}
-              <FlatList
-                data={
-                  lastActivityLog?.length > 0
-                    ? lastActivityLog
-                    : lastTodayActivityLog
-                }
-                keyExtractor={(_, index) => index.toString()}
-                renderItem={({item}) => {
-                  console.log('item>>>>>>>', item);
-
-                  return (
-                    <View style={styles.logItem}>
-                      <View style={{flex: 1}}>
-                        <Text
-                          style={[
-                            styles.logTitle,
-                            {color: item.color || '#333'},
-                          ]}>
-                          {item?.title}
-                        </Text>
-                        {item?.note ? (
-                          <Text
-                            style={{fontSize: 12, color: '#555', marginTop: 2}}>
-                            {item?.note}
-                          </Text>
-                        ) : null}
-                      </View>
-                      {/* <Text style={styles.logTime}>
-                      {item?.duration ?? item?.time ?? '--:--:--'}
-                    </Text> */}
-                      <Text style={styles.logTime}>
-                        {item?.duration === '00:00:00' ||
-                        item?.time === '00:00:00'
-                          ? 'Start'
-                          : item?.duration ?? item?.time ?? '--:--:--'}
-                      </Text>
-                    </View>
-                  );
-                }}
               />
-              <View
-                style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                <Text
-                  style={[styles.logTime, {marginTop: 10, color: '#4CAF50'}]}>
-                  Total{' '}
-                </Text>
-                <Text
-                  style={[styles.logTime, {marginTop: 10, color: '#4CAF50'}]}>
-                  {totalDuration}
-                </Text>
-              </View>
             </View>
-          )}
-
-          {/*  All Activity Log — now shows start, end, total from API */}
-          <View style={styles.logCard}>
-            <Text style={styles.sectionTitle}>All Activity Log</Text>
-            <FlatList
-              data={allSummaries}
-              keyExtractor={(_, index) => index.toString()}
-              renderItem={({item}) => {
-                console.log('itemmm', item);
-
-                return (
-                  <View style={styles.logItem}>
-                    <View style={{flex: 1}}>
-                      <Text style={[styles.logTitle]}>
-                        Start: {item.start || '--:--:--'}
-                      </Text>
-
-                      <Text style={[styles.logTitle, {marginTop: 10}]}>
-                        Date: {item.date || '--'}
-                      </Text>
-                      {/* <Text style={[styles.logTitle, {marginTop: 10}]}>
-                      End: {item.end ?? '--:--:--'}
-                    </Text>
-                     */}
-                    </View>
-                    <View style={{alignItems: 'flex-end'}}>
-                      <Text style={[styles.logTitle]}>
-                        End: {item.end ?? '--:--:--'}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.logTime,
-                          {marginTop: 10, color: '#4CAF50'},
-                        ]}>
-                        Total: {item.totalSec}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              }}
-              ListEmptyComponent={() => (
-                <View style={{alignItems: 'center', padding: 20}}>
-                  <Feather name="activity" size={40} color="#9ca3af" />
-                  <Text style={{marginTop: 10, fontSize: 16, color: '#6b7280'}}>
-                    No activity found
-                  </Text>
-                </View>
-              )}
-            />
-          </View>
+          </ScrollView>
 
           {/* Pause Modal */}
           <Modal visible={pauseModal} transparent animationType="fade">
@@ -995,6 +988,7 @@ export default function TimerScreen({navigation, route}) {
                   <TextInput
                     style={styles.input}
                     placeholder="Additional notes..."
+                    placeholderTextColor="#9CA3AF"
                     value={pauseNotes}
                     onChangeText={setPauseNotes}
                     editable={pauseReason == 'Other'}

@@ -9,6 +9,7 @@ import {
   Alert,
   Linking,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Skeleton from 'react-native-reanimated-skeleton';
@@ -826,7 +827,7 @@ const styles = StyleSheet.create({
   headerCenter: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Platform.OS === 'android' ? 0 : Spacing.sm,
   },
   headerTitle: {
     fontSize: 18,

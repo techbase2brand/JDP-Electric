@@ -10,9 +10,17 @@ import {
   Modal,
   Alert,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
 
 // Embedded Colors - JDP Electrics Theme
 const Colors = {
@@ -405,9 +413,11 @@ const OrderHistoryScreen = ({
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
-      
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -484,6 +494,8 @@ const OrderHistoryScreen = ({
           renderItem={renderOrderCard}
           keyExtractor={item => item.id}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           contentContainerStyle={styles.ordersList}
         />
       )}
@@ -639,7 +651,7 @@ const OrderHistoryScreen = ({
           </View>
         </Modal>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 

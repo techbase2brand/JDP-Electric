@@ -956,7 +956,7 @@ const ProfileScreen = ({navigation}) => {
 
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
-  console.log('users', user?.labor?.id);
+  console.log('users', user);
 
   // const {user, logout} = useAuth();
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -1175,8 +1175,11 @@ const ProfileScreen = ({navigation}) => {
         {/* User Info Card */}
         <View style={styles.userCard}>
           <View style={styles.userInfo}>
-            {user?.photo_url ? (
-              <Image source={{uri: avatarUri}} style={styles.avatarImage} />
+            {(avatarUri || user?.photo_url) ? (
+              <Image
+                source={{uri: avatarUri || user?.photo_url}}
+                style={styles.avatarImage}
+              />
             ) : (
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
@@ -1472,6 +1475,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
+    marginBottom: 74,
   },
   section: {
     marginBottom: 24,

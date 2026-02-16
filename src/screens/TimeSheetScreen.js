@@ -25,6 +25,12 @@ import {getBlueSheets} from '../config/apiConfig';
 import {useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
 
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
+
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -219,8 +225,8 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       const fetchBlueSheet = async () => {
         if (loading) return;
         setLoading(true);
-        console.log("token>>>",token);
-        
+        console.log('token>>>', token);
+
         try {
           const res = await getBlueSheets(token);
           const blue = Array.isArray(res)
@@ -294,7 +300,12 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       {loading ? (
         <ActivityIndicator color="#3B82F6" style={{marginTop: 40}} />
       ) : (
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={{flexGrow: 1}}>
           {/* Filters and Search */}
           <View style={styles.filtersCard}>
             {/* Search */}
@@ -335,7 +346,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                     <View style={styles.timesheetHeader}>
                       <View style={styles.timesheetTitleContainer}>
                         <View style={styles.timesheetBadges}>
-                          <Text style={[styles.timesheetId,{width:"60%"}]}>
+                          <Text style={[styles.timesheetId, {width: '60%'}]}>
                             {timesheet?.job?.job_title}
                           </Text>
                           <View
@@ -358,7 +369,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                             </Text>
                           </View>
                         </View>
-                      
+
                         <View
                           style={{
                             display: 'flex',
@@ -602,7 +613,7 @@ const styles = StyleSheet.create({
   filtersCard: {
     backgroundColor: 'white',
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginVertical: 16,
     padding: 16,
     borderRadius: 12,
     shadowColor: '#000',
@@ -628,7 +639,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: Platform.OS === 'android' ? 8 : 12,
     fontSize: 16,
     color: '#111827',
     marginLeft: 8,
@@ -737,12 +748,12 @@ const styles = StyleSheet.create({
   },
   timesheetHeader: {
     marginBottom: 12,
-    width:"100%",
+    width: '100%',
   },
   timesheetTitleContainer: {
     flex: 1,
-    flexDirection:"row",
-    justifyContent:"space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   timesheetBadges: {
     flexDirection: 'row',

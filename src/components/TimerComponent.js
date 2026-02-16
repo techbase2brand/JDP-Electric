@@ -11,6 +11,12 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { AppState } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
+
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 

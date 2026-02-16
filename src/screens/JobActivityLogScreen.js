@@ -1122,7 +1122,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   summaryGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 16},
-  summaryItem: {width: widthPercentageToDP(38), alignItems: 'center'},
+  summaryItem: {width: widthPercentageToDP(37.5), alignItems: 'center'},
   summaryItemIcon: {
     width: 64,
     height: 64,

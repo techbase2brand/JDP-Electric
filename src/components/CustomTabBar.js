@@ -206,11 +206,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: tabColor,
-    width: '80%',
+    width: Platform.OS === 'android' ? '84%' : '80%',
     height: '8%',
 
     alignSelf: 'center',
-    bottom: 40,
+    bottom: Platform.OS === 'android' ? 10 : 40,
     borderRadius: 40,
     // paddingHorizontal: 12,
     // paddingVertical: 15,

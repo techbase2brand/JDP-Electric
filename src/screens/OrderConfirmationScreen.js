@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Animated,
   Share,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -477,7 +478,7 @@ const styles = StyleSheet.create({
   // Content
   content: {
     flex: 1,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.lg,
   },
 
@@ -694,7 +695,7 @@ const styles = StyleSheet.create({
   },
   secondaryActionButton: {
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: Platform.OS === 'android' ? 0 : Spacing.md,
   },
   secondaryActionText: {
     fontSize: 16,

@@ -600,7 +600,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
+import {setUser} from '../redux/userSlice';
 import {
   getLaborById,
   getLeadLaborById,
@@ -636,6 +637,7 @@ const InputField = React.memo(
             value={value}
             onChangeText={onChangeText}
             placeholder={placeholder}
+            placeholderTextColor="#9CA3AF"
             keyboardType={keyboardType}
             editable={editable}
             blurOnSubmit={blurOnSubmit}
@@ -652,13 +654,16 @@ const InputField = React.memo(
 );
 
 const EditProfileScreen = ({navigation}) => {
+  const dispatch = useDispatch();
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
+  const permissions = useSelector(state => state.user.permissions);
 
   const [allLabourData, setAllLabourData] = useState(null);
   const [avatarUri, setAvatarUri] = useState(null);
   const [formData, setFormData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // refs for inputs to chain focus
   const fullNameRef = useRef(null);
@@ -677,7 +682,7 @@ const EditProfileScreen = ({navigation}) => {
   useEffect(() => {
     let mounted = true;
     const fetchProfiles = async () => {
-      setIsLoading(true);
+      setIsFetching(true);
       try {
         let profileData;
         if (user?.management_type === 'lead_labor') {
@@ -710,7 +715,7 @@ const EditProfileScreen = ({navigation}) => {
         console.error('Error fetching profiles:', err);
         Alert.alert('Error', 'Failed to load profile data');
       } finally {
-        if (mounted) setIsLoading(false);
+        if (mounted) setIsFetching(false);
       }
     };
     fetchProfiles();
@@ -726,7 +731,7 @@ const EditProfileScreen = ({navigation}) => {
 
   const handleSave = useCallback(async () => {
     if (!formData) return;
-    setIsLoading(true);
+    setIsSaving(true);
     try {
       const form = new FormData();
 
@@ -757,14 +762,46 @@ const EditProfileScreen = ({navigation}) => {
         response = await updateLaborProfile(user?.labor?.id, form, token);
       }
 
-      Alert.alert('Success', 'Profile updated successfully!', [
+      // Refresh latest profile and update Redux so Home/Profile reflect changes immediately
+      try {
+        let freshProfile;
+        if (user?.management_type === 'lead_labor') {
+          const leadLabor = await getLeadLaborById(user?.lead_labor?.id, token);
+          freshProfile = leadLabor?.data;
+        } else {
+          const labor = await getLaborById(user?.labor?.id, token);
+          freshProfile = labor?.data;
+        }
+
+        const freshName = freshProfile?.users?.full_name;
+        const freshPhoto = freshProfile?.users?.photo_url;
+        if (freshName || freshPhoto) {
+          dispatch(
+            setUser({
+              user: {
+                ...user,
+                ...(freshName ? {full_name: freshName} : {}),
+                ...(freshPhoto ? {photo_url: freshPhoto} : {}),
+              },
+              token,
+              permissions,
+            }),
+          );
+        }
+      } catch (e) {
+        // non-blocking: even if refresh fails, update API already succeeded
+      }
+
+      // Stop "Saving..." state before showing alert so UI doesn't feel stuck
+      setIsSaving(false);
+      Alert.alert('Success', response?.message || 'Profile updated successfully!', [
         {text: 'OK', onPress: () => navigation.goBack()},
       ]);
     } catch (error) {
       console.error('Update Error:', error);
       Alert.alert('Error', error.message || 'Failed to update profile');
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   }, [formData, avatarUri, user, token, navigation]);
 
@@ -776,7 +813,10 @@ const EditProfileScreen = ({navigation}) => {
         {
           text: 'Camera',
           onPress: () => {
-            launchCamera({mediaType: 'photo'}, response => {
+            // Compress/resize to speed up upload
+            launchCamera(
+              {mediaType: 'photo', quality: 0.7, maxWidth: 1024, maxHeight: 1024},
+              response => {
               if (
                 !response.didCancel &&
                 !response.errorCode &&
@@ -789,13 +829,17 @@ const EditProfileScreen = ({navigation}) => {
                   photo_url: response.assets[0].uri,
                 }));
               }
-            });
+              },
+            );
           },
         },
         {
           text: 'Gallery',
           onPress: () => {
-            launchImageLibrary({mediaType: 'photo'}, response => {
+            // Compress/resize to speed up upload
+            launchImageLibrary(
+              {mediaType: 'photo', quality: 0.7, maxWidth: 1024, maxHeight: 1024},
+              response => {
               if (
                 !response.didCancel &&
                 !response.errorCode &&
@@ -807,7 +851,8 @@ const EditProfileScreen = ({navigation}) => {
                   photo_url: response.assets[0].uri,
                 }));
               }
-            });
+              },
+            );
           },
         },
         {text: 'Cancel', style: 'cancel'},
@@ -816,7 +861,7 @@ const EditProfileScreen = ({navigation}) => {
     );
   }, []);
 
-  if (isLoading || !formData) {
+  if (isFetching || !formData) {
     return (
       <View
         style={[
@@ -839,9 +884,12 @@ const EditProfileScreen = ({navigation}) => {
             <Icon name="arrow-back" size={24} color="#000" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profile</Text>
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSave}
+            disabled={isSaving}>
             <Text style={styles.saveButtonText}>
-              {isLoading ? 'Saving...' : 'Save'}
+              {isSaving ? 'Saving...' : 'Save'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -893,6 +941,7 @@ const EditProfileScreen = ({navigation}) => {
               value={formData.full_name}
               onChangeText={text => handleChange('full_name', text)}
               placeholder="Enter your full name"
+              editable={!isSaving}
               returnKeyType="next"
               blurOnSubmit={false}
               onSubmitEditing={() =>
@@ -916,6 +965,7 @@ const EditProfileScreen = ({navigation}) => {
               onChangeText={text => handleChange('phone', text)}
               placeholder="Enter your phone number"
               keyboardType="phone-pad"
+              editable={!isSaving}
               returnKeyType="next"
               blurOnSubmit={false}
               onSubmitEditing={() =>
@@ -941,6 +991,7 @@ const EditProfileScreen = ({navigation}) => {
               value={formData.address}
               onChangeText={text => handleChange('address', text)}
               placeholder="Enter your address"
+              editable={!isSaving}
               returnKeyType="done"
               blurOnSubmit={true}
             />

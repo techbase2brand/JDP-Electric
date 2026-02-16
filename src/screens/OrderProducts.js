@@ -629,6 +629,8 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -637,6 +639,12 @@ import {addToCart, updateQuantity} from '../redux/cartSlice';
 
 // --- API imports (ensure these are exported from your api file) ---
 import {getProductsBySupplier, searchProducts} from '../config/apiConfig';
+
+// Ensure placeholders remain visible in system dark mode
+TextInput.defaultProps = {
+  ...(TextInput.defaultProps || {}),
+  placeholderTextColor: '#9CA3AF',
+};
 
 // ----------------- Design Tokens -----------------
 const Colors = {
@@ -987,7 +995,10 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
     (filteredProducts?.length ?? 0) === 0;
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
 
       {/* Header */}
@@ -1093,6 +1104,8 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
             keyExtractor={(item, index) => productKey(item, index)}
             renderItem={renderProduct}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             refreshing={isSearching ? searchLoading : refreshing}
             onRefresh={handleRefresh}
             onEndReached={loadMore}
@@ -1134,7 +1147,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
           </TouchableOpacity>
         </View>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -1189,7 +1202,7 @@ const styles = StyleSheet.create({
   searchIcon: {marginRight: Spacing.sm},
   searchInput: {
     flex: 1,
-    paddingVertical: Spacing.md,
+    paddingVertical: Platform.OS === 'android' ? 10 : Spacing.md,
     fontSize: 16,
     color: Colors.text,
   },
@@ -1336,7 +1349,7 @@ const styles = StyleSheet.create({
 
   bottomCartSummary: {
     position: 'absolute',
-    bottom: 30,
+    bottom: Platform.OS === 'android' ? 0 : 30,
     left: 0,
     right: 0,
     backgroundColor: Colors.white,
