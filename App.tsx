@@ -104,33 +104,16 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import crashlytics from '@react-native-firebase/crashlytics';
 const {flex} = BaseStyle;
 const AppContent = () => {
-  // const {DynamicIslandModule} = NativeModules;
   const navigationRef = useRef();
-  useEffect(() => {
-    // (async () => {
-    //   try {
-    //     const res = await HelloModule.testCall();
-    //     console.log("✅ Native response:", res);
-    //   } catch (err) {
-    //     console.error("❌ Native error:", err);
-    //   }
-    // })();
-    //   if (Platform.OS === "ios" && DynamicIslandModule) {
-    //   console.log("👉 Calling Native startTimer",true);
-    //   DynamicIslandModule.startTimer(true);
-    // }
-  }, []);
-  //  console.log('Native Modules:', NativeModules);  // Check if your module is listed
-  // console.log('DynamicIslandModule:',CalendarModule);
-  // DynamicIslandModule.showDynamicIsland(message => {
-  //   console.log(message);
-  // });
+  const [navReady, setNavReady] = useState(false);
+  const [pendingLink, setPendingLink] = useState(null);
   const userData = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
   const dispatch = useDispatch();
   const token = useSelector(state => state.user.token);
   const {isRunning, elapsedTime} = useSelector((state: any) => state.timer);
-  console.log('useruser', user, token, isRunning, elapsedTime);
+
+  // console.log('useruser', user, token, isRunning, elapsedTime);
   const userId = user?.id;
 
   const {unreadCount} = useNotifications(userId);
@@ -146,20 +129,6 @@ const AppContent = () => {
       console.log('Badge update error:', e);
     }
   };
-
-  // ============================================
-  // TEST CRASHLYTICS - Uncomment to test automatic crash
-  // ============================================
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     console.log('🧪 [TEST] Triggering test crash in 5 seconds...');
-  //     crashlytics().setAttribute('test_crash', 'true');
-  //     crashlytics().log('Test crash triggered automatically from App.tsx');
-  //     crashlytics().crash();
-  //   }, 5000);
-
-  //   return () => clearTimeout(timer);
-  // }, []);
 
   // Initialize Crashlytics (App Start पर)
   useEffect(() => {
@@ -234,30 +203,60 @@ const AppContent = () => {
       });
   }, []);
 
-  //   const handleNavigation = data => {
-  //     if (!data) return;
-  // console.log("datata>>>",data);
+  // const handleNavigation = data => {
+  //   if (!data) return;
 
-  //     if (data?.custom_link !== '/') {
+  //   console.log('datata>>>', data);
+
+  //   const link = data?.custom_link || '';
+  //   console.log('link>>>', link);
+
+  //   // agar link "/jobs" se start hota hai
+  //   if (link.startsWith('/jobs')) {
+  //     navigationRef.current?.navigate('JobStack');
+  //   } else {
   //     navigationRef.current?.navigate('NotificationScreen');
-  //     }else{
-  //       navigationRef.current?.navigate('JobStack');
-  //     }
-  //   };
+  //   }
+  // };
+
   const handleNavigation = data => {
     if (!data) return;
 
-    console.log('datata>>>', data);
-
     const link = data?.custom_link || '';
+    console.log('link>>>', link);
 
-    // agar link "/jobs" se start hota hai
+    // agar navigation ready nahi hai to store kar do
+    if (!navReady) {
+      console.log('Navigation not ready, storing link');
+      setPendingLink(link);
+      return;
+    }
+
+    navigateFromLink(link);
+  };
+  const navigateFromLink = link => {
+    if (!navigationRef.current) return;
+
     if (link.startsWith('/jobs')) {
-      navigationRef.current?.navigate('JobStack');
+      const jobId = link.split('/')[2];
+
+      navigationRef.current.navigate('JobStack', {
+        screen: 'JobDetails',
+        params: {id: jobId},
+      });
     } else {
-      navigationRef.current?.navigate('NotificationScreen');
+      navigationRef.current.navigate('NotificationScreen');
     }
   };
+
+  useEffect(() => {
+  if (navReady && pendingLink) {
+    console.log('Opening pending link:', pendingLink);
+    navigateFromLink(pendingLink);
+    setPendingLink(null);
+  }
+}, [navReady, pendingLink]);
+
 
   useEffect(() => {
     if (isRunning) {
@@ -385,6 +384,10 @@ const AppContent = () => {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <NavigationContainer
           ref={navigationRef}
+          onReady={() => {
+            console.log('✅ Navigation Ready');
+            setNavReady(true);
+          }}
           onStateChange={handleNavigationStateChange}>
           {isLoading ? (
             <SplashScreen />

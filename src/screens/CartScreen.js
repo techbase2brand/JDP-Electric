@@ -257,7 +257,12 @@ const CartScreen = ({onBack, onNavigate, route}) => {
           </Text>
           <TouchableOpacity
             style={styles.browseButton}
-            onPress={() => navigation.navigate('OrderProducts')}>
+            onPress={() =>
+              navigation.navigate('OrderProducts', {
+                id: id,
+                job: job,
+              })
+            }>
             <Icon name="inventory" size={20} color={Colors.white} />
             <Text style={styles.browseButtonText}>Browse Products</Text>
           </TouchableOpacity>
@@ -701,7 +706,7 @@ const styles = StyleSheet.create({
   // Header
   header: {
     backgroundColor: Colors.white,
-    paddingTop: Spacing.xl,
+    paddingTop: Platform.OS === 'android' ? Spacing.xl : 0,
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,

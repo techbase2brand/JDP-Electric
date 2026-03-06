@@ -697,6 +697,7 @@ const EditProfileScreen = ({navigation}) => {
 
         setAllLabourData(profileData);
         setAvatarUri(profileData?.users?.photo_url || null);
+        console.log('profileData?.users', profileData?.users?.photo_url);
 
         setFormData({
           full_name: profileData?.users?.full_name || '',
@@ -794,9 +795,11 @@ const EditProfileScreen = ({navigation}) => {
 
       // Stop "Saving..." state before showing alert so UI doesn't feel stuck
       setIsSaving(false);
-      Alert.alert('Success', response?.message || 'Profile updated successfully!', [
-        {text: 'OK', onPress: () => navigation.goBack()},
-      ]);
+      Alert.alert(
+        'Success',
+        response?.message || 'Profile updated successfully!',
+        [{text: 'OK', onPress: () => navigation.goBack()}],
+      );
     } catch (error) {
       console.error('Update Error:', error);
       Alert.alert('Error', error.message || 'Failed to update profile');
@@ -815,20 +818,25 @@ const EditProfileScreen = ({navigation}) => {
           onPress: () => {
             // Compress/resize to speed up upload
             launchCamera(
-              {mediaType: 'photo', quality: 0.7, maxWidth: 1024, maxHeight: 1024},
+              {
+                mediaType: 'photo',
+                quality: 0.7,
+                maxWidth: 1024,
+                maxHeight: 1024,
+              },
               response => {
-              if (
-                !response.didCancel &&
-                !response.errorCode &&
-                response.assets?.[0]?.uri
-              ) {
-                setAvatarUri(response.assets[0].uri);
-                // also update formData.photo_url if needed
-                setFormData(prev => ({
-                  ...prev,
-                  photo_url: response.assets[0].uri,
-                }));
-              }
+                if (
+                  !response.didCancel &&
+                  !response.errorCode &&
+                  response.assets?.[0]?.uri
+                ) {
+                  setAvatarUri(response.assets[0].uri);
+                  // also update formData.photo_url if needed
+                  setFormData(prev => ({
+                    ...prev,
+                    photo_url: response.assets[0].uri,
+                  }));
+                }
               },
             );
           },
@@ -838,19 +846,24 @@ const EditProfileScreen = ({navigation}) => {
           onPress: () => {
             // Compress/resize to speed up upload
             launchImageLibrary(
-              {mediaType: 'photo', quality: 0.7, maxWidth: 1024, maxHeight: 1024},
+              {
+                mediaType: 'photo',
+                quality: 0.7,
+                maxWidth: 1024,
+                maxHeight: 1024,
+              },
               response => {
-              if (
-                !response.didCancel &&
-                !response.errorCode &&
-                response.assets?.[0]?.uri
-              ) {
-                setAvatarUri(response.assets[0].uri);
-                setFormData(prev => ({
-                  ...prev,
-                  photo_url: response.assets[0].uri,
-                }));
-              }
+                if (
+                  !response.didCancel &&
+                  !response.errorCode &&
+                  response.assets?.[0]?.uri
+                ) {
+                  setAvatarUri(response.assets[0].uri);
+                  setFormData(prev => ({
+                    ...prev,
+                    photo_url: response.assets[0].uri,
+                  }));
+                }
               },
             );
           },
@@ -926,7 +939,10 @@ const EditProfileScreen = ({navigation}) => {
                 style={styles.changePhotoButton}
                 onPress={handleImagePicker}>
                 <Icon name="camera-alt" size={20} color="#2563eb" />
-                <Text style={styles.changePhotoText}>Change image</Text>
+                <Text style={styles.changePhotoText}>
+                  {' '}
+                  {avatarUri ? 'Change image' : 'Upload image'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

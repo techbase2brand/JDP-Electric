@@ -639,6 +639,7 @@ import {addToCart, updateQuantity} from '../redux/cartSlice';
 
 // --- API imports (ensure these are exported from your api file) ---
 import {getProductsBySupplier, searchProducts} from '../config/apiConfig';
+import {heightPercentageToDP} from '../utils';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -1162,7 +1163,7 @@ const styles = StyleSheet.create({
 
   header: {
     backgroundColor: Colors.white,
-    paddingTop: Spacing.xl,
+    paddingTop: Platform.OS === 'android' ? Spacing.xl : 0,
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
@@ -1328,7 +1329,7 @@ const styles = StyleSheet.create({
   },
 
   emptyStateContainer: {
-    flex: 1,
+    height: heightPercentageToDP(80),
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.md,
@@ -1349,7 +1350,7 @@ const styles = StyleSheet.create({
 
   bottomCartSummary: {
     position: 'absolute',
-    bottom: Platform.OS === 'android' ? 0 : 30,
+    bottom: Platform.OS === 'android' ? 0 : 5,
     left: 0,
     right: 0,
     backgroundColor: Colors.white,

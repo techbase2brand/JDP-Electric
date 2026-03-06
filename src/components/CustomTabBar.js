@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
 
     alignSelf: 'center',
     bottom: Platform.OS === 'android' ? 10 : 40,
-    borderRadius: 40,
+    borderRadius: Platform.OS === 'android' ? 40 : 90,
     // paddingHorizontal: 12,
     // paddingVertical: 15,
     shadowColor: '#000',

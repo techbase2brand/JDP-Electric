@@ -492,10 +492,22 @@ const JobListingScreen = ({navigation, route}) => {
           </View>
         </View> */}
 
-        <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+          }}>
           <View>
             <Text
-              style={[styles.jobTitle, {width: widthPercentageToDP(60)}]}
+              style={[
+                styles.jobTitle,
+                {
+                  width:
+                    job?.status == 'in_progress'
+                      ? widthPercentageToDP(50)
+                      : widthPercentageToDP(55),
+                },
+              ]}
               numberOfLines={1}>
               {job?.job_title || job?.title}
             </Text>
@@ -745,12 +757,13 @@ const JobListingScreen = ({navigation, route}) => {
             if (!isSearching) fetchJobs();
           }}
           onEndReachedThreshold={0.5}
+          showsVerticalScrollIndicator={false}
           refreshing={refreshing}
           onRefresh={refreshJobs}
           contentContainerStyle={{
             flexGrow: 1,
             paddingHorizontal: 16,
-            paddingBottom: 12,
+            paddingBottom: Platform.OS === 'android' ? 100 : 12,
           }}
           ListFooterComponent={
             loading && !refreshing && filteredJobs.length > 0 ? (
@@ -871,7 +884,7 @@ const styles = {
     paddingVertical: 4,
     borderRadius: 6,
     height: 23,
-    margin:5
+    margin: 5,
   },
   statusText: {fontSize: 10, fontWeight: '600', color: COLORS.white},
   priorityBadge: {
