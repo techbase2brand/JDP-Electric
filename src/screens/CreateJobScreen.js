@@ -1415,7 +1415,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                   fetchDetails={true}
                   enablePoweredByContainer={false}
                   query={{
-                    key: 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI',
+                    key: 'AIzaSyCKNlYJxb2T3c8a1rvP5r4FTopvfWWCwHI',
                     language: 'en',
                     components: 'country:us',
                   }}

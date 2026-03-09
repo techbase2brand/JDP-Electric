@@ -1,8 +1,9 @@
-import React, {useState, useMemo, useEffect, useRef} from 'react';
+import React, {useState, useMemo, useEffect, useRef, useCallback} from 'react';
 import {
   View,
   Text,
   ScrollView,
+  FlatList,
   TouchableOpacity,
   TextInput,
   StyleSheet,
@@ -26,7 +27,7 @@ import {
   getJobBluesheets,
   submitBluesheetComplete,
 } from '../config/apiConfig';
-import DateTimePicker from '@react-native-community/datetimepicker';
+// import DateTimePicker from '@react-native-community/datetimepicker';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 
 // Ensure placeholders remain visible in system dark mode
@@ -241,22 +242,25 @@ const LabourSearchDropdown = ({
     setQuery(selectedEmployee?.label || '');
   }, [selectedEmployee]);
 
-  const fetchPage = async (pageNo = 1) => {
-    if (!token) return;
-    try {
-      setLoading(true);
-      const res = await getAllLabor(pageNo, 10, token);
-      const data = res?.data?.data || [];
-      setItems(prev => (pageNo === 1 ? data : [...prev, ...data]));
-      setHasMore(Array.isArray(data) ? data.length > 0 : false);
-      setPage(pageNo);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchPage = useCallback(
+    async (pageNo = 1) => {
+      if (!token) return;
+      try {
+        setLoading(true);
+        const res = await getAllLabor(pageNo, 10, token);
+        const data = res?.data?.data || [];
+        setItems(prev => (pageNo === 1 ? data : [...prev, ...data]));
+        setHasMore(Array.isArray(data) ? data.length > 0 : false);
+        setPage(pageNo);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token],
+  );
   useEffect(() => {
     if (open) fetchPage(1);
-  }, [open]);
+  }, [open, fetchPage]);
 
   const debouncedSetQuery = useMemo(
     () => debounce(txt => setQuery(txt), 300),
@@ -484,7 +488,10 @@ const LabourModal = ({
   showTimePicker,
   setShowTimePicker,
 }) => {
-  const [pickerValue, setPickerValue] = useState(new Date());
+  const [durParts, setDurParts] = useState({h: '00', m: '00', s: '00'});
+  const hListRef = useRef(null);
+  const mListRef = useRef(null);
+  const sListRef = useRef(null);
   const existingIds = (timesheetData?.labourEntries || []).map(e =>
     String(e.employeeId || ''),
   );
@@ -496,6 +503,7 @@ const LabourModal = ({
     String(tempLabourData?.id || '').startsWith('labour-') ||
     !tempLabourData?.id;
 
+  /* OLD: DateTimePicker init sync (HH:MM only) – kept for reference
   useEffect(() => {
     // sync picker initial value from hms / input
     if (tempLabourData?.regular_hours_hms) {
@@ -521,7 +529,9 @@ const LabourModal = ({
     tempLabourData?.regular_hours_hms,
     tempLabourData?.regular_hours_input,
   ]);
+  */
 
+  /* OLD: DateTimePicker handler (clock-time HH:MM only) – kept for reference
   const onChangePicker = (event, selectedDate) => {
     if (Platform.OS === 'android') {
       setShowTimePicker(false); // auto-hide on android
@@ -538,8 +548,58 @@ const LabourModal = ({
     setTempLabourData(prev => ({
       ...prev,
       regular_hours_hms: hms,
-      regular_hours_input: hmsToDecimalStr(hms),
+      regular_hours_input: hms,
     }));
+  };
+  */
+
+  // ---------- Duration picker (HH:MM:SS) ----------
+  const pad2 = n => String(n).padStart(2, '0');
+  const clampInt = (val, min, max) => {
+    const n = parseInt(String(val || '').replace(/[^\d]/g, ''), 10);
+    if (!Number.isFinite(n)) return min;
+    return Math.min(max, Math.max(min, n));
+  };
+  const ITEM_H = 44;
+  const hoursData = useMemo(() => Array.from({length: 24}, (_, i) => i), []);
+  const minsData = useMemo(() => Array.from({length: 60}, (_, i) => i), []);
+  const secsData = minsData;
+  const currentHms = useMemo(() => {
+    const base =
+      tempLabourData?.regular_hours_hms ||
+      normalizeToHMS(tempLabourData?.regular_hours_input) ||
+      '00:00:00';
+    return normalizeToHMS(base);
+  }, [tempLabourData?.regular_hours_hms, tempLabourData?.regular_hours_input]);
+
+  useEffect(() => {
+    if (!showTimePicker) return;
+    const [hh, mm, ss] = (currentHms || '00:00:00').split(':');
+    setDurParts({h: pad2(hh || 0), m: pad2(mm || 0), s: pad2(ss || 0)});
+    // scroll wheels to current values (after modal opens)
+    const h = clampInt(hh, 0, 23);
+    const m = clampInt(mm, 0, 59);
+    const s = clampInt(ss, 0, 59);
+    setTimeout(() => {
+      try {
+        hListRef.current?.scrollToOffset({offset: h * ITEM_H, animated: false});
+        mListRef.current?.scrollToOffset({offset: m * ITEM_H, animated: false});
+        sListRef.current?.scrollToOffset({offset: s * ITEM_H, animated: false});
+      } catch {}
+    }, 0);
+  }, [showTimePicker, currentHms]);
+
+  const applyDuration = () => {
+    const hh = pad2(clampInt(durParts.h, 0, 23));
+    const mm = pad2(clampInt(durParts.m, 0, 59));
+    const ss = pad2(clampInt(durParts.s, 0, 59));
+    const hms = `${hh}:${mm}:${ss}`;
+    setTempLabourData(prev => ({
+      ...prev,
+      regular_hours_hms: hms,
+      regular_hours_input: hms,
+    }));
+    setShowTimePicker(false);
   };
 
   const handleSaveWithValidation = () => {
@@ -632,7 +692,7 @@ const LabourModal = ({
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>Regular Hours (HH:MM)</Text>
+                  <Text style={styles.formLabel}>Regular Hours (HH:MM:SS)</Text>
 
                   <TouchableOpacity
                     activeOpacity={0.8}
@@ -650,12 +710,13 @@ const LabourModal = ({
                               ).slice(0, 9)
                             : ''
                         }
-                        placeholder="Select hours & minutes"
+                        placeholder="Select hours, minutes & seconds"
                         placeholderTextColor="#9CA3AF"
                       />
                     </View>
                   </TouchableOpacity>
 
+                  {/* OLD: Clock-time picker (HH:MM only) – kept for reference
                   {showTimePicker && (
                     <DateTimePicker
                       value={pickerValue || new Date()}
@@ -666,6 +727,320 @@ const LabourModal = ({
                       onChange={onChangePicker}
                     />
                   )}
+                  */}
+
+                  {/* NEW: Duration picker (HH:MM:SS) */}
+                  <Modal
+                    visible={showTimePicker}
+                    animationType="fade"
+                    transparent
+                    onRequestClose={() => setShowTimePicker(false)}>
+                    {/* Backdrop press closes; content stays scrollable */}
+                    <View style={styles.modalOverlay}>
+                      <Pressable
+                        style={[
+                          StyleSheet.absoluteFill,
+                          {zIndex: 0, elevation: 0},
+                        ]}
+                        onPress={() => setShowTimePicker(false)}
+                      />
+                      <View
+                        pointerEvents="auto"
+                        style={[
+                          styles.modalContent,
+                          {zIndex: 1, elevation: 4, position: 'relative'},
+                        ]}>
+                            <View style={styles.modalHeader}>
+                              <Text style={styles.modalTitle}>
+                                Set duration (HH:MM:SS)
+                              </Text>
+                              <TouchableOpacity
+                                onPress={() => setShowTimePicker(false)}>
+                                <Text style={styles.modalCloseButton}>✕</Text>
+                              </TouchableOpacity>
+                            </View>
+
+                            {/* OLD (typed inputs) – kept for reference
+                            <View style={{paddingHorizontal: 16, paddingTop: 8}}>
+                              <Text style={styles.formLabel}>Hours</Text>
+                              <TextInput
+                                style={styles.formInput}
+                                keyboardType="number-pad"
+                                value={String(durParts.h)}
+                                onChangeText={t =>
+                                  setDurParts(p => ({...p, h: t}))
+                                }
+                                placeholder="00"
+                              />
+                              <Text style={styles.formLabel}>Minutes</Text>
+                              <TextInput
+                                style={styles.formInput}
+                                keyboardType="number-pad"
+                                value={String(durParts.m)}
+                                onChangeText={t =>
+                                  setDurParts(p => ({...p, m: t}))
+                                }
+                                placeholder="00"
+                              />
+                              <Text style={styles.formLabel}>Seconds</Text>
+                              <TextInput
+                                style={styles.formInput}
+                                keyboardType="number-pad"
+                                value={String(durParts.s)}
+                                onChangeText={t =>
+                                  setDurParts(p => ({...p, s: t}))
+                                }
+                                placeholder="00"
+                              />
+                            </View>
+                            */}
+
+                            {/* NEW: Wheel duration picker (scroll only) */}
+                            <View style={{paddingHorizontal: 16, paddingTop: 12}}>
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}>
+                                <Text style={[styles.formLabel, {flex: 1}]}>
+                                  Hours
+                                </Text>
+                                <Text style={[styles.formLabel, {flex: 1}]}>
+                                  Minutes
+                                </Text>
+                                <Text style={[styles.formLabel, {flex: 1}]}>
+                                  Seconds
+                                </Text>
+                              </View>
+
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  justifyContent: 'space-between',
+                                  gap: 12,
+                                  marginTop: 6,
+                                }}>
+                                {/** Hours wheel */}
+                                <View style={{flex: 1, height: ITEM_H * 5}}>
+                                  <View
+                                    pointerEvents="none"
+                                    style={{
+                                      position: 'absolute',
+                                      top: ITEM_H * 2,
+                                      left: 0,
+                                      right: 0,
+                                      height: ITEM_H,
+                                      borderRadius: 10,
+                                      backgroundColor: '#EBF4FF',
+                                    }}
+                                  />
+                                  <FlatList
+                                    ref={hListRef}
+                                    data={hoursData}
+                                    keyExtractor={i => `h-${i}`}
+                                    showsVerticalScrollIndicator={false}
+                                    nestedScrollEnabled
+                                    scrollEnabled
+                                    snapToInterval={ITEM_H}
+                                    decelerationRate="fast"
+                                    disableIntervalMomentum
+                                    snapToAlignment="start"
+                                    getItemLayout={(_, index) => ({
+                                      length: ITEM_H,
+                                      offset: ITEM_H * index,
+                                      index,
+                                    })}
+                                    contentContainerStyle={{
+                                      paddingVertical: ITEM_H * 2,
+                                    }}
+                                    // helps when inside other scrollables on Android
+                                    scrollEventThrottle={16}
+                                    keyboardShouldPersistTaps="handled"
+                                    onMomentumScrollEnd={e => {
+                                      const idx = Math.round(
+                                        e.nativeEvent.contentOffset.y / ITEM_H,
+                                      );
+                                      const v = hoursData[idx] ?? 0;
+                                      setDurParts(p => ({...p, h: pad2(v)}));
+                                    }}
+                                    renderItem={({item}) => (
+                                      <View
+                                        style={{
+                                          height: ITEM_H,
+                                          justifyContent: 'center',
+                                          alignItems: 'center',
+                                        }}>
+                                        <Text
+                                          style={{
+                                            fontSize: 18,
+                                            color: '#0F172A',
+                                            fontWeight: '600',
+                                          }}>
+                                          {pad2(item)}
+                                        </Text>
+                                      </View>
+                                    )}
+                                  />
+                                </View>
+
+                                {/** Minutes wheel */}
+                                <View style={{flex: 1, height: ITEM_H * 5}}>
+                                  <View
+                                    pointerEvents="none"
+                                    style={{
+                                      position: 'absolute',
+                                      top: ITEM_H * 2,
+                                      left: 0,
+                                      right: 0,
+                                      height: ITEM_H,
+                                      borderRadius: 10,
+                                      backgroundColor: '#EBF4FF',
+                                    }}
+                                  />
+                                  <FlatList
+                                    ref={mListRef}
+                                    data={minsData}
+                                    keyExtractor={i => `m-${i}`}
+                                    showsVerticalScrollIndicator={false}
+                                    nestedScrollEnabled
+                                    scrollEnabled
+                                    snapToInterval={ITEM_H}
+                                    decelerationRate="fast"
+                                    disableIntervalMomentum
+                                    snapToAlignment="start"
+                                    getItemLayout={(_, index) => ({
+                                      length: ITEM_H,
+                                      offset: ITEM_H * index,
+                                      index,
+                                    })}
+                                    contentContainerStyle={{
+                                      paddingVertical: ITEM_H * 2,
+                                    }}
+                                    scrollEventThrottle={16}
+                                    keyboardShouldPersistTaps="handled"
+                                    onMomentumScrollEnd={e => {
+                                      const idx = Math.round(
+                                        e.nativeEvent.contentOffset.y / ITEM_H,
+                                      );
+                                      const v = minsData[idx] ?? 0;
+                                      setDurParts(p => ({...p, m: pad2(v)}));
+                                    }}
+                                    renderItem={({item}) => (
+                                      <View
+                                        style={{
+                                          height: ITEM_H,
+                                          justifyContent: 'center',
+                                          alignItems: 'center',
+                                        }}>
+                                        <Text
+                                          style={{
+                                            fontSize: 18,
+                                            color: '#0F172A',
+                                            fontWeight: '600',
+                                          }}>
+                                          {pad2(item)}
+                                        </Text>
+                                      </View>
+                                    )}
+                                  />
+                                </View>
+
+                                {/** Seconds wheel */}
+                                <View style={{flex: 1, height: ITEM_H * 5}}>
+                                  <View
+                                    pointerEvents="none"
+                                    style={{
+                                      position: 'absolute',
+                                      top: ITEM_H * 2,
+                                      left: 0,
+                                      right: 0,
+                                      height: ITEM_H,
+                                      borderRadius: 10,
+                                      backgroundColor: '#EBF4FF',
+                                    }}
+                                  />
+                                  <FlatList
+                                    ref={sListRef}
+                                    data={secsData}
+                                    keyExtractor={i => `s-${i}`}
+                                    showsVerticalScrollIndicator={false}
+                                    nestedScrollEnabled
+                                    scrollEnabled
+                                    snapToInterval={ITEM_H}
+                                    decelerationRate="fast"
+                                    disableIntervalMomentum
+                                    snapToAlignment="start"
+                                    getItemLayout={(_, index) => ({
+                                      length: ITEM_H,
+                                      offset: ITEM_H * index,
+                                      index,
+                                    })}
+                                    contentContainerStyle={{
+                                      paddingVertical: ITEM_H * 2,
+                                    }}
+                                    scrollEventThrottle={16}
+                                    keyboardShouldPersistTaps="handled"
+                                    onMomentumScrollEnd={e => {
+                                      const idx = Math.round(
+                                        e.nativeEvent.contentOffset.y / ITEM_H,
+                                      );
+                                      const v = secsData[idx] ?? 0;
+                                      setDurParts(p => ({...p, s: pad2(v)}));
+                                    }}
+                                    renderItem={({item}) => (
+                                      <View
+                                        style={{
+                                          height: ITEM_H,
+                                          justifyContent: 'center',
+                                          alignItems: 'center',
+                                        }}>
+                                        <Text
+                                          style={{
+                                            fontSize: 18,
+                                            color: '#0F172A',
+                                            fontWeight: '600',
+                                          }}>
+                                          {pad2(item)}
+                                        </Text>
+                                      </View>
+                                    )}
+                                  />
+                                </View>
+                              </View>
+
+                              <View style={{marginTop: 10, alignItems: 'center'}}>
+                                <Text style={{color: '#334155'}}>
+                                  Selected: {durParts.h}:{durParts.m}:{durParts.s}
+                                </Text>
+                              </View>
+                            </View>
+
+                            <View style={styles.modalFooter}>
+                              <TouchableOpacity
+                                style={[
+                                  styles.modalButton,
+                                  styles.modalButtonSecondary,
+                                ]}
+                                onPress={() => setShowTimePicker(false)}>
+                                <Text style={styles.modalButtonTextSecondary}>
+                                  Cancel
+                                </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[
+                                  styles.modalButton,
+                                  styles.modalButtonPrimary,
+                                ]}
+                                onPress={applyDuration}>
+                                <Text style={styles.modalButtonTextPrimary}>
+                                  Set
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                      </View>
+                    </View>
+                  </Modal>
                 </View>
               </ScrollView>
 
@@ -956,7 +1331,7 @@ const JobTimesheet = ({navigation, route, user}) => {
     const fetchTimesheet = async () => {
       try {
         // fetch for current date so route-seeding uses that data immediately
-        const res = await getJobBluesheets(jobId, token);
+        const res = await getJobBluesheets(currentJobId, token);
         console.log('reessss', res);
 
         setBulesheetData(res?.data ?? {}); // keep shape similar to previous code
@@ -974,7 +1349,7 @@ const JobTimesheet = ({navigation, route, user}) => {
   // storage key per job+date
   const storageKeyRef = useRef(tsKey(currentJobId, timesheetData?.date));
 
-  const loadFromStorageOrSeed = async (job, date) => {
+  const loadFromStorageOrSeed = useCallback(async (job, date) => {
     try {
       const jobId = job?.id ?? currentJobId;
       const key = tsKey(jobId, date);
@@ -1016,7 +1391,8 @@ const JobTimesheet = ({navigation, route, user}) => {
             employeeName: name,
             employeeId: empId,
             role: isLead ? 'Lead Labor' : 'Labor',
-            regular_hours_input: hmsToDecimalStr(hms),
+            // Keep HMS from timer/API as-is to avoid rounding seconds to 0.00h → 00:00:00
+            regular_hours_input: hms,
             regular_hours_hms: hms,
             regularHours: hms,
             base_hours_hms: hms,
@@ -1162,13 +1538,13 @@ const JobTimesheet = ({navigation, route, user}) => {
     } catch (e) {
       // soft-fail: keep current state
     }
-  };
+  }, [bluesheetData, currentJobId]);
   useEffect(() => {
     storageKeyRef.current = tsKey(currentJobId, timesheetData.date);
     if (bluesheetData) {
       loadFromStorageOrSeed(bluesheetData, timesheetData.date);
     }
-  }, [currentJobId, timesheetData.date, bluesheetData]);
+  }, [currentJobId, timesheetData.date, bluesheetData, loadFromStorageOrSeed]);
   // per-day submit lock
   const [isSubmittedForDay, setIsSubmittedForDay] = useState(false);
   const refreshSubmitLock = async (jobId, date) => {

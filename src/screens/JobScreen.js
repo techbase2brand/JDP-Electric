@@ -115,7 +115,7 @@ const JobListingScreen = ({navigation, route}) => {
 
   // ---------- initial list fetch (once)
   useEffect(() => {
-    fetchJobs(); // first page only
+    fetchFirstPage(); // first page only
   }, []);
 
   // ---------- set status tab from route (optional)
@@ -164,13 +164,13 @@ const JobListingScreen = ({navigation, route}) => {
           ? await getJobs(leadLaborId, 1, 10, token)
           : await getlabourJobs(laborId, 1, 10, token);
 
-      const newJobs = res?.data?.jobs ?? [];
+      // API shape can be either res.data.{...} or res.{...}
+      const root = res?.data ?? res;
+      const newJobs = root?.jobs ?? [];
       setJobs(dedupeById(newJobs));
       setPage(2); // next time onEndReached se page 2 aayega
-      const pg = res?.data?.pagination ?? {};
-      const limit = Number(pg?.limit ?? 10);
-      const total = Number(pg?.total ?? newJobs.length);
-      setHasMore(newJobs.length < total);
+      const hasNext = !!(root?.pagination?.hasNextPage ?? false);
+      setHasMore(hasNext);
     } catch (err) {
       console.error('First page fetch error:', err);
     } finally {
@@ -188,18 +188,16 @@ const JobListingScreen = ({navigation, route}) => {
           ? await getJobs(leadLaborId, page, 10, token)
           : await getlabourJobs(laborId, page, 10, token);
 
-      const newJobs = res?.data?.jobs ?? [];
-      console.log('newJobsnewJobs>>', newJobs);
+      const root = res?.data ?? res;
+      const newJobs = root?.jobs ?? [];
+      console.log('newJobs page', page, '→', newJobs.length);
 
       const combined = dedupeById([...(jobs || []), ...newJobs]);
       setJobs(combined);
 
-      // pagination flags from server
-      const pg = res?.data?.pagination ?? {};
-      const limit = Number(pg?.limit ?? 10);
-      const total = Number(pg?.total ?? combined.length);
-      const loadedSoFar = (page - 1) * limit + newJobs.length;
-      setHasMore(loadedSoFar < total);
+      // pagination flags from server (use hasNextPage)
+      const hasNext = !!(root?.pagination?.hasNextPage ?? false);
+      setHasMore(hasNext);
 
       if (newJobs.length > 0) setPage(p => p + 1);
     } catch (err) {
@@ -220,8 +218,11 @@ const JobListingScreen = ({navigation, route}) => {
           ? await getJobs(leadLaborId, 1, 10, token)
           : await getlabourJobs(laborId, 1, 10, token);
 
-      const newJobs = res?.data?.jobs ?? [];
+      const root = res?.data ?? res;
+      const newJobs = root?.jobs ?? [];
       setJobs(dedupeById(newJobs));
+      const hasNext = !!(root?.pagination?.hasNextPage ?? false);
+      setHasMore(hasNext);
     } catch (err) {
       console.error('Refresh error:', err);
     } finally {
@@ -239,7 +240,7 @@ const JobListingScreen = ({navigation, route}) => {
           ? await searchMyJobs(latestQueryRef.current, token, leadLaborId)
           : await await searchMyJobs(latestQueryRef.current, token, laborId);
       // const res = await searchMyJobs(latestQueryRef.current, token,leadLaborId);
-      const newJobs = res?.data?.jobs ?? [];
+      const newJobs = res?.jobs ?? res?.data?.jobs ?? [];
       setJobs(dedupeById(newJobs));
       setHasMore(false); // disable onEndReached in search mode
     } catch (err) {
@@ -753,8 +754,12 @@ const JobListingScreen = ({navigation, route}) => {
           }
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          onEndReached={() => {
-            if (!isSearching) fetchJobs();
+          onEndReached={({distanceFromEnd}) => {
+            // distanceFromEnd < 0 means user scrolled up; ignore
+            if (distanceFromEnd < 0) return;
+            if (!isSearching && hasMore && !loading) {
+              fetchJobs();
+            }
           }}
           onEndReachedThreshold={0.5}
           showsVerticalScrollIndicator={false}
@@ -763,16 +768,22 @@ const JobListingScreen = ({navigation, route}) => {
           contentContainerStyle={{
             flexGrow: 1,
             paddingHorizontal: 16,
-            paddingBottom: Platform.OS === 'android' ? 100 : 12,
+            paddingBottom: 100,
           }}
           ListFooterComponent={
             loading && !refreshing && filteredJobs.length > 0 ? (
-              <ActivityIndicator size="small" style={{margin: 10}} />
+              <ActivityIndicator
+                size="large"
+                style={{margin: 10}}
+              />
             ) : null
           }
           ListEmptyComponent={
             loading || refreshing || searchLoading ? (
-              <ActivityIndicator size="small" style={{marginTop: 40}} />
+              <ActivityIndicator
+                size="large"
+                style={{marginTop: 40}}
+              />
             ) : (
               renderEmptyState()
             )

@@ -18,13 +18,12 @@ import {
   TIMESHEET_ICON_FOCUSED,
 } from '../assests/images';
 import ActivitySummaryStack from './ActivitySummaryStack';
-import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
+import {CommonActions} from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator();
 
 export default function MainTabNavigator() {
-  const user = useSelector(state => state.user.user);
   const canViewBlueSheet = useHasPermission('bluesheet', 'view');
 
   const icons = {
@@ -42,15 +41,94 @@ export default function MainTabNavigator() {
         headerShown: false,
         tabBarHideOnKeyboard: true,
       }}>
-      <Tab.Screen name="Home" component={HomeStack} />
+      <Tab.Screen
+        name="Home"
+        component={HomeStack}
+        options={{unmountOnBlur: true}}
+        listeners={({navigation, route}) => ({
+          tabPress: e => {
+            const state = route?.state;
+            if (state && state.index > 0) {
+              e.preventDefault();
+              navigation.dispatch(
+                CommonActions.navigate('Home', {screen: 'HomeScreen'}),
+              );
+            }
+          },
+        })}
+      />
       {canViewBlueSheet && (
-        <Tab.Screen name="BlueSheet" component={TimeSheetStack} />
+        <Tab.Screen
+          name="BlueSheet"
+          component={TimeSheetStack}
+          options={{unmountOnBlur: true}}
+          listeners={({navigation, route}) => ({
+            tabPress: e => {
+              const state = route?.state;
+              if (state && state.index > 0) {
+                e.preventDefault();
+                navigation.dispatch(
+                  CommonActions.navigate('BlueSheet', {
+                    screen: 'TimeSheetScreen',
+                  }),
+                );
+              }
+            },
+          })}
+        />
       )}
-      <Tab.Screen name="Jobs" component={JobStack} />
+      <Tab.Screen
+        name="Jobs"
+        component={JobStack}
+        options={{unmountOnBlur: true}}
+        listeners={({navigation, route}) => ({
+          tabPress: e => {
+            const state = route?.state;
+            if (state && state.index > 0) {
+              e.preventDefault();
+              navigation.dispatch(
+                CommonActions.navigate('Jobs', {screen: 'JobStack'}),
+              );
+            }
+          },
+        })}
+      />
       {/* {canViewBlueSheet && ( */}
-      <Tab.Screen name="Activity" component={ActivitySummaryStack} />
+      <Tab.Screen
+        name="Activity"
+        component={ActivitySummaryStack}
+        options={{unmountOnBlur: true}}
+        listeners={({navigation, route}) => ({
+          tabPress: e => {
+            const state = route?.state;
+            if (state && state.index > 0) {
+              e.preventDefault();
+              navigation.dispatch(
+                CommonActions.navigate('Activity', {
+                  screen: 'ActivitySummaryScreen',
+                }),
+              );
+            }
+          },
+        })}
+      />
       {/* )} */}
-      <Tab.Screen name="Profile" component={ProfileStack} />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileStack}
+        options={{unmountOnBlur: true}}
+        listeners={({navigation, route}) => ({
+          tabPress: e => {
+            const state = route?.state;
+            if (state && state.index > 0) {
+              e.preventDefault();
+              navigation.dispatch(
+                CommonActions.navigate('Profile', {screen: 'ProfileScreen'}),
+              );
+            }
+          },
+        })}
+      />
     </Tab.Navigator>
   );
 }
