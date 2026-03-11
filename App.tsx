@@ -64,6 +64,7 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   Alert,
+  AppState,
   KeyboardAvoidingView,
   NativeModules,
   Platform,
@@ -97,6 +98,13 @@ import {
   startBackgroundTimer,
   stopBackgroundTimer,
 } from './src/NotificationService';
+import {
+  persistTimerState,
+  showTimerNotification,
+  getPersistedTimerState,
+  updateTimerNotification,
+  cancelTimerNotification,
+} from './src/services/TimerNotificationService';
 import {logout} from './src/redux/userSlice';
 import {logoutApi} from './src/config/apiConfig';
 import {useNotifications} from './src/hooks/useNotifications';
@@ -267,6 +275,70 @@ const AppContent = () => {
       stopBackgroundTimer();
     }
   }, [isRunning]);
+
+  // Persist + update notification every second when running (sync app ↔ notification)
+  const persistIntervalRef = useRef(null);
+  useEffect(() => {
+    if (!isRunning) {
+      if (persistIntervalRef.current) {
+        clearInterval(persistIntervalRef.current);
+        persistIntervalRef.current = null;
+      }
+      persistTimerState(elapsedTime, false);
+      return;
+    }
+    const tick = async () => {
+      const state = store.getState();
+      const t = state?.timer;
+      if (!t) return;
+      const elapsed = t.elapsedTime ?? 0;
+      const running = !!t.isRunning;
+      await persistTimerState(elapsed, running);
+      // Only update notification when app is in background (don't show card when app is active)
+      if (appStateRef.current === 'background') {
+        const p = await getPersistedTimerState();
+        await updateTimerNotification(
+          Math.floor(elapsed / 1000),
+          running,
+          p?.jobName || 'Work',
+        );
+      }
+    };
+    tick(); // once now
+    persistIntervalRef.current = setInterval(tick, 1000);
+    return () => {
+      if (persistIntervalRef.current) {
+        clearInterval(persistIntervalRef.current);
+        persistIntervalRef.current = null;
+      }
+    };
+  }, [isRunning, elapsedTime]);
+
+  // When app goes to background and timer is running, show notification (lock screen / shade).
+  // When app comes to active, hide the notification so it doesn't show while user is in app.
+  const appStateRef = useRef(AppState.currentState);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', nextState => {
+      const prev = appStateRef.current;
+      appStateRef.current = nextState;
+      if (prev === 'active' && nextState === 'background') {
+        const state = store.getState();
+        const running = state?.timer?.isRunning;
+        const elapsed = state?.timer?.elapsedTime ?? 0;
+        if (running) {
+          persistTimerState(elapsed, true);
+          const elapsedSec = Math.floor(elapsed / 1000);
+          getPersistedTimerState().then(p =>
+            showTimerNotification(elapsedSec, true, p?.jobName || 'Work'),
+          );
+        }
+      }
+      if (prev === 'background' && nextState === 'active') {
+        cancelTimerNotification();
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);

@@ -20,6 +20,7 @@ import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
 import {getJobById} from '../config/apiConfig';
 import {style} from '../constants/Fonts';
+import {blackColor} from '../constants/Color';
 
 // Embedded Colors - JDP Electrics Theme
 const Colors = {
@@ -543,10 +544,15 @@ const JobDetailScreen = ({
                   ]}>
                   <View style={[styles.infoItem]}>
                     <Text style={styles.infoLabel}>Assigned To :</Text>
-                    <View style={styles.infoWithIcon}>
+                    <View
+                      style={[
+                        {
+                          width: widthPercentageToDP(55),
+                        },
+                      ]}>
                       {job?.assigned_lead_labor &&
                         Array.isArray(job?.assigned_lead_labor) && (
-                          <Text style={styles.infoText}>
+                          <Text style={{color: blackColor, fontSize: 15}}>
                             {job?.assigned_lead_labor
                               ?.map(labor => labor.user?.full_name)
                               .join(', ')}
@@ -555,7 +561,7 @@ const JobDetailScreen = ({
 
                       {job?.assigned_labor &&
                         Array.isArray(job?.assigned_labor) && (
-                          <Text style={styles.infoText}>
+                          <Text style={{color: blackColor, fontSize: 15}}>
                             ,
                             {job?.assigned_labor
                               ?.map(labor => labor.user?.full_name)

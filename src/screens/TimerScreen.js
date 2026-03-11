@@ -26,6 +26,11 @@ import Feather from 'react-native-vector-icons/Feather';
 import {widthPercentageToDP} from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getJobById, updateWorkData} from '../config/apiConfig';
+import {
+  setTimerJobName,
+  cancelTimerNotification,
+  persistTimerState,
+} from '../services/TimerNotificationService';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -81,7 +86,7 @@ export default function TimerScreen({navigation, route}) {
     // console.log('Received jobId:', route?.params?.jobId);
   }, [stroageJobId]);
   const job = route?.params?.job;
-  console.log('Received jobId:', job);
+  // console.log('Received jobId:', job);
 
   const jobId = job?.id || Number(stroageJobId);
 
@@ -120,9 +125,7 @@ export default function TimerScreen({navigation, route}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [uiLoading, setUiLoading] = useState(true);
-  console.log('jobDatajobDatajobData', jobData);
-
-  const {TimerModule} = NativeModules;
+  // console.log('jobDatajobDatajobData', jobData);
 
   // ---------- Helpers: local buffer (no rename of existing vars) ----------
   const LS_KEYS = {
@@ -321,7 +324,7 @@ export default function TimerScreen({navigation, route}) {
     };
     boot();
   }, [stroageJobId]);
-  
+
   useEffect(() => {
     const getData = async () => {
       const bufferToday = await loadTodayActivityFromBuffer();
@@ -408,6 +411,11 @@ export default function TimerScreen({navigation, route}) {
       await bufferSet(LS_KEYS.pauses, []);
       await bufferSet(LS_KEYS.pending, []);
 
+      const jobName = job?.job_title || job?.title || job?.name || 'Work';
+      await setTimerJobName(jobName);
+      await persistTimerState(0, true, jobName);
+      // Don't show notification when app is active — only when app goes to background (handled in App.tsx)
+      // await showTimerNotification(0, true, jobName);
       dispatch(startTimerWithBackground());
       await startLiveActivity(elapsedTime);
       updateLiveActivity(elapsedTime, true);
@@ -624,6 +632,7 @@ export default function TimerScreen({navigation, route}) {
 
       dispatch(stopTimerWithBackground());
       endLiveActivity();
+      await cancelTimerNotification();
       setCompleteModal(false);
 
       Alert.alert('Success', 'Work data updated successfully.');
@@ -883,17 +892,11 @@ export default function TimerScreen({navigation, route}) {
                     justifyContent: 'space-between',
                   }}>
                   <Text
-                    style={[
-                      styles.logTime,
-                      {marginTop: 10, color: '#4CAF50'},
-                    ]}>
+                    style={[styles.logTime, {marginTop: 10, color: '#4CAF50'}]}>
                     Total{' '}
                   </Text>
                   <Text
-                    style={[
-                      styles.logTime,
-                      {marginTop: 10, color: '#4CAF50'},
-                    ]}>
+                    style={[styles.logTime, {marginTop: 10, color: '#4CAF50'}]}>
                     {totalDuration}
                   </Text>
                 </View>
@@ -956,7 +959,7 @@ export default function TimerScreen({navigation, route}) {
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>Pause Timer</Text>
-                <Text>Select a reason:</Text>
+                <Text style={{ color: 'black',}}>Select a reason:</Text>
                 {[
                   'Lunch Break',
                   'Material Pickup',
@@ -1210,7 +1213,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: '85%',
   },
-  modalTitle: {fontSize: 20, fontWeight: 'bold', marginBottom: 10},
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: 'black',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',

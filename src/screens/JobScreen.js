@@ -26,6 +26,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
 import {getJobs, getlabourJobs, searchMyJobs} from '../config/apiConfig';
+import { spacings } from '../constants/Fonts';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -99,6 +100,7 @@ const JobListingScreen = ({navigation, route}) => {
   const [showEndPicker, setShowEndPicker] = useState(false);
 
   const [expandedJobId, setExpandedJobId] = useState(null);
+  const [hasAutoExpanded, setHasAutoExpanded] = useState(false);
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -107,6 +109,10 @@ const JobListingScreen = ({navigation, route}) => {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false); // list loader
   const [refreshing, setRefreshing] = useState(false); // pull-to-refresh
+
+  const [subJobModalVisible, setSubJobModalVisible] = useState(false);
+  const [selectedJobForSub, setSelectedJobForSub] = useState(null);
+  const [subJobNewTitle, setSubJobNewTitle] = useState('');
 
   // ---------- mount mark (prevents double load)
   useEffect(() => {
@@ -117,6 +123,17 @@ const JobListingScreen = ({navigation, route}) => {
   useEffect(() => {
     fetchFirstPage(); // first page only
   }, []);
+
+  // ---------- auto-expand first job only first time
+  useEffect(() => {
+    if (!hasAutoExpanded && jobs.length > 0) {
+      const firstId = jobs[0]?.id ?? jobs[0]?._id;
+      if (firstId) {
+        setExpandedJobId(firstId);
+        setHasAutoExpanded(true);
+      }
+    }
+  }, [jobs, hasAutoExpanded]);
 
   // ---------- set status tab from route (optional)
   useEffect(() => {
@@ -167,6 +184,8 @@ const JobListingScreen = ({navigation, route}) => {
       // API shape can be either res.data.{...} or res.{...}
       const root = res?.data ?? res;
       const newJobs = root?.jobs ?? [];
+      console.log('job respsoen First:::::::', newJobs);
+
       setJobs(dedupeById(newJobs));
       setPage(2); // next time onEndReached se page 2 aayega
       const hasNext = !!(root?.pagination?.hasNextPage ?? false);
@@ -190,9 +209,10 @@ const JobListingScreen = ({navigation, route}) => {
 
       const root = res?.data ?? res;
       const newJobs = root?.jobs ?? [];
-      console.log('newJobs page', page, '→', newJobs.length);
+      // console.log('newJobs page', page, '→', newJobs.length);
 
       const combined = dedupeById([...(jobs || []), ...newJobs]);
+      console.log('job respsoen :::::::', combined);
       setJobs(combined);
 
       // pagination flags from server (use hasNextPage)
@@ -512,6 +532,12 @@ const JobListingScreen = ({navigation, route}) => {
               numberOfLines={1}>
               {job?.job_title || job?.title}
             </Text>
+            {!!job?.isSubJob && (
+              <Text style={styles.subJobTag}>Sub Job</Text>
+            )}
+            {!!job?.isMainJob && !job?.isSubJob && (
+              <Text style={styles.mainJobTag}>Main Job</Text>
+            )}
           </View>
           <View
             style={[
@@ -555,12 +581,23 @@ const JobListingScreen = ({navigation, route}) => {
                 : '—'}
             </Text>
           </View>
-          {/* <View style={styles.scheduleItem}>
-            <Ionicons name="hourglass" size={16} color={COLORS.gray500} />
-            <Text style={styles.scheduleText}>
-              {job?.estimated_hours ? `${job?.estimated_hours}h est.` : '—'}
-            </Text>
-          </View> */}
+          {job?.isMainJob && !job?.isSubJob && (
+            <TouchableOpacity
+              style={styles.subJobButtonInline}
+              onPress={e => {
+                e?.stopPropagation?.();
+                setSelectedJobForSub(job);
+                setSubJobNewTitle('');
+                setSubJobModalVisible(true);
+              }}>
+              <Ionicons
+                name="document-text-outline"
+                size={16}
+                color={COLORS.primary}
+              />
+              <Text style={styles.subJobButtonInlineText}>Change Order</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {isExpanded && (
@@ -587,14 +624,119 @@ const JobListingScreen = ({navigation, route}) => {
                   'N/A'}
                 </Text> */}
               </View>
-              {/* <View style={{flexDirection: 'row'}}>
-                <Ionicons name="people" size={16} color={COLORS.gray500} />
-                <Text style={styles.assignedText}>
-                  Assigned by: {job?.created_by_user?.full_name}
-                
-                </Text>
-              </View> */}
             </View>
+
+            {job?.isMainJob &&
+              Array.isArray(job?.subJobs) &&
+              job.subJobs.length > 0 && (
+                <View style={styles.subJobsContainer}>
+                  <Text style={styles.subJobsTitle}>Sub Jobs</Text>
+                  {job.subJobs.map(sub => (
+                    <TouchableOpacity
+                      key={sub.id}
+                      style={styles.subJobItem}
+                      activeOpacity={0.85}
+                      onPress={() =>
+                        navigation.navigate('JobDetail', {job: sub})
+                      }>
+                      {/* Top row: title + small status */}
+                      <View style={styles.subJobHeaderRow}>
+                        <Text style={styles.subJobTitle}>
+                          {sub.job_title || sub.title}
+                        </Text>
+                        <Text style={styles.subJobStatusText}>
+                          {(sub?.status === 'in_progress'
+                            ? 'In Progress'
+                            : sub?.status || ''
+                          ).toUpperCase()}
+                        </Text>
+                      </View>
+
+                      {/* Description */}
+                      {!!sub.description && (
+                        <Text
+                          style={styles.subJobDescription}
+                          numberOfLines={2}>
+                          {sub.description}
+                        </Text>
+                      )}
+
+                      {/* Date + actions row */}
+                      <View style={styles.subJobBottomRow}>
+                        <View style={styles.subJobDateRow}>
+                          <Ionicons
+                            name="calendar"
+                            size={14}
+                            color={COLORS.gray500}
+                          />
+                          <Text style={styles.subJobDateText}>
+                            {sub?.due_date
+                              ? new Date(sub?.due_date).toLocaleDateString(
+                                  'en-US',
+                                )
+                              : '—'}
+                          </Text>
+                        </View>
+
+                        <View style={styles.subJobActionsRow}>
+                          <TouchableOpacity
+                            style={styles.subJobActionButton}
+                            onPress={() =>
+                              handleCall(
+                                sub?.customer?.phone ||
+                                  sub?.contractor?.phone ||
+                                  sub?.phone,
+                              )
+                            }>
+                            <Ionicons
+                              name="call"
+                              size={16}
+                              color={COLORS.primary}
+                            />
+                            <Text style={styles.subJobActionText}>Call</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.subJobActionButton}
+                            onPress={() =>
+                              navigation.navigate('MapScreen', {job: sub})
+                            }>
+                            <Ionicons
+                              name="navigate"
+                              size={16}
+                              color={'#10B981'}
+                            />
+                            <Text
+                              style={[
+                                styles.subJobActionText,
+                                {color: '#10B981'},
+                              ]}>
+                              Navigate
+                            </Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.subJobActionButton}
+                            onPress={() => handleNavigateTimer(sub)}>
+                            <Icon
+                              name="timer"
+                              size={16}
+                              color={COLORS.danger}
+                            />
+                            <Text
+                              style={[
+                                styles.subJobActionText,
+                                {color: COLORS.danger},
+                              ]}>
+                              Timer
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
           </View>
         )}
 
@@ -739,6 +881,79 @@ const JobListingScreen = ({navigation, route}) => {
                 </View>
               </View>
             </Modal>
+
+            {/* Sub Job popup */}
+            <Modal
+              transparent
+              visible={subJobModalVisible}
+              animationType="fade"
+              onRequestClose={() => {
+                setSubJobModalVisible(false);
+                setSelectedJobForSub(null);
+                setSubJobNewTitle('');
+              }}>
+              <TouchableOpacity
+                activeOpacity={1}
+                style={styles.modalBackground}
+                onPress={() => {
+                  setSubJobModalVisible(false);
+                  setSelectedJobForSub(null);
+                  setSubJobNewTitle('');
+                }}>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  style={styles.subJobModalBox}
+                  onPress={e => e?.stopPropagation?.()}>
+                  <Text style={styles.subJobModalTitle}>
+                    Change Order Details
+                  </Text>
+                  <Text style={styles.subJobModalLabel}>Job title</Text>
+                  <TextInput
+                    style={styles.subJobModalInput}
+                    value={subJobNewTitle}
+                    onChangeText={setSubJobNewTitle}
+                    placeholder="Enter Job title"
+                    placeholderTextColor={COLORS.gray400}
+                  />
+                  <View style={styles.subJobModalButtons}>
+                    <TouchableOpacity
+                      style={[
+                        styles.subJobModalBtn,
+                        styles.subJobModalBtnCancel,
+                      ]}
+                      onPress={() => {
+                        setSubJobModalVisible(false);
+                        setSelectedJobForSub(null);
+                        setSubJobNewTitle('');
+                      }}>
+                      <Text style={styles.subJobModalBtnCancelText}>
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.subJobModalBtn,
+                        styles.subJobModalBtnCreate,
+                      ]}
+                      onPress={() => {
+                        const newTitle = subJobNewTitle?.trim() || '';
+                        const parent = selectedJobForSub;
+                        setSubJobModalVisible(false);
+                        setSelectedJobForSub(null);
+                        setSubJobNewTitle('');
+                        navigation.navigate('CreateJobScreen', {
+                          subJobTitle: newTitle,
+                          parentJob: parent,
+                        });
+                      }}>
+                      <Text style={styles.subJobModalBtnCreateText}>
+                        Create
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            </Modal>
           </View>
         </View>
 
@@ -772,18 +987,12 @@ const JobListingScreen = ({navigation, route}) => {
           }}
           ListFooterComponent={
             loading && !refreshing && filteredJobs.length > 0 ? (
-              <ActivityIndicator
-                size="large"
-                style={{margin: 10}}
-              />
+              <ActivityIndicator size="large" style={{margin: 10}} />
             ) : null
           }
           ListEmptyComponent={
             loading || refreshing || searchLoading ? (
-              <ActivityIndicator
-                size="large"
-                style={{marginTop: 40}}
-              />
+              <ActivityIndicator size="large" style={{marginTop: 40}} />
             ) : (
               renderEmptyState()
             )
@@ -913,6 +1122,18 @@ const styles = {
     color: COLORS.gray900,
     marginBottom: 12,
   },
+  mainJobTag: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginTop: -6,
+  },
+  subJobTag: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.warning,
+    marginTop: -6,
+  },
   customerSection: {marginBottom: 12},
   customerName: {
     fontSize: 16,
@@ -924,10 +1145,94 @@ const styles = {
   scheduleSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
   scheduleItem: {flexDirection: 'row', alignItems: 'center', gap: 6},
   scheduleText: {fontSize: 13, color: COLORS.gray600},
+  subJobButtonInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.blue50,
+  },
+  subJobButtonInlineText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+
+  subJobsContainer: {
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gray200,
+  },
+  subJobsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.gray800,
+    marginBottom: 4,
+  },
+  subJobItem: {
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.gray50,
+    paddingHorizontal: 10,
+    marginTop: 4,
+  },
+  subJobHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subJobTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.gray900,
+  },
+  subJobStatusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.gray600,
+  },
+  subJobDescription: {
+    fontSize: 12,
+    color: COLORS.gray700,
+    marginTop: 4,
+  },
+  subJobBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  subJobDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  subJobDateText: {
+    fontSize: 12,
+    color: COLORS.gray600,
+  },
+  subJobActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  subJobActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  subJobActionText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.primary,
+  },
 
   assignedSection: {
     flexDirection: 'row',
@@ -943,6 +1248,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
+    marginTop:spacings.large,
     borderTopColor: COLORS.gray200,
   },
   actionButton: {
@@ -988,6 +1294,60 @@ const styles = {
     padding: 20,
     backgroundColor: 'white',
     borderRadius: 10,
+  },
+  subJobModalBox: {
+    margin: 24,
+    padding: 20,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+  },
+  subJobModalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.gray700,
+    marginBottom: 12,
+  },
+  subJobModalLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: COLORS.gray600,
+    marginBottom: 6,
+  },
+  subJobModalInput: {
+    borderWidth: 1,
+    borderColor: COLORS.gray300,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: COLORS.gray900,
+    marginBottom: 20,
+  },
+  subJobModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  subJobModalBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  subJobModalBtnCancel: {
+    backgroundColor: COLORS.gray200,
+  },
+  subJobModalBtnCreate: {
+    backgroundColor: COLORS.primary,
+  },
+  subJobModalBtnCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.gray700,
+  },
+  subJobModalBtnCreateText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.white,
   },
   label: {marginTop: 10, marginBottom: 5, fontWeight: 'bold'},
   dateButton: {

@@ -53,7 +53,7 @@ const customers = [
   {id: '5', name: 'William Miller'},
 ];
 
-const CreateJobScreen = ({navigation, onCreateJob}) => {
+const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const GOOGLE_MAPS_APIKEY = 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI';
   const scrollRef = useRef(null);
   const googleRef = useRef(null);
@@ -63,6 +63,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
 
   const token = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
+  const isSubJobFlow = !!route?.params?.parentJob;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -210,6 +211,67 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
     fetchCustomers();
     // fetchContractors();
   }, []);
+
+  // Pre-fill from Sub Job: new title + full parent job details + customer + labour
+  useEffect(() => {
+    const subTitle = route?.params?.subJobTitle;
+    const parent = route?.params?.parentJob;
+    if (parent) {
+      console.log('parentparentparent', parent);
+      const dueDate = parent.due_date
+        ? new Date(parent.due_date).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0];
+      const custName = parent.customer?.name || parent.customer?.customer_name || '';
+      const assignedIds = (parent.assigned_labor || [])
+        .map(l => l?.id ?? l?.labor_id)
+        .filter(Boolean);
+      const customerAddress = parent.address || parent.customer?.address || '';
+      // Phone/email: use JOB-level (what was saved at create time), NOT customer object
+      const customerPhone =
+        parent.phone ||
+        parent.customer_phone ||
+        parent.contact_phone ||
+        parent.customer?.phone ||
+        '';
+      const customerEmail =
+        parent.email ||
+        parent.customer_email ||
+        parent.contact_email ||
+        parent.customer?.email ||
+        '';
+      const city = parent.city_zip || parent.city || '';
+      const notes = parent.notes ?? parent.additional_notes ?? '';
+      setFormData(prev => ({
+        ...prev,
+        title: typeof subTitle === 'string' ? subTitle.trim() : prev.title,
+        description: parent.description ?? prev.description,
+        customerName: custName || prev.customerName,
+        customerPhone: customerPhone || prev.customerPhone,
+        customerEmail: customerEmail || prev.customerEmail,
+        customerAddress: customerAddress || prev.customerAddress,
+        city: city || prev.city,
+        dueDate,
+        notes: notes || prev.notes,
+        assignedTo: assignedIds.length > 0 ? assignedIds : prev.assignedTo,
+        sameAsCustomer: true,
+        billingName: custName || prev.billingName,
+        billingPhone: customerPhone || prev.billingPhone,
+        billingEmail: customerEmail || prev.billingEmail,
+        billingAddress: customerAddress || prev.billingAddress,
+        billingCity: city || prev.billingCity,
+      }));
+      const custId = parent.customer_id ?? parent.customer?.id;
+      if (custId) setSelectedCustomerId(custId);
+      if (custName) {
+        setSearch(custName);
+        setSelectedCustomer(custName);
+      }
+      setValidationErrors(prev => ({...prev, customerName: ''}));
+    } else if (subTitle && typeof subTitle === 'string') {
+      setFormData(prev => ({...prev, title: subTitle.trim()}));
+    }
+  }, [route?.params?.subJobTitle, route?.params?.parentJob]);
+
   // ✅ Customers
   const fetchCustomers = async (pageNo = 1) => {
     // page 1 ko kabhi block mat karo; baaki pages ke liye guards
@@ -1109,7 +1171,9 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
         </View>
 
         {/* Customer Information */}
-        <View style={styles.sectionCard}>
+        <View
+          style={[styles.sectionCard, isSubJobFlow && styles.lockedSection]}
+          pointerEvents={isSubJobFlow ? 'none' : 'auto'}>
           <View style={styles.sectionHeader}>
             <Icon name="person" size={24} color="#3B82F6" />
             <Text style={styles.sectionTitle}>
@@ -1128,6 +1192,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 validationErrors.customerName && styles.inputContainerError,
               ]}
               placeholder="Enter Customer"
+              placeholderTextColor={'gray'}
               value={search}
               onChangeText={handleChange}
               // onBlur={handleAddIfNotExist}
@@ -1399,7 +1464,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 styles.inputContainer,
                 validationErrors.customerAddress && styles.inputContainerError,
                 ,
-                {paddingHorizontal: 0},
+                {paddingHorizontal: 0, color: 'black'},
               ]}>
               <Icon
                 name="place"
@@ -1431,14 +1496,26 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                   }}
                   textInputProps={{
                     value: formData.customerAddress,
+                    placeholderTextColor: '#9ca3af',
                     onChangeText: text =>
                       updateFormData('customerAddress', text),
                   }}
                   styles={{
+                    textInput: {
+                      color: '#000', // jo text type karoge uska color
+                      fontSize: 16,
+                    },
                     listView: {
                       maxHeight: 200,
                       zIndex: 9999,
                       elevation: 10,
+                      backgroundColor: '#fff',
+                    },
+                    row: {
+                      backgroundColor: '#fff',
+                    },
+                    description: {
+                      color: '#000', // suggestion item text color
                     },
                   }}
                 />
@@ -1826,7 +1903,9 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
         style={styles.stepContent}
         showsVerticalScrollIndicator={false}>
         {/* Team Assignment */}
-        <View style={styles.sectionCard}>
+        <View
+          style={[styles.sectionCard, isSubJobFlow && styles.lockedSection]}
+          pointerEvents={isSubJobFlow ? 'none' : 'auto'}>
           <View style={styles.sectionHeader}>
             <Icon name="groups" size={24} color="#3B82F6" />
             <Text style={styles.sectionTitle}>Team Assignment</Text>
@@ -1895,7 +1974,9 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 <Icon name="check" size={16} color="white" />
               </View>
               <View style={styles.memberInfo1}>
-                <Text style={styles.memberName1}>{user?.full_name}</Text>
+                <Text style={[styles.memberName1, {color: 'black'}]}>
+                  {user?.full_name}
+                </Text>
                 <Text style={styles.memberRole1}>
                   {user?.management_type == 'lead_labor' && 'Lead Labor'}
                 </Text>
@@ -1940,7 +2021,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                           )}
                         </View>
                         <View style={styles.memberInfo1}>
-                          <Text style={styles.memberName1}>
+                          <Text style={[styles.memberName1,{color:"black"}]}>
                             {item?.users?.full_name}
                           </Text>
                           <Text style={styles.memberRole1}>
@@ -2010,7 +2091,9 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
       </View> */}
 
         {/* Additional Notes */}
-        <View style={styles.sectionCard}>
+        <View
+          style={[styles.sectionCard, isSubJobFlow && styles.lockedSection]}
+          pointerEvents={isSubJobFlow ? 'none' : 'auto'}>
           <View style={styles.sectionHeader}>
             <Icon name="note" size={24} color="#3B82F6" />
             <Text style={styles.sectionTitle}>Additional Notes</Text>
@@ -2028,6 +2111,7 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
+                editable={!isSubJobFlow}
               />
             </View>
           </View>
@@ -2080,12 +2164,14 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               <Icon name="check-circle" size={24} color="#10b981" />
               <Text style={styles.sectionTitle}>Job Summary</Text>
             </View>
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={() => setCurrentStep(1)}>
-              <Icon name="edit" size={16} color="#6b7280" />
-              <Text style={styles.editButtonText}>Edit</Text>
-            </TouchableOpacity>
+            {!isSubJobFlow && (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => setCurrentStep(1)}>
+                <Icon name="edit" size={16} color="#6b7280" />
+                <Text style={styles.editButtonText}>Edit</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.reviewContent}>
@@ -2187,12 +2273,14 @@ const CreateJobScreen = ({navigation, onCreateJob}) => {
               <Icon name="groups" size={24} color="#3B82F6" />
               <Text style={styles.sectionTitle}>Resources</Text>
             </View>
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={() => setCurrentStep(2)}>
-              <Icon name="edit" size={16} color="#6b7280" />
-              <Text style={styles.editButtonText}>Edit</Text>
-            </TouchableOpacity>
+            {!isSubJobFlow && (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => setCurrentStep(2)}>
+                <Icon name="edit" size={16} color="#6b7280" />
+                <Text style={styles.editButtonText}>Edit</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.reviewContent}>
@@ -2442,6 +2530,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
+  lockedSection: {
+    opacity: 0.6,
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2491,6 +2582,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     paddingHorizontal: 10,
+    color: 'black',
   },
   inputContainerError: {
     borderColor: '#ef4444',
@@ -2878,9 +2970,14 @@ const styles = StyleSheet.create({
     padding: 15,
     maxHeight: '70%',
   },
-  modalTitle: {fontSize: 18, fontWeight: 'bold', marginBottom: 10},
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: 'black',
+  },
   customerItem: {padding: 12, borderBottomWidth: 1, borderColor: '#ddd'},
-  customerText: {fontSize: 16},
+  customerText: {fontSize: 16, color: 'black'},
   closeBtn: {marginTop: 10, alignSelf: 'flex-end'},
   closeBtnText: {color: '#ef4444', fontSize: 16},
   dropdownWrapper: {

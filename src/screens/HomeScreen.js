@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Modal,
+  TextInput,
 } from 'react-native';
 import {tabColor, whiteColor} from '../constants/Color';
 import Feather from 'react-native-vector-icons/Feather';
@@ -64,6 +66,10 @@ const HomeScreen = ({navigation}) => {
   const [dashboardData, setDashboardData] = useState();
   // const [unreadCount, setUnreadCount] = useState(0);
   const [todayDueJobs, setTodayDueJobs] = useState([]);
+
+  const [subJobModalVisible, setSubJobModalVisible] = useState(false);
+  const [selectedJobForSub, setSelectedJobForSub] = useState(null);
+  const [subJobNewTitle, setSubJobNewTitle] = useState('');
 
   const statsData = [
     {
@@ -438,6 +444,69 @@ const HomeScreen = ({navigation}) => {
             {job?.address}
           </Text>
         </View>
+        <View style={styles.jobDetailRow}>
+          <TouchableOpacity
+            style={styles.subJobButtonInline}
+            onPress={e => {
+              e?.stopPropagation?.();
+              setSelectedJobForSub(job);
+              setSubJobNewTitle('');
+              setSubJobModalVisible(true);
+            }}>
+            <Ionicons name="document-text-outline" size={16} color="#3B82F6" />
+            <Text style={styles.subJobButtonInlineText}>Change order</Text>
+          </TouchableOpacity>
+        </View>
+
+        {job?.isMainJob &&
+          Array.isArray(job?.subJobs) &&
+          job.subJobs.length > 0 && (
+            <View style={styles.homeSubJobsContainer}>
+              <Text style={styles.homeSubJobsTitle}>Sub Jobs</Text>
+              {job.subJobs.map(sub => (
+                <TouchableOpacity
+                  key={sub.id}
+                  style={styles.homeSubJobItem}
+                  activeOpacity={0.85}
+                  onPress={() => navigation.navigate('JobDetail', {job: sub})}>
+                  <View style={styles.homeSubJobHeaderRow}>
+                    <Text style={styles.homeSubJobTitle}>
+                      {sub.job_title || sub.title}
+                    </Text>
+                    <Text style={styles.homeSubJobStatusText}>
+                      {(sub?.status === 'in_progress'
+                        ? 'In Progress'
+                        : sub?.status || ''
+                      ).toUpperCase()}
+                    </Text>
+                  </View>
+                  {!!sub.description && (
+                    <Text
+                      style={styles.homeSubJobDescription}
+                      numberOfLines={2}>
+                      {sub.description}
+                    </Text>
+                  )}
+                  <View style={styles.homeSubJobBottomRow}>
+                    <View style={styles.homeSubJobDateRow}>
+                      <Ionicons
+                        name="calendar"
+                        size={14}
+                        color={'#6B7280'}
+                      />
+                      <Text style={styles.homeSubJobDateText}>
+                        {sub?.due_date
+                          ? new Date(sub?.due_date).toLocaleDateString(
+                              'en-US',
+                            )
+                          : '—'}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
       </View>
     </TouchableOpacity>
   );
@@ -756,6 +825,67 @@ const HomeScreen = ({navigation}) => {
           </View> */}
         </ScrollView>
       </ScrollView>
+
+      {/* Sub Job popup - same flow as Job listing */}
+      <Modal
+        transparent
+        visible={subJobModalVisible}
+        animationType="fade"
+        onRequestClose={() => {
+          setSubJobModalVisible(false);
+          setSelectedJobForSub(null);
+          setSubJobNewTitle('');
+        }}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.subJobModalBackground}
+          onPress={() => {
+            setSubJobModalVisible(false);
+            setSelectedJobForSub(null);
+            setSubJobNewTitle('');
+          }}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={styles.subJobModalBox}
+            onPress={e => e?.stopPropagation?.()}>
+            <Text style={styles.subJobModalTitle}>Change Order Details</Text>
+            <Text style={styles.subJobModalLabel}>Job title</Text>
+            <TextInput
+              style={styles.subJobModalInput}
+              value={subJobNewTitle}
+              onChangeText={setSubJobNewTitle}
+              placeholder="Enter Job title"
+              placeholderTextColor="#9CA3AF"
+            />
+            <View style={styles.subJobModalButtons}>
+              <TouchableOpacity
+                style={[styles.subJobModalBtn, styles.subJobModalBtnCancel]}
+                onPress={() => {
+                  setSubJobModalVisible(false);
+                  setSelectedJobForSub(null);
+                  setSubJobNewTitle('');
+                }}>
+                <Text style={styles.subJobModalBtnCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.subJobModalBtn, styles.subJobModalBtnCreate]}
+                onPress={() => {
+                  const newTitle = subJobNewTitle?.trim() || '';
+                  const parent = selectedJobForSub;
+                  setSubJobModalVisible(false);
+                  setSelectedJobForSub(null);
+                  setSubJobNewTitle('');
+                  navigation.navigate('Jobs', {
+                    screen: 'CreateJobScreen',
+                    params: {subJobTitle: newTitle, parentJob: parent},
+                  });
+                }}>
+                <Text style={styles.subJobModalBtnCreateText}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1097,6 +1227,81 @@ const styles = StyleSheet.create({
   jobDetails: {
     gap: 8,
   },
+  subJobButtonInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#EFF6FF',
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  subJobButtonInlineText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
+  subJobModalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  subJobModalBox: {
+    margin: 24,
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+  },
+  subJobModalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 12,
+  },
+  subJobModalLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#4B5563',
+    marginBottom: 6,
+  },
+  subJobModalInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: '#111827',
+    marginBottom: 20,
+  },
+  subJobModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  subJobModalBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  subJobModalBtnCancel: {
+    backgroundColor: '#E5E7EB',
+  },
+  subJobModalBtnCreate: {
+    backgroundColor: '#3B82F6',
+  },
+  subJobModalBtnCancelText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  subJobModalBtnCreateText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
   jobDetailRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1109,6 +1314,61 @@ const styles = StyleSheet.create({
   jobDetailText: {
     fontSize: 12,
     color: '#4A5565',
+  },
+  homeSubJobsContainer: {
+    marginTop: 10,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    gap: 4,
+  },
+  homeSubJobsTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  homeSubJobItem: {
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  homeSubJobHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  homeSubJobTitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#111827',
+  },
+  homeSubJobStatusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  homeSubJobDescription: {
+    fontSize: 12,
+    color: '#4B5563',
+    marginTop: 2,
+  },
+  homeSubJobBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  homeSubJobDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  homeSubJobDateText: {
+    fontSize: 12,
+    color: '#6B7280',
   },
   upcomingJobCard: {
     backgroundColor: 'rgba(255,255,255,0.8)',

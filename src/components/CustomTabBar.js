@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     height: '8%',
 
     alignSelf: 'center',
-    bottom: Platform.OS === 'android' ? 10 : 40,
+    bottom: Platform.OS === 'android' ? 0 : 30,
     borderRadius: Platform.OS === 'android' ? 40 : 90,
     // paddingHorizontal: 12,
     // paddingVertical: 15,

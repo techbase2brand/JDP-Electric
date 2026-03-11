@@ -14,11 +14,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {tabColor} from '../constants/Color';
+import {tabColor, whiteColor} from '../constants/Color';
 import Feather from 'react-native-vector-icons/Feather';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useSelector} from 'react-redux';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const TimesheetScreen = ({navigation, route, job}) => {
   const {timesheet} = route?.params || {};
@@ -206,7 +207,7 @@ const TimesheetScreen = ({navigation, route, job}) => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <Text style={styles.backButtonText}>←</Text>
+          <Icon name="arrow-back" size={24} color={whiteColor} />
         </TouchableOpacity>
 
         <View style={styles.headerContent}>
