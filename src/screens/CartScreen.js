@@ -23,6 +23,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {addToCart, updateQuantity} from '../redux/cartSlice';
 import {createProduct} from '../config/apiConfig';
 import DeviceInfo from 'react-native-device-info';
+import { spacings } from '../constants/Fonts';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -235,7 +236,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   if (cartItems.length === 0) {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+        {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.white} /> */}
 
         {/* Header */}
         <View style={styles.header}>
@@ -515,7 +516,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   );
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+      {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.white} /> */}
 
       {/* Header */}
       <View style={styles.header}>
@@ -706,7 +707,7 @@ const styles = StyleSheet.create({
   // Header
   header: {
     backgroundColor: Colors.white,
-    paddingTop: Platform.OS === 'android' ? Spacing.xl : 0,
+    paddingTop: Platform.OS === 'android' ? spacings.small2x : 0,
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
@@ -716,7 +717,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   backButton: {
-    padding: Spacing.sm,
+    padding: spacings.large,
   },
   headerCenter: {
     alignItems: 'center',

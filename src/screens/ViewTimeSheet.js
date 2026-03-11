@@ -202,7 +202,7 @@ const TimesheetScreen = ({navigation, route, job}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
+      {/* <StatusBar backgroundColor="#3B82F6" barStyle="light-content" /> */}
 
       {/* Header */}
       <View style={styles.header}>
@@ -214,10 +214,14 @@ const TimesheetScreen = ({navigation, route, job}) => {
           <Text style={styles.headerTitle}>
             {timesheet ? 'Bluesheet Details' : 'Daily Timesheet'}
           </Text>
-          <Text style={styles.headerSubtitle}>
-            {timesheet ? timesheet.job?.jobTitle : job?.title || 'Unknown Job'}{' '}
-            {/* {formatDate(timesheet?.created_at)} */}
-          </Text>
+          {(timesheet?.job?.jobTitle || job?.title) && (
+            <Text style={styles.headerSubtitle}>
+              {timesheet
+                ? timesheet.job?.jobTitle
+                : job?.title || 'Unknown Job'}{' '}
+              {/* {formatDate(timesheet?.created_at)} */}
+            </Text>
+          )}
         </View>
 
         <View style={styles.headerSpacer} />

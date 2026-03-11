@@ -890,7 +890,7 @@ const JobActivityLogScreen = ({navigation, route}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#3B82F6" />
+      {/* <StatusBar barStyle="light-content" backgroundColor="#3B82F6" /> */}
 
       {/* Header */}
       <View style={styles.header}>

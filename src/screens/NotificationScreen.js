@@ -869,7 +869,7 @@ const NotificationScreen = ({route}) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+      {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.white} /> */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}

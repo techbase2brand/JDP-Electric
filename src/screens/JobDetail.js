@@ -434,7 +434,7 @@ const JobDetailScreen = ({
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+      {/* <StatusBar barStyle="light-content" backgroundColor={Colors.primary} /> */}
       {/* Header */}
       <View style={[styles.header]}>
         <TouchableOpacity

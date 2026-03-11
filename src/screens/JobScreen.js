@@ -793,7 +793,7 @@ const JobListingScreen = ({navigation, route}) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+        {/* <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} /> */}
         {renderHeader()}
         <View
           style={{

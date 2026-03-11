@@ -2715,7 +2715,7 @@ const InvoiceManagementScreen = ({selectedJob, onNavigate, navigation}) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      {/* <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} /> */}
 
       {/* Header */}
       <View style={styles.header}>

@@ -208,7 +208,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+      {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.white} /> */}
 
       {/* Header */}
       <View style={styles.header}>

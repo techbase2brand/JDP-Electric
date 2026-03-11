@@ -224,7 +224,7 @@ const ForgotPasswordScreen = ({onSubmit, onBack, navigation}) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+      {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.white} /> */}
       {renderHeader()}
       <ScrollView
         style={{flex: 1}}

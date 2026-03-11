@@ -2347,7 +2347,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   // );
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
+      {/* <StatusBar backgroundColor="#3B82F6" barStyle="light-content" /> */}
 
       {/* Header */}
       <View style={styles.header}>

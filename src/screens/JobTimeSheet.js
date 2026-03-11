@@ -1895,7 +1895,7 @@ const JobTimesheet = ({navigation, route, user}) => {
   };
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
+      {/* <StatusBar backgroundColor="#3B82F6" barStyle="light-content" /> */}
 
       <View style={styles.header}>
         <View style={styles.headerTop}>

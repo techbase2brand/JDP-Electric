@@ -417,7 +417,7 @@ const OrderHistoryScreen = ({
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+      {/* <StatusBar barStyle="light-content" backgroundColor={Colors.primary} /> */}
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>

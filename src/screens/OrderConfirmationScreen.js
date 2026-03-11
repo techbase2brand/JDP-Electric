@@ -173,7 +173,7 @@ const OrderConfirmationScreen = ({
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.success} />
+      {/* <StatusBar barStyle="light-content" backgroundColor={Colors.success} /> */}
 
       {/* Confetti Animation */}
       {showConfetti && (

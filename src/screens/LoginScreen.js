@@ -470,7 +470,7 @@ const LoginScreen = ({navigation}) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
-      <StatusBar backgroundColor="#f8fafc" barStyle="dark-content" />
+      {/* <StatusBar backgroundColor="#f8fafc" barStyle="dark-content" /> */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

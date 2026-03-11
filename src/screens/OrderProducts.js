@@ -640,6 +640,7 @@ import {addToCart, updateQuantity} from '../redux/cartSlice';
 // --- API imports (ensure these are exported from your api file) ---
 import {getProductsBySupplier, searchProducts} from '../config/apiConfig';
 import {heightPercentageToDP} from '../utils';
+import { spacings } from '../constants/Fonts';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -1000,7 +1001,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+      {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.white} /> */}
 
       {/* Header */}
       <View style={styles.header}>
@@ -1072,7 +1073,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
           <Text>Loading products...</Text>
         </View>
       ) : !showEmpty ? (
-        <View>
+        <View style={{height:heightPercentageToDP(82.5)}}>
           {/* Categories only for default list */}
           {!isSearching && (
             <View style={styles.categoryTabs}>
@@ -1163,7 +1164,7 @@ const styles = StyleSheet.create({
 
   header: {
     backgroundColor: Colors.white,
-    paddingTop: Platform.OS === 'android' ? Spacing.xl : 0,
+    paddingTop: Platform.OS === 'android' ? spacings.large : 0,
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,

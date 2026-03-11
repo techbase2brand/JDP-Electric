@@ -1574,7 +1574,7 @@ const ActivitySummaryScreen = ({navigation}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#3B82F6" />
+      {/* <StatusBar barStyle="light-content" backgroundColor="#3B82F6" /> */}
 
       {/* Header */}
       <View style={styles.header}>
@@ -1833,7 +1833,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 50,
+    bottom: Platform.OS === 'android' ? 150 : 50,
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,

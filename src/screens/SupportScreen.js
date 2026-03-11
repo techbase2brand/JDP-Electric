@@ -516,6 +516,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
+import { spacings } from '../constants/Fonts';
 
 // Embedded Colors and Constants
 const Colors = {
@@ -717,7 +718,7 @@ const openEmail = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.white} />
+      {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.white} /> */}
       {renderHeader()}
 
       <ScrollView
@@ -736,7 +737,7 @@ const styles = StyleSheet.create({
   container: {flex: 1, backgroundColor: Colors.backgroundLight, paddingBottom:0},
   header: {
     backgroundColor: Colors.white,
-    paddingTop: Spacing.lg,
+    paddingTop: spacings.large,
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,

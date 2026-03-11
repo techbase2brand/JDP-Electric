@@ -284,15 +284,15 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
+      {/* <StatusBar backgroundColor="#3B82F6" barStyle="light-content" /> */}
 
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>All Bluesheets</Text>
-          <Text style={styles.headerSubtitle}>
+          {/* <Text style={styles.headerSubtitle}> */}
             {/* {filteredTimesheets.length} of {allTimesheets.length} timesheets */}
-          </Text>
+          {/* </Text> */}
         </View>
 
         {/* <View style={styles.headerSpacer} /> */}

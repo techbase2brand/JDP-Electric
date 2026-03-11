@@ -1202,7 +1202,7 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
       <SafeAreaView style={styles.container}>
-        <StatusBar backgroundColor="#3B82F6" barStyle="light-content" />
+        {/* <StatusBar backgroundColor="#3B82F6" barStyle="light-content" /> */}
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
