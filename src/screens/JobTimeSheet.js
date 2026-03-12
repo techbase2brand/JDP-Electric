@@ -25,6 +25,7 @@ import {useSelector} from 'react-redux';
 import {
   getAllLabor,
   getJobBluesheets,
+  getJobOrders,
   submitBluesheetComplete,
 } from '../config/apiConfig';
 // import DateTimePicker from '@react-native-community/datetimepicker';
@@ -108,7 +109,7 @@ const normalizeToHMS = val => {
 
 /** Storage keys (per job + date) */
 const tsKey = (jobId, date) => `ts:${jobId}:${date}`;
-const submitKey = (jobId, date) => `ts:${jobId}:${date}:submitted`;
+// const submitKey = (jobId, date) => `ts:${jobId}:${date}:submitted`; // per-day submit lock (commented out)
 
 /* ======================
    SEARCH DROPDOWN
@@ -1330,11 +1331,16 @@ const JobTimesheet = ({navigation, route, user}) => {
   useEffect(() => {
     const fetchTimesheet = async () => {
       try {
-        // fetch for current date so route-seeding uses that data immediately
-        const res = await getJobBluesheets(currentJobId, token);
-        console.log('reessss', res);
-
-        setBulesheetData(res?.data ?? {}); // keep shape similar to previous code
+        const [bluesheetRes, ordersRes] = await Promise.all([
+          getJobBluesheets(currentJobId, token),
+          getJobOrders(currentJobId, token).catch(() => ({data: {orders: []}})),
+        ]);
+        const bluesheet = bluesheetRes?.data ?? {};
+        const jobOrders = ordersRes?.data?.orders ?? ordersRes?.orders ?? [];
+        setBulesheetData({
+          ...bluesheet,
+          orders: bluesheet.orders?.length ? bluesheet.orders : jobOrders,
+        });
       } catch (error) {
         console.log('Error fetching timesheet:', error);
         setBulesheetData({}); // fail-safe
@@ -1545,19 +1551,20 @@ const JobTimesheet = ({navigation, route, user}) => {
       loadFromStorageOrSeed(bluesheetData, timesheetData.date);
     }
   }, [currentJobId, timesheetData.date, bluesheetData, loadFromStorageOrSeed]);
-  // per-day submit lock
-  const [isSubmittedForDay, setIsSubmittedForDay] = useState(false);
-  const refreshSubmitLock = async (jobId, date) => {
-    try {
-      const v = await AsyncStorage.getItem(submitKey(jobId, date));
-      setIsSubmittedForDay(v === 'true');
-    } catch {
-      setIsSubmittedForDay(false);
-    }
-  };
-  useEffect(() => {
-    refreshSubmitLock(currentJobId, timesheetData.date);
-  }, [currentJobId, timesheetData.date]);
+
+  // per-day submit lock (commented out – re-enable to restrict one submit per job per day)
+  // const [isSubmittedForDay, setIsSubmittedForDay] = useState(false);
+  // const refreshSubmitLock = async (jobId, date) => {
+  //   try {
+  //     const v = await AsyncStorage.getItem(submitKey(jobId, date));
+  //     setIsSubmittedForDay(v === 'true');
+  //   } catch {
+  //     setIsSubmittedForDay(false);
+  //   }
+  // };
+  // useEffect(() => {
+  //   refreshSubmitLock(currentJobId, timesheetData.date);
+  // }, [currentJobId, timesheetData.date]);
 
   // persist local edits
   const persistLocalState = async next => {
@@ -1682,7 +1689,8 @@ const JobTimesheet = ({navigation, route, user}) => {
   const [tempMaterialData, setTempMaterialData] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const locked = isSubmittedForDay;
+  // was: const locked = isSubmittedForDay; (per-day lock commented out)
+  const locked = timesheetData.status === 'approved';
 
   /* ========= LABOUR CRUD ========= */
   const handleAddLabour = () => {
@@ -1793,11 +1801,8 @@ const JobTimesheet = ({navigation, route, user}) => {
 
       const response = await submitBluesheetComplete(payload, token);
 
-      await AsyncStorage.setItem(
-        submitKey(currentJobId, timesheetData.date),
-        'true',
-      );
-      setIsSubmittedForDay(true);
+      // await AsyncStorage.setItem(submitKey(currentJobId, timesheetData.date), 'true');
+      // setIsSubmittedForDay(true);
 
       await AsyncStorage.removeItem(tsKey(currentJobId, timesheetData.date));
 
@@ -1827,21 +1832,11 @@ const JobTimesheet = ({navigation, route, user}) => {
           String(err?.message || err?.error || ''),
         )
       ) {
-        await AsyncStorage.setItem(
-          submitKey(currentJobId, timesheetData.date),
-          'true',
-        );
-        setIsSubmittedForDay(true);
-        await AsyncStorage.removeItem(tsKey(currentJobId, timesheetData.date));
-        setTimesheetData(prev => ({
-          ...prev,
-          status: 'submitted',
-          submittedAt: prev.submittedAt || new Date().toISOString(),
-        }));
-        Alert.alert(
-          'Already Submitted',
-          // 'Aaj ki bluesheet pehle hi submit ho chuki hai.',
-        );
+        // await AsyncStorage.setItem(submitKey(currentJobId, timesheetData.date), 'true');
+        // setIsSubmittedForDay(true);
+        // await AsyncStorage.removeItem(tsKey(currentJobId, timesheetData.date));
+        // setTimesheetData(prev => ({ ...prev, status: 'submitted', submittedAt: prev.submittedAt || new Date().toISOString() }));
+        Alert.alert('Already Submitted', msg);
         return;
       }
 
@@ -1862,14 +1857,12 @@ const JobTimesheet = ({navigation, route, user}) => {
     });
 
   const canEdit = () =>
-    // console.log('timesheetData.status', timesheetData.status);
-
-    !isSubmittedForDay &&
+    // !isSubmittedForDay &&
     (timesheetData.status === 'draft' ||
       (user?.role === 'Lead Labor' && timesheetData.status === 'submitted') ||
       timesheetData.status === 'rejected');
   const isReadOnly = () =>
-    isSubmittedForDay || timesheetData.status === 'approved';
+    /* isSubmittedForDay || */ timesheetData.status === 'approved';
   const handleEdit = entry => {
     const hms = normalizeToHMS(
       entry.regular_hours_input ??

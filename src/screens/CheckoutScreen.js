@@ -18,7 +18,7 @@ import {useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
 import DeviceInfo from 'react-native-device-info';
 import {createOrders} from '../config/apiConfig';
-import {clearCart} from '../redux/cartSlice';
+import {clearCartForJob} from '../redux/cartSlice';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -77,18 +77,25 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
   console.log('deviceIddeviceId>>>', deviceId._j);
   const token = useSelector(state => state.user.token);
   const dispatch = useDispatch();
-  const {leadLabourId, jobData, supplierId} = route.params;
+  const {leadLabourId, jobData, supplierId} = route.params ?? {};
+  const jobObj = jobData?.job ?? jobData;
+  const jobId = jobObj?.id ?? jobObj?._id ?? null;
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [showOrderSummary, setShowOrderSummary] = useState(false);
   const [loading, setLoading] = useState(false);
-  const cartItems = useSelector(state => state.cart.items);
+  const allCartItems = useSelector(state => state.cart.items);
+  const cartItems = allCartItems.filter(
+    item => (item.job_id ?? item.jobId) === jobId,
+  );
   console.log('Labour ID:', leadLabourId, cartItems);
-  console.log('Job ID:', jobData);
+  console.log('Job ID:', jobData, jobId);
   console.log('Supplier ID:', supplierId);
-  const jobId = jobData?.job?.id;
-  console.log('Job ID:', jobId);
 
   const handlePlaceOrder = async () => {
+    if (!jobId || !cartItems?.length) {
+      Alert.alert('Error', 'No items for this job or job missing.');
+      return;
+    }
     const today = new Date().toISOString().split('T')[0];
     const formattedCartItems = cartItems.map(item => ({
       product_id: item?.id,
@@ -99,15 +106,15 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
       lead_labour_id: leadLabourId,
       job_id: jobId,
       supplier_id: supplierId,
-      customer_id: jobData?.job?.customer_id,
-      contractor_id: jobData?.job?.contractor_id,
+      customer_id: jobObj?.customer_id ?? jobObj?.customer?.id,
+      contractor_id: jobObj?.contractor_id ?? jobObj?.contractor?.id,
       // totalItems: formattedCartItems?.length,
       cartItems: formattedCartItems,
       // order details.
       order_date: today,
-      delivery_address: jobData?.job?.customer?.address,
+      delivery_address: jobObj?.customer?.address ?? jobObj?.address,
       // delivery_city_zip: 'New York, NY 10001',
-      delivery_phone: jobData?.job?.customer?.phone,
+      delivery_phone: jobObj?.customer?.phone ?? jobObj?.customer_phone,
       created_from: 'app',
       status: 'completed',
       system_ip: deviceId._j,
@@ -117,7 +124,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
     try {
       setLoading(true);
       const res = await createOrders(payload, token);
-      dispatch(clearCart());
+      dispatch(clearCartForJob(jobId));
       Alert.alert('Success', 'Order Created successfully!');
       navigation.navigate('OrderConfirmationScreen', {order: res});
     } catch (error) {

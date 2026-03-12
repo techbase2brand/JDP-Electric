@@ -77,14 +77,18 @@ const Shadows = {
 };
 
 const CartScreen = ({onBack, onNavigate, route}) => {
-  const {id, job} = route.params;
+  const {id, job} = route.params ?? {};
+  const jobObj = job?.job ?? job;
   const dispatch = useDispatch();
-  const cartItems = useSelector(state => state.cart.items);
+  const allCartItems = useSelector(state => state.cart.items);
+  const cartItems = allCartItems.filter(
+    item => (item.job_id ?? item.jobId) === (jobObj?.id ?? jobObj?._id),
+  );
   const token = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
   const [loading, setLoading] = useState(false);
 
-  console.log('cartitemss', id, job.job.id, user?.leadLabor?.[0].id);
+  console.log('cartitemss', id, jobObj?.id, user?.leadLabor?.[0].id);
 
   const handleAddMaterial = async () => {
     try {
@@ -137,21 +141,33 @@ const CartScreen = ({onBack, onNavigate, route}) => {
     unit: 'pieces',
     unit_cost: '',
     supplier_id: id,
-    job_id: job?.job?.id || '',
+    job_id: jobObj?.id || '',
     is_custom: true,
   });
 
   // Device unique ID
   const deviceId = DeviceInfo.getUniqueId();
 
-  // ✅ Update Quantity (Redux)
+  // ✅ Update Quantity (Redux) – scoped to current job
   const handleUpdateQuantity = (itemId, newQuantity) => {
-    dispatch(updateQuantity({productId: itemId, newQuantity}));
+    dispatch(
+      updateQuantity({
+        productId: itemId,
+        newQuantity,
+        jobId: jobObj?.id ?? jobObj?._id,
+      }),
+    );
   };
 
-  // ✅ Remove item
+  // ✅ Remove item – scoped to current job
   const handleRemoveItem = itemId => {
-    dispatch(updateQuantity({productId: itemId, newQuantity: 0}));
+    dispatch(
+      updateQuantity({
+        productId: itemId,
+        newQuantity: 0,
+        jobId: jobObj?.id ?? jobObj?._id,
+      }),
+    );
   };
 
   const getTotalItems = () => {

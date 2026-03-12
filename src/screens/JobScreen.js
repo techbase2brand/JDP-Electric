@@ -86,7 +86,7 @@ const JobListingScreen = ({navigation, route}) => {
   const canViewCreateJob = useHasPermission('jobs', 'view');
 
   // ----- route
-  const {status} = route?.params || {};
+  const {status, initialJobId} = route?.params || {};
 
   // ----- state
   const [jobs, setJobs] = useState([]);
@@ -113,6 +113,9 @@ const JobListingScreen = ({navigation, route}) => {
   const [subJobModalVisible, setSubJobModalVisible] = useState(false);
   const [selectedJobForSub, setSelectedJobForSub] = useState(null);
   const [subJobNewTitle, setSubJobNewTitle] = useState('');
+  const [pendingDeepLinkJobId, setPendingDeepLinkJobId] = useState(
+    initialJobId ? String(initialJobId) : null,
+  );
 
   // ---------- mount mark (prevents double load)
   useEffect(() => {
@@ -139,6 +142,25 @@ const JobListingScreen = ({navigation, route}) => {
   useEffect(() => {
     if (status) setActiveTab(status);
   }, [status]);
+
+  // ---------- handle deep-linked job from notification
+  useEffect(() => {
+    if (!pendingDeepLinkJobId || !jobs || jobs.length === 0) return;
+
+    const target = jobs.find(j => {
+      const id =
+        j?.id ?? j?._id ?? j?.jobId ?? j?.job_id ?? j?.job_number ?? null;
+      return id && String(id) === String(pendingDeepLinkJobId);
+    });
+
+    if (target) {
+      setPendingDeepLinkJobId(null);
+      // chhota delay (≈2 sec), pehle list render ho jaaye phir detail open ho
+      setTimeout(() => {
+        navigation.navigate('JobDetail', {job: target});
+      }, 2000);
+    }
+  }, [pendingDeepLinkJobId, jobs, navigation]);
 
   // ---------- search debounce
   useEffect(() => {
@@ -581,7 +603,9 @@ const JobListingScreen = ({navigation, route}) => {
                 : '—'}
             </Text>
           </View>
-          {job?.isMainJob && !job?.isSubJob && (
+          {job?.isMainJob &&
+            !job?.isSubJob &&
+            user?.management_type === 'lead_labor' && (
             <TouchableOpacity
               style={styles.subJobButtonInline}
               onPress={e => {
@@ -626,7 +650,8 @@ const JobListingScreen = ({navigation, route}) => {
               </View>
             </View>
 
-            {job?.isMainJob &&
+            {/* Sub job listing inside job list card is temporarily disabled */}
+            {/* {job?.isMainJob &&
               Array.isArray(job?.subJobs) &&
               job.subJobs.length > 0 && (
                 <View style={styles.subJobsContainer}>
@@ -639,7 +664,6 @@ const JobListingScreen = ({navigation, route}) => {
                       onPress={() =>
                         navigation.navigate('JobDetail', {job: sub})
                       }>
-                      {/* Top row: title + small status */}
                       <View style={styles.subJobHeaderRow}>
                         <Text style={styles.subJobTitle}>
                           {sub.job_title || sub.title}
@@ -652,7 +676,6 @@ const JobListingScreen = ({navigation, route}) => {
                         </Text>
                       </View>
 
-                      {/* Description */}
                       {!!sub.description && (
                         <Text
                           style={styles.subJobDescription}
@@ -661,7 +684,6 @@ const JobListingScreen = ({navigation, route}) => {
                         </Text>
                       )}
 
-                      {/* Date + actions row */}
                       <View style={styles.subJobBottomRow}>
                         <View style={styles.subJobDateRow}>
                           <Ionicons
@@ -736,7 +758,7 @@ const JobListingScreen = ({navigation, route}) => {
                     </TouchableOpacity>
                   ))}
                 </View>
-              )}
+              )} */}
           </View>
         )}
 
@@ -789,7 +811,7 @@ const JobListingScreen = ({navigation, route}) => {
   // ---------- render
   return (
     <KeyboardAvoidingView
-      style={styles.safeArea}
+      style={{flex: 1, backgroundColor: 'white'}}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
       <SafeAreaView style={styles.safeArea}>

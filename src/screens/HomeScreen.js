@@ -444,21 +444,30 @@ const HomeScreen = ({navigation}) => {
             {job?.address}
           </Text>
         </View>
-        <View style={styles.jobDetailRow}>
-          <TouchableOpacity
-            style={styles.subJobButtonInline}
-            onPress={e => {
-              e?.stopPropagation?.();
-              setSelectedJobForSub(job);
-              setSubJobNewTitle('');
-              setSubJobModalVisible(true);
-            }}>
-            <Ionicons name="document-text-outline" size={16} color="#3B82F6" />
-            <Text style={styles.subJobButtonInlineText}>Change order</Text>
-          </TouchableOpacity>
-        </View>
-
         {job?.isMainJob &&
+          !job?.isSubJob &&
+          user?.management_type === 'lead_labor' && (
+            <View style={styles.jobDetailRow}>
+              <TouchableOpacity
+                style={styles.subJobButtonInline}
+                onPress={e => {
+                  e?.stopPropagation?.();
+                  setSelectedJobForSub(job);
+                  setSubJobNewTitle('');
+                  setSubJobModalVisible(true);
+                }}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={16}
+                  color="#3B82F6"
+                />
+                <Text style={styles.subJobButtonInlineText}>Change order</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+        {/* Sub job listing in home job card is temporarily disabled */}
+        {/* {job?.isMainJob &&
           Array.isArray(job?.subJobs) &&
           job.subJobs.length > 0 && (
             <View style={styles.homeSubJobsContainer}>
@@ -506,7 +515,7 @@ const HomeScreen = ({navigation}) => {
                 </TouchableOpacity>
               ))}
             </View>
-          )}
+          )} */}
       </View>
     </TouchableOpacity>
   );

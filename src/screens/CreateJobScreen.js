@@ -157,6 +157,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const [selectedContractorId, setSelectedContractorId] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showPlaces, setShowPlaces] = useState(true);
+  const [laborSearch, setLaborSearch] = useState('');
 
   console.log('selectedselected>>', selected);
 
@@ -1482,7 +1483,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                   query={{
                     key: 'AIzaSyCKNlYJxb2T3c8a1rvP5r4FTopvfWWCwHI',
                     language: 'en',
-                    components: 'country:us',
+                    // components: 'country:us',
                   }}
                   onPress={(data, details) => {
                     const fullAddress = data.description;
@@ -1893,26 +1894,33 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
     );
   };
 
-  const renderResourcesStep = () => (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{flex: 1}}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // adjust as per header height
-    >
-      <ScrollView
-        style={styles.stepContent}
-        showsVerticalScrollIndicator={false}>
-        {/* Team Assignment */}
-        <View
-          style={[styles.sectionCard, isSubJobFlow && styles.lockedSection]}
-          pointerEvents={isSubJobFlow ? 'none' : 'auto'}>
-          <View style={styles.sectionHeader}>
-            <Icon name="groups" size={24} color="#3B82F6" />
-            <Text style={styles.sectionTitle}>Team Assignment</Text>
-          </View>
+  const renderResourcesStep = () => {
+    const filteredLabors = labors.filter(labor =>
+      (labor?.users?.full_name || '')
+        .toLowerCase()
+        .includes(laborSearch.trim().toLowerCase()),
+    );
 
-          <Text style={styles.formLabel}>Assigned Team Members *</Text>
-          {/* <View style={styles.teamMembersList}>
+    return (
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{flex: 1}}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0} // adjust as per header height
+      >
+        <ScrollView
+          style={styles.stepContent}
+          showsVerticalScrollIndicator={false}>
+          {/* Team Assignment */}
+          <View
+            style={[styles.sectionCard, isSubJobFlow && styles.lockedSection]}
+            pointerEvents={isSubJobFlow ? 'none' : 'auto'}>
+            <View style={styles.sectionHeader}>
+              <Icon name="groups" size={24} color="#3B82F6" />
+              <Text style={styles.sectionTitle}>Team Assignment</Text>
+            </View>
+
+            <Text style={styles.formLabel}>Assigned Team Members *</Text>
+            {/* <View style={styles.teamMembersList}>
           {teamMembers.map(member => (
             <TouchableOpacity
               key={member.id}
@@ -1953,100 +1961,115 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
             </TouchableOpacity>
           ))}
         </View> */}
-          <View style={styles.container}>
-            {/* Dropdown Header */}
+            <View style={styles.container}>
+              {/* Dropdown Header */}
 
-            <TouchableOpacity style={styles.dropdownItem}>
-              <View
-                style={[
-                  styles.checkboxChecked1,
-                  {
-                    width: 20,
-                    height: 20,
-                    borderWidth: 1,
-                    borderColor: '#aaa',
-                    marginRight: 10,
-                    borderRadius: 4,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  },
-                ]}>
-                <Icon name="check" size={16} color="white" />
-              </View>
-              <View style={styles.memberInfo1}>
-                <Text style={[styles.memberName1, {color: 'black'}]}>
-                  {user?.full_name}
+              <TouchableOpacity style={styles.dropdownItem}>
+                <View
+                  style={[
+                    styles.checkboxChecked1,
+                    {
+                      width: 20,
+                      height: 20,
+                      borderWidth: 1,
+                      borderColor: '#aaa',
+                      marginRight: 10,
+                      borderRadius: 4,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    },
+                  ]}>
+                  <Icon name="check" size={16} color="white" />
+                </View>
+                <View style={styles.memberInfo1}>
+                  <Text style={[styles.memberName1, {color: 'black'}]}>
+                    {user?.full_name}
+                  </Text>
+                  <Text style={styles.memberRole1}>
+                    {user?.management_type == 'lead_labor' && 'Lead Labor'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dropdownHeader}
+                onPress={toggleDropdown}>
+                <Text style={styles.headerText}>
+                  {formData?.assignedTo?.length > 0
+                    ? labors
+                        .filter(labor =>
+                          formData.assignedTo.includes(labor.id),
+                        )
+                        .map(labor => labor.users?.full_name)
+                        .join(', ')
+                    : 'Select Members'}
                 </Text>
-                <Text style={styles.memberRole1}>
-                  {user?.management_type == 'lead_labor' && 'Lead Labor'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.dropdownHeader}
-              onPress={toggleDropdown}>
-              <Text style={styles.headerText}>
-                {formData?.assignedTo?.length > 0
-                  ? labors
-                      .filter(labor => formData.assignedTo.includes(labor.id))
-                      .map(labor => labor.users?.full_name)
-                      .join(', ')
-                  : 'Select Members'}
-              </Text>
-              <Icon
-                name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
-                size={24}
-              />
-            </TouchableOpacity>
-
-            {/* Dropdown List */}
-            {isOpen && (
-              <View style={styles.dropdownList}>
-                <FlatList
-                  data={labors}
-                  keyExtractor={item => item.id.toString()}
-                  renderItem={({item}) => {
-                    const isSelected = formData.assignedTo.includes(item?.id);
-                    return (
-                      <TouchableOpacity
-                        style={styles.dropdownItem}
-                        onPress={() => handleSelect(item)}>
-                        <View
-                          style={[
-                            styles.checkbox1,
-                            isSelected && styles.checkboxChecked1,
-                          ]}>
-                          {isSelected && (
-                            <Icon name="check" size={16} color="white" />
-                          )}
-                        </View>
-                        <View style={styles.memberInfo1}>
-                          <Text style={[styles.memberName1,{color:"black"}]}>
-                            {item?.users?.full_name}
-                          </Text>
-                          <Text style={styles.memberRole1}>
-                            {item?.users?.role}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  }}
+                <Icon
+                  name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
+                  size={24}
                 />
+              </TouchableOpacity>
+
+              {/* Dropdown List */}
+              {isOpen && (
+                <View style={styles.dropdownList}>
+                  <View style={styles.searchInputWrapper}>
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Search labour..."
+                      placeholderTextColor="#9ca3af"
+                      value={laborSearch}
+                      onChangeText={text => setLaborSearch(text)}
+                    />
+                  </View>
+                  <FlatList
+                    data={filteredLabors}
+                    keyExtractor={item => item.id.toString()}
+                    nestedScrollEnabled
+                    keyboardShouldPersistTaps="handled"
+                    scrollEnabled
+                    style={{flexGrow: 0}}
+                    renderItem={({item}) => {
+                      const isSelected = formData.assignedTo.includes(item?.id);
+                      return (
+                        <TouchableOpacity
+                          style={styles.dropdownItem}
+                          onPress={() => handleSelect(item)}>
+                          <View
+                            style={[
+                              styles.checkbox1,
+                              isSelected && styles.checkboxChecked1,
+                            ]}>
+                            {isSelected && (
+                              <Icon name="check" size={16} color="white" />
+                            )}
+                          </View>
+                          <View style={styles.memberInfo1}>
+                            <Text style={[styles.memberName1, {color: 'black'}]}>
+                              {item?.users?.full_name}
+                            </Text>
+                            <Text style={styles.memberRole1}>
+                              {item?.users?.role}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    }}
+                  />
+                </View>
+              )}
+            </View>
+            {validationErrors.assignedTo && (
+              <View style={styles.errorContainer}>
+                <Icon name="error" size={16} color="#ef4444" />
+                <Text style={styles.errorText}>
+                  {validationErrors.assignedTo}
+                </Text>
               </View>
             )}
           </View>
-          {validationErrors.assignedTo && (
-            <View style={styles.errorContainer}>
-              <Icon name="error" size={16} color="#ef4444" />
-              <Text style={styles.errorText}>
-                {validationErrors.assignedTo}
-              </Text>
-            </View>
-          )}
-        </View>
 
-        {/* Time Estimation */}
-        {/* <View style={styles.sectionCard}>
+          {/* Time Estimation */}
+          {/* <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <Icon name="timer" size={24} color="#3B82F6" />
           <Text style={styles.sectionTitle}>Time Estimation</Text>
@@ -2090,35 +2113,36 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         </View>
       </View> */}
 
-        {/* Additional Notes */}
-        <View
-          style={[styles.sectionCard, isSubJobFlow && styles.lockedSection]}
-          pointerEvents={isSubJobFlow ? 'none' : 'auto'}>
-          <View style={styles.sectionHeader}>
-            <Icon name="note" size={24} color="#3B82F6" />
-            <Text style={styles.sectionTitle}>Additional Notes</Text>
-          </View>
+          {/* Additional Notes */}
+          <View
+            style={[styles.sectionCard, isSubJobFlow && styles.lockedSection]}
+            pointerEvents={isSubJobFlow ? 'none' : 'auto'}>
+            <View style={styles.sectionHeader}>
+              <Icon name="note" size={24} color="#3B82F6" />
+              <Text style={styles.sectionTitle}>Additional Notes</Text>
+            </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Special Instructions or Notes</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={[styles.formInput, styles.textArea]}
-                value={formData.notes}
-                onChangeText={text => updateFormData('notes', text)}
-                placeholder="Any special instructions, safety requirements, or additional notes..."
-                placeholderTextColor="#9ca3af"
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                editable={!isSubJobFlow}
-              />
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Special Instructions or Notes</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={[styles.formInput, styles.textArea]}
+                  value={formData.notes}
+                  onChangeText={text => updateFormData('notes', text)}
+                  placeholder="Any special instructions, safety requirements, or additional notes..."
+                  placeholderTextColor="#9ca3af"
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                  editable={!isSubJobFlow}
+                />
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  };
 
   const renderReviewStep = () => {
     // const assignedMembers = labors?.filter(member =>
@@ -3012,7 +3036,21 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 8,
     marginTop: 5,
-    maxHeight: 200,
+    height: 260,
+    overflow: 'hidden',
+  },
+  searchInputWrapper: {
+    paddingHorizontal: 10,
+    paddingTop: 10,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#111827',
   },
   dropdownItem: {
     flexDirection: 'row',

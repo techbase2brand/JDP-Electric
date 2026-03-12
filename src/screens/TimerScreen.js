@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   ScrollView,
+  PermissionsAndroid,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {
@@ -31,6 +32,7 @@ import {
   cancelTimerNotification,
   persistTimerState,
 } from '../services/TimerNotificationService';
+import Geolocation from '@react-native-community/geolocation';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -54,6 +56,25 @@ const fmtDate = (d = new Date()) => {
 };
 const fmtTime = (d = new Date()) =>
   `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+
+// ---------------- Geofencing (Timer) ----------------
+const GEOFENCE_RADIUS_M = 50;
+const GOOGLE_MAPS_APIKEY = 'AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE';
+
+// Haversine distance in meters
+const getDistanceM = (lat1, lon1, lat2, lon2) => {
+  const toRad = x => (x * Math.PI) / 180;
+  const R = 6371e3;
+  const φ1 = toRad(lat1);
+  const φ2 = toRad(lat2);
+  const Δφ = toRad(lat2 - lat1);
+  const Δλ = toRad(lon2 - lon1);
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 const CustomButton = ({label, onPress, color, disabled, widthbtn, loading}) => (
   <TouchableOpacity
@@ -89,6 +110,113 @@ export default function TimerScreen({navigation, route}) {
   // console.log('Received jobId:', job);
 
   const jobId = job?.id || Number(stroageJobId);
+
+  // geofence state
+  const [destinationCoordinates, setDestinationCoordinates] = useState(null);
+  const geofenceWatchIdRef = React.useRef(null);
+  const geofenceStopShownRef = React.useRef(false);
+
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message:
+              'Location permission is required to start timer at the work location.',
+            buttonPositive: 'Allow',
+            buttonNegative: 'Deny',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const geocodeAddressToCoords = async address => {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        address,
+      )}&key=${GOOGLE_MAPS_APIKEY}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data?.results?.length > 0) {
+        const {lat, lng} = data.results[0].geometry.location;
+        return {latitude: lat, longitude: lng};
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const ensureDestinationCoords = async () => {
+    if (destinationCoordinates) return destinationCoordinates;
+
+    // try numeric coordinates if present on job
+    const lat =
+      job?.latitude ??
+      job?.lat ??
+      job?.location?.latitude ??
+      job?.location?.lat ??
+      null;
+    const lng =
+      job?.longitude ??
+      job?.lng ??
+      job?.location?.longitude ??
+      job?.location?.lng ??
+      null;
+    if (typeof lat === 'number' && typeof lng === 'number') {
+      const coords = {latitude: lat, longitude: lng};
+      setDestinationCoordinates(coords);
+      return coords;
+    }
+
+    const address = job?.job?.address || job?.address || null;
+    if (!address) return null;
+    const coords = await geocodeAddressToCoords(address);
+    if (coords) setDestinationCoordinates(coords);
+    return coords;
+  };
+
+  const getCurrentCoordsOnce = async options =>
+    await new Promise(resolve => {
+      Geolocation.getCurrentPosition(
+        pos =>
+          resolve({
+            latitude: pos?.coords?.latitude,
+            longitude: pos?.coords?.longitude,
+          }),
+        () => resolve(null),
+        options,
+      );
+    });
+
+  const getCurrentCoords = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) return null;
+
+    // Try fast first (less strict), then high accuracy.
+    const first = await getCurrentCoordsOnce({
+      enableHighAccuracy: false,
+      timeout: 15000,
+      maximumAge: 5000,
+    });
+    if (first?.latitude && first?.longitude) return first;
+
+    const second = await getCurrentCoordsOnce({
+      enableHighAccuracy: true,
+      timeout: 25000,
+      maximumAge: 0,
+    });
+    if (second?.latitude && second?.longitude) return second;
+
+    return null;
+  };
 
   const [startISO, setStartISO] = useState(null);
   const [pauseList, setPauseList] = useState([]);
@@ -400,6 +528,38 @@ export default function TimerScreen({navigation, route}) {
   const handleStart = async () => {
     try {
       setStartLoading(true);
+
+      // -------- Geofence: must be within 50m to start --------
+      const dest = await ensureDestinationCoords();
+      if (!dest) {
+        Alert.alert(
+          'Working Area Not Set',
+          'Working area location is not set for this job. Please add a valid job address.',
+        );
+        return;
+      }
+      const cur = await getCurrentCoords();
+      if (!cur?.latitude || !cur?.longitude) {
+        Alert.alert(
+          'Location Not Available',
+          'Unable to fetch your current location. Please turn on GPS and try again.',
+        );
+        return;
+      }
+      const distM = getDistanceM(
+        cur.latitude,
+        cur.longitude,
+        dest.latitude,
+        dest.longitude,
+      );
+      if (distM > GEOFENCE_RADIUS_M) {
+        Alert.alert(
+          'Outside Working Area',
+          `You are outside the working area. Please move within ${GEOFENCE_RADIUS_M} meters of the job location to start the timer.`,
+        );
+        return;
+      }
+
       await AsyncStorage.setItem('activeJobId', String(job?.id ?? job?.id));
       setStoredJobId(job?.id ?? job?.id);
 
@@ -425,6 +585,142 @@ export default function TimerScreen({navigation, route}) {
       setStartLoading(false);
     }
   };
+
+  const forceStopDueToGeofence = async () => {
+    if (geofenceStopShownRef.current) return;
+    geofenceStopShownRef.current = true;
+    try {
+      if (geofenceWatchIdRef.current != null) {
+        Geolocation.clearWatch(geofenceWatchIdRef.current);
+        geofenceWatchIdRef.current = null;
+      }
+
+      // -------- Persist current work session before clearing anything --------
+      const jobIdForApi = storedJobId ?? jobId ?? job?.id ?? job?.job?.id;
+      const endISO = new Date().toISOString();
+
+      const persistedStart =
+        (await bufferGet(LS_KEYS.start, false)) ||
+        startISO ||
+        new Date(Date.now() - elapsedTime).toISOString();
+
+      let bufferedPauses = (await bufferGet(LS_KEYS.pauses)) || pauseList || [];
+      let finalElapsed = elapsedTime;
+
+      // If user was in the middle of a pause, finalize that pause entry
+      if (currentPauseStartedAt && currentPauseTitle) {
+        const durSec = Math.max(
+          1,
+          Math.floor((Date.now() - currentPauseStartedAt) / 1000),
+        );
+        const finalPause = {
+          title: currentPauseTitle,
+          duration: toHHMMSS(durSec * 1000),
+          note: pauseReason === 'Other' ? pauseNotes : '',
+        };
+
+        bufferedPauses.push(finalPause);
+        await bufferSet(LS_KEYS.pauses, bufferedPauses);
+
+        setCurrentPauseStartedAt(null);
+        setCurrentPauseTitle(null);
+        await bufferDel('ts_buffer_currentPause');
+      }
+
+      bufferedPauses = bufferedPauses.filter(p => p.duration !== '00:00:00');
+
+      if (jobIdForApi && finalElapsed > 0) {
+        const payload = buildLaborTimesheetPayload({
+          totalMs: finalElapsed,
+          pauseList: bufferedPauses,
+          startISO: persistedStart,
+          endISO,
+          markCompleted: false,
+        });
+
+        try {
+          await updateWorkData(jobIdForApi, payload, token);
+        } catch (e) {
+          await enqueuePending(payload);
+        }
+
+        await tryFlushPending();
+      }
+
+      // -------- Now clear local state/buffers and stop timer --------
+      await AsyncStorage.removeItem('activeJobId');
+      await bufferDel(LS_KEYS.start);
+      await bufferDel(LS_KEYS.pauses);
+      await bufferDel(LS_KEYS.elapsedOnResume);
+      await bufferDel(LS_KEYS.pending);
+      await bufferDel(LS_KEYS.jobId);
+
+      dispatch(stopTimerWithBackground());
+      endLiveActivity();
+      await cancelTimerNotification();
+
+      // Refresh job details so the saved session appears in logs
+      fetchJobDetails();
+    } catch {
+      dispatch(stopTimerWithBackground());
+    } finally {
+      Alert.alert(
+        'Timer Stopped',
+        `You moved outside the working area (more than ${GEOFENCE_RADIUS_M} meters from the job location). Your timer has been stopped and time worked so far has been saved.`,
+      );
+    }
+  };
+
+  // When timer running, watch location and stop if user exits 50m radius
+  useEffect(() => {
+    let cancelled = false;
+
+    const startWatch = async () => {
+      if (!isRunning) return;
+      geofenceStopShownRef.current = false;
+
+      const dest = await ensureDestinationCoords();
+      if (!dest || cancelled) return;
+
+      const hasPermission = await requestLocationPermission();
+      if (!hasPermission || cancelled) return;
+
+      if (geofenceWatchIdRef.current != null) {
+        Geolocation.clearWatch(geofenceWatchIdRef.current);
+        geofenceWatchIdRef.current = null;
+      }
+
+      geofenceWatchIdRef.current = Geolocation.watchPosition(
+        pos => {
+          if (!isRunning) return;
+          const {latitude, longitude} = pos?.coords || {};
+          if (!latitude || !longitude) return;
+          const distM = getDistanceM(
+            latitude,
+            longitude,
+            dest.latitude,
+            dest.longitude,
+          );
+          if (distM > GEOFENCE_RADIUS_M) {
+            forceStopDueToGeofence();
+          }
+        },
+        () => {},
+        {enableHighAccuracy: true, distanceFilter: 10, interval: 5000},
+      );
+    };
+
+    startWatch();
+
+    return () => {
+      cancelled = true;
+      if (geofenceWatchIdRef.current != null) {
+        Geolocation.clearWatch(geofenceWatchIdRef.current);
+        geofenceWatchIdRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRunning, job?.id]);
 
   const handleConfirmPause = async () => {
     if (!pauseReason) return;
@@ -740,13 +1036,17 @@ export default function TimerScreen({navigation, route}) {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{paddingBottom: 24}}>
             {/* Timer Card */}
-            {!isTodayCompleted && (
-              <View style={styles.timerCard}>
+            {/* NOTE: Pehle yahan !isTodayCompleted condition thi jiski wajah se
+                aaj job complete ho jaane ke baad timer dobara start nahi ho
+                sakta tha. Ab wo restriction hata di gayi hai, isliye timer
+                hamesha available rahega. */}
+            <View style={styles.timerCard}>
                 <View
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     marginBottom: 20,
+                    width:widthPercentageToDP(50),
                   }}>
                   <View style={{flexDirection: 'row', gap: 4}}>
                     <Icon name="timer" size={20} color="#000" />
@@ -824,9 +1124,11 @@ export default function TimerScreen({navigation, route}) {
                   </View>
                 )}
               </View>
-            )}
 
-            {/* Completed banner for today */}
+            {/* Completed banner for today (optional)
+                Agar future me sirf info dikhani ho ki aaj ek baar complete ho
+                chuka hai, to neeche ka block wapas enable kar sakte ho. */}
+            {/*
             {isTodayCompleted && (
               <View style={styles.timerCard}>
                 <Text style={{color: '#2196F3', fontWeight: 'bold'}}>
@@ -837,6 +1139,7 @@ export default function TimerScreen({navigation, route}) {
                 </Text>
               </View>
             )}
+            */}
 
             {/* Today's Activity Log (pauses only) */}
             {(lastActivityLog?.length > 0 ||

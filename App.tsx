@@ -73,6 +73,7 @@ import {
   PermissionsAndroid,
   StatusBar,
 } from 'react-native';
+import Geolocation from '@react-native-community/geolocation';
 import {whiteColor} from './src/constants/Color';
 import {
   heightPercentageToDP,
@@ -248,9 +249,10 @@ const AppContent = () => {
     if (link.startsWith('/jobs')) {
       const jobId = link.split('/')[2];
 
-      navigationRef.current.navigate('JobStack', {
-        screen: 'JobDetails',
-        params: {id: jobId},
+      // Deep link into Jobs tab → Job list → auto-open detail inside JobScreen
+      navigationRef.current.navigate('Jobs', {
+        screen: 'JobStack',
+        params: {initialJobId: jobId},
       });
     } else {
       navigationRef.current.navigate('NotificationScreen');
@@ -376,12 +378,43 @@ const AppContent = () => {
       } else {
         await requestNotificationPermission();
       }
+      await requestLocationPermission();
     };
     requestPermissions();
   }, []);
-  const requestNotificationPermission = async () => {
-    if (Platform.OS === 'android' && Platform.Version >= 33) {
+
+  const requestLocationPermission = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message:
+              'This app needs access to your location to verify work location for timer.',
+            buttonPositive: 'Allow',
+            buttonNegative: 'Deny',
+          },
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          // don't block app; timer screen will handle showing alerts
+          console.log('Location permission denied');
+        }
+        return;
+      }
+
+      // iOS
       try {
+        Geolocation.requestAuthorization?.('whenInUse');
+      } catch {}
+    } catch (err) {
+      console.warn('Location permission error:', err);
+    }
+  };
+  const requestNotificationPermission = async () => {
+    try {
+      // Android 13+ → runtime POST_NOTIFICATIONS permission required
+      if (Platform.OS === 'android' && Platform.Version >= 33) {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
           {
@@ -393,18 +426,26 @@ const AppContent = () => {
         );
 
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          getFcmToken();
-          console.log('Notification permission granted');
+          console.log('Notification permission granted (Android 13+)');
+          await getFcmToken();
         } else {
-          console.log('Notification permission denied');
+          console.log('Notification permission denied (Android 13+)');
           Alert.alert(
             'Permission Denied',
             'You will not receive notifications.',
           );
         }
-      } catch (err) {
-        console.warn('Permission error:', err);
+        return;
       }
+
+      // Android 12 and below → permission popup nahi hota, direct token le lo
+      if (Platform.OS === 'android') {
+        console.log('Android < 13, requesting FCM token without notification permission');
+        await getFcmToken();
+        return;
+      }
+    } catch (err) {
+      console.warn('Permission error:', err);
     }
   };
   const requestUserIosPermission = async () => {

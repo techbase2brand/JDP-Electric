@@ -110,7 +110,36 @@ const JobDetailScreen = ({
   const canViewOrders = useHasPermission('orders', 'view');
   const canViewBlueSheet = useHasPermission('bluesheet', 'view');
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const [viewingJob, setViewingJob] = useState(null);
   console.log('detailjob', job);
+
+  const mainJob =
+    route?.params?.mainJob || (job?.isMainJob ? job : null) || null;
+
+  const subJobs = Array.isArray(mainJob?.subJobs) ? mainJob.subJobs : [];
+
+  const effectiveJob = viewingJob ?? job;
+
+  useEffect(() => {
+    setViewingJob(null);
+  }, [job?.id, job?._id]);
+
+  const getStatusColor = status => {
+    switch (status) {
+      case 'active':
+        return Colors.primary;
+      case 'assigned':
+        return Colors.warning;
+      case 'pending':
+        return Colors.error;
+      case 'completed':
+        return Colors.success;
+      case 'in_progress':
+        return Colors.primaryDark;
+      default:
+        return Colors.textSecondary;
+    }
+  };
 
   const [timerSession, setTimerSession] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -390,11 +419,7 @@ const JobDetailScreen = ({
   // const priorityConfig = getPriorityConfig(job.priority || 'medium');
 
   const handleNavigate = (screen, jobData) => {
-    // if (onNavigate) {
-    //   navigation.navigate(screen, jobData);
-    // } else {
     navigation.navigate(screen, jobData ? {job: jobData} : undefined);
-    // }
   };
 
   const handleNavigateTimer = async job => {
@@ -425,6 +450,10 @@ const JobDetailScreen = ({
   };
 
   const handleBack = () => {
+    if (viewingJob) {
+      setViewingJob(null);
+      return;
+    }
     if (onBack) {
       onBack();
     } else {
@@ -444,7 +473,7 @@ const JobDetailScreen = ({
         </TouchableOpacity>
         <View style={[styles.headerCenter, {width: widthPercentageToDP(30)}]}>
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {job?.job_title}
+            {effectiveJob?.job_title || effectiveJob?.title}
           </Text>
           {/* <Text style={styles.headerSubtitle}>{job?.job_title}</Text> */}
         </View>
@@ -468,6 +497,225 @@ const JobDetailScreen = ({
 
       {/* Timer Display */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Main & Sub Job section: show only on overview; hide when user tapped main/sub card */}
+        {mainJob &&
+          subJobs.length > 0 &&
+          !viewingJob &&
+          (job?.id === mainJob?.id || job?._id === mainJob?._id) && (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Icon name="work" size={20} color={Colors.primary} />
+              <Text style={styles.cardTitle}>Main Job & Sub Jobs</Text>
+            </View>
+            <View style={styles.cardContent}>
+              {/* Main job row – tap to show only main job detail; section hides */}
+              <TouchableOpacity
+                style={styles.mainSubJobCard}
+                activeOpacity={0.9}
+                onPress={() => setViewingJob(mainJob)}>
+                <View style={styles.mainSubJobTopRow}>
+                  <View>
+                    <Text style={styles.mainSubJobTitle} numberOfLines={1}>
+                      {mainJob.job_title || mainJob.title}
+                    </Text>
+                    <Text style={styles.mainSubJobTag}>Main Job</Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.mainSubJobStatusBadge,
+                      {backgroundColor: getStatusColor(mainJob?.status)},
+                    ]}>
+                    <Text style={styles.mainSubJobStatusText}>
+                      {(mainJob?.status === 'in_progress'
+                        ? 'In Progress'
+                        : mainJob?.status || ''
+                      ).toUpperCase()}
+                    </Text>
+                  </View>
+                </View>
+                {!!mainJob?.description && (
+                  <Text
+                    style={styles.mainSubJobDescription}
+                    numberOfLines={3}>
+                    {mainJob.description}
+                  </Text>
+                )}
+                <View style={styles.mainSubJobDateRow}>
+                  <Icon
+                    name="event"
+                    size={14}
+                    color={Colors.textSecondary}
+                  />
+                  <Text style={styles.mainSubJobDateText}>
+                    {mainJob?.due_date
+                      ? new Date(mainJob?.due_date).toLocaleDateString('en-US')
+                      : '—'}
+                  </Text>
+                </View>
+                <View style={styles.mainSubJobActionsRow}>
+                  <TouchableOpacity
+                    style={styles.mainSubJobActionButton}
+                    onPress={() =>
+                      Linking.openURL(
+                        `tel:${
+                          mainJob?.customer?.phone ||
+                          mainJob?.contractor?.phone ||
+                          mainJob?.phone ||
+                          ''
+                        }`,
+                      )
+                    }>
+                    <Icon name="phone" size={16} color={Colors.primary} />
+                    <Text style={styles.mainSubJobActionText}>Call</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.mainSubJobActionButton}
+                    onPress={() => navigation.navigate('MapScreen', {job: mainJob})}>
+                    <Icon
+                      name="directions"
+                      size={16}
+                      color={Colors.successDark}
+                    />
+                    <Text
+                      style={[
+                        styles.mainSubJobActionText,
+                        {color: Colors.successDark},
+                      ]}>
+                      Navigate
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.mainSubJobActionButton}
+                    onPress={() => handleNavigateTimer(mainJob)}>
+                    <Icon name="timer" size={16} color={Colors.error} />
+                    <Text
+                      style={[
+                        styles.mainSubJobActionText,
+                        {color: Colors.error},
+                      ]}>
+                      Timer
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+
+              {/* Sub job rows – same look/feel as Job list cards */}
+              {subJobs.map(sub => {
+                const enrichedSub = {
+                  ...mainJob,
+                  ...sub,
+                  customer: sub.customer || mainJob.customer,
+                  contractor: sub.contractor || mainJob.contractor,
+                  address: sub.address || mainJob.address,
+                  assigned_labor: sub.assigned_labor || mainJob.assigned_labor,
+                  assigned_lead_labor:
+                    sub.assigned_lead_labor || mainJob.assigned_lead_labor,
+                  notes: sub.notes ?? mainJob.notes,
+                  requiredMaterials:
+                    sub.requiredMaterials || mainJob.requiredMaterials,
+                  bluesheets: sub.bluesheets || mainJob.bluesheets,
+                };
+
+                return (
+                  <TouchableOpacity
+                    key={sub.id}
+                    style={styles.mainSubJobCard}
+                    activeOpacity={0.9}
+                    onPress={() => setViewingJob(enrichedSub)}>
+                    <View style={styles.mainSubJobTopRow}>
+                      <View>
+                        <Text style={styles.mainSubJobTitle} numberOfLines={1}>
+                          {sub.job_title || sub.title}
+                        </Text>
+                        <Text style={styles.subJobTag}>Sub Job</Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.mainSubJobStatusBadge,
+                          {backgroundColor: getStatusColor(sub?.status)},
+                        ]}
+                      >
+                        <Text style={styles.mainSubJobStatusText}>
+                          {(sub?.status === 'in_progress'
+                            ? 'In Progress'
+                            : sub?.status || ''
+                          ).toUpperCase()}
+                        </Text>
+                      </View>
+                    </View>
+                    {!!sub?.description && (
+                      <Text
+                        style={styles.mainSubJobDescription}
+                        numberOfLines={3}>
+                        {sub.description}
+                      </Text>
+                    )}
+                    <View style={styles.mainSubJobDateRow}>
+                      <Icon
+                        name="event"
+                        size={14}
+                        color={Colors.textSecondary}
+                      />
+                      <Text style={styles.mainSubJobDateText}>
+                        {sub?.due_date
+                          ? new Date(sub?.due_date).toLocaleDateString('en-US')
+                          : '—'}
+                      </Text>
+                    </View>
+                    <View style={styles.mainSubJobActionsRow}>
+                      <TouchableOpacity
+                        style={styles.mainSubJobActionButton}
+                        onPress={() =>
+                          Linking.openURL(
+                            `tel:${
+                              enrichedSub?.customer?.phone ||
+                              enrichedSub?.contractor?.phone ||
+                              enrichedSub?.phone ||
+                              ''
+                            }`,
+                          )
+                        }>
+                        <Icon name="phone" size={16} color={Colors.primary} />
+                        <Text style={styles.mainSubJobActionText}>Call</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.mainSubJobActionButton}
+                        onPress={() =>
+                          navigation.navigate('MapScreen', {job: enrichedSub})
+                        }>
+                        <Icon
+                          name="directions"
+                          size={16}
+                          color={Colors.successDark}
+                        />
+                        <Text
+                          style={[
+                            styles.mainSubJobActionText,
+                            {color: Colors.successDark},
+                          ]}>
+                          Navigate
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.mainSubJobActionButton}
+                        onPress={() => handleNavigateTimer(enrichedSub)}>
+                        <Icon name="timer" size={16} color={Colors.error} />
+                        <Text
+                          style={[
+                            styles.mainSubJobActionText,
+                            {color: Colors.error},
+                          ]}>
+                          Timer
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
         {/* Primary Actions */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
@@ -478,7 +726,7 @@ const JobDetailScreen = ({
             <View style={styles.actionButtonRow}>
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => handleNavigateTimer(job)}>
+                onPress={() => handleNavigateTimer(effectiveJob)}>
                 <Icon name="timer" size={20} color={Colors.successDark} />
                 <Text style={styles.actionButtonText}>{'Start Timer'}</Text>
               </TouchableOpacity>
@@ -513,10 +761,10 @@ const JobDetailScreen = ({
               <Text
                 style={[styles.infoText, {width: widthPercentageToDP(60)}]}
                 numberOfLines={showFullDesc ? 2 : 4}>
-                {job?.description || 'No description available'}
+                {effectiveJob?.description || 'No description available'}
               </Text>
 
-              {job?.description?.length > 150 && (
+              {effectiveJob?.description?.length > 150 && (
                 <TouchableOpacity
                   onPress={() => setShowFullDesc(prev => !prev)}>
                   <Text
@@ -550,20 +798,20 @@ const JobDetailScreen = ({
                           width: widthPercentageToDP(55),
                         },
                       ]}>
-                      {job?.assigned_lead_labor &&
-                        Array.isArray(job?.assigned_lead_labor) && (
+                      {effectiveJob?.assigned_lead_labor &&
+                        Array.isArray(effectiveJob?.assigned_lead_labor) && (
                           <Text style={{color: blackColor, fontSize: 15}}>
-                            {job?.assigned_lead_labor
+                            {effectiveJob?.assigned_lead_labor
                               ?.map(labor => labor.user?.full_name)
                               .join(', ')}
                           </Text>
                         )}
 
-                      {job?.assigned_labor &&
-                        Array.isArray(job?.assigned_labor) && (
+                      {effectiveJob?.assigned_labor &&
+                        Array.isArray(effectiveJob?.assigned_labor) && (
                           <Text style={{color: blackColor, fontSize: 15}}>
                             ,
-                            {job?.assigned_labor
+                            {effectiveJob?.assigned_labor
                               ?.map(labor => labor.user?.full_name)
                               .join(', ')}
                           </Text>
@@ -576,7 +824,7 @@ const JobDetailScreen = ({
                   <Text style={styles.infoLabel}>Scheduled</Text>
                   <View style={styles.infoWithIcon}>
                     <Icon name="event" size={16} color={Colors.textSecondary} />
-                    <Text style={styles.infoText}>{job?.due_date}</Text>
+                    <Text style={styles.infoText}>{effectiveJob?.due_date}</Text>
                   </View>
                 </View>
               </View>
@@ -601,24 +849,24 @@ const JobDetailScreen = ({
           <View style={styles.cardHeader}>
             <Icon name="person" size={20} color={Colors.primary} />
             <Text style={styles.cardTitle}>
-              {job?.customer?.customer_name ? 'Customer' : 'Contractor'}
+              {effectiveJob?.customer?.customer_name ? 'Customer' : 'Contractor'}
             </Text>
           </View>
           <View style={styles.cardContent}>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Name:</Text>
               <Text style={styles.infoText}>
-                {job?.customer?.customer_name ||
-                  job?.contractor?.contractor_name}
+                {effectiveJob?.customer?.customer_name ||
+                  effectiveJob?.contractor?.contractor_name}
               </Text>
             </View>
 
-            {job?.customer?.phone && (
+            {effectiveJob?.customer?.phone && (
               <View style={styles.customerContactItem}>
                 <View style={styles.contactInfo}>
                   <Text style={styles.infoLabel}>Phone</Text>
                   <Text style={styles.infoText}>
-                    {job?.customer?.phone || job?.contractor?.phone}
+                    {effectiveJob?.customer?.phone || effectiveJob?.contractor?.phone}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -643,7 +891,7 @@ const JobDetailScreen = ({
                   onPress={async () => {
                     try {
                       const phoneNumber =
-                        job?.customer?.phone || job?.contractor?.phone;
+                        effectiveJob?.customer?.phone || effectiveJob?.contractor?.phone;
 
                       if (!phoneNumber) {
                         Alert.alert('Error', 'No phone number available');
@@ -684,11 +932,11 @@ const JobDetailScreen = ({
           </View>
           <View style={styles.cardContent}>
             <Text style={styles.locationText}>
-              {job?.address || 'Location not specified'}
+              {effectiveJob?.address || 'Location not specified'}
             </Text>
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={() => handleNavigate('MapScreen', {job})}>
+              onPress={() => handleNavigate('MapScreen', {effectiveJob})}>
               <Icon name="directions" size={20} color={Colors.white} />
               <Text style={styles.primaryButtonText}>Get Directions</Text>
             </TouchableOpacity>
@@ -716,7 +964,7 @@ const JobDetailScreen = ({
               <TouchableOpacity
                 style={styles.outlineButton}
                 onPress={() =>
-                  handleNavigate('SupplierSelectionScreen', {job})
+                  handleNavigate('SupplierSelectionScreen', job)
                 }>
                 <Icon name="shopping-cart" size={20} color={Colors.primary} />
                 <Text style={styles.outlineButtonText}>Order Materials</Text>
@@ -725,44 +973,38 @@ const JobDetailScreen = ({
           </View>
         )} */}
 
-        {canViewOrders &&
-          !(
-            Array.isArray(job?.bluesheets) &&
-            job?.bluesheets?.some(
-              item => item?.date === new Date().toISOString().split('T')[0],
-            )
-          ) && (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Icon name="inventory" size={20} color={Colors.primary} />
-                <Text style={styles.cardTitle}>Required Materials</Text>
-              </View>
-              <View style={styles.cardContent}>
-                {job?.requiredMaterials?.map((material, idx) => (
-                  <View key={idx} style={styles.materialItem}>
-                    <Text style={styles.materialName}>{material.name}</Text>
-                    <Text style={styles.materialQuantity}>
-                      {material.quantity} {material.unit}
-                    </Text>
-                  </View>
-                ))}
-                <TouchableOpacity
-                  style={styles.outlineButton}
-                  onPress={() =>
-                    handleNavigate('SupplierSelectionScreen', {job})
-                  }>
-                  <Icon name="shopping-cart" size={20} color={Colors.primary} />
-                  <Text style={styles.outlineButtonText}>Order Materials</Text>
-                </TouchableOpacity>
-              </View>
+        {canViewOrders && (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Icon name="inventory" size={20} color={Colors.primary} />
+              <Text style={styles.cardTitle}>Required Materials</Text>
             </View>
-          )}
+            <View style={styles.cardContent}>
+              {effectiveJob?.requiredMaterials?.map((material, idx) => (
+                <View key={idx} style={styles.materialItem}>
+                  <Text style={styles.materialName}>{material.name}</Text>
+                  <Text style={styles.materialQuantity}>
+                    {material.quantity} {material.unit}
+                  </Text>
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.outlineButton}
+                onPress={() =>
+                  handleNavigate('SupplierSelectionScreen', effectiveJob)
+                }>
+                <Icon name="shopping-cart" size={20} color={Colors.primary} />
+                <Text style={styles.outlineButtonText}>Order Materials</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* )} */}
         {/* )} */}
 
         {/* Special Instructions */}
-        {job?.notes && (
+        {effectiveJob?.notes && (
           <View style={[styles.card, styles.warningCard]}>
             <View style={styles.cardHeader}>
               <Icon name="warning" size={20} color={Colors.orange} />
@@ -772,7 +1014,7 @@ const JobDetailScreen = ({
             </View>
             <View style={styles.cardContent}>
               <View style={styles.warningContent}>
-                <Text style={styles.warningText}>{job?.notes}</Text>
+                <Text style={styles.warningText}>{effectiveJob?.notes}</Text>
               </View>
             </View>
           </View>
@@ -789,7 +1031,7 @@ const JobDetailScreen = ({
               <View style={styles.actionGrid}>
                 <TouchableOpacity
                   style={styles.gridActionButton}
-                  onPress={() => navigation.navigate('JobTimesheet', {job})}>
+                  onPress={() => navigation.navigate('JobTimesheet', {job: effectiveJob})}>
                   <Icon name="schedule" size={20} color={Colors.text} />
                   <Text style={styles.gridActionText}>Bluesheet</Text>
                 </TouchableOpacity>
@@ -797,7 +1039,7 @@ const JobDetailScreen = ({
                 <TouchableOpacity
                   style={styles.gridActionButton}
                   onPress={() =>
-                    navigation.navigate('JobActivityLogScreen', {job})
+                    navigation.navigate('JobActivityLogScreen', {job: effectiveJob})
                   }>
                   <Icon name="bar-chart" size={20} color={Colors.text} />
                   <Text style={styles.gridActionText}>Job Activity</Text>
@@ -1222,6 +1464,82 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: Colors.text,
+  },
+  mainSubJobCard: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    backgroundColor: Colors.white,
+  },
+  mainSubJobTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mainSubJobTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.text,
+    flex: 1,
+    marginRight: Spacing.sm,
+  },
+  mainSubJobTag: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  subJobTag: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.warning,
+  },
+  mainSubJobStatusBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+  },
+  mainSubJobStatusText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+  mainSubJobDescription: {
+    fontSize: 12,
+    color: Colors.text,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  mainSubJobDateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.xs,
+    gap: Spacing.xs,
+  },
+  mainSubJobDateText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  mainSubJobActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.md,
+    paddingTop: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  mainSubJobActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  mainSubJobActionText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: Colors.primary,
   },
 });
 

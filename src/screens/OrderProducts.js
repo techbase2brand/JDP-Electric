@@ -689,6 +689,8 @@ const asArray = x => {
 // ----------------- Screen -----------------
 const OrderProductsScreen = ({onBack, onNavigate, route}) => {
   const {id, job} = route.params ?? {};
+  const jobObj = job?.job ?? job;
+  const jobId = jobObj?.id ?? jobObj?._id ?? null;
   const token = useSelector(state => state.user.token);
   const cart = useSelector(state => state.cart.items);
   const dispatch = useDispatch();
@@ -808,16 +810,20 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
     }
   };
 
-  // ---------- Cart Helpers ----------
-  const handleAddToCart = product => dispatch(addToCart(product));
+  // ---------- Cart Helpers (job-scoped: only this job's cart items) ----------
+  const cartForThisJob = cart.filter(
+    item => (item.job_id ?? item.jobId) === jobId,
+  );
+  const handleAddToCart = product =>
+    dispatch(addToCart({...product, job_id: jobId, jobId}));
   const handleUpdateQuantity = (productId, newQuantity) =>
-    dispatch(updateQuantity({productId, newQuantity}));
+    dispatch(updateQuantity({productId, newQuantity, jobId}));
 
   const getCartItemCount = () =>
-    cart.reduce((total, item) => total + item.quantity, 0);
+    cartForThisJob.reduce((total, item) => total + item.quantity, 0);
 
   const getItemQuantity = productId => {
-    const item = cart.find(item => item.id === productId);
+    const item = cartForThisJob.find(item => item.id === productId);
     return item ? item.quantity : 0;
   };
 
@@ -1073,7 +1079,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
           <Text>Loading products...</Text>
         </View>
       ) : !showEmpty ? (
-        <View style={{height:heightPercentageToDP(82.5)}}>
+        <View style={{height:getCartItemCount() > 0 ? heightPercentageToDP(71.5) : heightPercentageToDP(82.5)}}>
           {/* Categories only for default list */}
           {!isSearching && (
             <View style={styles.categoryTabs}>

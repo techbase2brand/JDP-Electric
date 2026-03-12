@@ -444,6 +444,24 @@ export const updateWorkData = async (jobId, payload, token) => {
     throw error.response?.data || {message: 'Something went wrong'};
   }
 };
+// get orders for a job (for bluesheet materials)
+export const getJobOrders = async (jobId, token) => {
+  try {
+    const res = await api.get(`/job/getJobOrders/${jobId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error(
+      'Error fetching job orders:',
+      error.response?.data || error.message,
+    );
+    return {data: {orders: []}};
+  }
+};
+
 // order
 export const createOrders = async (payload, token) => {
   console.log('createOrders', payload, token);

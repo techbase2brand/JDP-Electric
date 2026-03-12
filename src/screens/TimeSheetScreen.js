@@ -528,8 +528,8 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-    marginBottom: 100,
+    backgroundColor: 'white',
+    // marginBottom: 100,
   },
   header: {
     backgroundColor: '#3B82F6',
@@ -921,7 +921,7 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   bottomSpacing: {
-    // height: ,
+    height: 100,
   },
 });
 
