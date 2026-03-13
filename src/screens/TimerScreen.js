@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {
   View,
   Text,
@@ -97,19 +98,36 @@ export default function TimerScreen({navigation, route}) {
   const user = useSelector(state => state.user?.user);
   const dispatch = useDispatch();
   const [stroageJobId, setStroageJobId] = useState(null);
+  const [storedJobName, setStoredJobName] = useState('');
+  const [storedJobAddress, setStoredJobAddress] = useState('');
+
+  const loadStoredJobInfo = React.useCallback(async () => {
+    try {
+      const activeJobId = await AsyncStorage.getItem('activeJobId');
+      const activeJobName = await AsyncStorage.getItem('activeJobName');
+      const activeJobAddress = await AsyncStorage.getItem('activeJobAddress');
+      setStroageJobId(activeJobId);
+      setStoredJobName(activeJobName || '');
+      setStoredJobAddress(activeJobAddress || '');
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   useEffect(() => {
-    const getIdFromstroage = async () => {
-      const activeJobId = await AsyncStorage.getItem('activeJobId');
-      setStroageJobId(activeJobId);
-    };
-    getIdFromstroage();
-    // console.log('Received jobId:', route?.params?.jobId);
-  }, [stroageJobId]);
-  const job = route?.params?.job;
-  // console.log('Received jobId:', job);
+    loadStoredJobInfo();
+  }, [loadStoredJobInfo]);
 
-  const jobId = job?.id || Number(stroageJobId);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadStoredJobInfo();
+    }, [loadStoredJobInfo]),
+  );
+  const job = route?.params?.job;
+  const jobId = job?.id || job?.job?.id || Number(stroageJobId) || Number(route?.params?.jobId);
+
+  const displayJobName = job?.job_title || job?.title || job?.name || storedJobName || '—';
+  const displayJobAddress = job?.job?.address || job?.address || storedJobAddress || '—';
 
   // geofence state
   const [destinationCoordinates, setDestinationCoordinates] = useState(null);
@@ -176,8 +194,14 @@ export default function TimerScreen({navigation, route}) {
       return coords;
     }
 
-    const address = job?.job?.address || job?.address || null;
-    if (!address) return null;
+    let address = job?.job?.address || job?.address || storedJobAddress || null;
+    if (!address || address === '—') {
+      try {
+        const saved = await AsyncStorage.getItem('activeJobAddress');
+        if (saved) address = saved;
+      } catch {}
+    }
+    if (!address || address === '—') return null;
     const coords = await geocodeAddressToCoords(address);
     if (coords) setDestinationCoordinates(coords);
     return coords;
@@ -560,8 +584,14 @@ export default function TimerScreen({navigation, route}) {
         return;
       }
 
-      await AsyncStorage.setItem('activeJobId', String(job?.id ?? job?.id));
-      setStoredJobId(job?.id ?? job?.id);
+      const jobIdToStore = job?.id ?? job?.job?.id;
+      await AsyncStorage.setItem('activeJobId', String(jobIdToStore));
+      setStoredJobId(jobIdToStore);
+
+      const jobName = job?.job_title || job?.title || job?.name || 'Work';
+      const jobAddress = job?.job?.address || job?.address || '';
+      await AsyncStorage.setItem('activeJobName', jobName);
+      await AsyncStorage.setItem('activeJobAddress', jobAddress);
 
       const nowISO = new Date().toISOString();
       setStartISO(nowISO);
@@ -571,7 +601,7 @@ export default function TimerScreen({navigation, route}) {
       await bufferSet(LS_KEYS.pauses, []);
       await bufferSet(LS_KEYS.pending, []);
 
-      const jobName = job?.job_title || job?.title || job?.name || 'Work';
+      // jobName already computed above
       await setTimerJobName(jobName);
       await persistTimerState(0, true, jobName);
       // Don't show notification when app is active — only when app goes to background (handled in App.tsx)
@@ -586,88 +616,28 @@ export default function TimerScreen({navigation, route}) {
     }
   };
 
-  const forceStopDueToGeofence = async () => {
+  const forceStopDueToGeofence = () => {
     if (geofenceStopShownRef.current) return;
     geofenceStopShownRef.current = true;
+
     try {
       if (geofenceWatchIdRef.current != null) {
         Geolocation.clearWatch(geofenceWatchIdRef.current);
         geofenceWatchIdRef.current = null;
       }
 
-      // -------- Persist current work session before clearing anything --------
-      const jobIdForApi = storedJobId ?? jobId ?? job?.id ?? job?.job?.id;
-      const endISO = new Date().toISOString();
-
-      const persistedStart =
-        (await bufferGet(LS_KEYS.start, false)) ||
-        startISO ||
-        new Date(Date.now() - elapsedTime).toISOString();
-
-      let bufferedPauses = (await bufferGet(LS_KEYS.pauses)) || pauseList || [];
-      let finalElapsed = elapsedTime;
-
-      // If user was in the middle of a pause, finalize that pause entry
-      if (currentPauseStartedAt && currentPauseTitle) {
-        const durSec = Math.max(
-          1,
-          Math.floor((Date.now() - currentPauseStartedAt) / 1000),
-        );
-        const finalPause = {
-          title: currentPauseTitle,
-          duration: toHHMMSS(durSec * 1000),
-          note: pauseReason === 'Other' ? pauseNotes : '',
-        };
-
-        bufferedPauses.push(finalPause);
-        await bufferSet(LS_KEYS.pauses, bufferedPauses);
-
-        setCurrentPauseStartedAt(null);
-        setCurrentPauseTitle(null);
-        await bufferDel('ts_buffer_currentPause');
-      }
-
-      bufferedPauses = bufferedPauses.filter(p => p.duration !== '00:00:00');
-
-      if (jobIdForApi && finalElapsed > 0) {
-        const payload = buildLaborTimesheetPayload({
-          totalMs: finalElapsed,
-          pauseList: bufferedPauses,
-          startISO: persistedStart,
-          endISO,
-          markCompleted: false,
-        });
-
-        try {
-          await updateWorkData(jobIdForApi, payload, token);
-        } catch (e) {
-          await enqueuePending(payload);
-        }
-
-        await tryFlushPending();
-      }
-
-      // -------- Now clear local state/buffers and stop timer --------
-      await AsyncStorage.removeItem('activeJobId');
-      await bufferDel(LS_KEYS.start);
-      await bufferDel(LS_KEYS.pauses);
-      await bufferDel(LS_KEYS.elapsedOnResume);
-      await bufferDel(LS_KEYS.pending);
-      await bufferDel(LS_KEYS.jobId);
-
-      dispatch(stopTimerWithBackground());
-      endLiveActivity();
-      await cancelTimerNotification();
-
-      // Refresh job details so the saved session appears in logs
-      fetchJobDetails();
-    } catch {
-      dispatch(stopTimerWithBackground());
-    } finally {
+      // Pehle user ko turant alert dikhao (UI responsive rahe)
       Alert.alert(
         'Timer Stopped',
-        `You moved outside the working area (more than ${GEOFENCE_RADIUS_M} meters from the job location). Your timer has been stopped and time worked so far has been saved.`,
+        `You moved outside the working area (more than ${GEOFENCE_RADIUS_M} meters from the job location). Your timer has been auto-stopped and time worked so far has been saved.`,
       );
+
+      // Phir same Complete API ko background me fire‑and‑forget chalao
+      completeJobInternal({auto: true}).finally(() => {
+        geofenceStopShownRef.current = false;
+      });
+    } catch (e) {
+      geofenceStopShownRef.current = false;
     }
   };
 
@@ -860,9 +830,12 @@ export default function TimerScreen({navigation, route}) {
   //   }
   // };
 
-  const handleComplete = async () => {
+  const completeJobInternal = async (options = {auto: false}) => {
+    const {auto} = options || {};
     try {
-      setCompleteLoading(true);
+      if (!auto) {
+        setCompleteLoading(true);
+      }
       const jobIdForApi = storedJobId ?? job?.id ?? job?.job?.id;
       const end = new Date().toISOString();
 
@@ -892,13 +865,21 @@ export default function TimerScreen({navigation, route}) {
 
         await bufferSet(LS_KEYS.pauses, bufferedPauses);
 
-        finalElapsed = finalElapsed; // existing time (s)
-
         // Pause state reset
         setCurrentPauseStartedAt(null);
         setCurrentPauseTitle(null);
         await bufferDel('ts_buffer_currentPause');
       }
+      // If for some reason elapsedTime is 0 (e.g. redux state reset),
+      // fall back to difference between now and persistedStart.
+      if (!finalElapsed || finalElapsed <= 0) {
+        const startMs = new Date(persistedStart).getTime();
+        const nowMs = Date.now();
+        if (!Number.isNaN(startMs) && nowMs > startMs) {
+          finalElapsed = nowMs - startMs;
+        }
+      }
+
       bufferedPauses = bufferedPauses.filter(p => p.duration !== '00:00:00');
       // ----------------------------------------------------
       await bufferDel(LS_KEYS.pending);
@@ -920,6 +901,8 @@ export default function TimerScreen({navigation, route}) {
 
       // buffer cleanup
       await AsyncStorage.removeItem('activeJobId');
+      await AsyncStorage.removeItem('activeJobName');
+      await AsyncStorage.removeItem('activeJobAddress');
       await bufferDel(LS_KEYS.start);
       await bufferDel(LS_KEYS.pauses);
       await bufferDel(LS_KEYS.elapsedOnResume);
@@ -929,15 +912,28 @@ export default function TimerScreen({navigation, route}) {
       dispatch(stopTimerWithBackground());
       endLiveActivity();
       await cancelTimerNotification();
-      setCompleteModal(false);
 
-      Alert.alert('Success', 'Work data updated successfully.');
+      // UI feedback only for manual completion
+      if (!auto) {
+        setCompleteModal(false);
+        Alert.alert('Success', 'Work data updated successfully.');
+      }
+
+      // Logs refresh is fine for both flows
       fetchJobDetails();
     } catch (err) {
-      Alert.alert('Error', err?.message || 'Failed to update work data');
+      if (!auto) {
+        Alert.alert('Error', err?.message || 'Failed to update work data');
+      }
     } finally {
-      setCompleteLoading(false);
+      if (!auto) {
+        setCompleteLoading(false);
+      }
     }
+  };
+
+  const handleComplete = async () => {
+    return completeJobInternal({auto: false});
   };
 
   const formatTime = ms => {
@@ -1057,13 +1053,13 @@ export default function TimerScreen({navigation, route}) {
                     <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
                       Job Name:{' '}
                     </Text>
-                    <Text style={styles.headerTitle}> {job?.job_title}</Text>
+                    <Text style={styles.headerTitle}> {displayJobName}</Text>
                   </View>
                   <View style={{flexDirection: 'row', gap: 2}}>
                     <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
                       Job Address:{' '}
                     </Text>
-                    <Text style={styles.headerTitle}> {job?.address}</Text>
+                    <Text style={styles.headerTitle}> {displayJobAddress}</Text>
                   </View>
                 </View>
 
