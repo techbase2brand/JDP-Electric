@@ -124,6 +124,7 @@ const OrderConfirmationScreen = ({
   };
 
   const order = route?.params?.order || mockOrderData;
+  const jobFromParams = route?.params?.job;
   console.log('orderorderorder', order?.data);
 
   // Confetti animation
@@ -155,6 +156,11 @@ const OrderConfirmationScreen = ({
   };
 
   const handleNavigate = screen => {
+    // If we came from a job (order products flow), go back to that job's detail
+    if (jobFromParams && (screen === 'HomeScreen' || !screen)) {
+      navigation.navigate('JobDetail', {job: jobFromParams});
+      return;
+    }
     if (onNavigate) {
       onNavigate(screen);
     } else {
@@ -412,8 +418,12 @@ const OrderConfirmationScreen = ({
 
         <TouchableOpacity
           style={styles.secondaryActionButton}
-          onPress={() => handleNavigate('HomeScreen')}>
-          <Text style={styles.secondaryActionText}>Back to Dashboard</Text>
+          onPress={() =>
+            handleNavigate(jobFromParams ? null : 'HomeScreen')
+          }>
+          <Text style={styles.secondaryActionText}>
+            {jobFromParams ? 'Back to Job' : 'Back to Dashboard'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

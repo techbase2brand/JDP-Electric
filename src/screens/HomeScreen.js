@@ -376,6 +376,17 @@ const HomeScreen = ({navigation}) => {
     }
   };
 
+  const formatSentence = text => {
+    if (!text || typeof text !== 'string') {
+      return text;
+    }
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return trimmed;
+    }
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  };
+
   const renderJobCard = job => (
     <TouchableOpacity
       onPress={() => navigation.navigate('JobDetail', {job})}
@@ -408,9 +419,11 @@ const HomeScreen = ({navigation}) => {
         </View>
       </View>
       {/* <Text style={styles.jobTitle}>{job.title}</Text> */}
-      <Text style={styles.jobDescription} numberOfLines={3}>
-        {job.description}
-      </Text>
+      {!!job?.description && (
+        <Text style={styles.jobDescription} numberOfLines={3}>
+          {formatSentence(job.description)}
+        </Text>
+      )}
       <View style={styles.jobDetails}>
         <View
           style={{
@@ -444,7 +457,7 @@ const HomeScreen = ({navigation}) => {
             {job?.address}
           </Text>
         </View>
-        {job?.isMainJob &&
+        {/* {job?.isMainJob &&
           !job?.isSubJob &&
           user?.management_type === 'lead_labor' && (
             <View style={styles.jobDetailRow}>
@@ -464,7 +477,7 @@ const HomeScreen = ({navigation}) => {
                 <Text style={styles.subJobButtonInlineText}>Change order</Text>
               </TouchableOpacity>
             </View>
-          )}
+          )} */}
 
         {/* Sub job listing in home job card is temporarily disabled */}
         {/* {job?.isMainJob &&
@@ -740,7 +753,7 @@ const HomeScreen = ({navigation}) => {
           <View style={styles.section}>
             <View
               style={[styles.sectionHeader, {justifyContent: 'space-between'}]}>
-              <View style={{flexDirection: 'row'}}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
                 <AntDesign name="calendar" size={18} color={tabColor} />
                 <Text style={[styles.sectionTitle, {marginLeft: 4}]}>
                   Today's Jobs
@@ -749,8 +762,10 @@ const HomeScreen = ({navigation}) => {
                   <Text style={styles.countText}>{jobs.length}</Text>
                 </View>
               </View>
-              <TouchableOpacity onPress={() => navigation.navigate('JobStack')}>
-                <Text style={styles.viewAllText}>View All →</Text>
+              <TouchableOpacity
+                style={styles.viewAllButton}
+                onPress={() => navigation.navigate('JobStack')}>
+                <Text style={styles.viewAllButtonText}>View All</Text>
               </TouchableOpacity>
             </View>
             {loading ? (
@@ -1144,6 +1159,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     alignSelf: 'flex-end',
+  },
+  viewAllButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#155DFC',
+    backgroundColor: '#EFF6FF',
+  },
+  viewAllButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#155DFC',
   },
   quickActionsGrid: {
     flexDirection: 'row',

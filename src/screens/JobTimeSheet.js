@@ -1820,7 +1820,8 @@ const JobTimesheet = ({navigation, route, user}) => {
         [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('TimeSheetStack'),
+            onPress: () =>
+              navigation.navigate('BlueSheet', {screen: 'TimeSheetScreen'}),
           },
         ],
       );

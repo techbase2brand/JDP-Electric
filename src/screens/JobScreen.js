@@ -70,6 +70,17 @@ const dedupeById = arr => {
   });
 };
 
+const formatSentence = text => {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+};
+
 const JobListingScreen = ({navigation, route}) => {
   // ----- refs
   const searchTimerRef = useRef(null);
@@ -392,11 +403,17 @@ const JobListingScreen = ({navigation, route}) => {
   }, [jobs, activeTab]);
 
   // ---------- UI renderers
+  const handleBack = () => {
+    if (route?.params?.fromCreateJob) {
+      navigation.navigate('Home', {screen: 'HomeScreen'});
+    } else {
+      navigation.goBack();
+    }
+  };
+
   const renderHeader = () => (
     <View style={[styles.header, {justifyContent: 'space-between'}]}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}>
+      <TouchableOpacity style={styles.backButton} onPress={handleBack}>
         <Ionicons name="arrow-back" size={24} color={COLORS.white} />
       </TouchableOpacity>
 
@@ -591,7 +608,7 @@ const JobListingScreen = ({navigation, route}) => {
               marginBottom: 12,
             }}
             numberOfLines={3}>
-            {job?.description}
+            {formatSentence(job?.description)}
           </Text>
         )}
         <View style={styles.scheduleSection}>
@@ -603,7 +620,7 @@ const JobListingScreen = ({navigation, route}) => {
                 : '—'}
             </Text>
           </View>
-          {job?.isMainJob &&
+          {/* {job?.isMainJob &&
             !job?.isSubJob &&
             user?.management_type === 'lead_labor' && (
             <TouchableOpacity
@@ -621,7 +638,7 @@ const JobListingScreen = ({navigation, route}) => {
               />
               <Text style={styles.subJobButtonInlineText}>Change Order</Text>
             </TouchableOpacity>
-          )}
+          )} */}
         </View>
 
         {isExpanded && (

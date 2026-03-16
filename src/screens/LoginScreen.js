@@ -491,7 +491,7 @@ const LoginScreen = ({navigation}) => {
 
         {/* Form */}
         <View style={styles.formSection}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>Email *</Text>
           <View style={styles.inputContainer}>
             <Icon
               name="email"
@@ -513,7 +513,7 @@ const LoginScreen = ({navigation}) => {
             <Text style={styles.errorText}>{emailError}</Text>
           ) : null}
 
-          <Text style={[styles.label, {marginTop: 16}]}>Password</Text>
+          <Text style={[styles.label, {marginTop: 16}]}>Password *</Text>
           <View style={styles.inputContainer}>
             <Icon
               name="lock"

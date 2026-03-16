@@ -35,13 +35,32 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 const MapScreen = ({route, navigation}) => {
-  const job = route?.params?.job;
+  const rawJob = route?.params?.job;
+  const job = rawJob?.job ?? rawJob;
   const mapRef = useRef(null);
 
   const [startCoordinates, setStartCoordinates] = useState(null);
   const [destinationCoordinates, setDestinationCoordinates] = useState(null);
   const [alertShown, setAlertShown] = useState(false);
   console.log('destinationCoordinates>>', job);
+
+  const jobTitle = job?.job_title || job?.title || '';
+  const customerName =
+    job?.customer?.customer_name ||
+    job?.customer?.name ||
+    job?.contractor?.contractor_name ||
+    job?.contractor?.name ||
+    '';
+  const address =
+    job?.address ||
+    job?.customer?.address ||
+    job?.contractor?.address ||
+    '';
+  const phone =
+    job?.contractor?.phone ||
+    job?.customer?.phone ||
+    job?.phone ||
+    '';
 
   const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
@@ -155,20 +174,43 @@ const MapScreen = ({route, navigation}) => {
   };
 
   useEffect(() => {
+    // Fetch user location, but map should still work even if this fails
     getCurrentLocation();
-    if (job?.job?.address || job?.address) {
-      getDestinationCoords(job?.job?.address || job?.address);
+    if (address) {
+      getDestinationCoords(address);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address]);
+
+  // Ensure map always focuses on destination once we have coordinates
+  useEffect(() => {
+    if (destinationCoordinates && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: destinationCoordinates.latitude,
+          longitude: destinationCoordinates.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        800,
+      );
+    }
+  }, [destinationCoordinates]);
 
   useEffect(() => {
     if (destinationCoordinates) {
       watchUserLocation();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destinationCoordinates]);
 
   const handleCall = phoneNumber => {
-    Linking.openURL(`tel:${phoneNumber}`);
+    if (!phoneNumber) {
+      Alert.alert('Error', 'No phone number available');
+      return;
+    }
+    const cleaned = String(phoneNumber).replace(/[^0-9+]/g, '');
+    Linking.openURL(`tel:${cleaned}`);
   };
   const openMaps = async address => {
     try {
@@ -224,18 +266,25 @@ const MapScreen = ({route, navigation}) => {
         </TouchableOpacity>
       </View>
 
-      {startCoordinates && destinationCoordinates ? (
+      {destinationCoordinates ? (
         <MapView
           ref={mapRef}
           style={styles.map}
-          showsUserLocation={true}
+          showsUserLocation={!!startCoordinates}
           initialRegion={{
-            ...startCoordinates,
+            latitude: destinationCoordinates.latitude,
+            longitude: destinationCoordinates.longitude,
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}>
-          <Marker coordinate={startCoordinates} title="Start" />
-          <Marker coordinate={destinationCoordinates} title="Destination" />
+          {startCoordinates && (
+            <Marker coordinate={startCoordinates} title="Start" />
+          )}
+          <Marker
+            coordinate={destinationCoordinates}
+            title={customerName || 'Destination'}
+            description={address}
+          />
 
           {/* ✅ Geofence Circle */}
           <Circle
@@ -247,18 +296,20 @@ const MapScreen = ({route, navigation}) => {
           />
 
           {/* ✅ Route by road */}
-          <MapViewDirections
-            origin={startCoordinates}
-            destination={destinationCoordinates}
-            apikey={GOOGLE_MAPS_APIKEY}
-            strokeWidth={4}
-            strokeColor="red"
-            onReady={result => {
-              mapRef?.current?.fitToCoordinates(result.coordinates, {
-                edgePadding: {top: 50, right: 50, bottom: 50, left: 50},
-              });
-            }}
-          />
+          {startCoordinates && (
+            <MapViewDirections
+              origin={startCoordinates}
+              destination={destinationCoordinates}
+              apikey={GOOGLE_MAPS_APIKEY}
+              strokeWidth={4}
+              strokeColor="red"
+              onReady={result => {
+                mapRef?.current?.fitToCoordinates(result.coordinates, {
+                  edgePadding: {top: 50, right: 50, bottom: 50, left: 50},
+                });
+              }}
+            />
+          )}
         </MapView>
       ) : (
         <Text style={{textAlign: 'center', marginTop: 50}}>Loading map...</Text>
@@ -266,7 +317,7 @@ const MapScreen = ({route, navigation}) => {
 
       <View style={styles.bottomCard}>
         <Text style={{fontWeight: '700', marginVertical: 0}} numberOfLines={1}>
-          {job?.job?.job_title || job?.job_title}
+          {jobTitle}
         </Text>
         {/* <Text style={{textAlign: 'center', fontSize: 12}}>
           {job?.job?.description || job?.description}
@@ -288,10 +339,7 @@ const MapScreen = ({route, navigation}) => {
             marginVertical: 6,
           }}>
           Customer Name:{' '}
-          <Text style={{fontWeight: '400'}}>
-            {job?.job?.customer?.customer_name ||
-              job?.job?.contractor?.contractor_name}
-          </Text>
+          <Text style={{fontWeight: '400'}}>{customerName || '—'}</Text>
         </Text>
         <Text
           style={{
@@ -301,9 +349,7 @@ const MapScreen = ({route, navigation}) => {
             marginVertical: 6,
           }}>
           Customer Address:{' '}
-          <Text style={{fontWeight: '400'}}>
-            {job?.job?.address || job?.address}
-          </Text>
+          <Text style={{fontWeight: '400'}}>{address || '—'}</Text>
         </Text>
         <View
           style={{
@@ -313,18 +359,14 @@ const MapScreen = ({route, navigation}) => {
             width: widthPercentageToDP(90),
           }}>
           <TouchableOpacity
-            onPress={() => openMaps(job?.job?.address)}
+            onPress={() => address && openMaps(address)}
             style={[styles.actionButton, {backgroundColor: '#0b69ff'}]}
             activeOpacity={0.7}>
             <Text style={[styles.label]}>{'Redirect to Map'}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() =>
-              handleCall(
-                job?.job?.contractor?.phone || job?.job?.customer?.phone,
-              )
-            }>
+            onPress={() => handleCall(phone)}>
             <Ionicons name="call" size={20} color="#fff" />
             <Text style={{color: '#fff', fontWeight: '800'}}>Call</Text>
           </TouchableOpacity>

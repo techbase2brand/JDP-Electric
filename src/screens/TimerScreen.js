@@ -59,7 +59,7 @@ const fmtTime = (d = new Date()) =>
   `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 
 // ---------------- Geofencing (Timer) ----------------
-const GEOFENCE_RADIUS_M = 50;
+const GEOFENCE_RADIUS_M = 100;
 const GOOGLE_MAPS_APIKEY = 'AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE';
 
 // Haversine distance in meters

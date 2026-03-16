@@ -943,7 +943,14 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
 
       // success UI
       Alert.alert('Success', 'Job created successfully!', [
-        {text: 'OK', onPress: () => navigation.navigate('JobStack')},
+        {
+          text: 'OK',
+          onPress: () =>
+            navigation.navigate('Jobs', {
+              screen: 'JobStack',
+              params: {fromCreateJob: true},
+            }),
+        },
       ]);
     } catch (err) {
       const msg = err?.message || 'Failed to create job. Please try again.';

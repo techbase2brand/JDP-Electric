@@ -65,7 +65,12 @@ export default function BluesheetSubmission({
             };
             onSubmit(submissionData);
             Alert.alert('Success', 'Bluesheet submitted successfully!');
-            onNavigate('dashboard');
+            if (onNavigate) {
+              onNavigate('dashboard');
+            } else if (navigation?.navigate) {
+              // Go to BlueSheet tab → bluesheet list (TimeSheetScreen)
+              navigation.navigate('BlueSheet', {screen: 'TimeSheetScreen'});
+            }
           },
         },
       ],

@@ -126,7 +126,10 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
       const res = await createOrders(payload, token);
       dispatch(clearCartForJob(jobId));
       Alert.alert('Success', 'Order Created successfully!');
-      navigation.navigate('OrderConfirmationScreen', {order: res});
+      navigation.navigate('OrderConfirmationScreen', {
+        order: res,
+        job: jobObj ?? jobData,
+      });
     } catch (error) {
       console.error('Error Creating Order:', error);
       Alert.alert('Error', error.message || 'Something went wrong');
