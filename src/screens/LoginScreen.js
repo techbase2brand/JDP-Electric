@@ -337,7 +337,7 @@
 
 // export default LoginScreen;
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -359,6 +359,7 @@ import {useDispatch} from 'react-redux';
 import {setUser} from '../redux/userSlice';
 import {api, LOGIN_URL} from '../config/apiConfig';
 import {mediumGray} from '../constants/Color';
+import {useFocusEffect} from '@react-navigation/native';
 
 const LoginScreen = ({navigation}) => {
   const dispatch = useDispatch();
@@ -371,6 +372,16 @@ const LoginScreen = ({navigation}) => {
   const [fcmToken, setFcmToken] = useState('');
   const [loading, setLoading] = useState(false);
   console.log('loginErrorloginError>>', fcmToken, Platform.OS);
+
+  useFocusEffect(
+    useCallback(() => {
+      setEmail('');
+      setPassword('');
+      setEmailError('');
+      setPasswordError('');
+      setLoginError('');
+    }, []),
+  );
 
   const validateEmail = email => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

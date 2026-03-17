@@ -21,6 +21,7 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
 } from 'react-native';
+import PhoneInput from 'react-native-phone-number-input';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -36,6 +37,7 @@ import {
   getCustomers,
 } from '../config/apiConfig';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
+import {spacings} from '../constants/Fonts';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -57,6 +59,8 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const GOOGLE_MAPS_APIKEY = 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI';
   const scrollRef = useRef(null);
   const googleRef = useRef(null);
+  const customerPhoneInputRef = useRef(null);
+  const billingPhoneInputRef = useRef(null);
 
   const fieldPositions = useRef({});
   const isFetchingMoreRef = useRef(false);
@@ -91,6 +95,11 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const [showBillingCitySuggestions, setShowBillingCitySuggestions] =
     useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  const [customerCountryCode, setCustomerCountryCode] = useState('+1');
+  const [customerPhoneNumber, setCustomerPhoneNumber] = useState('');
+  const [billingCountryCode, setBillingCountryCode] = useState('+1');
+  const [billingPhoneNumber, setBillingPhoneNumber] = useState('');
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
@@ -213,6 +222,37 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
     // fetchContractors();
   }, []);
 
+  useEffect(() => {
+    if (formData.customerPhone && !customerPhoneNumber) {
+      const [code, number] = formData.customerPhone.split('-');
+      if (number) {
+        setCustomerCountryCode(code || '+1');
+        setCustomerPhoneNumber(number);
+      } else {
+        setCustomerPhoneNumber(formData.customerPhone);
+      }
+    }
+  }, [formData.customerPhone, customerPhoneNumber]);
+
+  useEffect(() => {
+    if (formData.billingPhone && !billingPhoneNumber) {
+      const [code, number] = formData.billingPhone.split('-');
+      if (number) {
+        setBillingCountryCode(code || '+1');
+        setBillingPhoneNumber(number);
+      } else {
+        setBillingPhoneNumber(formData.billingPhone);
+      }
+    }
+  }, [formData.billingPhone, billingPhoneNumber]);
+
+  useEffect(() => {
+    if (formData.sameAsCustomer) {
+      setBillingCountryCode(customerCountryCode);
+      setBillingPhoneNumber(customerPhoneNumber);
+    }
+  }, [formData.sameAsCustomer, customerCountryCode, customerPhoneNumber]);
+
   // Pre-fill from Sub Job: new title + full parent job details + customer + labour
   useEffect(() => {
     const subTitle = route?.params?.subJobTitle;
@@ -222,7 +262,8 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       const dueDate = parent.due_date
         ? new Date(parent.due_date).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0];
-      const custName = parent.customer?.name || parent.customer?.customer_name || '';
+      const custName =
+        parent.customer?.name || parent.customer?.customer_name || '';
       const assignedIds = (parent.assigned_labor || [])
         .map(l => l?.id ?? l?.labor_id)
         .filter(Boolean);
@@ -671,7 +712,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         if (!formData.sameAsCustomer) {
           if (!formData.billingName.trim())
             errors.billingName = 'Billing name is required';
-          if (!formData.billingPhone.trim())
+          if (!billingPhoneNumber.trim())
             errors.billingPhone = 'Billing phone is required';
           if (!formData.billingAddress.trim())
             errors.billingAddress = 'Billing address is required';
@@ -679,20 +720,10 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
             errors.billingCity = 'Billing city is required';
         }
 
-        // Validate phone format
-        const phoneRegex =
-          /^\+?1?[-.\s]?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$/;
-        if (
-          formData.customerPhone &&
-          !phoneRegex.test(formData.customerPhone)
-        ) {
+        if (!customerPhoneNumber.trim()) {
           errors.customerPhone = 'Please enter a valid phone number';
         }
-        if (
-          !formData.sameAsCustomer &&
-          formData.billingPhone &&
-          !phoneRegex.test(formData.billingPhone)
-        ) {
+        if (!formData.sameAsCustomer && !billingPhoneNumber.trim()) {
           errors.billingPhone = 'Please enter a valid phone number';
         }
 
@@ -1353,8 +1384,6 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
               style={[
                 styles.inputContainer,
                 validationErrors.customerPhone && styles.inputContainerError,
-                ,
-                {paddingHorizontal: 0},
               ]}>
               <Icon
                 name="phone"
@@ -1362,13 +1391,55 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                 color="#9ca3af"
                 style={styles.inputIcon}
               />
-              <TextInput
-                style={[styles.formInput, styles.inputWithIcon]}
-                value={formData.customerPhone}
-                onChangeText={text => updateFormData('customerPhone', text)}
-                placeholder="(555) 123-4567"
-                placeholderTextColor="#9ca3af"
-                keyboardType="phone-pad"
+              <PhoneInput
+                ref={customerPhoneInputRef}
+                defaultCode="US"
+                layout="second"
+                value={customerPhoneNumber}
+                onChangeCountry={country => {
+                  const raw = country?.callingCode;
+                  const cc = Array.isArray(raw) ? raw[0] : raw;
+                  if (!cc) {
+                    return;
+                  }
+                  const code = `+${cc}`;
+                  setCustomerCountryCode(code);
+                  updateFormData(
+                    'customerPhone',
+                    `${code}-${customerPhoneNumber}`.trim(),
+                  );
+                }}
+                onChangeText={text => {
+                  setCustomerPhoneNumber(text);
+                  updateFormData(
+                    'customerPhone',
+                    `${customerCountryCode}-${text}`.trim(),
+                  );
+                }}
+                containerStyle={{
+                  width: '100%',
+                  height: 48,
+                  borderWidth: 0,
+                  backgroundColor: 'transparent',
+                  alignItems: 'center',
+                  marginLeft: 8,
+                }}
+                textContainerStyle={{
+                  paddingHorizontal: 0,
+                  paddingVertical: 0,
+                  backgroundColor: 'transparent',
+                }}
+                textInputProps={{
+                  placeholder: '(555) 123-4567',
+                  placeholderTextColor: '#9ca3af',
+                  keyboardType: 'phone-pad',
+                  backgroundColor: 'transparent',
+                  style: [styles.formInput],
+                }}
+                flagButtonStyle={{
+                  width: 80,
+                  paddingLeft: spacings.large,
+                }}
               />
             </View>
             {validationErrors.customerPhone && (
@@ -1638,13 +1709,55 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                     color="#9ca3af"
                     style={styles.inputIcon}
                   />
-                  <TextInput
-                    style={[styles.formInput, styles.inputWithIcon]}
-                    value={formData.billingPhone}
-                    onChangeText={text => updateFormData('billingPhone', text)}
-                    placeholder="(555) 123-4567"
-                    placeholderTextColor="#9ca3af"
-                    keyboardType="phone-pad"
+                  <PhoneInput
+                    ref={billingPhoneInputRef}
+                    defaultCode="US"
+                    layout="second"
+                    value={billingPhoneNumber}
+                    onChangeCountry={country => {
+                      const raw = country?.callingCode;
+                      const cc = Array.isArray(raw) ? raw[0] : raw;
+                      if (!cc) {
+                        return;
+                      }
+                      const code = `+${cc}`;
+                      setBillingCountryCode(code);
+                      updateFormData(
+                        'billingPhone',
+                        `${code}-${billingPhoneNumber}`.trim(),
+                      );
+                    }}
+                    onChangeText={text => {
+                      setBillingPhoneNumber(text);
+                      updateFormData(
+                        'billingPhone',
+                        `${billingCountryCode}-${text}`.trim(),
+                      );
+                    }}
+                    containerStyle={{
+                      width: '100%',
+                      height: 48,
+                      borderWidth: 0,
+                      backgroundColor: 'transparent',
+                      alignItems: 'center',
+                      marginLeft: 8,
+                    }}
+                    textContainerStyle={{
+                      paddingHorizontal: 0,
+                      paddingVertical: 0,
+                      backgroundColor: 'transparent',
+                    }}
+                    textInputProps={{
+                      placeholder: '(555) 123-4567',
+                      placeholderTextColor: '#9ca3af',
+                      keyboardType: 'phone-pad',
+                      backgroundColor: 'transparent',
+                      style: [styles.formInput],
+                    }}
+                    flagButtonStyle={{
+                      width: 80,
+                      paddingLeft: spacings.large,
+                    }}
                   />
                 </View>
                 {validationErrors.billingPhone && (
@@ -2003,9 +2116,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                 <Text style={styles.headerText}>
                   {formData?.assignedTo?.length > 0
                     ? labors
-                        .filter(labor =>
-                          formData.assignedTo.includes(labor.id),
-                        )
+                        .filter(labor => formData.assignedTo.includes(labor.id))
                         .map(labor => labor.users?.full_name)
                         .join(', ')
                     : 'Select Members'}
@@ -2051,7 +2162,8 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                             )}
                           </View>
                           <View style={styles.memberInfo1}>
-                            <Text style={[styles.memberName1, {color: 'black'}]}>
+                            <Text
+                              style={[styles.memberName1, {color: 'black'}]}>
                               {item?.users?.full_name}
                             </Text>
                             <Text style={styles.memberRole1}>
@@ -2130,7 +2242,9 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Special Instructions or Notes</Text>
+              <Text style={styles.formLabel}>
+                Special Instructions or Notes
+              </Text>
               <View style={styles.inputContainer}>
                 <TextInput
                   style={[styles.formInput, styles.textArea]}

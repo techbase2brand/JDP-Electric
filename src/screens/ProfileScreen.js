@@ -951,6 +951,7 @@ const ProfileScreen = ({navigation}) => {
   const dispatch = useDispatch();
   const [allLabourData, setAllLabourData] = useState();
   const [avatarUri, setAvatarUri] = useState(null);
+  const [avatarError, setAvatarError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   console.log('allLabourDataallLabourData', allLabourData, avatarUri);
 
@@ -1137,7 +1138,8 @@ const ProfileScreen = ({navigation}) => {
           }
 
           setAllLabourData(profileData);
-          setAvatarUri(profileData?.users?.photo_url);
+          setAvatarUri(profileData?.users?.photo_url || null);
+          setAvatarError(false);
           // API response se formData set karo
         } catch (err) {
           console.error('Error fetching profiles:', err);
@@ -1175,10 +1177,11 @@ const ProfileScreen = ({navigation}) => {
         {/* User Info Card */}
         <View style={styles.userCard}>
           <View style={styles.userInfo}>
-            {(avatarUri || user?.photo_url) ? (
+            {(avatarUri || user?.photo_url) && !avatarError ? (
               <Image
                 source={{uri: avatarUri || user?.photo_url}}
                 style={styles.avatarImage}
+                onError={() => setAvatarError(true)}
               />
             ) : (
               <View style={styles.avatar}>
@@ -1475,7 +1478,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
-    marginBottom: 74,
+    // marginBottom: 74,
   },
   section: {
     marginBottom: 24,

@@ -888,17 +888,27 @@ const JobDetailScreen = ({
                           return;
                         }
 
-                        const cleanedNumber = phoneNumber.replace(
-                          /[^0-9+]/g,
+                        const cleanedNumber = String(phoneNumber).replace(
+                          /[^\d+]/g,
                           '',
                         );
-                        const telURL = `tel:${cleanedNumber}`;
 
-                        const supported = await Linking.canOpenURL(telURL);
-                        if (supported) {
-                          await Linking.openURL(telURL);
-                        } else {
-                          Alert.alert('Error', 'Unable to open phone dialer');
+                        if (!cleanedNumber) {
+                          Alert.alert('Error', 'Invalid phone number');
+                          return;
+                        }
+
+                        const primaryUrl =
+                          Platform.OS === 'ios'
+                            ? `telprompt:${cleanedNumber}`
+                            : `tel:${cleanedNumber}`;
+
+                        const fallbackUrl = `tel:${cleanedNumber}`;
+
+                        try {
+                          await Linking.openURL(primaryUrl);
+                        } catch (e) {
+                          await Linking.openURL(fallbackUrl);
                         }
                       } catch (err) {
                         console.error('Call error:', err);
@@ -1117,19 +1127,21 @@ const JobDetailScreen = ({
               activeOpacity={1}
               style={styles.timerPickerBox}
               onPress={e => e?.stopPropagation?.()}>
-              <Text style={styles.timerPickerTitle}>Select job to start timer</Text>
+              <Text style={styles.timerPickerTitle}>
+                Select job to start timer
+              </Text>
 
               <View style={styles.timerPickerList}>
                 <ScrollView
                   nestedScrollEnabled
-                  showsVerticalScrollIndicator={
-                    1 + (subJobs?.length || 0) > 3
-                  }>
+                  showsVerticalScrollIndicator={1 + (subJobs?.length || 0) > 3}>
                   <TouchableOpacity
                     style={[styles.mainSubJobCard, styles.mainSubJobCardMain]}
                     activeOpacity={0.9}
                     onPress={async () => {
-                      setTimerSelectedJobId(String(mainJob?.id || mainJob?._id));
+                      setTimerSelectedJobId(
+                        String(mainJob?.id || mainJob?._id),
+                      );
                       const key = getTimerStorageKey();
                       if (key) {
                         await AsyncStorage.setItem(
@@ -1222,15 +1234,12 @@ const JobDetailScreen = ({
                   }
                   const id = String(timerSelectedJobId);
                   let selected = null;
-                  if (
-                    id === String(mainJob?.id || mainJob?._id)
-                  ) {
+                  if (id === String(mainJob?.id || mainJob?._id)) {
                     selected = mainJob;
                   } else {
                     selected =
-                      subJobs.find(
-                        s => String(s.id || s._id) === id,
-                      ) || mainJob;
+                      subJobs.find(s => String(s.id || s._id) === id) ||
+                      mainJob;
                   }
                   setTimerPickerVisible(false);
                   handleNavigateTimer(selected);

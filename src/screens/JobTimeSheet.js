@@ -1411,6 +1411,11 @@ const JobTimesheet = ({navigation, route, user}) => {
 
       const routeMaterials = [];
       const orders = bs?.orders || bs?.data?.orders || [];
+      console.log(
+        '[JobTimeSheet] BlueSheet orders for materials seed:',
+        Array.isArray(orders) ? orders.length : 0,
+        orders,
+      );
       orders.forEach(order => {
         const orderDate = order?.order_date || order?.created_at;
         if (!orderDate || !sameDay(orderDate, date)) return;
@@ -1448,6 +1453,10 @@ const JobTimesheet = ({navigation, route, user}) => {
         const savedMaterials = Array.isArray(saved.materialEntries)
           ? saved.materialEntries
           : [];
+        console.log(
+          '[JobTimeSheet] Loaded materialEntries from AsyncStorage:',
+          savedMaterials,
+        );
 
         // Merge by id: saved has priority; add any new route items not in saved
         const mergeById = (a = [], b = []) => {
@@ -1531,6 +1540,10 @@ const JobTimesheet = ({navigation, route, user}) => {
         labourEntries: routeLabour,
         materialEntries: routeMaterials,
       };
+      console.log(
+        '[JobTimeSheet] Seeding materialEntries from BlueSheet only:',
+        routeMaterials,
+      );
       await AsyncStorage.setItem(key, JSON.stringify(toStore));
 
       setTimesheetData(prev => ({

@@ -19,6 +19,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import DeviceInfo from 'react-native-device-info';
 import {createOrders} from '../config/apiConfig';
 import {clearCartForJob} from '../redux/cartSlice';
+import {spacings} from '../constants/Fonts';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
   // Header
   header: {
     backgroundColor: Colors.white,
-    paddingTop: Spacing.xl,
+    paddingTop: Platform.OS === 'android' ? spacings.large : Spacing.xl,
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,

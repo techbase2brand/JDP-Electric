@@ -1015,14 +1015,89 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
     );
   });
 
-  // ---------- actions ----------
-  const handleCall = phone => Linking.openURL(`tel:${phone}`);
-  const handleEmail = email => Linking.openURL(`mailto:${email}`);
+  // ---------- actions (with iOS-safe Linking) ----------
+  const handleCall = phone => {
+    const raw = String(phone || '').trim();
+    if (!raw) {
+      Alert.alert('Call failed', 'No phone number available for this supplier.');
+      return;
+    }
+
+    const cleaned = raw.replace(/[^\d+]/g, '');
+    if (!cleaned) {
+      Alert.alert('Call failed', 'Phone number format is invalid.');
+      return;
+    }
+
+    const url = Platform.OS === 'ios' ? `telprompt:${cleaned}` : `tel:${cleaned}`;
+
+    Linking.canOpenURL(url)
+      .then(supported => {
+        if (supported) {
+          return Linking.openURL(url);
+        }
+        Alert.alert(
+          'Call not supported',
+          'Your device cannot make phone calls from this app.',
+        );
+      })
+      .catch(() => {
+        Alert.alert('Call failed', 'Unable to open the phone app.');
+      });
+  };
+
+  const handleEmail = email => {
+    const raw = String(email || '').trim();
+    if (!raw) {
+      Alert.alert('Email failed', 'No email address available for this supplier.');
+      return;
+    }
+
+    const url = `mailto:${raw}`;
+    Linking.canOpenURL(url)
+      .then(supported => {
+        if (supported) {
+          return Linking.openURL(url);
+        }
+        Alert.alert(
+          'Email not supported',
+          'No email app is configured on this device.',
+        );
+      })
+      .catch(() => {
+        Alert.alert('Email failed', 'Unable to open the email app.');
+      });
+  };
+
   const handleDirections = supplier => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      supplier?.address || '',
-    )}`;
-    Linking.openURL(url);
+    const address = String(supplier?.address || '').trim();
+    if (!address) {
+      Alert.alert(
+        'Location not available',
+        'No address is available for this supplier.',
+      );
+      return;
+    }
+
+    const encoded = encodeURIComponent(address);
+    const url =
+      Platform.OS === 'ios'
+        ? `http://maps.apple.com/?q=${encoded}`
+        : `https://www.google.com/maps/search/?api=1&query=${encoded}`;
+
+    Linking.canOpenURL(url)
+      .then(supported => {
+        if (supported) {
+          return Linking.openURL(url);
+        }
+        Alert.alert(
+          'Navigation not supported',
+          'No maps application is available to open directions.',
+        );
+      })
+      .catch(() => {
+        Alert.alert('Navigation failed', 'Unable to open the maps application.');
+      });
   };
 
   // ---------- render ----------

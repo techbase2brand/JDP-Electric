@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-     paddingVertical: Platform.OS === 'android' ? 8 : 16,
+    paddingVertical: Platform.OS === 'android' ? 8 : 16,
     fontSize: 16,
     color: '#374151',
   },
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.primary,
     borderRadius: BorderRadius.md,
-     paddingVertical: Platform.OS === 'android' ? 10 : 16,
+    paddingVertical: Platform.OS === 'android' ? 10 : 16,
     paddingHorizontal: Spacing.xl,
     width: '100%',
     gap: Spacing.sm,
@@ -385,6 +385,7 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontWeight: '600',
   },
+  label: {fontSize: 16, fontWeight: '600', color: '#374151', marginBottom: 8},
 });
 
 export default ForgotPasswordScreen;

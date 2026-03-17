@@ -600,6 +600,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import PhoneInput from 'react-native-phone-number-input';
+import {PhoneNumberUtil} from 'google-libphonenumber';
 import {useDispatch, useSelector} from 'react-redux';
 import {setUser} from '../redux/userSlice';
 import {
@@ -608,6 +610,8 @@ import {
   updateLaborProfile,
   updateLeadLaborProfile,
 } from '../config/apiConfig';
+
+const phoneUtil = PhoneNumberUtil.getInstance();
 
 ////////////////////////////////////////////////////////////////////////////////
 // Memoized/forwardRef InputField to avoid unnecessary re-renders and focus loss
@@ -661,14 +665,18 @@ const EditProfileScreen = ({navigation}) => {
 
   const [allLabourData, setAllLabourData] = useState(null);
   const [avatarUri, setAvatarUri] = useState(null);
+  const [avatarError, setAvatarError] = useState(false);
   const [formData, setFormData] = useState(null);
+  const [phoneCountryCode, setPhoneCountryCode] = useState('+1');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneDefaultCountry, setPhoneDefaultCountry] = useState('US');
   const [isFetching, setIsFetching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // refs for inputs to chain focus
   const fullNameRef = useRef(null);
-  const phoneRef = useRef(null);
   const addressRef = useRef(null);
+  const phoneInputRef = useRef(null);
 
   const formatDate = dateString => {
     if (!dateString) return '';
@@ -697,12 +705,44 @@ const EditProfileScreen = ({navigation}) => {
 
         setAllLabourData(profileData);
         setAvatarUri(profileData?.users?.photo_url || null);
-        console.log('profileData?.users', profileData?.users?.photo_url);
+        setAvatarError(false);
+        console.log('profileData?.users', profileData?.users);
+
+        const rawPhone = profileData?.users?.phone || '';
+        let initialCode = '+1';
+        let initialNumber = rawPhone;
+
+        // backend format: +<callingCode>-<nationalNumber>
+        // be tolerant to extra spaces/other separators
+        if (rawPhone) {
+          const match = rawPhone.match(/^\s*(\+\d+)\s*[-\s]?\s*(.*)\s*$/);
+          if (match) {
+            const code = match[1];
+            const rest = match[2];
+            if (code) initialCode = code;
+            if (rest !== undefined) initialNumber = rest;
+          }
+        }
+
+        // Update PhoneInput country (defaultCode expects CCA2 e.g. "IN", "US")
+        // Derive it from calling code using libphonenumber's region lookup.
+        const callingCodeDigits = String(initialCode || '')
+          .replace('+', '')
+          .trim();
+        const callingCodeNum = Number(callingCodeDigits);
+        const region =
+          callingCodeDigits && Number.isFinite(callingCodeNum)
+            ? phoneUtil.getRegionCodeForCountryCode(callingCodeNum)
+            : null;
+        setPhoneDefaultCountry(region && region !== 'ZZ' ? region : 'US');
+
+        setPhoneCountryCode(initialCode);
+        setPhoneNumber((initialNumber || '').trim());
 
         setFormData({
           full_name: profileData?.users?.full_name || '',
           email: profileData?.users?.email || '',
-          phone: profileData?.users?.phone || '',
+          phone: rawPhone || '',
           address: profileData?.address || '',
           department: profileData?.department || '',
           date_of_joining: formatDate(profileData?.date_of_joining || ''),
@@ -806,7 +846,7 @@ const EditProfileScreen = ({navigation}) => {
     } finally {
       setIsSaving(false);
     }
-  }, [formData, avatarUri, user, token, navigation]);
+  }, [formData, avatarUri, user, token, navigation, dispatch, permissions]);
 
   const handleImagePicker = useCallback(() => {
     Alert.alert(
@@ -831,6 +871,7 @@ const EditProfileScreen = ({navigation}) => {
                   response.assets?.[0]?.uri
                 ) {
                   setAvatarUri(response.assets[0].uri);
+                  setAvatarError(false);
                   // also update formData.photo_url if needed
                   setFormData(prev => ({
                     ...prev,
@@ -859,6 +900,7 @@ const EditProfileScreen = ({navigation}) => {
                   response.assets?.[0]?.uri
                 ) {
                   setAvatarUri(response.assets[0].uri);
+                  setAvatarError(false);
                   setFormData(prev => ({
                     ...prev,
                     photo_url: response.assets[0].uri,
@@ -893,7 +935,8 @@ const EditProfileScreen = ({navigation}) => {
         <View style={styles.headerContent}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}>
+            onPress={() => navigation.goBack()}
+            disabled={isSaving}>
             <Icon name="arrow-back" size={24} color="#000" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profile</Text>
@@ -917,13 +960,18 @@ const EditProfileScreen = ({navigation}) => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
-          contentContainerStyle={{paddingBottom: 40}}>
+          contentContainerStyle={{paddingBottom: 40}}
+          scrollEnabled={!isSaving}>
           {/* Profile Picture Section */}
           <View style={styles.profileSection}>
             <View style={styles.avatarContainer}>
               <View style={styles.avatar}>
-                {avatarUri ? (
-                  <Image source={{uri: avatarUri}} style={styles.avatarImage} />
+                {avatarUri && !avatarError ? (
+                  <Image
+                    source={{uri: avatarUri}}
+                    style={styles.avatarImage}
+                    onError={() => setAvatarError(true)}
+                  />
                 ) : (
                   <Text style={styles.avatarText}>
                     {formData?.full_name
@@ -937,7 +985,8 @@ const EditProfileScreen = ({navigation}) => {
               </View>
               <TouchableOpacity
                 style={styles.changePhotoButton}
-                onPress={handleImagePicker}>
+                onPress={handleImagePicker}
+                disabled={isSaving}>
                 <Icon name="camera-alt" size={20} color="#2563eb" />
                 <Text style={styles.changePhotoText}>
                   {' '}
@@ -961,7 +1010,7 @@ const EditProfileScreen = ({navigation}) => {
               returnKeyType="next"
               blurOnSubmit={false}
               onSubmitEditing={() =>
-                phoneRef.current && phoneRef.current.focus()
+                addressRef.current && addressRef.current.focus()
               }
             />
 
@@ -974,20 +1023,68 @@ const EditProfileScreen = ({navigation}) => {
               editable={false}
             />
 
-            <InputField
-              ref={phoneRef}
-              label="Phone Number"
-              value={formData.phone}
-              onChangeText={text => handleChange('phone', text)}
-              placeholder="Enter your phone number"
-              keyboardType="phone-pad"
-              editable={!isSaving}
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={() =>
-                addressRef.current && addressRef.current.focus()
-              }
-            />
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Phone Number</Text>
+              <View style={styles.phoneInputContainer}>
+                <PhoneInput
+                  ref={phoneInputRef}
+                  key={phoneDefaultCountry}
+                  defaultCode={phoneDefaultCountry}
+                  layout="second"
+                  value={phoneNumber}
+                  onChangeCountry={country => {
+                    const raw = country?.callingCode;
+                    const cc = Array.isArray(raw) ? raw[0] : raw;
+                    if (!cc) {
+                      return;
+                    }
+                    const code = `+${cc}`;
+                    setPhoneCountryCode(code);
+                    setPhoneDefaultCountry(country?.cca2 || 'US');
+                    setFormData(prev => ({
+                      ...prev,
+                      phone: `${code}-${phoneNumber}`.trim(),
+                    }));
+                  }}
+                  onChangeText={text => {
+                    setPhoneNumber(text);
+                    setFormData(prev => ({
+                      ...prev,
+                      phone: `${phoneCountryCode}-${text}`.trim(),
+                    }));
+                  }}
+                  containerStyle={{
+                    width: '100%',
+                    height: 48,
+                    borderWidth: 0,
+                    backgroundColor: 'transparent',
+                    alignItems: 'center',
+                  }}
+                  textContainerStyle={{
+                    paddingHorizontal: 0,
+                    paddingVertical: 0,
+                    backgroundColor: 'transparent',
+                  }}
+                  textInputProps={{
+                    placeholder: '(555) 123-4567',
+                    placeholderTextColor: '#9ca3af',
+                    keyboardType: 'phone-pad',
+                    style: [styles.formInput],
+                  }}
+                  flagButtonStyle={{
+                    width: 60,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                  countryPickerButtonStyle={{
+                    width: 60,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                  disabled={isSaving}
+                />
+              </View>
+            </View>
 
             <InputField
               label="Date of birth"
@@ -1052,6 +1149,13 @@ const EditProfileScreen = ({navigation}) => {
           <View style={{height: 40}} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {isSaving && (
+        <View style={styles.savingOverlay} pointerEvents="auto">
+          <ActivityIndicator size="large" color="#2563eb" />
+          <Text style={styles.savingText}>Saving...</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -1150,6 +1254,15 @@ const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 16,
   },
+  phoneInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    backgroundColor: '#ffffff',
+  },
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
@@ -1166,6 +1279,12 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     backgroundColor: '#ffffff',
   },
+  formInput: {
+    borderWidth: 0,
+    flex: 1,
+    fontSize: 16,
+    color: '#1f2937',
+  },
   disabledInput: {
     backgroundColor: '#e5e8eaff',
     color: '#000',
@@ -1175,6 +1294,18 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     resizeMode: 'cover',
+  },
+  savingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  savingText: {
+    marginTop: 10,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
   },
 });
 
