@@ -1019,7 +1019,10 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
   const handleCall = phone => {
     const raw = String(phone || '').trim();
     if (!raw) {
-      Alert.alert('Call failed', 'No phone number available for this supplier.');
+      Alert.alert(
+        'Call failed',
+        'No phone number available for this supplier.',
+      );
       return;
     }
 
@@ -1029,7 +1032,8 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
       return;
     }
 
-    const url = Platform.OS === 'ios' ? `telprompt:${cleaned}` : `tel:${cleaned}`;
+    const url =
+      Platform.OS === 'ios' ? `telprompt:${cleaned}` : `tel:${cleaned}`;
 
     Linking.canOpenURL(url)
       .then(supported => {
@@ -1049,7 +1053,10 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
   const handleEmail = email => {
     const raw = String(email || '').trim();
     if (!raw) {
-      Alert.alert('Email failed', 'No email address available for this supplier.');
+      Alert.alert(
+        'Email failed',
+        'No email address available for this supplier.',
+      );
       return;
     }
 
@@ -1096,7 +1103,10 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
         );
       })
       .catch(() => {
-        Alert.alert('Navigation failed', 'Unable to open the maps application.');
+        Alert.alert(
+          'Navigation failed',
+          'Unable to open the maps application.',
+        );
       });
   };
 
@@ -1152,15 +1162,18 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
       )}
     </View>
   );
-
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
   const renderSupplier = ({item: supplier}) => (
     <View style={styles.supplierCard}>
       {/* Header */}
       <View style={styles.supplierHeader}>
         <View style={styles.supplierInfo}>
-          <Text style={styles.supplierName}>{supplier?.company_name}</Text>
+          <Text style={styles.supplierName}>
+            {capitalize(supplier?.company_name)}
+          </Text>
           <Text style={styles.supplierCategory}>
-            {supplier?.contact_person}
+            {capitalize(supplier?.contact_person)}
           </Text>
         </View>
         <View style={styles.statusContainer}>
@@ -1287,9 +1300,11 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
           </TouchableOpacity>
           <View>
             <Text style={styles.headerTitle}>Select Supplier</Text>
-            <Text style={[styles.headerTitle, {textAlign: 'center'}]}>
-              {job?.job?.job_title}
-            </Text>
+            {job?.job?.job_title && (
+              <Text style={[styles.headerTitle, {textAlign: 'center'}]}>
+                {job?.job?.job_title}
+              </Text>
+            )}
           </View>
 
           <View style={styles.headerButton} />

@@ -852,9 +852,20 @@ const JobDetailScreen = ({
             <View style={styles.customerBox}>
               <Text style={styles.customerLabel}>Name</Text>
               <Text style={styles.customerNameText}>
-                {effectiveJob?.customer?.customer_name ||
-                  effectiveJob?.contractor?.contractor_name ||
-                  'N/A'}
+                <Text>
+                  {(
+                    effectiveJob?.customer?.customer_name ||
+                    effectiveJob?.contractor?.contractor_name ||
+                    'N/A'
+                  )
+                    .charAt(0)
+                    .toUpperCase() +
+                    (
+                      effectiveJob?.customer?.customer_name ||
+                      effectiveJob?.contractor?.contractor_name ||
+                      'N/A'
+                    ).slice(1)}
+                </Text>
               </Text>
 
               {(effectiveJob?.customer?.phone ||

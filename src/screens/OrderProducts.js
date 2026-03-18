@@ -640,7 +640,8 @@ import {addToCart, updateQuantity} from '../redux/cartSlice';
 // --- API imports (ensure these are exported from your api file) ---
 import {getProductsBySupplier, searchProducts} from '../config/apiConfig';
 import {heightPercentageToDP} from '../utils';
-import { spacings } from '../constants/Fonts';
+import {spacings} from '../constants/Fonts';
+import {whiteColor} from '../constants/Color';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -908,7 +909,8 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       p?.id ?? p?.product_id ?? p?.jdp_sku ?? p?.supplier_sku ?? `idx-${idx}`;
     return `${base}-${id}`;
   };
-
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
   const renderProduct = ({item}) => {
     const quantity = getItemQuantity(item.id);
     return (
@@ -921,7 +923,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
           <View style={styles.productInfo}>
             <View style={styles.productHeader}>
               <Text style={styles.productName} numberOfLines={1}>
-                {item.product_name}
+                {capitalize(item.product_name)}
               </Text>
               <View
                 style={[
@@ -943,7 +945,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
             </View>
 
             <Text style={styles.productDescription} numberOfLines={2}>
-              {item.description}
+              {capitalize(item.description)}
             </Text>
 
             <View style={styles.productDetails}>
@@ -954,7 +956,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
             </View>
 
             <Text style={styles.productSupplier}>
-              Supplier: {item?.suppliers?.contact_person}
+              Supplier: {capitalize(item?.suppliers?.contact_person)}
             </Text>
 
             {(item.stock_quantity ?? 0) > 0 && (
@@ -1013,13 +1015,13 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Icon name="arrow-back" size={24} color={Colors.text} />
+            <Icon name="arrow-back" size={24} color={'white'} />
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>Order Products</Text>
 
           <TouchableOpacity style={styles.cartButton} onPress={goCart}>
-            <Icon name="shopping-cart" size={24} color={Colors.text} />
+            <Icon name="shopping-cart" size={24} color={'white'} />
             {getCartItemCount() > 0 && (
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{getCartItemCount()}</Text>
@@ -1079,7 +1081,13 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
           <Text>Loading products...</Text>
         </View>
       ) : !showEmpty ? (
-        <View style={{height:getCartItemCount() > 0 ? heightPercentageToDP(71.5) : heightPercentageToDP(82.5)}}>
+        <View
+          style={{
+            height:
+              getCartItemCount() > 0
+                ? heightPercentageToDP(71.5)
+                : heightPercentageToDP(82.5),
+          }}>
           {/* Categories only for default list */}
           {!isSearching && (
             <View style={styles.categoryTabs}>
@@ -1170,8 +1178,8 @@ const styles = StyleSheet.create({
 
   header: {
     backgroundColor: Colors.white,
-    paddingTop: Platform.OS === 'android' ? spacings.large : 0,
-    paddingHorizontal: Spacing.md,
+    // paddingTop: Platform.OS === 'android' ? spacings.large : 0,
+    // paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
@@ -1181,9 +1189,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: Spacing.md,
+    backgroundColor: '#3B82F6',
+    padding: spacings.large,
   },
   backButton: {padding: Spacing.sm},
-  headerTitle: {fontSize: 18, fontWeight: 'bold', color: Colors.text},
+  headerTitle: {fontSize: 18, fontWeight: 'bold', color: whiteColor},
   cartButton: {padding: Spacing.sm, position: 'relative'},
   cartBadge: {
     position: 'absolute',
@@ -1198,7 +1208,11 @@ const styles = StyleSheet.create({
   },
   cartBadgeText: {fontSize: 12, color: Colors.white, fontWeight: 'bold'},
 
-  searchContainer: {flexDirection: 'row', gap: Spacing.sm},
+  searchContainer: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',

@@ -418,9 +418,19 @@ const OrderConfirmationScreen = ({
 
         <TouchableOpacity
           style={styles.secondaryActionButton}
-          onPress={() =>
-            handleNavigate(jobFromParams ? null : 'HomeScreen')
-          }>
+          onPress={() => {
+            if (jobFromParams) {
+              navigation.reset({
+                index: 1,
+                routes: [
+                  {name: 'JobStack'},
+                  {name: 'JobDetail', params: {job: jobFromParams}},
+                ],
+              });
+            } else {
+              handleNavigate('HomeScreen');
+            }
+          }}>
           <Text style={styles.secondaryActionText}>
             {jobFromParams ? 'Back to Job' : 'Back to Dashboard'}
           </Text>
