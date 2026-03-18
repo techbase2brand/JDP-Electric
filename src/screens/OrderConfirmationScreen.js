@@ -423,7 +423,8 @@ const OrderConfirmationScreen = ({
               navigation.reset({
                 index: 1,
                 routes: [
-                  {name: 'JobStack'},
+                  // Ensure JobStack back button returns to dashboard even after reset()
+                  {name: 'JobStack', params: {fromCreateJob: true}},
                   {name: 'JobDetail', params: {job: jobFromParams}},
                 ],
               });

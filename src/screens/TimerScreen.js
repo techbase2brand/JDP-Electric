@@ -35,6 +35,8 @@ import {
 } from '../services/TimerNotificationService';
 import Geolocation from '@react-native-community/geolocation';
 
+const TimerModule = NativeModules?.TimerModule;
+
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
   ...(TextInput.defaultProps || {}),
@@ -365,12 +367,16 @@ export default function TimerScreen({navigation, route}) {
   // ---------- Native Live Activity ----------
   const startLiveActivity = async elapsed => {
     try {
-      await TimerModule?.startActivity?.(elapsed);
+      // Native widget expects seconds
+      const elapsedSec = Math.floor((elapsed || 0) / 1000);
+      await TimerModule?.startActivity?.(elapsedSec);
     } catch {}
   };
   const updateLiveActivity = (elapsed, running) => {
     try {
-      TimerModule?.updateActivity?.(elapsed, running);
+      // Native widget expects seconds
+      const elapsedSec = Math.floor((elapsed || 0) / 1000);
+      TimerModule?.updateActivity?.(elapsedSec, running);
     } catch {}
   };
   const endLiveActivity = () => {

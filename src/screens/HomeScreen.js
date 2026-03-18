@@ -386,6 +386,8 @@ const HomeScreen = ({navigation}) => {
     }
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
   };
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
 
   const renderJobCard = job => (
     <TouchableOpacity
@@ -438,7 +440,10 @@ const HomeScreen = ({navigation}) => {
               {/* <Feather name="user" size={18} color={tabColor} />{' '} */}
             </Text>
             <Text style={styles.jobDetailText}>
-              {job?.customer?.customer_name || job?.contractor?.contractor_name}
+              {capitalize(
+                job?.customer?.customer_name ||
+                  job?.contractor?.contractor_name,
+              )}
             </Text>
           </View>
           <View style={styles.jobDetailRow}>

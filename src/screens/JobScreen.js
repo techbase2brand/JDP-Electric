@@ -26,7 +26,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
 import {getJobs, getlabourJobs, searchMyJobs} from '../config/apiConfig';
-import { spacings } from '../constants/Fonts';
+import {spacings} from '../constants/Fonts';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -407,7 +407,11 @@ const JobListingScreen = ({navigation, route}) => {
     if (route?.params?.fromCreateJob) {
       navigation.navigate('Home', {screen: 'HomeScreen'});
     } else {
-      navigation.goBack();
+      if (navigation.canGoBack?.()) {
+        navigation.goBack();
+      } else {
+        navigation.navigate('Home', {screen: 'HomeScreen'});
+      }
     }
   };
 
@@ -514,7 +518,9 @@ const JobListingScreen = ({navigation, route}) => {
       </ScrollView>
     </View>
   );
-
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
+  
   const renderJobCard = ({item: job}) => {
     const isExpanded = expandedJobId === (job?.id ?? job?._id);
     return (
@@ -571,9 +577,7 @@ const JobListingScreen = ({navigation, route}) => {
               numberOfLines={1}>
               {job?.job_title || job?.title}
             </Text>
-            {!!job?.isSubJob && (
-              <Text style={styles.subJobTag}>Sub Job</Text>
-            )}
+            {!!job?.isSubJob && <Text style={styles.subJobTag}>Sub Job</Text>}
             {!!job?.isMainJob && !job?.isSubJob && (
               <Text style={styles.mainJobTag}>Main Job</Text>
             )}
@@ -645,7 +649,7 @@ const JobListingScreen = ({navigation, route}) => {
           <View>
             <View style={styles.customerSection}>
               <Text style={styles.customerName}>
-                {job?.customer?.name || job?.customer?.customer_name || '—'}
+                {capitalize(job?.customer?.name || job?.customer?.customer_name || '—')}
               </Text>
               <Text style={styles.customerAddress}>
                 {job?.address || job?.customer?.address || '—'}
@@ -1287,7 +1291,7 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    marginTop:spacings.large,
+    marginTop: spacings.large,
     borderTopColor: COLORS.gray200,
   },
   actionButton: {

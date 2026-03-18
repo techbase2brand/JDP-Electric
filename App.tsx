@@ -297,7 +297,9 @@ const AppContent = () => {
       const running = !!t.isRunning;
       await persistTimerState(elapsed, running);
       // Only update notification when app is in background (don't show card when app is active)
-      if (appStateRef.current === 'background') {
+      // iOS: we rely on Live Activity (TimerModule) for lock-screen display.
+      // Android: keep updating the foreground-service notification.
+      if (Platform.OS === 'android' && appStateRef.current === 'background') {
         const p = await getPersistedTimerState();
         await updateTimerNotification(
           Math.floor(elapsed / 1000),
@@ -330,13 +332,21 @@ const AppContent = () => {
         if (running) {
           persistTimerState(elapsed, true);
           const elapsedSec = Math.floor(elapsed / 1000);
-          getPersistedTimerState().then(p =>
-            showTimerNotification(elapsedSec, true, p?.jobName || 'Work'),
-          );
+          // Android: show foreground-service notification on background.
+          // iOS: do not show timer notification; Live Activity handles lock screen.
+          if (Platform.OS === 'android') {
+            getPersistedTimerState().then(p =>
+              showTimerNotification(elapsedSec, true, p?.jobName || 'Work'),
+            );
+          }
         }
       }
       if (prev === 'background' && nextState === 'active') {
-        cancelTimerNotification();
+        // Android: hide/stop foreground-service notification when user returns to app.
+        // iOS: no timer notification should be shown.
+        if (Platform.OS === 'android') {
+          cancelTimerNotification();
+        }
       }
     });
     return () => sub.remove();
