@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useEffect, useCallback} from 'react';
+import React, {useState, useMemo, useCallback} from 'react';
 import {
   View,
   Text,
@@ -6,21 +6,16 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Alert,
-  StatusBar,
   SafeAreaView,
   Platform,
   UIManager,
-  LayoutAnimation,
   ActivityIndicator,
 } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import {tabColor} from '../constants/Color';
-import {widthPercentageToDP} from '../utils';
 import {getBlueSheets} from '../config/apiConfig';
 import {useSelector} from 'react-redux';
 import {useFocusEffect} from '@react-navigation/native';
@@ -39,13 +34,12 @@ if (Platform.OS === 'android') {
 const TimesheetScreen = ({navigation, user, jobs}) => {
   const token = useSelector(state => state.user.token);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('date');
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
-  const [expandedJobId, setExpandedJobId] = useState(null);
+  const [statusFilter] = useState('all');
+  const [sortBy] = useState('date');
   const [loading, setLoading] = useState(false);
   const [blueSheetData, setBlueSheetData] = useState([]);
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
 
   // Mock comprehensive timesheet data across all jobs
   const allTimesheets = [
@@ -214,16 +208,16 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
     });
 
     return filtered;
+    // Keep existing behavior; avoid changing deps/behavior.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allTimesheets, statusFilter, searchQuery, sortBy]);
 
-  const toggleJobExpansion = jobId => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedJobId(expandedJobId === jobId ? null : jobId);
-  };
   useFocusEffect(
     useCallback(() => {
       const fetchBlueSheet = async () => {
-        if (loading) return;
+        if (loading) {
+          return;
+        }
         setLoading(true);
         console.log('token>>>', token);
 
@@ -248,6 +242,8 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
 
       // Cleanup optional (e.g. reset state)
       return () => {};
+      // Keep existing behavior; avoid changing deps/behavior.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]), // dependencies if needed
   );
 
@@ -291,7 +287,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>All Bluesheets</Text>
           {/* <Text style={styles.headerSubtitle}> */}
-            {/* {filteredTimesheets.length} of {allTimesheets.length} timesheets */}
+          {/* {filteredTimesheets.length} of {allTimesheets.length} timesheets */}
           {/* </Text> */}
         </View>
 
@@ -339,7 +335,6 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
               </View>
             ) : (
               filteredTimesheets?.map(timesheet => {
-                const isExpanded = expandedJobId === timesheet.id;
                 return (
                   <View key={timesheet?.id} style={styles.timesheetCard}>
                     {/* Header */}
@@ -431,7 +426,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                         <View style={styles.detailItem}>
                           <Feather name="user" size={20} color={tabColor} />
                           <Text style={styles.detailText}>
-                            By: {timesheet?.created_by_user?.full_name}
+                            By: {capitalize(timesheet?.created_by_user?.full_name)}
                           </Text>
                         </View>
                         <View style={styles.detailItem}>
@@ -528,7 +523,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#f9fafb',
     // marginBottom: 100,
   },
   header: {
@@ -707,6 +702,7 @@ const styles = StyleSheet.create({
   },
   timesheetsList: {
     paddingHorizontal: 16,
+    paddingBottom: 12,
   },
   emptyState: {
     backgroundColor: 'white',
@@ -738,8 +734,10 @@ const styles = StyleSheet.create({
   timesheetCard: {
     backgroundColor: 'white',
     marginBottom: 16,
-    padding: 16,
+    padding: 14,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EEF2F7',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
@@ -759,12 +757,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+    flexWrap: 'wrap',
+    rowGap: 8,
   },
   timesheetId: {
     fontSize: 16,
     fontWeight: '600',
     color: '#111827',
     marginRight: 8,
+    flexShrink: 1,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -808,10 +809,16 @@ const styles = StyleSheet.create({
   },
   detailsGrid: {
     marginBottom: 16,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#EEF2F7',
   },
   detailRow: {
     flexDirection: 'row',
     marginBottom: 8,
+    columnGap: 12,
   },
   detailItem: {
     flex: 1,
@@ -828,6 +835,7 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     flex: 1,
     marginLeft: 10,
+    lineHeight: 20,
   },
   costBreakdown: {
     backgroundColor: '#f9fafb',
@@ -884,11 +892,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 2,
   },
   submittedText: {
     fontSize: 12,
     color: '#6b7280',
     flex: 1,
+    paddingRight: 10,
   },
   viewButton: {
     flexDirection: 'row',
@@ -896,6 +906,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 6,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   viewButtonPrimary: {
     backgroundColor: '#3B82F6',

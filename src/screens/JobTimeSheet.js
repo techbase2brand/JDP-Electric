@@ -2,6 +2,7 @@ import React, {useState, useMemo, useEffect, useRef, useCallback} from 'react';
 import {
   View,
   Text,
+  Image,
   ScrollView,
   FlatList,
   TouchableOpacity,
@@ -22,6 +23,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {
   getAllLabor,
   getJobBluesheets,
@@ -1303,6 +1305,7 @@ const JobTimesheet = ({navigation, route, user}) => {
     labourEntries: [],
     materialEntries: [],
     additionalCharges: [],
+    jobImages: [],
   }));
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -1548,6 +1551,7 @@ const JobTimesheet = ({navigation, route, user}) => {
           jobNotes: toStore.jobNotes,
           labourEntries: toStore.labourEntries,
           materialEntries: toStore.materialEntries,
+          jobImages: toStore.jobImages || [],
         }));
       } catch (e) {
         // soft-fail: keep current state
@@ -1593,6 +1597,12 @@ const JobTimesheet = ({navigation, route, user}) => {
         ),
       })),
       materialEntries: (next.materialEntries || []).map(m => ({...m})),
+      jobImages: (next.jobImages || []).map(img => ({
+        uri: img?.uri,
+        type: img?.type,
+        fileName: img?.fileName,
+        base64: img?.base64,
+      })),
     };
     try {
       await AsyncStorage.setItem(
@@ -1611,6 +1621,99 @@ const JobTimesheet = ({navigation, route, user}) => {
       }, 500),
     [timesheetData],
   );
+
+  // -------- Job Images (Optional) --------
+  const [imagePickerLoading, setImagePickerLoading] = useState(false);
+
+  const normalizePickedImages = assets =>
+    (assets || []).map(a => ({
+      uri: a?.uri,
+      type: a?.type,
+      fileName: a?.fileName,
+      base64: a?.base64,
+    }));
+
+  const addJobImages = assets => {
+    const picked = normalizePickedImages(assets).filter(i => i?.uri);
+    if (!picked.length) return;
+
+    setTimesheetData(prev => {
+      const next = {
+        ...prev,
+        jobImages: [...(prev.jobImages || []), ...picked].slice(0, 5),
+      };
+      persistLocalState(next);
+      return next;
+    });
+  };
+
+  const handlePickCamera = () => {
+    if (timesheetData.status === 'approved') return; // read-only
+    setImagePickerLoading(true);
+    launchCamera(
+      {
+        mediaType: 'photo',
+        includeBase64: true,
+        quality: 0.8,
+        maxWidth: 1200,
+        maxHeight: 1200,
+      },
+      response => {
+        setImagePickerLoading(false);
+        if (response?.didCancel) return;
+        if (response?.errorMessage) {
+          Alert.alert('Error', response.errorMessage);
+          return;
+        }
+        addJobImages(response?.assets || []);
+      },
+    );
+  };
+
+  const handlePickGallery = () => {
+    if (timesheetData.status === 'approved') return; // read-only
+    setImagePickerLoading(true);
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        selectionLimit: 5,
+        includeBase64: true,
+        quality: 0.8,
+        maxWidth: 1200,
+        maxHeight: 1200,
+      },
+      response => {
+        setImagePickerLoading(false);
+        if (response?.didCancel) return;
+        if (response?.errorMessage) {
+          Alert.alert('Error', response.errorMessage);
+          return;
+        }
+        addJobImages(response?.assets || []);
+      },
+    );
+  };
+
+  const handleRemoveJobImage = idx => {
+    if (timesheetData.status === 'approved') return;
+    setTimesheetData(prev => {
+      const nextImages = (prev.jobImages || []).filter((_, i) => i !== idx);
+      const next = {...prev, jobImages: nextImages};
+      persistLocalState(next);
+      return next;
+    });
+  };
+
+  const handleOpenMaterialSlipPicker = () => {
+    if (timesheetData.status === 'approved') return;
+    if (imagePickerLoading) return;
+
+    Alert.alert('Add Material Slip', 'Choose image source', [
+      {text: 'Camera', onPress: handlePickCamera},
+      {text: 'Photo', onPress: handlePickGallery},
+      {text: 'Cancel', style: 'cancel'},
+    ]);
+  };
 
   // payload mappers (HH:MM:SS out)
   const localLaborToApi = l => {
@@ -1705,6 +1808,15 @@ const JobTimesheet = ({navigation, route, user}) => {
       status: 'pending',
       notes: timesheetData.jobNotes || '',
       additional_charges: Number(additionalCharges.toFixed(2)),
+      // Optional material slip images (backend may ignore if not supported)
+      material_slip_images: (timesheetData.jobImages || [])
+        .slice(0, 5)
+        .map(img => ({
+          uri: img?.uri,
+          type: img?.type,
+          fileName: img?.fileName,
+          base64: img?.base64,
+        })),
       labor_entries: (timesheetData.labourEntries || []).map(localLaborToApi),
       material_entries: (timesheetData.materialEntries || []).map(
         localMaterialToApi,
@@ -2297,6 +2409,66 @@ const JobTimesheet = ({navigation, route, user}) => {
               />
             </View>
 
+            {/* MATERIAL SLIPS (Optional) */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <MaterialIcons
+                  name="description"
+                  size={24}
+                  color={Colors.primary}
+                />
+                <Text style={styles.sectionTitle}>
+                  Material Slips (Optional)
+                </Text>
+              </View>
+
+              <Text style={styles.imageHint}>
+                Upload up to 5 material slip images (Camera/Gallery).
+              </Text>
+
+              <View style={styles.thumbGrid}>
+                {Array.from({length: 5}).map((_, idx) => {
+                  const img = (timesheetData.jobImages || [])[idx];
+                  const isFilled = !!img?.uri;
+                  return (
+                    <TouchableOpacity
+                      key={`material-slip-${idx}`}
+                      style={styles.thumbItem}
+                      activeOpacity={0.85}
+                      disabled={
+                        timesheetData.status === 'approved' ||
+                        imagePickerLoading ||
+                        isFilled
+                      }
+                      onPress={() => {
+                        if (!isFilled) handleOpenMaterialSlipPicker();
+                      }}>
+                      {isFilled ? (
+                        <>
+                          <Image
+                            source={{uri: img?.uri}}
+                            style={styles.thumbImg}
+                            resizeMode="cover"
+                          />
+                          <TouchableOpacity
+                            style={styles.thumbRemoveBtn}
+                            onPress={() => handleRemoveJobImage(idx)}
+                            disabled={timesheetData.status === 'approved'}>
+                            <Text style={styles.thumbRemoveText}>×</Text>
+                          </TouchableOpacity>
+                        </>
+                      ) : (
+                        <View style={styles.plusSlot}>
+                          <Feather name="plus" size={24} color="#3B82F6" />
+                          <Text style={styles.plusSlotText}>Add</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
                 <MaterialIcons
@@ -2502,6 +2674,99 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     textAlignVertical: 'top',
     minHeight: 96,
+  },
+  imageHint: {
+    color: '#6b7280',
+    fontSize: 13,
+    marginBottom: 12,
+    marginTop: -4,
+  },
+  imagePickerRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  imagePickerBtn: {
+    flex: 1,
+    backgroundColor: '#3B82F6',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  imagePickerBtnSecondary: {
+    flex: 1,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  imagePickerBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  imagePickerBtnTextSecondary: {
+    color: '#3B82F6',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  thumbGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  thumbItem: {
+    width: 105,
+    height: 100,
+    borderRadius: 10,
+    // overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    position: 'relative',
+    backgroundColor: '#F9FAFB',
+  },
+  thumbImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
+  },
+  thumbRemoveBtn: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbRemoveText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 16,
+    lineHeight: 16,
+    marginTop: -2,
+  },
+  plusSlot: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+  },
+  plusSlotText: {
+    marginTop: 6,
+    color: '#3B82F6',
+    fontWeight: '800',
+    fontSize: 12,
   },
   actionButtons: {},
   submitButton: {

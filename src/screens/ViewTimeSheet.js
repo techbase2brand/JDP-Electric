@@ -198,7 +198,8 @@ const TimesheetScreen = ({navigation, route, job}) => {
     }
   };
 
-  // Modal components
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -237,12 +238,12 @@ const TimesheetScreen = ({navigation, route, job}) => {
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <View style={styles.jobInfo}>
-              <Text style={styles.jobTitle}>{timesheet?.job?.job_title}</Text>
+              <Text style={styles.jobTitle}>{capitalize(timesheet?.job?.job_title)}</Text>
               <Text style={styles.jobCustomer}>
-                {timesheet?.job?.customer?.customer_name}
+                {capitalize(timesheet?.job?.customer?.customer_name)}
               </Text>
               <Text style={styles.jobLocation}>
-                {timesheet?.job?.bill_to_address}
+                {capitalize(timesheet?.job?.bill_to_address)}
               </Text>
             </View>
             <View style={styles.statusBadges}>
@@ -305,7 +306,7 @@ const TimesheetScreen = ({navigation, route, job}) => {
             <View key={entry.id} style={styles.entryCard}>
               <View style={styles.entryHeader}>
                 <View style={styles.entryInfo}>
-                  <Text style={styles.entryName}>{entry?.employee_name}</Text>
+                  <Text style={styles.entryName}>{capitalize(entry?.employee_name)}</Text>
                   <Text style={styles.entryDetails}></Text>
                 </View>
               </View>

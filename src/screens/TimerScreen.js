@@ -264,6 +264,8 @@ export default function TimerScreen({navigation, route}) {
   // Modals
   const [pauseModal, setPauseModal] = useState(false);
   const [completeModal, setCompleteModal] = useState(false);
+  const [timerCompletedModal, setTimerCompletedModal] = useState(false);
+  const [completedWorkedTime, setCompletedWorkedTime] = useState('00:00:00');
 
   // Pause modal inputs
   const [pauseReason, setPauseReason] = useState('');
@@ -915,6 +917,9 @@ export default function TimerScreen({navigation, route}) {
       await bufferDel(LS_KEYS.pending);
       await bufferDel(LS_KEYS.jobId);
 
+      const workedTimeText = toHHMMSS(finalElapsed);
+      setCompletedWorkedTime(workedTimeText);
+
       dispatch(stopTimerWithBackground());
       endLiveActivity();
       await cancelTimerNotification();
@@ -922,7 +927,7 @@ export default function TimerScreen({navigation, route}) {
       // UI feedback only for manual completion
       if (!auto) {
         setCompleteModal(false);
-        Alert.alert('Success', 'Work data updated successfully.');
+        setTimerCompletedModal(true);
       }
 
       // Logs refresh is fine for both flows
@@ -1439,6 +1444,61 @@ export default function TimerScreen({navigation, route}) {
               </View>
             </View>
           </Modal>
+
+          {/* Timer Completed Modal */}
+          <Modal visible={timerCompletedModal} transparent animationType="fade">
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, {width: '85%'}]}>
+                <View style={styles.completedIconWrap}>
+                  <Icon name="check-circle" size={60} color={'#10B981'} />
+                </View>
+                <Text style={styles.completedTitle}>Timer Completed</Text>
+                <Text style={styles.completedSubtitle}>
+                  Your timer has been completed successfully.
+                </Text>
+
+                <View style={styles.completedTimePill}>
+                  <Text style={styles.completedTimeLabel}>Worked time</Text>
+                  <Text style={styles.completedTimeValue}>
+                    {completedWorkedTime}
+                  </Text>
+                </View>
+
+                <View style={styles.completedButtonRow}>
+                  <CustomButton
+                    label="Back to Job"
+                    color="#9E9E9E"
+                    onPress={() => {
+                      setTimerCompletedModal(false);
+                      const jobToPass = jobData?.job ?? jobData ?? job;
+                      navigation.reset({
+                        index: 1,
+                        routes: [
+                          {name: 'JobStack', params: {fromCreateJob: true}},
+                          {name: 'JobDetail', params: {job: jobToPass}},
+                        ],
+                      });
+                    }}
+                  />
+                  <CustomButton
+                    label="Create Bluesheet"
+                    color="#1565C0"
+                    onPress={() => {
+                      setTimerCompletedModal(false);
+                      const jobToPass = jobData?.job ?? jobData ?? job;
+                      navigation.reset({
+                        index: 1,
+                        routes: [
+                          {name: 'JobStack', params: {fromCreateJob: true}},
+                          {name: 'JobTimesheet', params: {job: jobToPass}},
+                        ],
+                      });
+                    }}
+                  />
+                </View>
+              </View>
+            </View>
+          </Modal>
         </>
       )}
     </View>
@@ -1466,6 +1526,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
+  },
+  completedIconWrap: {
+    borderRadius: 40,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  completedTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#000',
+    textAlign: 'center',
+  },
+  completedSubtitle: {
+    fontSize: 13,
+    color: '#555',
+    textAlign: 'center',
+    marginTop: 6,
+    marginBottom: 14,
+  },
+  completedTimePill: {
+    width: '100%',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 18,
+  },
+  completedTimeLabel: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+  completedTimeValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#111',
+    textAlign: 'center',
+    marginTop: 6,
+  },
+  completedButtonRow: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
   },
   headerContent: {alignItems: 'center'},
   headerTitle: {fontSize: 18, fontWeight: 'bold', color: '#000'},

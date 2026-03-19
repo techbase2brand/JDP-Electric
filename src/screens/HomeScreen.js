@@ -666,7 +666,7 @@ const HomeScreen = ({navigation}) => {
               </TouchableOpacity>
               <View style={styles.headerLeft}>
                 <Text style={styles.greeting}>
-                  {greeting}, {user?.full_name}!
+                  {greeting}, {capitalize(user?.full_name)} !
                 </Text>
                 <View style={styles.roleContainer}>
                   <View style={styles.roleBadge}>
@@ -676,7 +676,8 @@ const HomeScreen = ({navigation}) => {
                         : 'Labor'}
                     </Text>
                   </View>
-                  <Text style={[styles.dateText, {color: '#fff'}]}>
+                  <Text
+                    style={[styles.dateText, {color: '#fff', paddingLeft: 4}]}>
                     • {today}
                   </Text>
                 </View>

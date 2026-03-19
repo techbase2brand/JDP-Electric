@@ -930,6 +930,7 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
         // exit search mode & show default list
         setIsSearching(false);
         setSearchResults([]);
+        setSearchLoading(false);
         lastIssuedSearchRef.current = '';
         return;
       }
@@ -967,6 +968,7 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
     setSearchQuery('');
     setIsSearching(false);
     setSearchResults([]);
+    setSearchLoading(false);
     lastIssuedSearchRef.current = '';
   };
 
@@ -990,7 +992,8 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
 
   // ---------- infinite scroll (disabled during search) ----------
   const loadMore = () => {
-    if (isSearching) return;
+    // During search debounce/typing, stop pagination to avoid extra API calls
+    if (isSearching || !!(searchQuery || '').trim()) return;
     if (loading || endReachedLockRef.current || !hasMore) return;
     endReachedLockRef.current = true;
     setPage(prev => prev + 1);

@@ -32,6 +32,7 @@ import {useSelector} from 'react-redux';
 import {
   createCustomer,
   createJob,
+  getJobById,
   getAllLabor,
   getContractors,
   getCustomers,
@@ -972,15 +973,57 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       const res = await createJob(payload, token);
       console.log('resres', res);
 
+      const createdJobCandidate = res?.data ?? res?.job ?? res;
+      const createdJobId =
+        createdJobCandidate?.id ??
+        createdJobCandidate?._id ??
+        res?.jobId ??
+        res?.data?.id ??
+        res?.data?._id;
+
       // success UI
       Alert.alert('Success', 'Job created successfully!', [
         {
           text: 'OK',
-          onPress: () =>
-            navigation.navigate('Jobs', {
-              screen: 'JobStack',
-              params: {fromCreateJob: true},
-            }),
+          onPress: async () => {
+            try {
+              if (createdJobId) {
+                const jobRes = await getJobById(createdJobId, token);
+                const fullJob =
+                  jobRes?.data ?? jobRes?.job ?? jobRes ?? createdJobCandidate;
+
+                navigation.reset({
+                  index: 1,
+                  routes: [
+                    {name: 'JobStack', params: {fromCreateJob: true}},
+                    {name: 'JobDetail', params: {job: fullJob}},
+                  ],
+                });
+                return;
+              }
+
+              if (createdJobCandidate?.id || createdJobCandidate?._id) {
+                navigation.reset({
+                  index: 1,
+                  routes: [
+                    {name: 'JobStack', params: {fromCreateJob: true}},
+                    {name: 'JobDetail', params: {job: createdJobCandidate}},
+                  ],
+                });
+                return;
+              }
+
+              navigation.reset({
+                index: 0,
+                routes: [{name: 'JobStack', params: {fromCreateJob: true}}],
+              });
+            } catch (e) {
+              navigation.reset({
+                index: 0,
+                routes: [{name: 'JobStack', params: {fromCreateJob: true}}],
+              });
+            }
+          },
         },
       ]);
     } catch (err) {
@@ -1376,118 +1419,125 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
             </View>
           )} */}
 
-          <View
-            style={styles.formGroup}
-            ref={ref => (fieldPositions.current['customerPhone'] = ref)}>
-            <Text style={styles.formLabel}>Phone Number *</Text>
-            <View
-              style={[
-                styles.inputContainer,
-                validationErrors.customerPhone && styles.inputContainerError,
-              ]}>
-              <Icon
-                name="phone"
-                size={20}
-                color="#9ca3af"
-                style={styles.inputIcon}
-              />
-              <PhoneInput
-                ref={customerPhoneInputRef}
-                defaultCode="US"
-                layout="second"
-                value={customerPhoneNumber}
-                onChangeCountry={country => {
-                  const raw = country?.callingCode;
-                  const cc = Array.isArray(raw) ? raw[0] : raw;
-                  if (!cc) {
-                    return;
-                  }
-                  const code = `+${cc}`;
-                  setCustomerCountryCode(code);
-                  updateFormData(
-                    'customerPhone',
-                    `${code}-${customerPhoneNumber}`.trim(),
-                  );
-                }}
-                onChangeText={text => {
-                  setCustomerPhoneNumber(text);
-                  updateFormData(
-                    'customerPhone',
-                    `${customerCountryCode}-${text}`.trim(),
-                  );
-                }}
-                containerStyle={{
-                  width: '100%',
-                  height: 48,
-                  borderWidth: 0,
-                  backgroundColor: 'transparent',
-                  alignItems: 'center',
-                  marginLeft: 8,
-                }}
-                textContainerStyle={{
-                  paddingHorizontal: 0,
-                  paddingVertical: 0,
-                  backgroundColor: 'transparent',
-                }}
-                textInputProps={{
-                  placeholder: '(555) 123-4567',
-                  placeholderTextColor: '#9ca3af',
-                  keyboardType: 'phone-pad',
-                  backgroundColor: 'transparent',
-                  style: [styles.formInput],
-                }}
-                flagButtonStyle={{
-                  width: 80,
-                  paddingLeft: spacings.large,
-                }}
-              />
+          {/* Job Information (kept as job-level fields) */}
+          <View style={styles.subCard}>
+            <View style={styles.subCardHeader}>
+              <Icon name="assignment" size={20} color="#3B82F6" />
+              <Text style={styles.subCardTitle}>Job Information</Text>
             </View>
-            {validationErrors.customerPhone && (
-              <View style={styles.errorContainer}>
-                <Icon name="error" size={16} color="#ef4444" />
-                <Text style={styles.errorText}>
-                  {validationErrors.customerPhone}
-                </Text>
-              </View>
-            )}
-          </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Email Address</Text>
             <View
-              style={[
-                styles.inputContainer,
-                validationErrors.customerEmail && styles.inputContainerError,
-                ,
-                {paddingHorizontal: 0},
-              ]}>
-              <Icon
-                name="email"
-                size={20}
-                color="#9ca3af"
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={[styles.formInput, styles.inputWithIcon]}
-                value={formData.customerEmail}
-                onChangeText={text => updateFormData('customerEmail', text)}
-                placeholder="customer@email.com"
-                placeholderTextColor="#9ca3af"
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-            {validationErrors.customerEmail && (
-              <View style={styles.errorContainer}>
-                <Icon name="error" size={16} color="#ef4444" />
-                <Text style={styles.errorText}>
-                  {validationErrors.customerEmail}
-                </Text>
+              style={styles.formGroup}
+              ref={ref => (fieldPositions.current['customerPhone'] = ref)}>
+              <Text style={styles.formLabel}>Phone Number *</Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  validationErrors.customerPhone && styles.inputContainerError,
+                ]}>
+                <Icon
+                  name="phone"
+                  size={20}
+                  color="#9ca3af"
+                  style={styles.inputIcon}
+                />
+                <PhoneInput
+                  ref={customerPhoneInputRef}
+                  defaultCode="US"
+                  layout="second"
+                  value={customerPhoneNumber}
+                  onChangeCountry={country => {
+                    const raw = country?.callingCode;
+                    const cc = Array.isArray(raw) ? raw[0] : raw;
+                    if (!cc) {
+                      return;
+                    }
+                    const code = `+${cc}`;
+                    setCustomerCountryCode(code);
+                    updateFormData(
+                      'customerPhone',
+                      `${code}-${customerPhoneNumber}`.trim(),
+                    );
+                  }}
+                  onChangeText={text => {
+                    setCustomerPhoneNumber(text);
+                    updateFormData(
+                      'customerPhone',
+                      `${customerCountryCode}-${text}`.trim(),
+                    );
+                  }}
+                  containerStyle={{
+                    width: '100%',
+                    height: 48,
+                    borderWidth: 0,
+                    backgroundColor: 'transparent',
+                    alignItems: 'center',
+                    marginLeft: 8,
+                  }}
+                  textContainerStyle={{
+                    paddingHorizontal: 0,
+                    paddingVertical: 0,
+                    backgroundColor: 'transparent',
+                  }}
+                  textInputProps={{
+                    placeholder: '(555) 123-4567',
+                    placeholderTextColor: '#9ca3af',
+                    keyboardType: 'phone-pad',
+                    backgroundColor: 'transparent',
+                    style: [styles.formInput],
+                  }}
+                  flagButtonStyle={{
+                    width: 80,
+                    paddingLeft: spacings.large,
+                  }}
+                />
               </View>
-            )}
-          </View>
+              {validationErrors.customerPhone && (
+                <View style={styles.errorContainer}>
+                  <Icon name="error" size={16} color="#ef4444" />
+                  <Text style={styles.errorText}>
+                    {validationErrors.customerPhone}
+                  </Text>
+                </View>
+              )}
+            </View>
 
-          {/* <View
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Email Address</Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  validationErrors.customerEmail && styles.inputContainerError,
+                  ,
+                  {paddingHorizontal: 0},
+                ]}>
+                <Icon
+                  name="email"
+                  size={20}
+                  color="#9ca3af"
+                  style={styles.inputIcon}
+                />
+                <TextInput
+                  style={[styles.formInput, styles.inputWithIcon]}
+                  value={formData.customerEmail}
+                  onChangeText={text => updateFormData('customerEmail', text)}
+                  placeholder="customer@email.com"
+                  placeholderTextColor="#9ca3af"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+              {validationErrors.customerEmail && (
+                <View style={styles.errorContainer}>
+                  <Icon name="error" size={16} color="#ef4444" />
+                  <Text style={styles.errorText}>
+                    {validationErrors.customerEmail}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* <View
             style={styles.formGroup}
             ref={ref => (fieldPositions.current['customerAddress'] = ref)}>
             <Text style={styles.formLabel}>Address *</Text>
@@ -1534,80 +1584,99 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
             )}
           </View> */}
 
-          <View
-            style={styles.formGroup}
-            ref={ref => (fieldPositions.current['customerAddress'] = ref)}>
-            <Text style={styles.formLabel}>Address *</Text>
             <View
-              style={[
-                styles.inputContainer,
-                validationErrors.customerAddress && styles.inputContainerError,
-                ,
-                {paddingHorizontal: 0, color: 'black'},
-              ]}>
-              <Icon
-                name="place"
-                size={20}
-                color="#9ca3af"
-                style={styles.inputIcon}
-              />
-
-              {showPlaces && (
-                <GooglePlacesAutocomplete
-                  ref={googleRef}
-                  placeholder="Enter customer address"
-                  fetchDetails={true}
-                  enablePoweredByContainer={false}
-                  query={{
-                    key: 'AIzaSyCKNlYJxb2T3c8a1rvP5r4FTopvfWWCwHI',
-                    language: 'en',
-                    // components: 'country:us',
-                  }}
-                  onPress={(data, details) => {
-                    const fullAddress = data.description;
-
-                    updateFormData('customerAddress', fullAddress);
-
-                    googleRef.current?.setAddressText(fullAddress);
-
-                    setShowPlaces(false);
-                    setTimeout(() => setShowPlaces(true), 50);
-                  }}
-                  textInputProps={{
-                    value: formData.customerAddress,
-                    placeholderTextColor: '#9ca3af',
-                    onChangeText: text =>
-                      updateFormData('customerAddress', text),
-                  }}
-                  styles={{
-                    textInput: {
-                      color: '#000', // jo text type karoge uska color
-                      fontSize: 16,
-                    },
-                    listView: {
-                      maxHeight: 200,
-                      zIndex: 9999,
-                      elevation: 10,
-                      backgroundColor: '#fff',
-                    },
-                    row: {
-                      backgroundColor: '#fff',
-                    },
-                    description: {
-                      color: '#000', // suggestion item text color
-                    },
-                  }}
+              style={styles.formGroup}
+              ref={ref => (fieldPositions.current['customerAddress'] = ref)}>
+              <Text style={styles.formLabel}>Address *</Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  validationErrors.customerAddress &&
+                    styles.inputContainerError,
+                  ,
+                  {paddingHorizontal: 0, color: 'black'},
+                ]}>
+                <Icon
+                  name="place"
+                  size={20}
+                  color="#9ca3af"
+                  style={styles.inputIcon}
                 />
+
+                {showPlaces && (
+                  <GooglePlacesAutocomplete
+                    ref={googleRef}
+                    placeholder="Enter customer address"
+                    fetchDetails={true}
+                    enablePoweredByContainer={false}
+                    renderRow={rowData => (
+                      <View
+                        style={{
+                          paddingVertical: 10,
+                          width: widthPercentageToDP(70),
+                        }}>
+                        <Text
+                          style={{
+                            color: '#000',
+                            fontSize: 14,
+                            width: widthPercentageToDP(70),
+                          }}
+                          numberOfLines={2}>
+                          {rowData?.description}
+                        </Text>
+                      </View>
+                    )}
+                    query={{
+                      key: 'AIzaSyCKNlYJxb2T3c8a1rvP5r4FTopvfWWCwHI',
+                      language: 'en',
+                      // components: 'country:us',
+                    }}
+                    onPress={(data, details) => {
+                      const fullAddress = data.description;
+
+                      updateFormData('customerAddress', fullAddress);
+
+                      googleRef.current?.setAddressText(fullAddress);
+
+                      setShowPlaces(false);
+                      setTimeout(() => setShowPlaces(true), 50);
+                    }}
+                    textInputProps={{
+                      value: formData.customerAddress,
+                      placeholderTextColor: '#9ca3af',
+                      onChangeText: text =>
+                        updateFormData('customerAddress', text),
+                    }}
+                    styles={{
+                      textInput: {
+                        color: '#000', // jo text type karoge uska color
+                        fontSize: 16,
+                      },
+                      listView: {
+                        maxHeight: 200,
+                        zIndex: 9999,
+                        elevation: 10,
+                        backgroundColor: '#fff',
+                      },
+                      row: {
+                        backgroundColor: '#fff',
+                      },
+                      description: {
+                        color: '#000', // suggestion item text color
+                      },
+                    }}
+                  />
+                )}
+              </View>
+              {validationErrors.customerAddress && (
+                <View style={styles.errorContainer}>
+                  <Icon name="error" size={16} color="#ef4444" />
+                  <Text style={styles.errorText}>
+                    {validationErrors.customerAddress}
+                  </Text>
+                </View>
               )}
             </View>
-            {validationErrors.customerAddress && (
-              <View style={styles.errorContainer}>
-                <Icon name="error" size={16} color="#ef4444" />
-                <Text style={styles.errorText}>
-                  {validationErrors.customerAddress}
-                </Text>
-              </View>
-            )}
           </View>
         </View>
         {/* <View
@@ -2698,6 +2767,25 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111827',
     marginLeft: 12,
+  },
+  subCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginTop: 4,
+  },
+  subCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  subCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginLeft: 10,
   },
   toggleContainer: {
     // flexDirection: 'row',

@@ -887,7 +887,8 @@ const JobActivityLogScreen = ({navigation, route}) => {
       </SafeAreaView>
     );
   }
-
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
   return (
     <SafeAreaView style={styles.container}>
       {/* <StatusBar barStyle="light-content" backgroundColor="#3B82F6" /> */}
@@ -902,7 +903,7 @@ const JobActivityLogScreen = ({navigation, route}) => {
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Job Activity Log</Text>
           <Text style={styles.headerSubtitle}>
-            {jobData?.job?.job_title || 'Job Activities'}
+            {capitalize(jobData?.job?.job_title) || 'Job Activities'}
           </Text>
         </View>
         <View style={styles.headerSpacer} />
@@ -998,7 +999,7 @@ const JobActivityLogScreen = ({navigation, route}) => {
                               <View style={styles.activityUser}>
                                 <Icon name="person" size={16} color="#6B7280" />
                                 <Text style={styles.activityUserText}>
-                                  {activity.user}
+                                  {capitalize(activity.user)}
                                 </Text>
                               </View>
                             </View>
@@ -1037,7 +1038,9 @@ const JobActivityLogScreen = ({navigation, route}) => {
                           <Icon name="schedule" size={24} color="#F59E0B" />
                         </View>
                         <View style={{flex: 1}}>
-                          <Text style={styles.timesheetName}>{userName}</Text>
+                          <Text style={styles.timesheetName}>
+                            {capitalize(userName)}
+                          </Text>
                           <Text style={styles.timesheetInfo}>
                             Time Spent:{' '}
                             <Text style={{fontWeight: '600'}}>

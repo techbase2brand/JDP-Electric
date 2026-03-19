@@ -1017,7 +1017,8 @@ const ActivitySummaryScreen = ({navigation}) => {
     const [h = '0', m = '0', s = '0'] = String(hms).split(':');
     return (+h || 0) * 3600 + (+m || 0) * 60 + (+s || 0);
   };
-
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
   // seconds number OR "HH:MM:SS" string -> seconds
   const toSeconds = val => {
     if (val == null) return 0;
@@ -1471,7 +1472,7 @@ const ActivitySummaryScreen = ({navigation}) => {
                 <Text style={[styles.jobTitle, {marginVertical: 10}]}>
                   {title}
                 </Text>
-                <Text style={styles.jobCustomer}>{customerName}</Text>
+                <Text style={styles.jobCustomer}>{capitalize(customerName)}</Text>
               </View>
             </View>
             <View style={styles.jobCardRight}>
@@ -1512,7 +1513,7 @@ const ActivitySummaryScreen = ({navigation}) => {
               <Icon name="people" size={16} color="#6B7280" />
               <Text style={styles.expandedLabel}>Assigned:</Text>
               <Text style={styles.expandedValue}>
-                {assignedAll?.length ? assignedAll.join(', ') : '-'}
+                {assignedAll?.length ? assignedAll.map(x => capitalize(x)).join(', ') : '-'}
               </Text>
             </View>
 

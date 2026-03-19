@@ -1150,6 +1150,8 @@ const ProfileScreen = ({navigation}) => {
       fetchProfiles();
     }, []),
   );
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
   return (
     <View style={styles.container}>
       {/* <StatusBar backgroundColor="#2563eb" barStyle="light-content" /> */}
@@ -1194,7 +1196,7 @@ const ProfileScreen = ({navigation}) => {
             )}
             <View style={styles.userDetails}>
               <Text style={styles.userName}>
-                {allLabourData?.users?.full_name}
+                {capitalize(allLabourData?.users?.full_name)}
               </Text>
               <Text style={styles.userEmail}>
                 {allLabourData?.users?.email}
