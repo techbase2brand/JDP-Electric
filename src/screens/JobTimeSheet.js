@@ -1419,12 +1419,16 @@ const JobTimesheet = ({navigation, route, user}) => {
           if (!orderDate || !sameDay(orderDate, date)) return;
 
           (order?.items || []).forEach((it, idx) => {
+            const jdpPrice = Number(it?.product?.jdp_price ?? 0) || 0;
+            const estimatedUnitCost =
+              Number(it?.product?.estimated_price ?? 0) || 0;
+            const qty =
+              Number(it?.quantity) || Number(it?.total_price ? 1 : 0) || 0;
             routeMaterials.push({
               id: `${order.id}_${it.id ?? idx}`,
               name: it?.product?.product_name || it?.product_name || '',
               unit: it?.product?.unit || it?.unit || 'pieces',
-              totalOrdered:
-                Number(it?.quantity) || Number(it?.total_price ? 1 : 0) || 0,
+              totalOrdered: qty,
               amountUsed: Number(it?.quantity) || 0,
               unitCost:
                 Number(
@@ -1433,6 +1437,9 @@ const JobTimesheet = ({navigation, route, user}) => {
                     it?.product?.estimated_price ??
                     0,
                 ) || 0,
+              jdpPrice,
+              estimatedUnitCost,
+              estimatedCost: Number((estimatedUnitCost * qty).toFixed(2)) || 0,
               productId: it?.product?.id ?? it?.product_id ?? null,
               supplierOrderId: order?.order_number || order?.order_no || '',
               returnToWarehouse: false,
@@ -1640,7 +1647,7 @@ const JobTimesheet = ({navigation, route, user}) => {
     setTimesheetData(prev => {
       const next = {
         ...prev,
-        jobImages: [...(prev.jobImages || []), ...picked].slice(0, 5),
+        jobImages: [...(prev.jobImages || []), ...picked],
       };
       persistLocalState(next);
       return next;
@@ -1676,7 +1683,7 @@ const JobTimesheet = ({navigation, route, user}) => {
     launchImageLibrary(
       {
         mediaType: 'photo',
-        selectionLimit: 5,
+        selectionLimit: 0, // 0 or undefined => no explicit limit (platform may still cap)
         includeBase64: true,
         quality: 0.8,
         maxWidth: 1200,
@@ -1776,22 +1783,41 @@ const JobTimesheet = ({navigation, route, user}) => {
 
   const localMaterialToApi = m => {
     const normalizedProductId = normalizeApiProductId(m.productId);
+    console.log('m:::::::', m);
+
+    const qty = Number(m.totalOrdered) || 0;
+    const unitCost = Number(m.unitCost) || 0;
+    const jdpPrice = Number(m.jdpPrice ?? m.jdp_price) || 0;
+    const estimatedUnitCost =
+      Number(m.estimatedUnitCost ?? m.estimatedPrice ?? m.estimated_price) || 0;
+    const estimatedCost =
+      Number(
+        m.estimatedCost ??
+          (estimatedUnitCost ? estimatedUnitCost * qty : unitCost * qty),
+      ) || 0;
 
     const payload = {
       material_name: m.name,
-      quantity: Number(m.totalOrdered) || 0,
+      quantity: qty,
       unit: m.unit || 'pieces',
-      total_ordered: Number(m.totalOrdered) || 0,
+      total_ordered: qty,
       material_used: Number(m.amountUsed) || 0,
       supplier_order_id: m.supplierOrderId || null,
       return_to_warehouse: !!m.returnToWarehouse,
-      unit_cost: Number(m.unitCost) || 0,
+      unit_cost: unitCost,
     };
 
     // Only include product_id when it's a real catalog product
     if (normalizedProductId !== undefined) {
       payload.product_id = normalizedProductId;
     }
+
+    // Log JDP price even if backend doesn't accept it
+    console.log('[JobTimeSheet] material payload (log-only extras):', {
+      ...payload,
+      jdp_price: jdpPrice,
+      estimated_unit_cost: estimatedUnitCost,
+    });
 
     return payload;
   };
@@ -2048,6 +2074,9 @@ const JobTimesheet = ({navigation, route, user}) => {
     setShowMenu(false);
     setShowTooltip(null);
   };
+
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
   return (
     <SafeAreaView style={styles.container}>
       {/* <StatusBar backgroundColor="#3B82F6" barStyle="light-content" /> */}
@@ -2158,7 +2187,7 @@ const JobTimesheet = ({navigation, route, user}) => {
                             styles.tableCell,
                             {width: '33%', paddingRight: spacings.large},
                           ]}>
-                          {entry.employeeName}
+                          {capitalize(entry.employeeName)}
                         </Text>
                         {/* <Text style={[styles.tableCell, {flex: 1}]}>
                   {entry.role || 'Labor'}
@@ -2292,7 +2321,7 @@ const JobTimesheet = ({navigation, route, user}) => {
                             styles.tableCell,
                             {width: '20%', paddingRight: spacings.normal},
                           ]}>
-                          {material?.name}
+                          {capitalize(material?.name)}
                         </Text>
                         <Text style={[styles.tableCell, {flex: 1}]}>
                           {material?.totalOrdered} {material?.unit}
@@ -2423,28 +2452,39 @@ const JobTimesheet = ({navigation, route, user}) => {
               </View>
 
               <Text style={styles.imageHint}>
-                Upload up to 5 material slip images (Camera/Gallery).
+                Upload material slip images from Camera or Gallery.
               </Text>
 
               <View style={styles.thumbGrid}>
-                {Array.from({length: 5}).map((_, idx) => {
-                  const img = (timesheetData.jobImages || [])[idx];
-                  const isFilled = !!img?.uri;
+                {(() => {
+                  const images = timesheetData.jobImages || [];
+                  const isDisabled =
+                    timesheetData.status === 'approved' || imagePickerLoading;
+
+                  if (images.length === 0) {
+                    // First time state: one big full-width dashed placeholder
+                    return (
+                      <TouchableOpacity
+                        key="material-slip-first"
+                        style={styles.materialSlipFirstSlot}
+                        activeOpacity={0.85}
+                        disabled={isDisabled}
+                        onPress={handleOpenMaterialSlipPicker}>
+                        <Feather name="plus" size={28} color="#3B82F6" />
+                        <Text style={styles.materialSlipFirstTitle}>
+                          Add Material Slip
+                        </Text>
+                        <Text style={styles.materialSlipFirstHint}>
+                          Tap to upload your material slip photos here.
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  }
+
                   return (
-                    <TouchableOpacity
-                      key={`material-slip-${idx}`}
-                      style={styles.thumbItem}
-                      activeOpacity={0.85}
-                      disabled={
-                        timesheetData.status === 'approved' ||
-                        imagePickerLoading ||
-                        isFilled
-                      }
-                      onPress={() => {
-                        if (!isFilled) handleOpenMaterialSlipPicker();
-                      }}>
-                      {isFilled ? (
-                        <>
+                    <>
+                      {images.map((img, idx) => (
+                        <View key={`material-slip-${idx}`} style={styles.thumbItem}>
                           <Image
                             source={{uri: img?.uri}}
                             style={styles.thumbImg}
@@ -2456,16 +2496,25 @@ const JobTimesheet = ({navigation, route, user}) => {
                             disabled={timesheetData.status === 'approved'}>
                             <Text style={styles.thumbRemoveText}>×</Text>
                           </TouchableOpacity>
-                        </>
-                      ) : (
-                        <View style={styles.plusSlot}>
-                          <Feather name="plus" size={24} color="#3B82F6" />
-                          <Text style={styles.plusSlotText}>Add</Text>
                         </View>
+                      ))}
+
+                      {!isDisabled && (
+                        <TouchableOpacity
+                          key="material-slip-add"
+                          style={styles.thumbItem}
+                          activeOpacity={0.85}
+                          disabled={isDisabled}
+                          onPress={handleOpenMaterialSlipPicker}>
+                          <View style={styles.plusSlot}>
+                            <Feather name="plus" size={24} color="#3B82F6" />
+                            <Text style={styles.plusSlotText}>Add</Text>
+                          </View>
+                        </TouchableOpacity>
                       )}
-                    </TouchableOpacity>
+                    </>
                   );
-                })}
+                })()}
               </View>
             </View>
 
@@ -2720,6 +2769,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
+  },
+  materialSlipFirstSlot: {
+    width: '100%',
+    height: 110,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#93C5FD',
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    paddingHorizontal: 16,
+  },
+  materialSlipFirstTitle: {
+    marginTop: 6,
+    color: '#1F2937',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  materialSlipFirstHint: {
+    marginTop: 4,
+    color: '#6B7280',
+    fontSize: 12,
+    textAlign: 'center',
   },
   thumbItem: {
     width: 105,

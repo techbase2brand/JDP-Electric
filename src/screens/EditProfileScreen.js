@@ -1070,6 +1070,7 @@ const EditProfileScreen = ({navigation}) => {
                     placeholderTextColor: '#9ca3af',
                     keyboardType: 'phone-pad',
                     style: [styles.formInput],
+                    maxLength: 10,
                   }}
                   flagButtonStyle={{
                     width: 60,

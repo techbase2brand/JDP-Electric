@@ -951,7 +951,8 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       status: 'pending',
     };
   };
-
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
   const submitJob = async () => {
     if (!validateStep(3)) return;
     if (!token) {
@@ -1485,6 +1486,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                     keyboardType: 'phone-pad',
                     backgroundColor: 'transparent',
                     style: [styles.formInput],
+                    maxLength: 10,
                   }}
                   flagButtonStyle={{
                     width: 80,
@@ -1822,6 +1824,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                       keyboardType: 'phone-pad',
                       backgroundColor: 'transparent',
                       style: [styles.formInput],
+                      maxLength: 10,
                     }}
                     flagButtonStyle={{
                       width: 80,
@@ -2172,7 +2175,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                 </View>
                 <View style={styles.memberInfo1}>
                   <Text style={[styles.memberName1, {color: 'black'}]}>
-                    {user?.full_name}
+                    {capitalize(user?.full_name)}
                   </Text>
                   <Text style={styles.memberRole1}>
                     {user?.management_type == 'lead_labor' && 'Lead Labor'}
@@ -2186,7 +2189,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                   {formData?.assignedTo?.length > 0
                     ? labors
                         .filter(labor => formData.assignedTo.includes(labor.id))
-                        .map(labor => labor.users?.full_name)
+                        .map(labor => capitalize(labor.users?.full_name))
                         .join(', ')
                     : 'Select Members'}
                 </Text>
@@ -2233,7 +2236,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                           <View style={styles.memberInfo1}>
                             <Text
                               style={[styles.memberName1, {color: 'black'}]}>
-                              {item?.users?.full_name}
+                              {capitalize(item?.users?.full_name)}
                             </Text>
                             <Text style={styles.memberRole1}>
                               {item?.users?.role}
@@ -2505,7 +2508,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
               {assignedMembers.map(member => (
                 <View key={member.id} style={styles.memberSummary}>
                   <Text style={styles.memberSummaryName}>
-                    {member?.users?.full_name}
+                    {capitalize(member?.users?.full_name)}
                   </Text>
                   <Text style={styles.memberSummaryRole}>
                     {member?.users?.role}
