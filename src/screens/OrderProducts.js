@@ -689,7 +689,8 @@ const asArray = x => {
 
 // ----------------- Screen -----------------
 const OrderProductsScreen = ({onBack, onNavigate, route}) => {
-  const {id, job} = route.params ?? {};
+  const {id, job, supplier} = route.params ?? {};
+  // console.log('supplier>>>orderproducts', supplier);
   const jobObj = job?.job ?? job;
   const jobId = jobObj?.id ?? jobObj?._id ?? null;
   const token = useSelector(state => state.user.token);
@@ -748,7 +749,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
         item => item?.status?.toLowerCase() === 'active',
       );
       // const newProducts = asArray(res);
-      console.log('newProductsnewProducts', newProducts);
+      // console.log('newProductsnewProducts', newProducts);
 
       if (isReplace) {
         setProducts(newProducts);
@@ -829,7 +830,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
   };
 
   const handleBack = () => (onBack ? onBack() : navigation.goBack());
-  const goCart = () => navigation.navigate('CartScreen', {id, job});
+  const goCart = () => navigation.navigate('CartScreen', {id, job, supplier});
 
   // ---------- SEARCH ----------
   const triggerSearch = useCallback(
@@ -1198,15 +1199,15 @@ const styles = StyleSheet.create({
   cartBadge: {
     position: 'absolute',
     top: 4,
-    right: 4,
-    backgroundColor: Colors.primary,
+    right: 6,
+    backgroundColor: 'white',
     borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    minWidth: 15,
+    height: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cartBadgeText: {fontSize: 12, color: Colors.white, fontWeight: 'bold'},
+  cartBadgeText: {fontSize: 10, color: Colors.primary, fontWeight: 'bold'},
 
   searchContainer: {
     flexDirection: 'row',

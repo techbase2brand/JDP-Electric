@@ -520,7 +520,7 @@ const JobListingScreen = ({navigation, route}) => {
   );
   const capitalize = text =>
     text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
-  
+
   const renderJobCard = ({item: job}) => {
     const isExpanded = expandedJobId === (job?.id ?? job?._id);
     return (
@@ -575,7 +575,7 @@ const JobListingScreen = ({navigation, route}) => {
                 },
               ]}
               numberOfLines={1}>
-              {job?.job_title || job?.title}
+              {capitalize(job?.job_title || job?.title)}
             </Text>
             {!!job?.isSubJob && <Text style={styles.subJobTag}>Sub Job</Text>}
             {!!job?.isMainJob && !job?.isSubJob && (
@@ -649,7 +649,9 @@ const JobListingScreen = ({navigation, route}) => {
           <View>
             <View style={styles.customerSection}>
               <Text style={styles.customerName}>
-                {capitalize(job?.customer?.name || job?.customer?.customer_name || '—')}
+                {capitalize(
+                  job?.customer?.name || job?.customer?.customer_name || '—',
+                )}
               </Text>
               <Text style={styles.customerAddress}>
                 {job?.address || job?.customer?.address || '—'}

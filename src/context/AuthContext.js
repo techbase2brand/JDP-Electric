@@ -72,7 +72,11 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('userData');
+      // Clear all local persisted data except onboarding flag
+      const keys = await AsyncStorage.getAllKeys();
+      const keepKey = 'hasLaunched';
+      const toRemove = keys.filter(k => k !== keepKey);
+      if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
       setUser(null);
     } catch (error) {
       console.error('Error logging out:', error);

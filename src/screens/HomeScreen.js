@@ -400,7 +400,7 @@ const HomeScreen = ({navigation}) => {
             styles.jobHeaderLeft,
             {width: '100%', justifyContent: 'space-between'},
           ]}>
-          <Text style={[styles.jobId, {width: '50%'}]}>{job.job_title}</Text>
+          <Text style={[styles.jobId, {width: '50%'}]}>{capitalize(job.job_title)}</Text>
           <View
             style={[
               styles.statusBadge,

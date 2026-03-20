@@ -23,7 +23,7 @@ import {useDispatch, useSelector} from 'react-redux';
 import {addToCart, updateQuantity} from '../redux/cartSlice';
 import {createProduct} from '../config/apiConfig';
 import DeviceInfo from 'react-native-device-info';
-import { spacings } from '../constants/Fonts';
+import {spacings} from '../constants/Fonts';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -77,7 +77,8 @@ const Shadows = {
 };
 
 const CartScreen = ({onBack, onNavigate, route}) => {
-  const {id, job} = route.params ?? {};
+  const {id, job, supplier} = route.params ?? {};
+  console.log('supplier>>>cartscreen', supplier);
   const jobObj = job?.job ?? job;
   const dispatch = useDispatch();
   const allCartItems = useSelector(state => state.cart.items);
@@ -173,11 +174,83 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   const getTotalItems = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
+
+  const buildEmailBody = () => {
+    const supplierName =
+      supplier?.contact_person ||
+      supplier?.users?.full_name ||
+      supplier?.company_name ||
+      'Supplier';
+
+    const jobName =
+      jobObj?.job_title ??
+      jobObj?.title ??
+      jobObj?.name ??
+      jobObj?.jobName ??
+      '';
+
+    const customerName = user?.full_name || user?.email || 'Customer';
+
+    const lines = [];
+    lines.push(`Hi ${capitalize(supplierName)},`);
+    lines.push('');
+    lines.push('Please share pricing/availability for the following items:');
+    lines.push('');
+
+    cartItems.forEach((item, index) => {
+      const productNameRaw =
+        item.product_name || item.name || item.title || item.productTitle || '';
+      const productHeadingRaw =
+        item.description || item.product_heading || item.productHeading || '';
+
+      const productName = productNameRaw || productHeadingRaw || 'Item';
+      const sku =
+        item.jdp_sku || item.supplier_sku || item.sku || item.product_sku || '';
+      const qty = item.quantity ?? 0;
+
+      lines.push(`${index + 1}. Product: ${capitalize(productName)}`);
+      lines.push(`    SKU: ${sku || '-'}`);
+      lines.push(`    Quantity: ${qty}`);
+      lines.push('');
+    });
+
+    if (jobName) {
+      lines.push(`Job: ${capitalize(jobName)}`);
+      lines.push('');
+    }
+
+    lines.push('Thanks,');
+    lines.push(customerName);
+
+    return lines.join('\n').trim();
+  };
   const handleCall = phoneNumber => {
-    Linking.openURL(`tel:${6184738399}`);
+    const raw = phoneNumber ?? supplier?.phone ?? supplier?.users?.phone;
+    if (!raw) {
+      Alert.alert('Phone not available', 'Supplier phone number is missing.');
+      return;
+    }
+
+    // Keep digits and optional leading '+'
+    const cleaned = String(raw)
+      .trim()
+      .replace(/[^\d+]/g, '');
+    Linking.openURL(`tel:${cleaned}`);
   };
   const handleEmail = email => {
-    Linking.openURL(`mailto:${'orders@circuitcity.com'}`);
+    const raw = email ?? supplier?.email ?? supplier?.users?.email;
+    if (!raw) {
+      Alert.alert('Email not available', 'Supplier email is missing.');
+      return;
+    }
+
+    const subject = 'Order Request';
+    const body = buildEmailBody();
+    const url = `mailto:${String(raw).trim()}?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
+
+    Linking.openURL(url);
   };
 
   const openWhatsApp = (phone, message) => {
@@ -530,6 +603,8 @@ const CartScreen = ({onBack, onNavigate, route}) => {
       )}
     </View>
   );
+  const capitalize = text =>
+    text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
   return (
     <View style={styles.container}>
       {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.white} /> */}
@@ -584,9 +659,11 @@ const CartScreen = ({onBack, onNavigate, route}) => {
               <View style={styles.productInfo}>
                 <View style={styles.productHeader}>
                   <View style={styles.productTitleContainer}>
-                    <Text style={styles.productName}>{item.product_name}</Text>
+                    <Text style={styles.productName}>
+                      {capitalize(item.product_name)}
+                    </Text>
                     <Text style={styles.productDescription}>
-                      {item.description}
+                      {capitalize(item.description)}
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -673,7 +750,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={[styles.continueButton, {backgroundColor: '#f3f4f6'}]}
-            onPress={() => handleCall()}
+            onPress={() => handleCall(supplier?.users?.phone)}
             // onPress={() => handleNavigate('OrderProducts')}
           >
             {/* <Ionicons name="call" size={20} color={"#fff"} /> */}
@@ -688,7 +765,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
           </TouchableOpacity> */}
           <TouchableOpacity
             style={[styles.continueButton, {backgroundColor: '#f3f4f6'}]}
-            onPress={() => handleEmail()}>
+            onPress={() => handleEmail(supplier?.users?.email)}>
             <Icon name="email" size={22} color="#3B82F6" />
           </TouchableOpacity>
           <TouchableOpacity
@@ -751,7 +828,8 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 40,
   },
-  clearButton: {
+  // (Unused) Kept for backward compatibility if referenced elsewhere.
+  headerClearButton: {
     padding: Spacing.sm,
   },
 

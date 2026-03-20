@@ -1470,7 +1470,7 @@ const ActivitySummaryScreen = ({navigation}) => {
               </View>
               <View>
                 <Text style={[styles.jobTitle, {marginVertical: 10}]}>
-                  {title}
+                  {capitalize(title)}
                 </Text>
                 <Text style={styles.jobCustomer}>{capitalize(customerName)}</Text>
               </View>

@@ -360,6 +360,11 @@ const AppContent = () => {
         await logoutApi(token);
       }
       dispatch(logout());
+      // Clear all persisted local storage except onboarding flag
+      const keys = await AsyncStorage.getAllKeys();
+      const keepKey = 'hasLaunched';
+      const toRemove = keys.filter(k => k !== keepKey);
+      if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
       // Alert.alert('Session Expired', 'Please login again.');
     } catch (err) {
       Alert.alert('Logout Failed', err.message || 'Please try again');

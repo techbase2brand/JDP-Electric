@@ -1805,6 +1805,8 @@ const JobTimesheet = ({navigation, route, user}) => {
       supplier_order_id: m.supplierOrderId || null,
       return_to_warehouse: !!m.returnToWarehouse,
       unit_cost: unitCost,
+      jdp_price: jdpPrice,
+      estimated_price: estimatedCost,
     };
 
     // Only include product_id when it's a real catalog product
@@ -1835,10 +1837,10 @@ const JobTimesheet = ({navigation, route, user}) => {
       notes: timesheetData.jobNotes || '',
       additional_charges: Number(additionalCharges.toFixed(2)),
       // Optional material slip images (backend may ignore if not supported)
-      material_slip_images: (timesheetData.jobImages || [])
+      images: (timesheetData.jobImages || [])
         .slice(0, 5)
         .map(img => ({
-          uri: img?.uri,
+          // uri: img?.uri,
           type: img?.type,
           fileName: img?.fileName,
           base64: img?.base64,
@@ -2276,7 +2278,7 @@ const JobTimesheet = ({navigation, route, user}) => {
                   })
                 ) : (
                   <View style={{padding: 10, alignItems: 'center'}}>
-                    <Text style={{color: '#777', fontStyle: 'italic'}}>
+                    <Text style={{color: '#777'}}>
                       No labours data found
                     </Text>
                   </View>
@@ -2406,7 +2408,7 @@ const JobTimesheet = ({navigation, route, user}) => {
                   })
                 ) : (
                   <View style={{padding: 10, alignItems: 'center'}}>
-                    <Text style={{color: '#777', fontStyle: 'italic'}}>
+                    <Text style={{color: '#777'}}>
                       No material data found
                     </Text>
                   </View>

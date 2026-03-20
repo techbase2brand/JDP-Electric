@@ -881,7 +881,7 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
 
   // default (paginated) list
   const [supplierss, setSuppliers] = useState([]);
-  console.log('supplierss>', job);
+  // console.log('supplierss>', job);
 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -1224,6 +1224,7 @@ const SupplierSelectionScreen = ({navigation, user, route}) => {
             navigation.navigate('OrderProducts', {
               id: supplier?.id,
               job: job,
+              supplier: supplier,
             })
           }>
           <Icon name="add" size={16} color="white" />

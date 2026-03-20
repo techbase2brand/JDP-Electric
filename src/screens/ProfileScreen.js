@@ -1051,6 +1051,11 @@ const ProfileScreen = ({navigation}) => {
 
       // Redux logout action
       dispatch(logout());
+      // Clear all local persisted storage except onboarding flag
+      const keys = await AsyncStorage.getAllKeys();
+      const keepKey = 'hasLaunched';
+      const toRemove = keys.filter(k => k !== keepKey);
+      if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
     } catch (err) {
       Alert.alert('Logout Failed', err.message || 'Please try again');
     }
@@ -1086,6 +1091,10 @@ const ProfileScreen = ({navigation}) => {
       Alert.alert('Success', 'Your account has been deleted');
 
       dispatch(logout());
+      const keys = await AsyncStorage.getAllKeys();
+      const keepKey = 'hasLaunched';
+      const toRemove = keys.filter(k => k !== keepKey);
+      if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
       AsyncStorage.setItem('isLoggedIn', 'false');
 
       navigation.navigate('AuthStack');
@@ -1344,19 +1353,16 @@ const ProfileScreen = ({navigation}) => {
                   styles.confirmButton,
                   {backgroundColor: modalConfig.confirmColor},
                 ]}
-                onPress={() => {
+                onPress={async () => {
                   setModalVisible(false);
                   if (modalConfig?.type === 'signout') {
-                    handleLogout();
-                    // // logout();
-                    // dispatch(logout());
-                    AsyncStorage.setItem('isLoggedIn', 'false');
+                    await handleLogout();
+                    await AsyncStorage.setItem('isLoggedIn', 'false');
                     // navigation.navigate('AuthStack');
                   } else if (modalConfig?.type === 'delete') {
                     // Here you can call real delete API
-                    handleDeleteAccount();
+                    await handleDeleteAccount();
                     // logout(); // logout after delete
-                    AsyncStorage.setItem('isLoggedIn', 'false');
                   }
                 }}>
                 <Text style={styles.confirmButtonText}>

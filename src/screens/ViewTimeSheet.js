@@ -2,6 +2,7 @@ import React, {useState, useMemo} from 'react';
 import {
   View,
   Text,
+  Image,
   ScrollView,
   TouchableOpacity,
   TextInput,
@@ -32,6 +33,27 @@ const TimesheetScreen = ({navigation, route, job}) => {
   const [showAddLabour, setShowAddLabour] = useState(false);
   const [showAddMaterial, setShowAddMaterial] = useState(false);
   const [showAddCharge, setShowAddCharge] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(null);
+
+  const normalizeImages = imagesInput => {
+    const arr = Array.isArray(imagesInput) ? imagesInput : [];
+    return arr
+      .map(img => {
+        if (!img) return null;
+        if (typeof img === 'string') return {uri: img};
+        if (typeof img === 'object') {
+          if (img?.uri) return {uri: img.uri};
+          if (img?.url) return {uri: img.url};
+        }
+        return null;
+      })
+      .filter(Boolean);
+  };
+
+  const viewImages = useMemo(
+    () => normalizeImages(timesheet?.images),
+    [timesheet?.images],
+  );
 
   // Initialize timesheet data - either from existing timesheet or create new
   const [timesheetData, setTimesheetData] = useState(() => {
@@ -399,9 +421,56 @@ const TimesheetScreen = ({navigation, route, job}) => {
           )}
         </View>
 
+        {/* Images Section */}
+        {viewImages.length > 0 && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Feather name="image" size={20} color={tabColor} />
+              <Text style={styles.sectionTitle}>Images</Text>
+            </View>
+
+            <View style={styles.imageThumbGrid}>
+              {viewImages.map((img, idx) => (
+                <TouchableOpacity
+                  key={`img-${idx}-${img.uri}`}
+                  style={styles.imageThumbWrap}
+                  onPress={() => setActiveImageIndex(idx)}
+                  activeOpacity={0.85}>
+                  <Image
+                    source={{uri: img.uri}}
+                    style={styles.imageThumb}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Bottom spacing */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      {/* Full image preview */}
+      <Modal
+        visible={activeImageIndex !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActiveImageIndex(null)}>
+        <TouchableOpacity
+          style={styles.imagePreviewOverlay}
+          activeOpacity={1}
+          onPress={() => setActiveImageIndex(null)}>
+          {activeImageIndex !== null &&
+          viewImages?.[activeImageIndex]?.uri ? (
+            <Image
+              source={{uri: viewImages[activeImageIndex].uri}}
+              style={styles.imagePreviewImg}
+              resizeMode="contain"
+            />
+          ) : null}
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -894,6 +963,38 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 28,
+  },
+
+  // Images
+  imageThumbGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingTop: 10,
+  },
+  imageThumbWrap: {
+    width: 100,
+    height: 105,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  imageThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePreviewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  imagePreviewImg: {
+    width: '100%',
+    height: '80%',
   },
   // Modal styles
   modalOverlay: {
