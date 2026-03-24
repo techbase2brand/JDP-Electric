@@ -109,8 +109,16 @@ const JobDetailScreen = ({
   const job = route?.params?.job;
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
-  const canViewOrders = useHasPermission('orders', 'view');
+  const canCreateOrders = useHasPermission('orders', 'create');
+  const canViewProducts = useHasPermission('products', 'view');
+  const canViewSuppliers = useHasPermission('suppliers', 'view');
+  const canViewSubJobs = useHasPermission('sub_jobs', 'view');
+  const canCreateSubJobs = useHasPermission('sub_jobs', 'create');
   const canViewBlueSheet = useHasPermission('bluesheet', 'view');
+  const canCreateBlueSheet = useHasPermission('bluesheet', 'create');
+  const canViewActivityLogs = useHasPermission('activity_logs', 'view');
+  const canOrderMaterials =
+    canCreateOrders && canViewProducts && canViewSuppliers;
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [viewingJob, setViewingJob] = useState(null);
   const [subJobModalVisible, setSubJobModalVisible] = useState(false);
@@ -547,7 +555,8 @@ const JobDetailScreen = ({
       {/* Timer Display */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Main & Sub Job section: show only on overview; hide when user tapped main/sub card */}
-        {mainJob &&
+        {canViewSubJobs &&
+          mainJob &&
           subJobs.length > 0 &&
           !viewingJob &&
           (job?.id === mainJob?.id || job?._id === mainJob?._id) && (
@@ -721,19 +730,24 @@ const JobDetailScreen = ({
               </TouchableOpacity>
             </View>
 
-            {effectiveJob?.isMainJob && !effectiveJob?.isSubJob && (
-              <TouchableOpacity
-                style={[styles.fullWidthActionButton, {marginTop: Spacing.md}]}
-                onPress={() => {
-                  setSubJobNewTitle('');
-                  setSubJobModalVisible(true);
-                }}>
-                <Icon name="note-add" size={20} color={Colors.primary} />
-                <Text style={styles.fullWidthActionText}>
-                  Add New Change Order
-                </Text>
-              </TouchableOpacity>
-            )}
+            {effectiveJob?.isMainJob &&
+              !effectiveJob?.isSubJob &&
+              canCreateSubJobs && (
+                <TouchableOpacity
+                  style={[
+                    styles.fullWidthActionButton,
+                    {marginTop: Spacing.md},
+                  ]}
+                  onPress={() => {
+                    setSubJobNewTitle('');
+                    setSubJobModalVisible(true);
+                  }}>
+                  <Icon name="note-add" size={20} color={Colors.primary} />
+                  <Text style={styles.fullWidthActionText}>
+                    Add New Change Order
+                  </Text>
+                </TouchableOpacity>
+              )}
           </View>
         </View>
 
@@ -987,7 +1001,7 @@ const JobDetailScreen = ({
           </View>
         )} */}
 
-        {canViewOrders && (
+        {canViewProducts && canOrderMaterials && (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Icon name="inventory" size={20} color={Colors.primary} />
@@ -1002,14 +1016,16 @@ const JobDetailScreen = ({
                   </Text>
                 </View>
               ))}
-              <TouchableOpacity
-                style={styles.outlineButton}
-                onPress={() =>
-                  handleNavigate('SupplierSelectionScreen', effectiveJob)
-                }>
-                <Icon name="shopping-cart" size={20} color={Colors.primary} />
-                <Text style={styles.outlineButtonText}>Order Materials</Text>
-              </TouchableOpacity>
+              {canOrderMaterials && (
+                <TouchableOpacity
+                  style={styles.outlineButton}
+                  onPress={() =>
+                    handleNavigate('SupplierSelectionScreen', effectiveJob)
+                  }>
+                  <Icon name="shopping-cart" size={20} color={Colors.primary} />
+                  <Text style={styles.outlineButtonText}>Order Materials</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}
@@ -1035,7 +1051,7 @@ const JobDetailScreen = ({
         )}
 
         {/* Additional Actions */}
-        {canViewBlueSheet && (
+        {(canCreateBlueSheet || canViewActivityLogs) && (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Icon name="description" size={20} color={Colors.primary} />
@@ -1043,25 +1059,29 @@ const JobDetailScreen = ({
             </View>
             <View style={styles.cardContent}>
               <View style={styles.actionGrid}>
-                <TouchableOpacity
-                  style={styles.gridActionButton}
-                  onPress={() =>
-                    navigation.navigate('JobTimesheet', {job: effectiveJob})
-                  }>
-                  <Icon name="schedule" size={20} color={Colors.text} />
-                  <Text style={styles.gridActionText}>Bluesheet</Text>
-                </TouchableOpacity>
+                {canCreateBlueSheet && (
+                  <TouchableOpacity
+                    style={styles.gridActionButton}
+                    onPress={() =>
+                      navigation.navigate('JobTimesheet', {job: effectiveJob})
+                    }>
+                    <Icon name="schedule" size={20} color={Colors.text} />
+                    <Text style={styles.gridActionText}>Create Bluesheet</Text>
+                  </TouchableOpacity>
+                )}
 
-                <TouchableOpacity
-                  style={styles.gridActionButton}
-                  onPress={() =>
-                    navigation.navigate('JobActivityLogScreen', {
-                      job: effectiveJob,
-                    })
-                  }>
-                  <Icon name="bar-chart" size={20} color={Colors.text} />
-                  <Text style={styles.gridActionText}>Job Activity</Text>
-                </TouchableOpacity>
+                {canViewActivityLogs && (
+                  <TouchableOpacity
+                    style={styles.gridActionButton}
+                    onPress={() =>
+                      navigation.navigate('JobActivityLogScreen', {
+                        job: effectiveJob,
+                      })
+                    }>
+                    <Icon name="bar-chart" size={20} color={Colors.text} />
+                    <Text style={styles.gridActionText}>Job Activity</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </View>

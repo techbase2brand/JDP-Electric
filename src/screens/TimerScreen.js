@@ -34,6 +34,7 @@ import {
   persistTimerState,
 } from '../services/TimerNotificationService';
 import Geolocation from '@react-native-community/geolocation';
+import useHasPermission from '../hooks/useHasPermission';
 
 const TimerModule = NativeModules?.TimerModule;
 
@@ -79,14 +80,22 @@ const getDistanceM = (lat1, lon1, lat2, lon2) => {
   return R * c;
 };
 
-const CustomButton = ({label, onPress, color, disabled, widthbtn, loading}) => (
+const CustomButton = ({
+  label,
+  onPress,
+  color,
+  disabled,
+  widthbtn,
+  fullWidth,
+  loading,
+}) => (
   <TouchableOpacity
     disabled={disabled || loading}
     style={[
       styles.btn,
       {
         backgroundColor: disabled || loading ? '#ccc' : color,
-        width: widthbtn && widthPercentageToDP(38),
+        width: fullWidth ? '100%' : widthbtn ? widthPercentageToDP(38) : undefined,
       },
     ]}
     onPress={onPress}>
@@ -98,6 +107,7 @@ export default function TimerScreen({navigation, route}) {
   const {isRunning, elapsedTime} = useSelector(state => state.timer);
   const token = useSelector(state => state.user?.token);
   const user = useSelector(state => state.user?.user);
+  const canCreateBlueSheet = useHasPermission('bluesheet', 'create');
   const dispatch = useDispatch();
   const [stroageJobId, setStroageJobId] = useState(null);
   const [storedJobName, setStoredJobName] = useState('');
@@ -1468,6 +1478,7 @@ export default function TimerScreen({navigation, route}) {
                   <CustomButton
                     label="Back to Job"
                     color="#9E9E9E"
+                    fullWidth={!canCreateBlueSheet}
                     onPress={() => {
                       setTimerCompletedModal(false);
                       const jobToPass = jobData?.job ?? jobData ?? job;
@@ -1480,21 +1491,23 @@ export default function TimerScreen({navigation, route}) {
                       });
                     }}
                   />
-                  <CustomButton
-                    label="Create Bluesheet"
-                    color="#1565C0"
-                    onPress={() => {
-                      setTimerCompletedModal(false);
-                      const jobToPass = jobData?.job ?? jobData ?? job;
-                      navigation.reset({
-                        index: 1,
-                        routes: [
-                          {name: 'JobStack', params: {fromCreateJob: true}},
-                          {name: 'JobTimesheet', params: {job: jobToPass}},
-                        ],
-                      });
-                    }}
-                  />
+                  {canCreateBlueSheet && (
+                    <CustomButton
+                      label="Create Bluesheet"
+                      color="#1565C0"
+                      onPress={() => {
+                        setTimerCompletedModal(false);
+                        const jobToPass = jobData?.job ?? jobData ?? job;
+                        navigation.reset({
+                          index: 1,
+                          routes: [
+                            {name: 'JobStack', params: {fromCreateJob: true}},
+                            {name: 'JobTimesheet', params: {job: jobToPass}},
+                          ],
+                        });
+                      }}
+                    />
+                  )}
                 </View>
               </View>
             </View>

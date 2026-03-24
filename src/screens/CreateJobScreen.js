@@ -29,6 +29,7 @@ import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useSelector} from 'react-redux';
+import useHasPermission from '../hooks/useHasPermission';
 import {
   createCustomer,
   createJob,
@@ -69,6 +70,11 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const token = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
   const isSubJobFlow = !!route?.params?.parentJob;
+  const canCreateJobs = useHasPermission('jobs', 'create');
+  const canCreateSubJobs = useHasPermission('sub_jobs', 'create');
+  const canAssignLabour = useHasPermission('assigned_labour', 'assign');
+  const canAssignLeadLabour = useHasPermission('assigned_lead_labour', 'assign');
+  const canAssignTeam = canAssignLabour || canAssignLeadLabour;
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -222,6 +228,20 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
     fetchCustomers();
     // fetchContractors();
   }, []);
+
+  useEffect(() => {
+    const hasCreateAccess = isSubJobFlow ? canCreateSubJobs : canCreateJobs;
+    if (hasCreateAccess) {
+      return;
+    }
+    Alert.alert(
+      'Permission required',
+      isSubJobFlow
+        ? 'You do not have permission to create change orders.'
+        : 'You do not have permission to create jobs.',
+      [{text: 'OK', onPress: () => navigation.goBack()}],
+    );
+  }, [canCreateJobs, canCreateSubJobs, isSubJobFlow, navigation]);
 
   useEffect(() => {
     if (formData.customerPhone && !customerPhoneNumber) {
@@ -755,7 +775,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         break;
 
       case 2: // Resources
-        if (formData.assignedTo.length === 0)
+        if (canAssignLabour && formData.assignedTo.length === 0)
           errors.assignedTo = 'At least one team member must be assigned';
 
         if (formData.estimatedHours > 100)
@@ -908,10 +928,14 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
 
   const buildJobPayload = () => {
     const leadIds =
-      user?.management_type === 'lead_labor' ? [user?.lead_labor?.id] : [];
+      canAssignLeadLabour && user?.management_type === 'lead_labor'
+        ? [user?.lead_labor?.id]
+        : [];
 
     const assigned_lead_labor_ids = JSON.stringify(leadIds);
-    const assigned_labor_ids = JSON.stringify(formData.assignedTo || []);
+    const assigned_labor_ids = JSON.stringify(
+      canAssignLabour ? formData.assignedTo || [] : [],
+    );
     const assigned_material_ids = JSON.stringify([]); // UI me material select nahi tha
 
     // bill-to fields
@@ -2105,13 +2129,18 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
           {/* Team Assignment */}
           <View
             style={[styles.sectionCard, isSubJobFlow && styles.lockedSection]}
-            pointerEvents={isSubJobFlow ? 'none' : 'auto'}>
+            pointerEvents={isSubJobFlow || !canAssignTeam ? 'none' : 'auto'}>
             <View style={styles.sectionHeader}>
               <Icon name="groups" size={24} color="#3B82F6" />
               <Text style={styles.sectionTitle}>Team Assignment</Text>
             </View>
 
             <Text style={styles.formLabel}>Assigned Team Members *</Text>
+            {!canAssignTeam && (
+              <Text style={{color: '#6B7280', marginBottom: 10}}>
+                You do not have permission to assign labor.
+              </Text>
+            )}
             {/* <View style={styles.teamMembersList}>
           {teamMembers.map(member => (
             <TouchableOpacity
@@ -2184,6 +2213,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.dropdownHeader}
+                disabled={!canAssignLabour}
                 onPress={toggleDropdown}>
                 <Text style={styles.headerText}>
                   {formData?.assignedTo?.length > 0

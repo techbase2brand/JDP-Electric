@@ -94,7 +94,7 @@ const JobListingScreen = ({navigation, route}) => {
   console.log('leadLaborId>>', user, leadLaborId);
 
   const laborId = user?.labor?.id;
-  const canViewCreateJob = useHasPermission('jobs', 'view');
+  const canCreateJob = useHasPermission('jobs', 'create');
 
   // ----- route
   const {status, initialJobId} = route?.params || {};
@@ -434,7 +434,7 @@ const JobListingScreen = ({navigation, route}) => {
         </Text> */}
       </View>
 
-      {canViewCreateJob ? (
+      {canCreateJob ? (
         <TouchableOpacity
           style={[
             styles.headerButton,

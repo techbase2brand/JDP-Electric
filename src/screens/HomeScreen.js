@@ -54,7 +54,10 @@ const HomeScreen = ({navigation}) => {
   const token = useSelector(state => state.user.token);
   const leadLaborId = user?.lead_labor?.id;
   const laborId = user?.labor?.id;
-  const canViewCreateJob = useHasPermission('jobs', 'view');
+  const canViewJobs = useHasPermission('jobs', 'view');
+  const canCreateJobs = useHasPermission('jobs', 'create');
+  const canViewNotifications = useHasPermission('notification', 'view');
+  const canViewActivityLogs = useHasPermission('activity_logs', 'view');
 
   const userId = user.id;
 
@@ -103,12 +106,12 @@ const HomeScreen = ({navigation}) => {
   ];
 
   const quickActions = [
-    {
+    canViewJobs && {
       title: 'View Jobs',
       icon: JOB_ICON,
       color: '#3B82F6',
     },
-    {
+    canViewActivityLogs && {
       title: 'View Activity',
       icon: REPORT_ICON,
       color: '#0D542B',
@@ -128,7 +131,7 @@ const HomeScreen = ({navigation}) => {
     //   icon: WARRENTY_ICON,
     //   color: '#9F2D00',
     // },
-    canViewCreateJob && {
+    canCreateJobs && {
       title: 'Create Job',
       icon: CREATE_JOB,
       color: '#9F2D00',
@@ -275,17 +278,20 @@ const HomeScreen = ({navigation}) => {
 
   const renderStatsCard = (item, index) => {
     const handlePress = () => {
-      if (item.key === 'thisWeek') {
-        return;
-      }
-      navigation.navigate('JobStack', {status: item.key});
+      const statusByCard = {
+        total: 'all',
+        active: 'pending',
+        completed: 'completed',
+        thisWeek: 'all',
+      };
+      navigation.navigate('JobStack', {status: statusByCard[item.key] || 'all'});
     };
     return (
       <TouchableOpacity
         key={index}
         style={styles.statsCard}
         activeOpacity={0.7}
-        // onPress={handlePress}
+        onPress={handlePress}
       >
         {/* <View style={[styles.headerCircle, styles.topRightCircle, {overflow:"hidden"}]} /> */}
 
@@ -683,20 +689,22 @@ const HomeScreen = ({navigation}) => {
                 </View>
               </View>
 
-              <TouchableOpacity
-                style={styles.notificationButton}
-                onPress={() => navigation.navigate('NotificationScreen')}>
-                <MaterialIcons
-                  name="notifications-none"
-                  size={24}
-                  color={whiteColor}
-                />
-                {unreadCount !== 0 && (
-                  <View style={styles.notificationBadge}>
-                    <Text style={styles.notificationCount}>{unreadCount}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+              {canViewNotifications && (
+                <TouchableOpacity
+                  style={styles.notificationButton}
+                  onPress={() => navigation.navigate('NotificationScreen')}>
+                  <MaterialIcons
+                    name="notifications-none"
+                    size={24}
+                    color={whiteColor}
+                  />
+                  {unreadCount !== 0 && (
+                    <View style={styles.notificationBadge}>
+                      <Text style={styles.notificationCount}>{unreadCount}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
           </View>
           <View style={styles.statsContainer}>
@@ -756,7 +764,8 @@ const HomeScreen = ({navigation}) => {
           )}
 
           {/* Today's Jobs */}
-          <View style={styles.section}>
+          {canViewJobs && (
+            <View style={styles.section}>
             <View
               style={[styles.sectionHeader, {justifyContent: 'space-between'}]}>
               <View style={{flexDirection: 'row', alignItems: 'center'}}>
@@ -781,7 +790,8 @@ const HomeScreen = ({navigation}) => {
             ) : (
               jobs?.slice(0, 10).map(renderJobCard)
             )}
-          </View>
+            </View>
+          )}
 
           {/* Upcoming Jobs */}
           {/* <View style={styles.section}>

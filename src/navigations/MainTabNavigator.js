@@ -25,6 +25,8 @@ const Tab = createBottomTabNavigator();
 
 export default function MainTabNavigator() {
   const canViewBlueSheet = useHasPermission('bluesheet', 'view');
+  const canViewJobs = useHasPermission('jobs', 'view');
+  const canViewActivityLogs = useHasPermission('activity_logs', 'view');
 
   const icons = {
     Home: {focused: HOME_ICON_FOCUSED, unfocused: HOME_ICON},
@@ -77,41 +79,45 @@ export default function MainTabNavigator() {
           })}
         />
       )}
-      <Tab.Screen
-        name="Jobs"
-        component={JobStack}
-        options={{unmountOnBlur: true}}
-        listeners={({navigation, route}) => ({
-          tabPress: e => {
-            const state = route?.state;
-            if (state && state.index > 0) {
-              e.preventDefault();
-              navigation.dispatch(
-                CommonActions.navigate('Jobs', {screen: 'JobStack'}),
-              );
-            }
-          },
-        })}
-      />
+      {canViewJobs && (
+        <Tab.Screen
+          name="Jobs"
+          component={JobStack}
+          options={{unmountOnBlur: true}}
+          listeners={({navigation, route}) => ({
+            tabPress: e => {
+              const state = route?.state;
+              if (state && state.index > 0) {
+                e.preventDefault();
+                navigation.dispatch(
+                  CommonActions.navigate('Jobs', {screen: 'JobStack'}),
+                );
+              }
+            },
+          })}
+        />
+      )}
       {/* {canViewBlueSheet && ( */}
-      <Tab.Screen
-        name="Activity"
-        component={ActivitySummaryStack}
-        options={{unmountOnBlur: true}}
-        listeners={({navigation, route}) => ({
-          tabPress: e => {
-            const state = route?.state;
-            if (state && state.index > 0) {
-              e.preventDefault();
-              navigation.dispatch(
-                CommonActions.navigate('Activity', {
-                  screen: 'ActivitySummaryScreen',
-                }),
-              );
-            }
-          },
-        })}
-      />
+      {canViewActivityLogs && (
+        <Tab.Screen
+          name="Activity"
+          component={ActivitySummaryStack}
+          options={{unmountOnBlur: true}}
+          listeners={({navigation, route}) => ({
+            tabPress: e => {
+              const state = route?.state;
+              if (state && state.index > 0) {
+                e.preventDefault();
+                navigation.dispatch(
+                  CommonActions.navigate('Activity', {
+                    screen: 'ActivitySummaryScreen',
+                  }),
+                );
+              }
+            },
+          })}
+        />
+      )}
       {/* )} */}
       <Tab.Screen
         name="Profile"
