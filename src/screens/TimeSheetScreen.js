@@ -33,6 +33,7 @@ if (Platform.OS === 'android') {
 }
 const TimesheetScreen = ({navigation, user, jobs}) => {
   const token = useSelector(state => state.user.token);
+  const loggedInUser = useSelector(state => state.user.user);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter] = useState('all');
   const [sortBy] = useState('date');
@@ -215,14 +216,17 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
   useFocusEffect(
     useCallback(() => {
       const fetchBlueSheet = async () => {
+        console.log('logged-in user id:', loggedInUser?.labor?.id);
+        console.log('logged-in lead labor id:', loggedInUser?.lead_labor?.id);
+        console.log('token>>>', token);
+
         if (loading) {
           return;
         }
         setLoading(true);
-        console.log('token>>>', token);
 
         try {
-          const res = await getBlueSheets(token);
+          const res = await getBlueSheets(token, loggedInUser);
           const blue = Array.isArray(res)
             ? res
             : res?.data ?? res?.items ?? res?.rows ?? [];
@@ -244,7 +248,7 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
       return () => {};
       // Keep existing behavior; avoid changing deps/behavior.
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token]), // dependencies if needed
+    }, [token, loggedInUser]),
   );
 
   // Helper functions
@@ -426,7 +430,8 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                         <View style={styles.detailItem}>
                           <Feather name="user" size={20} color={tabColor} />
                           <Text style={styles.detailText}>
-                            By: {capitalize(timesheet?.created_by_user?.full_name)}
+                            By:{' '}
+                            {capitalize(timesheet?.created_by_user?.full_name)}
                           </Text>
                         </View>
                         <View style={styles.detailItem}>

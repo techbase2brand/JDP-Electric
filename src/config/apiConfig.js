@@ -133,8 +133,8 @@ export const updateLeadLaborProfile = async (id, formData, token) => {
         'Content-Type': 'multipart/form-data',
       },
     });
-    console.log("res.data",res.data);
-    
+    console.log('res.data', res.data);
+
     return res.data;
   } catch (error) {
     throw error.response?.data || {message: 'Something went wrong'};
@@ -381,6 +381,8 @@ export const getJobBluesheets = async (jobId, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
+    console.log("blusshet dataapi:::",res.data);
+    
     return res.data; // { data: {...} }
   } catch (error) {
     console.error(
@@ -452,6 +454,8 @@ export const getJobOrders = async (jobId, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
+    console.log('API Response:', res); // full response
+    console.log('Response Data:', res.data);
     return res.data;
   } catch (error) {
     console.error(
@@ -501,7 +505,7 @@ export const searchMyJobs = async (q, token) => {
 };
 export const searchProducts = async (q, token) => {
   try {
-    const res = await api.get(`products/searchProducts`, {
+    const res = await api.get(`/products/searchProducts`, {
       params: {q},
       headers: {
         Authorization: `Bearer ${token}`,
@@ -510,7 +514,7 @@ export const searchProducts = async (q, token) => {
     return res.data;
   } catch (error) {
     console.error(
-      'Error searching jobs:',
+      'Error searching products:',
       error.response?.data || error.message,
     );
     throw error.response?.data || {message: 'Something went wrong'};
@@ -558,11 +562,21 @@ export const submitBluesheetComplete = async (payload, token) => {
 
 // blue sheet
 
-export const getBlueSheets = async token => {
-  console.log('token', token);
+export const getBlueSheets = async (token, user) => {
+  if (!token) {
+    throw {message: 'Not authenticated'};
+  }
+  const isLeadLabor = user?.management_type === 'lead_labor';
+  const id = isLeadLabor ? user?.lead_labor?.id : user?.labor?.id;
+  if (id == null || id === '') {
+    throw {message: 'Missing labor or lead labor id for bluesheets'};
+  }
+  const path = isLeadLabor
+    ? `/bluesheet/lead-labor/bluesheets/${id}`
+    : `/bluesheet/labor/bluesheets/${id}`;
 
   try {
-    const res = await api.get(`/bluesheet/lead-labor/bluesheets`, {
+    const res = await api.get(path, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -570,7 +584,7 @@ export const getBlueSheets = async token => {
     return res.data;
   } catch (error) {
     console.error(
-      'Error fetching jobs:',
+      'Error fetching bluesheets:',
       error.response?.data || error.message,
     );
     throw error.response?.data || {message: 'Something went wrong'};

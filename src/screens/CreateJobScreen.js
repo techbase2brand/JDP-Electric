@@ -73,7 +73,10 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const canCreateJobs = useHasPermission('jobs', 'create');
   const canCreateSubJobs = useHasPermission('sub_jobs', 'create');
   const canAssignLabour = useHasPermission('assigned_labour', 'assign');
-  const canAssignLeadLabour = useHasPermission('assigned_lead_labour', 'assign');
+  const canAssignLeadLabour = useHasPermission(
+    'assigned_lead_labour',
+    'assign',
+  );
   const canAssignTeam = canAssignLabour || canAssignLeadLabour;
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -148,8 +151,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
     estimatedCost: '',
     notes: '',
   });
-  console.log('form data :::', formData);
-
+  const [jobType, setJobType] = useState('service_based');
   const [search, setSearch] = useState('');
   const [customers, setCustomers] = useState([]); // API se data
   const [filtered, setFiltered] = useState([]); // According Search
@@ -174,8 +176,6 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showPlaces, setShowPlaces] = useState(true);
   const [laborSearch, setLaborSearch] = useState('');
-
-  console.log('selectedselected>>', selected);
 
   //  Load from AsyncStorage on mount
   // useEffect(() => {
@@ -275,66 +275,164 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   }, [formData.sameAsCustomer, customerCountryCode, customerPhoneNumber]);
 
   // Pre-fill from Sub Job: new title + full parent job details + customer + labour
+  // useEffect(() => {
+  //   const subTitle = route?.params?.subJobTitle;
+  //   const parent = route?.params?.parentJob;
+  //   if (parent) {
+  //     console.log('parentparentparent', parent);
+  //     const dueDate = parent.due_date
+  //       ? new Date(parent.due_date).toISOString().split('T')[0]
+  //       : new Date().toISOString().split('T')[0];
+  //     const custName =
+  //       parent.customer?.name || parent.customer?.customer_name || '';
+  //     const assignedIds = (parent.assigned_labor || [])
+  //       .map(l => l?.id ?? l?.labor_id)
+  //       .filter(Boolean);
+  //     const customerAddress = parent.address || parent.customer?.address || '';
+  //     // Phone/email: use JOB-level (what was saved at create time), NOT customer object
+  //     const customerPhone =
+  //       parent.phone ||
+  //       parent.customer_phone ||
+  //       parent.contact_phone ||
+  //       parent.customer?.phone ||
+  //       '';
+  //     const customerEmail =
+  //       parent.email ||
+  //       parent.customer_email ||
+  //       parent.contact_email ||
+  //       parent.customer?.email ||
+  //       '';
+  //     const city = parent.city_zip || parent.city || '';
+  //     const notes = parent.notes ?? parent.additional_notes ?? '';
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       title: typeof subTitle === 'string' ? subTitle.trim() : prev.title,
+  //       description: parent.description ?? prev.description,
+  //       customerName: custName || prev.customerName,
+  //       customerPhone: customerPhone || prev.customerPhone,
+  //       customerEmail: customerEmail || prev.customerEmail,
+  //       customerAddress: customerAddress || prev.customerAddress,
+  //       city: city || prev.city,
+  //       dueDate,
+  //       notes: notes || prev.notes,
+  //       assignedTo: assignedIds.length > 0 ? assignedIds : prev.assignedTo,
+  //       sameAsCustomer: true,
+  //       billingName: custName || prev.billingName,
+  //       billingPhone: customerPhone || prev.billingPhone,
+  //       billingEmail: customerEmail || prev.billingEmail,
+  //       billingAddress: customerAddress || prev.billingAddress,
+  //       billingCity: city || prev.billingCity,
+  //     }));
+  //     const custId = parent.customer_id ?? parent.customer?.id;
+  //     if (custId) setSelectedCustomerId(custId);
+  //     if (custName) {
+  //       setSearch(custName);
+  //       setSelectedCustomer(custName);
+  //     }
+  //     setValidationErrors(prev => ({...prev, customerName: ''}));
+  //   } else if (subTitle && typeof subTitle === 'string') {
+  //     setFormData(prev => ({...prev, title: subTitle.trim()}));
+  //   }
+  // }, [route?.params?.subJobTitle, route?.params?.parentJob]);
+  
   useEffect(() => {
     const subTitle = route?.params?.subJobTitle;
     const parent = route?.params?.parentJob;
+
     if (parent) {
       console.log('parentparentparent', parent);
+      const type = parent.contractor ? 'contract_based' : 'service_based';
+      setJobType(type);
       const dueDate = parent.due_date
         ? new Date(parent.due_date).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0];
+
+      // 👇 Customer OR Contractor Name
       const custName =
-        parent.customer?.name || parent.customer?.customer_name || '';
+        parent.customer?.name ||
+        parent.customer?.customer_name ||
+        parent.contractor?.contractor_name ||
+        parent.contractor?.company_name ||
+        '';
+
       const assignedIds = (parent.assigned_labor || [])
         .map(l => l?.id ?? l?.labor_id)
         .filter(Boolean);
-      const customerAddress = parent.address || parent.customer?.address || '';
-      // Phone/email: use JOB-level (what was saved at create time), NOT customer object
+
+      const customerAddress =
+        parent.address ||
+        parent.customer?.address ||
+        parent.contractor?.address ||
+        '';
+
+      // 👇 Phone fallback
       const customerPhone =
         parent.phone ||
         parent.customer_phone ||
         parent.contact_phone ||
         parent.customer?.phone ||
+        parent.contractor?.phone ||
         '';
+
+      // 👇 Email fallback
       const customerEmail =
         parent.email ||
         parent.customer_email ||
         parent.contact_email ||
         parent.customer?.email ||
+        parent.contractor?.email ||
         '';
+
       const city = parent.city_zip || parent.city || '';
+
       const notes = parent.notes ?? parent.additional_notes ?? '';
+
       setFormData(prev => ({
         ...prev,
         title: typeof subTitle === 'string' ? subTitle.trim() : prev.title,
         description: parent.description ?? prev.description,
+
         customerName: custName || prev.customerName,
         customerPhone: customerPhone || prev.customerPhone,
         customerEmail: customerEmail || prev.customerEmail,
         customerAddress: customerAddress || prev.customerAddress,
         city: city || prev.city,
+
         dueDate,
         notes: notes || prev.notes,
+
         assignedTo: assignedIds.length > 0 ? assignedIds : prev.assignedTo,
+
         sameAsCustomer: true,
+
+        // 👇 Billing also same fallback
         billingName: custName || prev.billingName,
         billingPhone: customerPhone || prev.billingPhone,
         billingEmail: customerEmail || prev.billingEmail,
         billingAddress: customerAddress || prev.billingAddress,
         billingCity: city || prev.billingCity,
       }));
-      const custId = parent.customer_id ?? parent.customer?.id;
+
+      // 👇 ID bhi handle kar
+      const custId =
+        parent.customer_id ??
+        parent.customer?.id ??
+        parent.contractor_id ??
+        parent.contractor?.id;
+
       if (custId) setSelectedCustomerId(custId);
+
       if (custName) {
         setSearch(custName);
         setSelectedCustomer(custName);
       }
+
       setValidationErrors(prev => ({...prev, customerName: ''}));
     } else if (subTitle && typeof subTitle === 'string') {
       setFormData(prev => ({...prev, title: subTitle.trim()}));
     }
   }, [route?.params?.subJobTitle, route?.params?.parentJob]);
-
+  
   // ✅ Customers
   const fetchCustomers = async (pageNo = 1) => {
     // page 1 ko kabhi block mat karo; baaki pages ke liye guards
@@ -518,6 +616,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   useEffect(() => {
     fetchLabors(1);
   }, []);
+  
   // ✅ Fetch labors
   const fetchLabors = async (pageNo = 1) => {
     if (!token) return;
@@ -827,6 +926,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   //     setCurrentStep(prev => Math.min(prev + 1, 3));
   //   }
   // };
+ 
   const nextStep = async () => {
     // Run validation for current step
     const isValid = validateStep(currentStep);
@@ -879,6 +979,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       }
     }
   }, [validationErrors]);
+
   //  whenever validationErrors change, scroll to first error field
   // useEffect(() => {
   //   const firstErrorField = Object.keys(validationErrors)[0];
@@ -933,9 +1034,11 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         : [];
 
     const assigned_lead_labor_ids = JSON.stringify(leadIds);
+    
     const assigned_labor_ids = JSON.stringify(
       canAssignLabour ? formData.assignedTo || [] : [],
     );
+    
     const assigned_material_ids = JSON.stringify([]); // UI me material select nahi tha
 
     // bill-to fields
@@ -952,11 +1055,17 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
           bill_to_phone: formData.billingPhone?.trim(),
           bill_to_email: formData.billingEmail?.trim(),
         };
+    console.log('selectedCustomerId', selectedCustomerId);
 
     return {
       job_title: formData.title?.trim(),
-      job_type: 'service_based', // as per your example
-      customer_id: selectedCustomerId, // <- required
+      // job_type: 'service_based', // as per your example
+      job_type: jobType,
+      // customer_id: selectedCustomerId, // <- required
+      ...(jobType === 'contract_based'
+        ? {contractor_id: selectedCustomerId}
+        : {customer_id: selectedCustomerId}),
+
       // contractor_id: selectedContractorId, // <- optional if needed
       description: formData.description?.trim(),
       // priority: formData.priority,
@@ -975,8 +1084,10 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       status: 'pending',
     };
   };
+
   const capitalize = text =>
     text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
+  
   const submitJob = async () => {
     if (!validateStep(3)) return;
     if (!token) {

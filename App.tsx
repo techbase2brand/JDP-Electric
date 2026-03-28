@@ -131,6 +131,7 @@ const AppContent = () => {
       updateBadge(unreadCount);
     }
   }, [unreadCount]);
+  
   const updateBadge = async count => {
     try {
       await notifee.setBadgeCount(count);
@@ -243,6 +244,7 @@ const AppContent = () => {
 
     navigateFromLink(link);
   };
+
   const navigateFromLink = link => {
     if (!navigationRef.current) return;
 
@@ -267,7 +269,6 @@ const AppContent = () => {
   }
 }, [navReady, pendingLink]);
 
-
   useEffect(() => {
     if (isRunning) {
       console.log('Starting background timer', isRunning);
@@ -280,6 +281,7 @@ const AppContent = () => {
 
   // Persist + update notification every second when running (sync app ↔ notification)
   const persistIntervalRef = useRef(null);
+ 
   useEffect(() => {
     if (!isRunning) {
       if (persistIntervalRef.current) {
@@ -354,6 +356,7 @@ const AppContent = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
   const handleLogout = async () => {
     try {
       if (token) {
@@ -386,6 +389,7 @@ const AppContent = () => {
     };
     checkLogin();
   }, []);
+
   useEffect(() => {
     const requestPermissions = async () => {
       if (Platform.OS === 'ios') {
@@ -426,6 +430,7 @@ const AppContent = () => {
       console.warn('Location permission error:', err);
     }
   };
+
   const requestNotificationPermission = async () => {
     try {
       // Android 13+ → runtime POST_NOTIFICATIONS permission required
@@ -463,6 +468,7 @@ const AppContent = () => {
       console.warn('Permission error:', err);
     }
   };
+
   const requestUserIosPermission = async () => {
     const authStatus = await messaging().requestPermission();
     const enabled =
@@ -478,10 +484,60 @@ const AppContent = () => {
   };
 
   useEffect(() => {
+    // Ensure a default channel exists on Android for foreground notifications.
+    // (No-op on iOS.)
+    const ensureDefaultChannel = async () => {
+      if (Platform.OS !== 'android') return;
+      try {
+        await notifee.createChannel({
+          id: 'default',
+          name: 'Default',
+          importance: 4,
+        });
+      } catch {}
+    };
+    ensureDefaultChannel();
+  }, []);
+
+  useEffect(() => {
     // const unsubscribe = messaging().onMessage(async remoteMessage => {
     //   Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
     // });
     // return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    // Foreground: iOS/Android won't show "notification" banner automatically while app is open.
+    // Show it via Notifee.
+    const unsub = messaging().onMessage(async remoteMessage => {
+      try {
+        const title =
+          remoteMessage?.notification?.title ||
+          remoteMessage?.data?.title ||
+          'Notification';
+        const body =
+          remoteMessage?.notification?.body ||
+          remoteMessage?.data?.body ||
+          '';
+
+        // iOS: permission already requested via messaging().requestPermission(),
+        // but Notifee may still need its own check to display in foreground reliably.
+        await notifee.requestPermission();
+
+        await notifee.displayNotification({
+          title,
+          body,
+          android: {
+            channelId: 'default',
+            pressAction: {id: 'default'},
+          },
+        });
+      } catch (e) {
+        console.log('Foreground notification display error:', e);
+      }
+    });
+
+    return unsub;
   }, []);
 
   const getFcmToken = async () => {

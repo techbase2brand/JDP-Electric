@@ -28,6 +28,7 @@ import {
   getAllLabor,
   getJobBluesheets,
   getJobOrders,
+  searchProducts,
   submitBluesheetComplete,
 } from '../config/apiConfig';
 // import DateTimePicker from '@react-native-community/datetimepicker';
@@ -1085,6 +1086,17 @@ const _toYMD = val => {
 
 const sameDay = (a, b) => _toYMD(a) === _toYMD(b);
 
+const normalizeProductSearchList = res => {
+  if (Array.isArray(res)) {
+    return res;
+  }
+  const raw =
+    res?.data?.products ??
+    res?.products ??
+    (Array.isArray(res?.data) ? res.data : null);
+  return Array.isArray(raw) ? raw : [];
+};
+
 /* ======================
    MATERIAL MODAL
 ====================== */
@@ -1095,7 +1107,87 @@ const MaterialModal = ({
   setTempMaterialData,
   handleSaveMaterial,
   setShowAddMaterial,
+  token,
 }) => {
+  const [productSuggestions, setProductSuggestions] = useState([]);
+  const [materialSearchLoading, setMaterialSearchLoading] = useState(false);
+  const lastIssuedQueryRef = useRef('');
+
+  const runProductSearch = useCallback(
+    async q => {
+      const trimmed = (q || '').trim();
+      if (!trimmed || !token) {
+        setProductSuggestions([]);
+        setMaterialSearchLoading(false);
+        lastIssuedQueryRef.current = '';
+        return;
+      }
+      lastIssuedQueryRef.current = trimmed;
+      setMaterialSearchLoading(true);
+      try {
+        const res = await searchProducts(trimmed, token);
+        console.log('[JobTimeSheet] searchProducts raw response:', res);
+        const list = normalizeProductSearchList(res);
+        console.log('[JobTimeSheet] searchProducts list:', list);
+        if (lastIssuedQueryRef.current === trimmed) {
+          setProductSuggestions(list);
+        }
+      } catch (e) {
+        console.log('[JobTimeSheet] searchProducts error:', e?.message || e);
+        if (lastIssuedQueryRef.current === trimmed) {
+          setProductSuggestions([]);
+        }
+      } finally {
+        if (lastIssuedQueryRef.current === trimmed) {
+          setMaterialSearchLoading(false);
+        }
+      }
+    },
+    [token],
+  );
+
+  const debouncedProductSearch = useMemo(
+    () => debounce(q => runProductSearch(q), 400),
+    [runProductSearch],
+  );
+
+  useEffect(() => {
+    if (!visible) {
+      setProductSuggestions([]);
+      lastIssuedQueryRef.current = '';
+    }
+  }, [visible]);
+
+  const applySelectedProduct = useCallback(
+    product => {
+      const cost = Number(
+        product?.unit_cost ??
+          product?.jdp_price ??
+          product?.estimated_price ??
+          0,
+      );
+      const unitStr =
+        product?.unit != null && String(product.unit).trim() !== ''
+          ? String(product.unit).trim()
+          : 'pieces';
+      const emptyQty = v => v === '' || v === undefined || v === null;
+      setTempMaterialData(prev => ({
+        ...prev,
+        name: product?.product_name || prev.name || '',
+        unit: unitStr,
+        unitCost: cost > 0 ? cost : prev.unitCost ?? '',
+        productId: product?.id != null ? product.id : null,
+        jdpPrice: Number(product?.jdp_price) || 0,
+        estimatedUnitCost: Number(product?.estimated_price) || 0,
+        totalOrdered: emptyQty(prev.totalOrdered) ? 1 : prev.totalOrdered,
+        amountUsed: emptyQty(prev.amountUsed) ? 1 : prev.amountUsed,
+      }));
+      setProductSuggestions([]);
+      Keyboard.dismiss();
+    },
+    [setTempMaterialData],
+  );
+
   const handleSaveWithValidation = () => {
     const {name, unit, totalOrdered, amountUsed, unitCost} = tempMaterialData;
 
@@ -1173,10 +1265,63 @@ const MaterialModal = ({
                     placeholder="Enter material name"
                     placeholderTextColor="#9CA3AF"
                     value={tempMaterialData.name || ''}
-                    onChangeText={text =>
-                      setTempMaterialData(prev => ({...prev, name: text}))
-                    }
+                    onChangeText={text => {
+                      setTempMaterialData(prev => ({
+                        ...prev,
+                        name: text,
+                        productId: null,
+                      }));
+                      debouncedProductSearch(text);
+                    }}
                   />
+                  {materialSearchLoading ? (
+                    <View style={styles.materialSearchHint}>
+                      <ActivityIndicator size="small" color={Colors.primary} />
+                      <Text
+                        style={[
+                          styles.materialSearchHintText,
+                          styles.materialSearchHintTextSpacing,
+                        ]}>
+                        Searching products…
+                      </Text>
+                    </View>
+                  ) : null}
+                  {productSuggestions.length > 0 ? (
+                    <View style={styles.materialSuggestionList}>
+                      {productSuggestions.map((p, idx) => {
+                        const key = String(
+                          p?.id ?? p?.product_id ?? p?.jdp_sku ?? `s-${idx}`,
+                        );
+                        return (
+                          <TouchableOpacity
+                            key={key}
+                            style={styles.materialSuggestionRow}
+                            activeOpacity={0.7}
+                            onPress={() => applySelectedProduct(p)}>
+                            <Text
+                              style={styles.materialSuggestionName}
+                              numberOfLines={2}>
+                              {p?.product_name || '—'}
+                            </Text>
+                            <Text style={styles.materialSuggestionMeta}>
+                              {[
+                                p?.unit != null && String(p.unit).trim() !== ''
+                                  ? p.unit
+                                  : 'pieces',
+                                p?.unit_cost != null
+                                  ? ` · $${Number(p.unit_cost)}`
+                                  : p?.jdp_price != null
+                                  ? ` · $${Number(p.jdp_price)}`
+                                  : null,
+                              ]
+                                .filter(Boolean)
+                                .join('')}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  ) : null}
                 </View>
 
                 <View style={styles.formGroup}>
@@ -1278,6 +1423,11 @@ const MaterialModal = ({
 ====================== */
 const JobTimesheet = ({navigation, route, user}) => {
   const token = useSelector(state => state.user.token);
+  const userFromStore = useSelector(state => state.user.user);
+  const profileUser = user ?? userFromStore;
+  const isLeadLabor =
+    profileUser?.management_type === 'lead_labor' ||
+    profileUser?.role === 'Lead Labor';
   const routeParams = route?.params || {};
   const jobId = route?.params?.job?.id;
   const jobFromRoute = routeParams?.data || routeParams?.job || {};
@@ -1291,7 +1441,6 @@ const JobTimesheet = ({navigation, route, user}) => {
   const todayISO = new Date().toISOString().split('T')[0];
   const [error, setError] = useState(null);
   const [showTooltip, setShowTooltip] = useState(false);
-  const [showMatTooltip, setShowMatTooltip] = useState(false);
 
   // base state
   const [timesheetData, setTimesheetData] = useState(() => ({
@@ -1333,6 +1482,8 @@ const JobTimesheet = ({navigation, route, user}) => {
           getJobOrders(currentJobId, token).catch(() => ({data: {orders: []}})),
         ]);
         const bluesheet = bluesheetRes?.data ?? {};
+        console.log('blueshhet:::,', bluesheet);
+
         const jobOrders = ordersRes?.data?.orders ?? ordersRes?.orders ?? [];
         setBulesheetData({
           ...bluesheet,
@@ -1360,6 +1511,8 @@ const JobTimesheet = ({navigation, route, user}) => {
 
         // --- Build fresh data from route (always compute) ---
         const bs = bluesheetData || {};
+        console.log('bs::::', bs);
+
         const routeLabour = (
           bs?.labor_timesheets ||
           bs?.data?.labor_timesheets ||
@@ -1430,13 +1583,14 @@ const JobTimesheet = ({navigation, route, user}) => {
               unit: it?.product?.unit || it?.unit || 'pieces',
               totalOrdered: qty,
               amountUsed: Number(it?.quantity) || 0,
-              unitCost:
-                Number(
-                  it?.product?.jdp_price ??
-                    it?.unit_cost ??
-                    it?.product?.estimated_price ??
-                    0,
-                ) || 0,
+              // unitCost:
+              //   Number(
+              //     it?.product?.jdp_price ??
+              //       it?.unit_cost ??
+              //       it?.product?.estimated_price ??
+              //       0,
+              //   ) || 0,
+              unitCost: Number(it?.product?.unit_cost) || 0,
               jdpPrice,
               estimatedUnitCost,
               estimatedCost: Number((estimatedUnitCost * qty).toFixed(2)) || 0,
@@ -1724,8 +1878,6 @@ const JobTimesheet = ({navigation, route, user}) => {
 
   // payload mappers (HH:MM:SS out)
   const localLaborToApi = l => {
-    console.log('llllllllllll', l);
-
     const isLead = (l.role || 'labor')
       .toString()
       .toLowerCase()
@@ -1774,11 +1926,11 @@ const JobTimesheet = ({navigation, route, user}) => {
       return undefined;
     }
     const n = Number(s);
-    if (!Number.isNaN(n)) {
-      // don't send 0/-1 for custom items
+    if (!Number.isNaN(n) && Number.isFinite(n)) {
+      // Only real catalog numeric ids (search selection). Custom / local rows omit product_id.
       return n > 0 ? n : undefined;
     }
-    return s; // fallback for non-numeric ids
+    return undefined;
   };
 
   const localMaterialToApi = m => {
@@ -1829,6 +1981,11 @@ const JobTimesheet = ({navigation, route, user}) => {
       (sum, c) => sum + (Number(c.amount) || 0),
       0,
     );
+    const laborTimesheetIds = (timesheetData.labourEntries || [])
+      .map(entry => Number(entry?.id))
+      .filter(id => !isNaN(id));
+
+    console.log(' labor_timesheet_ids: laborTimesheetIds,', laborTimesheetIds);
 
     const payload = {
       job_id: isNaN(Number(currentJobId)) ? currentJobId : Number(currentJobId),
@@ -1836,19 +1993,18 @@ const JobTimesheet = ({navigation, route, user}) => {
       status: 'pending',
       notes: timesheetData.jobNotes || '',
       additional_charges: Number(additionalCharges.toFixed(2)),
-      // Optional material slip images (backend may ignore if not supported)
-      images: (timesheetData.jobImages || [])
-        .slice(0, 5)
-        .map(img => ({
-          // uri: img?.uri,
-          type: img?.type,
-          fileName: img?.fileName,
-          base64: img?.base64,
-        })),
+      images: isLeadLabor
+        ? (timesheetData.jobImages || []).slice(0, 5).map(img => ({
+            type: img?.type,
+            fileName: img?.fileName,
+            base64: img?.base64,
+          }))
+        : [],
+      labor_timesheet_ids: laborTimesheetIds,
       labor_entries: (timesheetData.labourEntries || []).map(localLaborToApi),
-      material_entries: (timesheetData.materialEntries || []).map(
-        localMaterialToApi,
-      ),
+      material_entries: isLeadLabor
+        ? (timesheetData.materialEntries || []).map(localMaterialToApi)
+        : [],
     };
 
     console.log('FINAL_PAYLOAD_TO_API::', JSON.stringify(payload, null, 2));
@@ -2049,7 +2205,7 @@ const JobTimesheet = ({navigation, route, user}) => {
   const canEdit = () =>
     // !isSubmittedForDay &&
     timesheetData.status === 'draft' ||
-    (user?.role === 'Lead Labor' && timesheetData.status === 'submitted') ||
+    (profileUser?.role === 'Lead Labor' && timesheetData.status === 'submitted') ||
     timesheetData.status === 'rejected';
   const isReadOnly = () =>
     /* isSubmittedForDay || */ timesheetData.status === 'approved';
@@ -2278,144 +2434,92 @@ const JobTimesheet = ({navigation, route, user}) => {
                   })
                 ) : (
                   <View style={{padding: 10, alignItems: 'center'}}>
-                    <Text style={{color: '#777'}}>
-                      No labours data found
-                    </Text>
+                    <Text style={{color: '#777'}}>No labours data found</Text>
                   </View>
                 )}
               </View>
             </View>
 
-            {/* MATERIALS */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionHeader}>
-                <Feather name="box" size={20} color={Colors.primary} />
-                <Text style={styles.sectionTitle}>Materials</Text>
-                {canEdit() && (
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={handleAddMaterial}>
-                    <Text style={styles.addButtonText}>+</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              <View style={styles.tableContainer}>
-                <View style={styles.tableHeader}>
-                  <Text style={[styles.tableHeaderText, {flex: 1}]}>Title</Text>
-                  <Text style={[styles.tableHeaderText, {flex: 1}]}>Qty</Text>
-                  <Text style={[styles.tableHeaderText, {flex: 1}]}>Used</Text>
-                  <Text style={[styles.tableHeaderText, {flex: 1}]}>Rest</Text>
+            {/* MATERIALS — lead labor only */}
+            {isLeadLabor ? (
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <Feather name="box" size={20} color={Colors.primary} />
+                  <Text style={styles.sectionTitle}>Materials</Text>
                   {canEdit() && (
-                    <Text style={[styles.tableHeaderText, {flex: 1}]}>
-                      Actions
-                    </Text>
+                    <TouchableOpacity
+                      style={styles.addButton}
+                      onPress={handleAddMaterial}>
+                      <Text style={styles.addButtonText}>+</Text>
+                    </TouchableOpacity>
                   )}
                 </View>
 
-                {timesheetData?.materialEntries?.length > 0 ? (
-                  timesheetData?.materialEntries?.map(material => {
-                    const isTooltipVisible = showMatTooltip === material.id;
-                    return (
-                      <View key={material?.id} style={styles.tableRow}>
-                        <Text
-                          style={[
-                            styles.tableCell,
-                            {width: '20%', paddingRight: spacings.normal},
-                          ]}>
-                          {capitalize(material?.name)}
-                        </Text>
-                        <Text style={[styles.tableCell, {flex: 1}]}>
-                          {material?.totalOrdered} {material?.unit}
-                        </Text>
-                        <Text style={[styles.tableCell, {flex: 1}]}>
-                          {material?.amountUsed} {material?.unit}
-                        </Text>
-                        <Text style={[styles.tableCell, {flex: 1}]}>
-                          {material?.totalOrdered - material?.amountUsed || 0}{' '}
-                          {material?.unit}
-                        </Text>
-                        {canEdit() && (
-                          // <View
-                          //   style={[styles.tableCell, {flex: 1, flexDirection: 'row'}]}>
-                          //   <TouchableOpacity
-                          //     style={styles.editButton}
-                          //     onPress={() => {
-                          //       setTempMaterialData(material);
-                          //       setShowAddMaterial(true);
-                          //     }}>
-                          //     <MaterialIcons
-                          //       name="edit"
-                          //       size={20}
-                          //       color={Colors.primary}
-                          //     />
-                          //   </TouchableOpacity>
-                          //   <TouchableOpacity
-                          //     style={styles.deleteButton}
-                          //     onPress={() => handleDeleteMaterial(material.id)}>
-                          //     <MaterialIcons
-                          //       name="delete"
-                          //       size={20}
-                          //       color={'#dc2626'}
-                          //     />
-                          //   </TouchableOpacity>
-                          // </View>
-                          <View
+                <View style={styles.tableContainer}>
+                  <View style={styles.tableHeader}>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>Title</Text>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>Qty</Text>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>Used</Text>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>Rest</Text>
+                    {canEdit() && (
+                      <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                        Actions
+                      </Text>
+                    )}
+                  </View>
+
+                  {timesheetData?.materialEntries?.length > 0 ? (
+                    timesheetData?.materialEntries?.map(material => {
+                      return (
+                        <View key={material?.id} style={styles.tableRow}>
+                          <Text
                             style={[
                               styles.tableCell,
-                              {
-                                flex: 1,
-                                flexDirection: 'row',
-                                position: 'relative',
-                              },
+                              {width: '20%', paddingRight: spacings.normal},
                             ]}>
-                            {/* 3 Dots */}
-                            <TouchableOpacity
-                              onPress={() => {
-                                setTempMaterialData(material);
-                                setShowAddMaterial(true);
-                                setShowMatTooltip(null);
-                              }}
-                              style={{padding: 4}}>
-                              <Feather name="edit" size={22} color="#555" />
-                            </TouchableOpacity>
-
-                            {/* Tooltip */}
-                            {/* {isTooltipVisible && (
-                            <View style={styles.tooltipBox}>
+                            {capitalize(material?.name)}
+                          </Text>
+                          <Text style={[styles.tableCell, {flex: 1}]}>
+                            {material?.totalOrdered} {material?.unit}
+                          </Text>
+                          <Text style={[styles.tableCell, {flex: 1}]}>
+                            {material?.amountUsed} {material?.unit}
+                          </Text>
+                          <Text style={[styles.tableCell, {flex: 1}]}>
+                            {material?.totalOrdered - material?.amountUsed || 0}{' '}
+                            {material?.unit}
+                          </Text>
+                          {canEdit() && (
+                            <View
+                              style={[
+                                styles.tableCell,
+                                {
+                                  flex: 1,
+                                  flexDirection: 'row',
+                                  position: 'relative',
+                                },
+                              ]}>
                               <TouchableOpacity
                                 onPress={() => {
                                   setTempMaterialData(material);
                                   setShowAddMaterial(true);
-                                  setShowMatTooltip(null);
                                 }}
-                                style={styles.tooltipItem}>
-                                <Text
-                                  style={[
-                                    styles.tooltipText,
-                                    {color: 'green'},
-                                  ]}>
-                                  Edit
-                                </Text>
+                                style={{padding: 4}}>
+                                <Feather name="edit" size={22} color="#555" />
                               </TouchableOpacity>
-                            
                             </View>
-                          )} */}
-                          </View>
-                        )}
-                      </View>
-                    );
-                  })
-                ) : (
-                  <View style={{padding: 10, alignItems: 'center'}}>
-                    <Text style={{color: '#777'}}>
-                      No material data found
-                    </Text>
-                  </View>
-                )}
+                          )}
+                        </View>
+                      );
+                    })
+                  ) : (
+                    <View style={{padding: 10, alignItems: 'center'}}>
+                      <Text style={{color: '#777'}}>No material data found</Text>
+                    </View>
+                  )}
+                </View>
               </View>
-            </View>
-
+            ) : null}
             {/* NOTES + SUBMIT */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
@@ -2440,85 +2544,88 @@ const JobTimesheet = ({navigation, route, user}) => {
               />
             </View>
 
-            {/* MATERIAL SLIPS (Optional) */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionHeader}>
-                <MaterialIcons
-                  name="description"
-                  size={24}
-                  color={Colors.primary}
-                />
-                <Text style={styles.sectionTitle}>
-                  Material Slips (Optional)
+            {/* MATERIAL SLIPS (Optional) — lead labor only */}
+            {isLeadLabor ? (
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <MaterialIcons
+                    name="description"
+                    size={24}
+                    color={Colors.primary}
+                  />
+                  <Text style={styles.sectionTitle}>
+                    Material Slips (Optional)
+                  </Text>
+                </View>
+
+                <Text style={styles.imageHint}>
+                  Upload material slip images from Camera or Gallery.
                 </Text>
-              </View>
 
-              <Text style={styles.imageHint}>
-                Upload material slip images from Camera or Gallery.
-              </Text>
+                <View style={styles.thumbGrid}>
+                  {(() => {
+                    const images = timesheetData.jobImages || [];
+                    const isDisabled =
+                      timesheetData.status === 'approved' || imagePickerLoading;
 
-              <View style={styles.thumbGrid}>
-                {(() => {
-                  const images = timesheetData.jobImages || [];
-                  const isDisabled =
-                    timesheetData.status === 'approved' || imagePickerLoading;
-
-                  if (images.length === 0) {
-                    // First time state: one big full-width dashed placeholder
-                    return (
-                      <TouchableOpacity
-                        key="material-slip-first"
-                        style={styles.materialSlipFirstSlot}
-                        activeOpacity={0.85}
-                        disabled={isDisabled}
-                        onPress={handleOpenMaterialSlipPicker}>
-                        <Feather name="plus" size={28} color="#3B82F6" />
-                        <Text style={styles.materialSlipFirstTitle}>
-                          Add Material Slip
-                        </Text>
-                        <Text style={styles.materialSlipFirstHint}>
-                          Tap to upload your material slip photos here.
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  }
-
-                  return (
-                    <>
-                      {images.map((img, idx) => (
-                        <View key={`material-slip-${idx}`} style={styles.thumbItem}>
-                          <Image
-                            source={{uri: img?.uri}}
-                            style={styles.thumbImg}
-                            resizeMode="cover"
-                          />
-                          <TouchableOpacity
-                            style={styles.thumbRemoveBtn}
-                            onPress={() => handleRemoveJobImage(idx)}
-                            disabled={timesheetData.status === 'approved'}>
-                            <Text style={styles.thumbRemoveText}>×</Text>
-                          </TouchableOpacity>
-                        </View>
-                      ))}
-
-                      {!isDisabled && (
+                    if (images.length === 0) {
+                      return (
                         <TouchableOpacity
-                          key="material-slip-add"
-                          style={styles.thumbItem}
+                          key="material-slip-first"
+                          style={styles.materialSlipFirstSlot}
                           activeOpacity={0.85}
                           disabled={isDisabled}
                           onPress={handleOpenMaterialSlipPicker}>
-                          <View style={styles.plusSlot}>
-                            <Feather name="plus" size={24} color="#3B82F6" />
-                            <Text style={styles.plusSlotText}>Add</Text>
-                          </View>
+                          <Feather name="plus" size={28} color="#3B82F6" />
+                          <Text style={styles.materialSlipFirstTitle}>
+                            Add Material Slip
+                          </Text>
+                          <Text style={styles.materialSlipFirstHint}>
+                            Tap to upload your material slip photos here.
+                          </Text>
                         </TouchableOpacity>
-                      )}
-                    </>
-                  );
-                })()}
+                      );
+                    }
+
+                    return (
+                      <>
+                        {images.map((img, idx) => (
+                          <View
+                            key={`material-slip-${idx}`}
+                            style={styles.thumbItem}>
+                            <Image
+                              source={{uri: img?.uri}}
+                              style={styles.thumbImg}
+                              resizeMode="cover"
+                            />
+                            <TouchableOpacity
+                              style={styles.thumbRemoveBtn}
+                              onPress={() => handleRemoveJobImage(idx)}
+                              disabled={timesheetData.status === 'approved'}>
+                              <Text style={styles.thumbRemoveText}>×</Text>
+                            </TouchableOpacity>
+                          </View>
+                        ))}
+
+                        {!isDisabled && (
+                          <TouchableOpacity
+                            key="material-slip-add"
+                            style={styles.thumbItem}
+                            activeOpacity={0.85}
+                            disabled={isDisabled}
+                            onPress={handleOpenMaterialSlipPicker}>
+                            <View style={styles.plusSlot}>
+                              <Feather name="plus" size={24} color="#3B82F6" />
+                              <Text style={styles.plusSlotText}>Add</Text>
+                            </View>
+                          </TouchableOpacity>
+                        )}
+                      </>
+                    );
+                  })()}
+                </View>
               </View>
-            </View>
+            ) : null}
 
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
@@ -2536,12 +2643,14 @@ const JobTimesheet = ({navigation, route, user}) => {
                     {timesheetData.labourEntries.length}
                   </Text>
                 </View>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Material:</Text>
-                  <Text style={styles.summaryValue}>
-                    {timesheetData.materialEntries.length}
-                  </Text>
-                </View>
+                {isLeadLabor ? (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Material:</Text>
+                    <Text style={styles.summaryValue}>
+                      {timesheetData.materialEntries.length}
+                    </Text>
+                  </View>
+                ) : null}
                 <View style={styles.summaryDivider} />
               </View>
               {/* <View style={styles.actionButtons}>
@@ -2647,6 +2756,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         setTempMaterialData={setTempMaterialData}
         handleSaveMaterial={handleSaveMaterial}
         setShowAddMaterial={setShowAddMaterial}
+        token={token}
       />
     </SafeAreaView>
   );
@@ -2928,6 +3038,30 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#111827',
   },
+  materialSearchHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  materialSearchHintText: {fontSize: 13, color: '#6b7280'},
+  materialSearchHintTextSpacing: {marginLeft: 8},
+  materialSuggestionList: {
+    marginTop: 8,
+    maxHeight: 200,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+  materialSuggestionRow: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  materialSuggestionName: {fontSize: 15, color: '#111827', fontWeight: '500'},
+  materialSuggestionMeta: {fontSize: 12, color: '#6b7280', marginTop: 2},
   dropdownSheet: {
     position: 'absolute',
     top: 52,
