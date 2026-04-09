@@ -233,6 +233,8 @@ const LabourSearchDropdown = ({
   selectedEmployee,
   onSelectEmployee,
   disabled = false,
+  currentUser = null,
+  includeLoggedInLeadLabor = false,
   existingEmployeeIds = [], // <-- array of employeeId strings that are already added for the day
   currentEditingEmployeeId = null, // <-- id of the employee currently being edited (if any)
 }) => {
@@ -254,14 +256,49 @@ const LabourSearchDropdown = ({
         setLoading(true);
         const res = await getAllLabor(pageNo, 10, token);
         const data = res?.data?.data || [];
-        setItems(prev => (pageNo === 1 ? data : [...prev, ...data]));
+        let mergedData = Array.isArray(data) ? data : [];
+
+        if (includeLoggedInLeadLabor) {
+          const leadId = currentUser?.lead_labor?.id;
+          const leadName =
+            currentUser?.full_name ||
+            currentUser?.users?.full_name ||
+            currentUser?.lead_labor?.users?.full_name ||
+            currentUser?.lead_labor?.name ||
+            'Logged In Lead Labor';
+
+          if (leadId != null && leadId !== '') {
+            const leadIdStr = String(leadId);
+            const alreadyInList = mergedData.some(
+              item => String(item?.id ?? item?._id ?? item?.employee_id ?? '') === leadIdStr,
+            );
+
+            if (!alreadyInList) {
+              const selfLeadOption = {
+                id: leadId,
+                users: {full_name: leadName},
+                _isCurrentLeadLabor: true,
+              };
+              mergedData =
+                pageNo === 1 ? [selfLeadOption, ...mergedData] : mergedData;
+            }
+          }
+        }
+
+        console.log('[JobTimeSheet] getAllLabor page:', pageNo);
+        console.log('[JobTimeSheet] getAllLabor full response:', res);
+        console.log('[JobTimeSheet] getAllLabor parsed list:', mergedData);
+        setItems(prev => (pageNo === 1 ? mergedData : [...prev, ...mergedData]));
         setHasMore(Array.isArray(data) ? data.length > 0 : false);
         setPage(pageNo);
+      } catch (error) {
+        console.log('[JobTimeSheet] getAllLabor error:', error);
+        throw error;
       } finally {
         setLoading(false);
       }
     },
-    [token],
+    [token, currentUser, includeLoggedInLeadLabor],
   );
   useEffect(() => {
     if (open) fetchPage(1);
@@ -490,6 +527,8 @@ const LabourModal = ({
   handleSaveLabour,
   timesheetData,
   token,
+  profileUser,
+  isLeadLabor,
   showTimePicker,
   setShowTimePicker,
 }) => {
@@ -665,6 +704,8 @@ const LabourModal = ({
                     // new -> allow search dropdown
                     <LabourSearchDropdown
                       token={token}
+                      currentUser={profileUser}
+                      includeLoggedInLeadLabor={isLeadLabor}
                       selectedEmployee={
                         tempLabourData.employeeId
                           ? {
@@ -678,6 +719,7 @@ const LabourModal = ({
                           ...prev,
                           employeeName: emp.label,
                           employeeId: emp.id,
+                          role: emp?.raw?._isCurrentLeadLabor ? 'Lead Labor' : 'Labor',
                           _selectedEmployee: emp.raw,
                         }))
                       }
@@ -2746,6 +2788,8 @@ const JobTimesheet = ({navigation, route, user}) => {
         handleSaveLabour={handleSaveLabour}
         token={token}
         timesheetData={timesheetData}
+        profileUser={profileUser}
+        isLeadLabor={isLeadLabor}
         showTimePicker={showTimePicker}
         setShowTimePicker={setShowTimePicker}
       />

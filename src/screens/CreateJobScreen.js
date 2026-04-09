@@ -40,6 +40,7 @@ import {
 } from '../config/apiConfig';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
 import {spacings} from '../constants/Fonts';
+import { GOOGLE_MAPS_APIKEY } from '../constants/Constants';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -58,7 +59,6 @@ const customers = [
 ];
 
 const CreateJobScreen = ({navigation, route, onCreateJob}) => {
-  const GOOGLE_MAPS_APIKEY = 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI';
   const scrollRef = useRef(null);
   const googleRef = useRef(null);
   const customerPhoneInputRef = useRef(null);
@@ -1764,7 +1764,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                       </View>
                     )}
                     query={{
-                      key: 'AIzaSyCKNlYJxb2T3c8a1rvP5r4FTopvfWWCwHI',
+                      key: GOOGLE_MAPS_APIKEY,
                       language: 'en',
                       // components: 'country:us',
                     }}

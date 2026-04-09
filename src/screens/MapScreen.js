@@ -1,4 +1,3 @@
-const GOOGLE_MAPS_APIKEY = 'AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE';
 
 import React, {useRef, useEffect, useState} from 'react';
 import {
@@ -16,6 +15,7 @@ import MapViewDirections from 'react-native-maps-directions';
 import Geolocation from '@react-native-community/geolocation';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
+import { GOOGLE_MAPS_APIKEY } from '../constants/Constants';
 
 // haversine distance
 const getDistance = (lat1, lon1, lat2, lon2) => {

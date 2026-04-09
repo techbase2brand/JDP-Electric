@@ -35,6 +35,7 @@ import {
 } from '../services/TimerNotificationService';
 import Geolocation from '@react-native-community/geolocation';
 import useHasPermission from '../hooks/useHasPermission';
+import { GOOGLE_MAPS_APIKEY } from '../constants/Constants';
 
 const TimerModule = NativeModules?.TimerModule;
 
@@ -63,7 +64,6 @@ const fmtTime = (d = new Date()) =>
 
 // ---------------- Geofencing (Timer) ----------------
 const GEOFENCE_RADIUS_M = 1200;
-const GOOGLE_MAPS_APIKEY = 'AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE';
 
 // Haversine distance in meters
 const getDistanceM = (lat1, lon1, lat2, lon2) => {

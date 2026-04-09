@@ -97,7 +97,12 @@ const JobListingScreen = ({navigation, route}) => {
   const canCreateJob = useHasPermission('jobs', 'create');
 
   // ----- route
-  const {status, initialJobId} = route?.params || {};
+  const {status} = route?.params || {};
+  const initialJobIdFromRoute =
+    route?.params?.initialJobId ??
+    route?.params?.jobId ??
+    route?.params?.params?.initialJobId ??
+    null;
 
   // ----- state
   const [jobs, setJobs] = useState([]);
@@ -125,8 +130,13 @@ const JobListingScreen = ({navigation, route}) => {
   const [selectedJobForSub, setSelectedJobForSub] = useState(null);
   const [subJobNewTitle, setSubJobNewTitle] = useState('');
   const [pendingDeepLinkJobId, setPendingDeepLinkJobId] = useState(
-    initialJobId ? String(initialJobId) : null,
+    initialJobIdFromRoute ? String(initialJobIdFromRoute) : null,
   );
+
+  useEffect(() => {
+    if (!initialJobIdFromRoute) return;
+    setPendingDeepLinkJobId(String(initialJobIdFromRoute));
+  }, [initialJobIdFromRoute]);
 
   // ---------- mount mark (prevents double load)
   useEffect(() => {
@@ -154,24 +164,33 @@ const JobListingScreen = ({navigation, route}) => {
     if (status) setActiveTab(status);
   }, [status]);
 
+  const getJobId = j =>
+    j?.id ?? j?._id ?? j?.jobId ?? j?.job_id ?? j?.job_number ?? null;
+
   // ---------- handle deep-linked job from notification
   useEffect(() => {
-    if (!pendingDeepLinkJobId || !jobs || jobs.length === 0) return;
+    if (!pendingDeepLinkJobId) return;
 
     const target = jobs.find(j => {
-      const id =
-        j?.id ?? j?._id ?? j?.jobId ?? j?.job_id ?? j?.job_number ?? null;
+      const id = getJobId(j);
       return id && String(id) === String(pendingDeepLinkJobId);
     });
 
-    if (target) {
-      setPendingDeepLinkJobId(null);
-      // chhota delay (≈2 sec), pehle list render ho jaaye phir detail open ho
-      setTimeout(() => {
-        navigation.navigate('JobDetail', {job: target});
-      }, 2000);
+    // Not in loaded pages yet -> keep paging until found
+    if (!target) {
+      if (hasMore && !loading && !isSearching) {
+        fetchJobs();
+      }
+      return;
     }
-  }, [pendingDeepLinkJobId, jobs, navigation]);
+
+    const targetId = getJobId(target);
+    if (!targetId) return;
+
+    setPendingDeepLinkJobId(null);
+    navigation.navigate('JobDetail', {job: target});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingDeepLinkJobId, jobs, filteredJobs, hasMore, loading, isSearching, navigation]);
 
   // ---------- search debounce
   useEffect(() => {

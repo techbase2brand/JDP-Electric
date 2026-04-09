@@ -85,3 +85,6 @@ export const DEFAULT_SETTINGS = {
     autoStartTimer: true,
   },
 };
+
+
+export const GOOGLE_MAPS_APIKEY = 'AIzaSyBEQp-ZFMYZjsTNyximu2pAifQ9EWA4W3M';
