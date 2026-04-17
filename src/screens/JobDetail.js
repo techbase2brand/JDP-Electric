@@ -138,6 +138,29 @@ const JobDetailScreen = ({
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
   };
 
+  const isChangeOrderJob = j =>
+    String(j?.changes_order ?? '')
+      .trim()
+      .toLowerCase() === 'change order';
+
+  const childJobKindLabel = j => {
+    if (!j?.isSubJob) {
+      return 'Main Job';
+    }
+    return isChangeOrderJob(j) ? 'Change Order' : 'Sub Job';
+  };
+
+  const subJobRowMeta = sub => {
+    const co = isChangeOrderJob(sub);
+    return {
+      cardStyle: co ? styles.mainSubJobCardChangeOrder : styles.mainSubJobCardSub,
+      accentColor: co ? Colors.purple : Colors.warning,
+      iconName: co ? 'post-add' : 'subdirectory-arrow-right',
+      tagStyle: co ? styles.changeOrderTag : styles.subJobTag,
+      tagText: co ? 'Change Order' : 'Sub Job',
+    };
+  };
+
   const mainJob =
     route?.params?.mainJob || (job?.isMainJob ? job : null) || null;
 
@@ -587,8 +610,15 @@ const JobDetailScreen = ({
                             numberOfLines={1}>
                             {mainJob.job_title || mainJob.title}
                           </Text>
-                          <Text style={styles.mainSubJobTag}>
-                            {mainJob?.isSubJob ? 'Sub Job' : 'Main Job'}
+                          <Text
+                            style={[
+                              styles.mainSubJobTag,
+                              mainJob?.isSubJob &&
+                                (isChangeOrderJob(mainJob)
+                                  ? {color: Colors.purple}
+                                  : {color: Colors.warning}),
+                            ]}>
+                            {childJobKindLabel(mainJob)}
                           </Text>
                         </View>
                         <View style={styles.mainSubRightCol}>
@@ -621,6 +651,7 @@ const JobDetailScreen = ({
 
                     {/* Sub job rows – icon + title + status + date */}
                     {subJobs.map(sub => {
+                      const row = subJobRowMeta(sub);
                       const enrichedSub = {
                         ...mainJob,
                         ...sub,
@@ -641,18 +672,15 @@ const JobDetailScreen = ({
                       return (
                         <TouchableOpacity
                           key={sub.id}
-                          style={[
-                            styles.mainSubJobCard,
-                            styles.mainSubJobCardSub,
-                          ]}
+                          style={[styles.mainSubJobCard, row.cardStyle]}
                           activeOpacity={0.9}
                           onPress={() => setViewingJob(enrichedSub)}>
                           <View style={styles.mainSubJobTopRow}>
                             <View style={styles.mainSubIconCol}>
                               <Icon
-                                name="subdirectory-arrow-right"
+                                name={row.iconName}
                                 size={18}
-                                color={Colors.warning}
+                                color={row.accentColor}
                               />
                             </View>
                             <View style={styles.mainSubJobMiddleCol}>
@@ -661,7 +689,7 @@ const JobDetailScreen = ({
                                 numberOfLines={1}>
                                 {sub.job_title || sub.title}
                               </Text>
-                              <Text style={styles.subJobTag}>Sub Job</Text>
+                              <Text style={row.tagStyle}>{row.tagText}</Text>
                             </View>
                             <View style={styles.mainSubRightCol}>
                               <View
@@ -774,8 +802,15 @@ const JobDetailScreen = ({
                   ).toUpperCase()}
                 </Text>
               </View>
-              <Text style={styles.summaryTypeText}>
-                {effectiveJob?.isSubJob ? 'Sub Job' : 'Main Job'}
+              <Text
+                style={[
+                  styles.summaryTypeText,
+                  effectiveJob?.isSubJob &&
+                    (isChangeOrderJob(effectiveJob)
+                      ? {color: Colors.purple}
+                      : {color: Colors.warning}),
+                ]}>
+                {childJobKindLabel(effectiveJob)}
               </Text>
             </View>
 
@@ -1206,50 +1241,53 @@ const JobDetailScreen = ({
                     </View>
                   </TouchableOpacity>
 
-                  {subJobs.map(sub => (
-                    <TouchableOpacity
-                      key={sub.id}
-                      style={[styles.mainSubJobCard, styles.mainSubJobCardSub]}
-                      activeOpacity={0.9}
-                      onPress={async () => {
-                        const selectedId = String(sub.id || sub._id);
-                        setTimerSelectedJobId(selectedId);
-                        const key = getTimerStorageKey();
-                        if (key) {
-                          await AsyncStorage.setItem(key, selectedId);
-                        }
-                      }}>
-                      <View style={styles.mainSubJobTopRow}>
-                        <View style={styles.mainSubIconCol}>
-                          <Icon
-                            name="subdirectory-arrow-right"
-                            size={18}
-                            color={Colors.warning}
-                          />
+                  {subJobs.map(sub => {
+                    const row = subJobRowMeta(sub);
+                    return (
+                      <TouchableOpacity
+                        key={sub.id}
+                        style={[styles.mainSubJobCard, row.cardStyle]}
+                        activeOpacity={0.9}
+                        onPress={async () => {
+                          const selectedId = String(sub.id || sub._id);
+                          setTimerSelectedJobId(selectedId);
+                          const key = getTimerStorageKey();
+                          if (key) {
+                            await AsyncStorage.setItem(key, selectedId);
+                          }
+                        }}>
+                        <View style={styles.mainSubJobTopRow}>
+                          <View style={styles.mainSubIconCol}>
+                            <Icon
+                              name={row.iconName}
+                              size={18}
+                              color={row.accentColor}
+                            />
+                          </View>
+                          <View style={styles.mainSubJobMiddleCol}>
+                            <Text
+                              style={styles.mainSubJobTitle}
+                              numberOfLines={1}>
+                              {sub.job_title || sub.title}
+                            </Text>
+                            <Text style={row.tagStyle}>{row.tagText}</Text>
+                          </View>
+                          <View style={styles.timerPickerCheckCol}>
+                            <Icon
+                              name={
+                                String(timerSelectedJobId) ===
+                                String(sub.id || sub._id)
+                                  ? 'check-circle'
+                                  : 'radio-button-unchecked'
+                              }
+                              size={18}
+                              color={row.accentColor}
+                            />
+                          </View>
                         </View>
-                        <View style={styles.mainSubJobMiddleCol}>
-                          <Text
-                            style={styles.mainSubJobTitle}
-                            numberOfLines={1}>
-                            {sub.job_title || sub.title}
-                          </Text>
-                          <Text style={styles.subJobTag}>Sub Job</Text>
-                        </View>
-                        <View style={styles.timerPickerCheckCol}>
-                          <Icon
-                            name={
-                              String(timerSelectedJobId) ===
-                              String(sub.id || sub._id)
-                                ? 'check-circle'
-                                : 'radio-button-unchecked'
-                            }
-                            size={18}
-                            color={Colors.warning}
-                          />
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
+                      </TouchableOpacity>
+                    );
+                  })}
                 </ScrollView>
               </View>
 
@@ -1909,6 +1947,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: Colors.warning,
   },
+  mainSubJobCardChangeOrder: {
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.purple,
+  },
   mainSubJobTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1943,6 +1985,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: Colors.warning,
+  },
+  changeOrderTag: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.purple,
   },
   mainSubJobStatusBadge: {
     paddingHorizontal: Spacing.sm,

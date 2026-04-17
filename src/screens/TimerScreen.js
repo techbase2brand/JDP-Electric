@@ -63,7 +63,7 @@ const fmtTime = (d = new Date()) =>
   `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 
 // ---------------- Geofencing (Timer) ----------------
-const GEOFENCE_RADIUS_M = 1200;
+const GEOFENCE_RADIUS_M = 100;
 
 // Haversine distance in meters
 const getDistanceM = (lat1, lon1, lat2, lon2) => {
@@ -517,6 +517,11 @@ export default function TimerScreen({navigation, route}) {
     }
   }, [elapsedTime, isRunning]);
 
+  // Ensure iOS lock-screen state switches immediately on pause/resume.
+  useEffect(() => {
+    updateLiveActivity(elapsedTime, isRunning);
+  }, [isRunning]);
+
   // ---------- Fetch job details (date compare fixed) ----------
   const fetchJobDetails = async () => {
     try {
@@ -723,6 +728,7 @@ export default function TimerScreen({navigation, route}) {
         title: pauseReason,
       });
       dispatch(pauseTimerWithBackground());
+      updateLiveActivity(elapsedTime, false);
       setPauseModal(false);
 
       const duration = pauseReason === 'Other' ? '00:00:00' : toHHMMSS(0);
@@ -790,6 +796,7 @@ export default function TimerScreen({navigation, route}) {
         await bufferDel('ts_buffer_currentPause');
       }
       dispatch(resumeTimerWithBackground());
+      updateLiveActivity(elapsedTime, true);
     } catch (e) {
       console.log('Resume failed:', e?.message);
     } finally {

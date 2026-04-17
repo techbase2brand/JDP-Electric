@@ -1082,6 +1082,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       assigned_labor_ids,
       assigned_material_ids,
       status: 'pending',
+      ...(isSubJobFlow ? {changes_order: 'change order'} : {}),
     };
   };
 

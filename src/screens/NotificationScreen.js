@@ -572,16 +572,19 @@ import {
   View,
   Text,
   FlatList,
+  ScrollView,
   TouchableOpacity,
   Alert,
   StatusBar,
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  Modal,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
-import {widthPercentageToDP} from '../utils';
+import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import {
   getNotificationsByUser,
   markNotificationAsRead,
@@ -592,6 +595,7 @@ import {useSelector} from 'react-redux';
 // Colors, Spacing, BorderRadius, Shadows
 const Colors = {
   primary: '#3B82F6',
+  primaryDark: '#2563EB',
   primaryLight: '#EBF4FF',
   white: '#FFFFFF',
   backgroundLight: '#F8FAFC',
@@ -634,6 +638,8 @@ const NotificationScreen = ({route}) => {
   const [filter, setFilter] = useState('all'); // 'all' | 'unread'
   const [hasNextPage, setHasNextPage] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
 
   useEffect(() => {
     StatusBar.setBarStyle('dark-content');
@@ -739,7 +745,8 @@ const NotificationScreen = ({route}) => {
           jobId: recipient.notification.job_id || recipient.relatedJobId,
         });
       } else {
-        // navigation.navigate('NotificationDetailScreen', {recipient});
+        setSelectedNotification(recipient);
+        setDetailModalVisible(true);
       }
     } catch (err) {
       console.error(err);
@@ -867,6 +874,35 @@ const NotificationScreen = ({route}) => {
     return `${diffInDays}d ago`;
   };
 
+  const formatFullTimestamp = timestamp => {
+    if (!timestamp) {
+      return '';
+    }
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  const closeDetailModal = () => {
+    setDetailModalVisible(false);
+    setSelectedNotification(null);
+  };
+
+  const selectedTitle =
+    selectedNotification?.notification?.notification_title ??
+    selectedNotification?.notification?.message ??
+    'Notification';
+  const selectedMessage = selectedNotification?.notification?.message ?? '';
+  const selectedTimestamp =
+    selectedNotification?.read_at ??
+    selectedNotification?.notification?.created_at ??
+    selectedNotification?.delivered_at;
+
   return (
     <View style={styles.container}>
       {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.white} /> */}
@@ -971,6 +1007,88 @@ const NotificationScreen = ({route}) => {
           <ActivityIndicator />
         </View>
       )}
+
+      <Modal
+        transparent
+        visible={detailModalVisible}
+        animationType="fade"
+        onRequestClose={closeDetailModal}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={closeDetailModal}
+          />
+          <View style={styles.detailModalBox}>
+            <View style={styles.detailModalAccent} />
+            <View style={styles.detailModalInner}>
+              <View style={styles.detailModalTopRow}>
+                <View style={styles.detailModalIconCircle}>
+                  <Icon
+                    name="notifications-active"
+                    size={24}
+                    color={Colors.primary}
+                  />
+                </View>
+                <View style={styles.detailModalTitleBlock}>
+                  <Text style={styles.detailModalKicker}>Notification</Text>
+                  <Text style={styles.detailModalTitle} numberOfLines={4}>
+                    {selectedTitle}
+                  </Text>
+                </View>
+              </View>
+
+              <ScrollView
+                style={styles.detailModalBody}
+                contentContainerStyle={styles.detailModalBodyContent}
+                showsVerticalScrollIndicator={false}>
+                {!!selectedMessage && (
+                  <View style={styles.detailModalMessageWrap}>
+                    {/* <View style={styles.detailModalMessageHeader}>
+                      <Icon
+                        name="format-quote"
+                        size={16}
+                        color={Colors.primary}
+                        style={styles.detailModalMessageQuote}
+                      />
+                      <Text style={styles.detailModalMessageLabel}>Message</Text>
+                    </View> */}
+                    <Text style={styles.detailModalMessage}>
+                      {selectedMessage}
+                    </Text>
+                  </View>
+                )}
+
+                {!!selectedTimestamp && (
+                  <View style={styles.detailModalTimeRow}>
+                    <Icon
+                      name="schedule"
+                      size={16}
+                      color={Colors.primary}
+                      style={styles.detailModalTimeIcon}
+                    />
+                    <Text style={styles.detailModalTime}>
+                      {formatTimestamp(selectedTimestamp)}
+                    </Text>
+                  </View>
+                )}
+                {!!selectedTimestamp && (
+                  <Text style={styles.detailModalExactTime}>
+                    {formatFullTimestamp(selectedTimestamp)}
+                  </Text>
+                )}
+              </ScrollView>
+
+              <TouchableOpacity
+                style={styles.detailModalFooterBtn}
+                onPress={closeDetailModal}
+                activeOpacity={0.85}>
+                <Text style={styles.detailModalFooterBtnText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -1091,6 +1209,157 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.md,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  detailModalBox: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: heightPercentageToDP(58),
+    backgroundColor: Colors.white,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(226, 232, 240, 0.9)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0f172a',
+        shadowOffset: {width: 0, height: 12},
+        shadowOpacity: 0.18,
+        shadowRadius: 24,
+      },
+      android: {elevation: 16},
+    }),
+  },
+  detailModalAccent: {
+    height: 4,
+    width: '100%',
+    backgroundColor: Colors.primary,
+  },
+  detailModalInner: {
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  detailModalTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.md,
+  },
+  detailModalIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.sm,
+  },
+  detailModalTitleBlock: {
+    flex: 1,
+    paddingRight: Spacing.xs,
+    minWidth: 0,
+  },
+  detailModalKicker: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: Colors.primary,
+    marginBottom: 4,
+  },
+  detailModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
+    lineHeight: 24,
+  },
+  detailModalBody: {
+    maxHeight: heightPercentageToDP(33),
+  },
+  detailModalBodyContent: {
+    paddingBottom: Spacing.sm,
+  },
+  detailModalMessageWrap: {
+    backgroundColor: Colors.backgroundLight,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: Spacing.md,
+  },
+  detailModalMessageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  detailModalMessageQuote: {
+    marginRight: 6,
+  },
+  detailModalMessageLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.primaryDark,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  detailModalMessage: {
+    fontSize: 15,
+    color: Colors.text,
+    lineHeight: 23,
+  },
+  detailModalTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.primaryLight,
+    borderRadius: BorderRadius.md,
+  },
+  detailModalTimeIcon: {
+    marginRight: 6,
+  },
+  detailModalTime: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.primaryDark,
+  },
+  detailModalExactTime: {
+    marginTop: Spacing.sm,
+    fontSize: 12,
+    color: Colors.textLight,
+  },
+  detailModalFooterBtn: {
+    marginTop: Spacing.md,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.primary,
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+      },
+      android: {elevation: 4},
+    }),
+  },
+  detailModalFooterBtnText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });
 
