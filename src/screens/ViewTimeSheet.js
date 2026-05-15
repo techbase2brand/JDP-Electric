@@ -21,6 +21,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { heightPercentageToDP, widthPercentageToDP } from '../utils';
 
 const TimesheetScreen = ({navigation, route, job}) => {
   const {timesheet} = route?.params || {};
@@ -973,8 +974,8 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   imageThumbWrap: {
-    width: 100,
-    height: 105,
+    width:widthPercentageToDP(25.5),
+    height: heightPercentageToDP(14),
     borderRadius: 10,
     overflow: 'hidden',
     backgroundColor: '#f3f4f6',

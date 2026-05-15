@@ -1640,41 +1640,6 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
               )}
             </View>
 
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Email Address</Text>
-              <View
-                style={[
-                  styles.inputContainer,
-                  validationErrors.customerEmail && styles.inputContainerError,
-                  ,
-                  {paddingHorizontal: 0},
-                ]}>
-                <Icon
-                  name="email"
-                  size={20}
-                  color="#9ca3af"
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={[styles.formInput, styles.inputWithIcon]}
-                  value={formData.customerEmail}
-                  onChangeText={text => updateFormData('customerEmail', text)}
-                  placeholder="customer@email.com"
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-              {validationErrors.customerEmail && (
-                <View style={styles.errorContainer}>
-                  <Icon name="error" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>
-                    {validationErrors.customerEmail}
-                  </Text>
-                </View>
-              )}
-            </View>
-
             {/* <View
             style={styles.formGroup}
             ref={ref => (fieldPositions.current['customerAddress'] = ref)}>

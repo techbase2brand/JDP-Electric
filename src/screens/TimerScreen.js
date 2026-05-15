@@ -915,6 +915,17 @@ export default function TimerScreen({navigation, route}) {
         endISO: end,
         markCompleted: true,
       });
+      console.log(
+        '[TimerScreen] updateWorkData payload:',
+        JSON.stringify(
+          {
+            jobIdForApi,
+            payload,
+          },
+          null,
+          2,
+        ),
+      );
 
       try {
         await updateWorkData(jobIdForApi, payload, token);
@@ -1614,7 +1625,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     alignItems: 'center',
   },
-  btnText: {color: '#fff', fontWeight: 'bold', fontSize: 16},
+  btnText: {color: '#fff', fontWeight: 'bold', fontSize: 13},
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

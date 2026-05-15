@@ -357,22 +357,37 @@ const AppContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
-  const handleLogout = async () => {
-    try {
-      if (token) {
-        await logoutApi(token);
+  const handleLogout = useCallback(
+    async ({skipServerLogout = false} = {}) => {
+      try {
+        if (!skipServerLogout && token) {
+          try {
+            await logoutApi(token);
+          } catch (e) {
+            // Ignore server logout failure; local logout must still happen.
+            console.log('logoutApi failed, continuing local logout:', e);
+          }
+        }
+
+        dispatch(logout());
+        // Clear all persisted local storage except onboarding flag
+        const keys = await AsyncStorage.getAllKeys();
+        const keepKey = 'hasLaunched';
+        const toRemove = keys.filter(k => k !== keepKey);
+        if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
+      } catch (err) {
+        Alert.alert('Logout Failed', err.message || 'Please try again');
       }
-      dispatch(logout());
-      // Clear all persisted local storage except onboarding flag
-      const keys = await AsyncStorage.getAllKeys();
-      const keepKey = 'hasLaunched';
-      const toRemove = keys.filter(k => k !== keepKey);
-      if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
-      // Alert.alert('Session Expired', 'Please login again.');
-    } catch (err) {
-      Alert.alert('Logout Failed', err.message || 'Please try again');
-    }
-  };
+    },
+    [dispatch, token],
+  );
+
+  useEffect(() => {
+    global.handleLogout = () => handleLogout({skipServerLogout: true});
+    return () => {
+      global.handleLogout = null;
+    };
+  }, [handleLogout]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

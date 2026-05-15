@@ -13,18 +13,18 @@ export const api = axios.create({
   },
 });
 
-// api.interceptors.response.use(
-//   response => response,
-//   async error => {
-//     if (error.response?.status === 401) {
-//       //  Invalid / expired token
-//       if (global.handleLogout) {
-//         global.handleLogout(); // App.js se navigate karayega
-//       }
-//     }
-//     return Promise.reject(error);
-//   },
-// );
+api.interceptors.response.use(
+  response => response,
+  async error => {
+    if (error.response?.status === 401) {
+      //  Invalid / expired token
+      if (global.handleLogout) {
+        global.handleLogout(); // App.js se navigate karayega
+      }
+    }
+    return Promise.reject(error);
+  },
+);
 
 // Send OTP
 export const sendForgotPasswordOtp = async email => {

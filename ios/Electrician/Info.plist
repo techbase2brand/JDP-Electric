@@ -41,10 +41,16 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to your camera to capture photos.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs access to your location even when the app is in the background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app requires access to your location while using the app.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to your microphone to record audio.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to select or upload images.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIAppFonts</key>
@@ -76,13 +82,6 @@
 		<string>fetch</string>
 		<string>location</string>
 	</array>
-	<key>NSPhotoLibraryUsageDescription</key>
-<string>This app needs access to your photo library to select or upload images.</string>
-<key>NSCameraUsageDescription</key>
-<string>This app needs access to your camera to capture photos.</string>
-<key>NSMicrophoneUsageDescription</key>
-<string>This app needs access to your microphone to record audio.</string>
-
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -92,19 +91,12 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
-<array>
-	<string>UIInterfaceOrientationPortrait</string>
-	<string>UIInterfaceOrientationPortraitUpsideDown</string>
-	<string>UIInterfaceOrientationLandscapeLeft</string>
-	<string>UIInterfaceOrientationLandscapeRight</string>
-</array>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
-	
 	<false/>
 </dict>
 </plist>

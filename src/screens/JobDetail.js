@@ -153,7 +153,9 @@ const JobDetailScreen = ({
   const subJobRowMeta = sub => {
     const co = isChangeOrderJob(sub);
     return {
-      cardStyle: co ? styles.mainSubJobCardChangeOrder : styles.mainSubJobCardSub,
+      cardStyle: co
+        ? styles.mainSubJobCardChangeOrder
+        : styles.mainSubJobCardSub,
       accentColor: co ? Colors.purple : Colors.warning,
       iconName: co ? 'post-add' : 'subdirectory-arrow-right',
       tagStyle: co ? styles.changeOrderTag : styles.subJobTag,
@@ -1813,7 +1815,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   gridActionText: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '500',
     color: Colors.text,
   },

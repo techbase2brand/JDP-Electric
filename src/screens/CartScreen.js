@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,6 @@ import {
   Alert,
   Linking,
   TextInput,
-  KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
@@ -21,7 +20,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import {useDispatch, useSelector} from 'react-redux';
 import {addToCart, updateQuantity} from '../redux/cartSlice';
-import {createProduct} from '../config/apiConfig';
+import {createProduct, searchProducts} from '../config/apiConfig';
 import DeviceInfo from 'react-native-device-info';
 import {spacings} from '../constants/Fonts';
 
@@ -76,6 +75,22 @@ const Shadows = {
   },
 };
 
+const asArray = value => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (Array.isArray(value?.data)) {
+    return value.data;
+  }
+  if (Array.isArray(value?.data?.data)) {
+    return value.data.data;
+  }
+  if (Array.isArray(value?.data?.products)) {
+    return value.data.products;
+  }
+  return [];
+};
+
 const CartScreen = ({onBack, onNavigate, route}) => {
   const {id, job, supplier} = route.params ?? {};
   console.log('supplier>>>cartscreen', supplier);
@@ -88,33 +103,23 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   const token = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
   const [loading, setLoading] = useState(false);
+  const materialSearchTimeoutRef = useRef(null);
 
   console.log('cartitemss', id, jobObj?.id, user?.leadLabor?.[0].id);
 
-  const handleAddMaterial = async () => {
-    try {
-      setLoading(true); // start loader
-
-      const payload = {
-        ...material,
-        stock_quantity: Number(material.stock_quantity),
-        unit_cost: Number(material.unit_cost),
-        supplier_id: Number(material.supplier_id),
-        system_ip: deviceId._j,
-      };
-
-      const res = await createProduct(payload, token);
-
-      dispatch(addToCart(res.data));
-      Alert.alert('Success', 'Material added successfully!');
-      setShowAddEntryModal(false);
-    } catch (error) {
-      console.error('Error adding material:', error);
-      Alert.alert('Error', error.message || 'Something went wrong');
-    } finally {
-      setLoading(false); // stop loader
-    }
-  };
+  const getInitialMaterial = () => ({
+    product_name: '',
+    jdp_sku: '',
+    description: '',
+    image: '',
+    product_id: '',
+    stock_quantity: '',
+    unit: 'pieces',
+    unit_cost: '',
+    supplier_id: id,
+    job_id: jobObj?.id || '',
+    is_custom: true,
+  });
 
   const navigation = useNavigation();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -135,19 +140,171 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   });
   const [timeEntries, setTimeEntries] = useState([]);
 
-  const [material, setMaterial] = useState({
-    product_name: '',
-    supplier_sku: '',
-    stock_quantity: '',
-    unit: 'pieces',
-    unit_cost: '',
-    supplier_id: id,
-    job_id: jobObj?.id || '',
-    is_custom: true,
-  });
+  const [material, setMaterial] = useState(getInitialMaterial);
+  const [materialSearchLoading, setMaterialSearchLoading] = useState(false);
+  const [materialSearchResults, setMaterialSearchResults] = useState([]);
+  const [showMaterialSearch, setShowMaterialSearch] = useState(false);
+  const [selectedMaterialProduct, setSelectedMaterialProduct] = useState(null);
 
   // Device unique ID
   const deviceId = DeviceInfo.getUniqueId();
+
+  const closeAddMaterialModal = () => {
+    setShowAddEntryModal(false);
+    setShowMaterialSearch(false);
+    setMaterialSearchResults([]);
+    setSelectedMaterialProduct(null);
+    setMaterial(getInitialMaterial());
+  };
+
+  const handleSelectMaterialProduct = product => {
+    const availableQty = Number(product?.stock_quantity ?? 0);
+    if (!Number.isFinite(availableQty) || availableQty <= 0) {
+      Alert.alert('Sold out', 'This product is currently out of stock.');
+      return;
+    }
+
+    setSelectedMaterialProduct(product);
+    setShowMaterialSearch(false);
+    setMaterial(prev => ({
+      ...prev,
+      product_name: product?.product_name || '',
+      jdp_sku: product?.jdp_sku || '',
+      description: product?.description || '',
+      image: product?.image || product?.product_image || product?.image_url || '',
+      product_id: product?.id || product?.product_id || '',
+      stock_quantity: '1',
+      unit: product?.unit || prev.unit || 'pieces',
+      unit_cost: product?.unit_cost != null ? String(product.unit_cost) : '',
+      supplier_id: Number(id) || product?.supplier_id || prev.supplier_id,
+      is_custom: false,
+    }));
+  };
+
+  const handleAddMaterial = async () => {
+    const trimmedName = (material?.product_name || '').trim();
+    if (!trimmedName) {
+      Alert.alert('Error', 'Please enter material name');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      if (selectedMaterialProduct?.id || selectedMaterialProduct?.product_id) {
+        const availableQty = Number(selectedMaterialProduct?.stock_quantity ?? 0);
+        if (!Number.isFinite(availableQty) || availableQty <= 0) {
+          Alert.alert('Sold out', 'This product is currently out of stock.');
+          return;
+        }
+
+        const selectedProductId =
+          selectedMaterialProduct?.id || selectedMaterialProduct?.product_id;
+        const stockQty = Number(material.stock_quantity);
+        const unitCost = Number(material.unit_cost);
+
+        dispatch(
+          addToCart({
+            ...selectedMaterialProduct,
+            id: selectedProductId,
+            product_id: selectedProductId,
+            product_name: trimmedName,
+            jdp_sku: material.jdp_sku || selectedMaterialProduct?.jdp_sku || '',
+            description:
+              material.description || selectedMaterialProduct?.description || '',
+            image:
+              material.image ||
+              selectedMaterialProduct?.image ||
+              selectedMaterialProduct?.product_image ||
+              selectedMaterialProduct?.image_url ||
+              '',
+            stock_quantity: Number.isFinite(stockQty) ? stockQty : 1,
+            unit_cost: Number.isFinite(unitCost) ? unitCost : 0,
+            supplier_id: Number(material.supplier_id) || Number(id),
+            job_id: jobObj?.id ?? jobObj?._id,
+            jobId: jobObj?.id ?? jobObj?._id,
+            is_custom: false,
+          }),
+        );
+
+        Alert.alert('Success', 'Material added to cart');
+        closeAddMaterialModal();
+        return;
+      }
+
+      const payload = {
+        ...material,
+        stock_quantity: Number(material.stock_quantity),
+        unit_cost: Number(material.unit_cost),
+        supplier_id: Number(material.supplier_id),
+        system_ip: deviceId._j,
+      };
+
+      const res = await createProduct(payload, token);
+
+      dispatch(
+        addToCart({
+          ...res.data,
+          job_id: jobObj?.id ?? jobObj?._id,
+          jobId: jobObj?.id ?? jobObj?._id,
+        }),
+      );
+      Alert.alert('Success', 'Material added successfully!');
+      closeAddMaterialModal();
+    } catch (error) {
+      console.error('Error adding material:', error);
+      Alert.alert('Error', error.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!showAddEntryModal) return;
+    const term = (material?.product_name || '').trim();
+
+    if (materialSearchTimeoutRef.current) {
+      clearTimeout(materialSearchTimeoutRef.current);
+    }
+
+    if (term.length < 2) {
+      setMaterialSearchResults([]);
+      setMaterialSearchLoading(false);
+      return;
+    }
+
+    materialSearchTimeoutRef.current = setTimeout(async () => {
+      try {
+        setMaterialSearchLoading(true);
+        const res = await searchProducts(term, token);
+        const currentSupplierId = String(id ?? '');
+        const products = asArray(res).filter(product => {
+          if (!product) {
+            return false;
+          }
+          if (!currentSupplierId) {
+            return true;
+          }
+          const productSupplierId = String(
+            product?.supplier_id ?? product?.suppliers?.id ?? '',
+          );
+          return productSupplierId === currentSupplierId;
+        });
+        setMaterialSearchResults(products);
+      } catch (error) {
+        console.log('❌ material search error:', error?.message || error);
+        setMaterialSearchResults([]);
+      } finally {
+        setMaterialSearchLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      if (materialSearchTimeoutRef.current) {
+        clearTimeout(materialSearchTimeoutRef.current);
+      }
+    };
+  }, [id, material?.product_name, showAddEntryModal, token]);
 
   // ✅ Update Quantity (Redux) – scoped to current job
   const handleUpdateQuantity = (itemId, newQuantity) => {
@@ -174,6 +331,17 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   const getTotalItems = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
+
+  useEffect(() => {
+    const debugCartItems = cartItems.map(item => ({
+      id: item?.id ?? item?.product_id,
+      name: item?.product_name,
+      qty: item?.quantity,
+      jdp_sku: item?.jdp_sku,
+      supplier_id: item?.supplier_id,
+    }));
+    console.log('Cart items:', debugCartItems);
+  }, [cartItems]);
 
   const buildEmailBody = () => {
     const supplierName =
@@ -204,8 +372,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
         item.description || item.product_heading || item.productHeading || '';
 
       const productName = productNameRaw || productHeadingRaw || 'Item';
-      const sku =
-        item.jdp_sku || item.supplier_sku || item.sku || item.product_sku || '';
+      const sku = item.jdp_sku || item.sku || item.product_sku || '';
       const qty = item.quantity ?? 0;
 
       lines.push(`${index + 1}. Product: ${capitalize(productName)}`);
@@ -403,38 +570,99 @@ const CartScreen = ({onBack, onNavigate, route}) => {
     <Modal
       visible={showAddEntryModal}
       transparent={true}
-      animationType="slide"
-      onRequestClose={() => setShowAddEntryModal(false)}>
+      animationType="fade"
+      onRequestClose={closeAddMaterialModal}>
       <View style={styles.modalOverlay1}>
         <View style={styles.addEntryModal}>
           {/* Header */}
           <View style={styles.modalHeader1}>
             <Text style={styles.modalTitle1}>Add Material</Text>
-            <TouchableOpacity onPress={() => setShowAddEntryModal(false)}>
+            <TouchableOpacity onPress={closeAddMaterialModal}>
               <Icon name="close" size={24} color={Colors.text} />
             </TouchableOpacity>
           </View>
 
           {/* Form */}
-          <KeyboardAvoidingView
-            style={{flex: 1}}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}>
+          <View style={styles.addMaterialBody}>
             <ScrollView
               style={styles.modalContent1}
-              showsVerticalScrollIndicator={false}>
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag">
               {/* Material Name */}
               <View style={styles.formField}>
                 <Text style={styles.fieldLabel}>Material Name *</Text>
                 <TextInput
                   style={styles.textInput}
                   value={material.product_name}
-                  onChangeText={text =>
-                    setMaterial(prev => ({...prev, product_name: text}))
-                  }
+                  onFocus={() => setShowMaterialSearch(true)}
+                  onChangeText={text => {
+                    if (
+                      selectedMaterialProduct &&
+                      text !== selectedMaterialProduct?.product_name
+                    ) {
+                      setSelectedMaterialProduct(null);
+                    }
+                    setMaterial(prev => ({...prev, product_name: text}));
+                  }}
                   placeholder="Enter material name"
                   placeholderTextColor={Colors.textLight}
                 />
+                {showMaterialSearch &&
+                (material?.product_name || '').trim().length >= 2 ? (
+                  <View style={styles.searchSuggestionBox}>
+                    {materialSearchLoading ? (
+                      <View style={styles.searchSuggestionRow}>
+                        <Text style={styles.searchSuggestionSubText}>
+                          Searching...
+                        </Text>
+                      </View>
+                    ) : materialSearchResults.length > 0 ? (
+                      materialSearchResults.slice(0, 8).map(product => {
+                        const key =
+                          product?.id ||
+                          product?.product_id ||
+                          product?.jdp_sku;
+                        const availableQty = Number(product?.stock_quantity ?? 0);
+                        const inStock =
+                          Number.isFinite(availableQty) && availableQty > 0;
+                        return (
+                          <TouchableOpacity
+                            key={String(key)}
+                            style={styles.searchSuggestionRow}
+                            onPress={() => handleSelectMaterialProduct(product)}>
+                            <Text
+                              style={styles.searchSuggestionTitle}
+                              numberOfLines={1}>
+                              {product?.product_name || 'Untitled product'}
+                            </Text>
+                            <Text
+                              style={styles.searchSuggestionSubText}
+                              numberOfLines={1}>
+                              SKU: {product?.jdp_sku || '—'}  |  Qty:{' '}
+                              {Number.isFinite(availableQty) ? availableQty : 0}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.searchSuggestionSubText,
+                                inStock
+                                  ? styles.searchSuggestionInStock
+                                  : styles.searchSuggestionSoldOut,
+                              ]}>
+                              {inStock ? 'In stock' : 'Sold out'}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })
+                    ) : (
+                      <View style={styles.searchSuggestionRow}>
+                        <Text style={styles.searchSuggestionSubText}>
+                          No material found
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                ) : null}
               </View>
 
               {/* SKU */}
@@ -442,9 +670,9 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                 <Text style={styles.fieldLabel}>SKU</Text>
                 <TextInput
                   style={styles.textInput}
-                  value={material.supplier_sku}
+                  value={material.jdp_sku}
                   onChangeText={text =>
-                    setMaterial(prev => ({...prev, supplier_sku: text}))
+                    setMaterial(prev => ({...prev, jdp_sku: text}))
                   }
                   placeholder="Enter SKU"
                   placeholderTextColor={Colors.textLight}
@@ -538,7 +766,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => setShowAddEntryModal(false)}>
+                onPress={closeAddMaterialModal}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
 
@@ -552,7 +780,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                 )}
               </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
+          </View>
         </View>
       </View>
     </Modal>
@@ -623,8 +851,8 @@ const CartScreen = ({onBack, onNavigate, route}) => {
           style={[
             styles.addButton,
             {
-              width: widthPercentageToDP(8),
-              height: heightPercentageToDP(3),
+              width: widthPercentageToDP(10),
+              height: heightPercentageToDP(5),
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -644,7 +872,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
           <View key={item.id} style={styles.cartItem}>
             <View style={styles.cartItemContent}>
               {/* Product Image */}
-              <View style={styles.productImageContainer}>
+              {/* <View style={styles.productImageContainer}>
                 {item.image ? (
                   <Image
                     source={{uri: item.image}}
@@ -653,7 +881,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                 ) : (
                   <Icon name="inventory" size={40} color={Colors.textLight} />
                 )}
-              </View>
+              </View> */}
 
               {/* Product Info */}
               <View style={styles.productInfo}>
@@ -662,9 +890,11 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                     <Text style={styles.productName}>
                       {capitalize(item.product_name)}
                     </Text>
-                    <Text style={styles.productDescription}>
-                      {capitalize(item.description)}
-                    </Text>
+                    {item.description && (
+                      <Text style={styles.productDescription}>
+                        {capitalize(item.description)}
+                      </Text>
+                    )}
                   </View>
                   <TouchableOpacity
                     style={styles.removeButton}
@@ -674,9 +904,13 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                 </View>
 
                 <View style={styles.productDetails}>
-                  <Text style={styles.productSku}>SKU: {item.jdp_sku}</Text>
+                  {item.jdp_sku && (
+                    <Text style={styles.productSku}>SKU: {item.jdp_sku}</Text>
+                  )}
                   <View style={styles.supplierBadge}>
-                    {/* <Text style={styles.supplierText}>{item.supplier}</Text> */}
+                    <Text style={styles.supplierText}>
+                      {capitalize(item.suppliers.contact_person)}
+                    </Text>
                   </View>
                 </View>
 
@@ -871,7 +1105,7 @@ const styles = StyleSheet.create({
   productHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: Spacing.sm,
+    // marginBottom: Spacing.sm,
   },
   productTitleContainer: {
     flex: 1,
@@ -1182,14 +1416,20 @@ const styles = StyleSheet.create({
   modalOverlay1: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.lg,
   },
   addEntryModal: {
     backgroundColor: Colors.white,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    // maxHeight: '90%',
-    height: heightPercentageToDP(90),
+    borderRadius: BorderRadius.xl,
+    width: '100%',
+    maxWidth: 520,
+    height: heightPercentageToDP(86),
+  },
+  addMaterialBody: {
+    flex: 1,
   },
   modalHeader1: {
     flexDirection: 'row',
@@ -1227,10 +1467,45 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
+    paddingVertical: spacings.large,
     fontSize: 16,
     color: Colors.text,
     backgroundColor: Colors.white,
+  },
+  searchSuggestionBox: {
+    marginTop: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.white,
+    maxHeight: 220,
+    overflow: 'hidden',
+  },
+  searchSuggestionRow: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  searchSuggestionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  searchSuggestionSubText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  searchSuggestionInStock: {
+    color: Colors.success,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  searchSuggestionSoldOut: {
+    color: Colors.error,
+    fontWeight: '600',
+    marginTop: 2,
   },
   textArea: {
     height: 80,

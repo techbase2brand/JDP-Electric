@@ -1020,7 +1020,7 @@ const NotificationScreen = ({route}) => {
             onPress={closeDetailModal}
           />
           <View style={styles.detailModalBox}>
-            <View style={styles.detailModalAccent} />
+            {/* <View style={styles.detailModalAccent} /> */}
             <View style={styles.detailModalInner}>
               <View style={styles.detailModalTopRow}>
                 <View style={styles.detailModalIconCircle}>

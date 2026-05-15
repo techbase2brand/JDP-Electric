@@ -30,6 +30,7 @@ import {
   getJobOrders,
   searchProducts,
   submitBluesheetComplete,
+  updateWorkData,
 } from '../config/apiConfig';
 // import DateTimePicker from '@react-native-community/datetimepicker';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
@@ -270,7 +271,9 @@ const LabourSearchDropdown = ({
           if (leadId != null && leadId !== '') {
             const leadIdStr = String(leadId);
             const alreadyInList = mergedData.some(
-              item => String(item?.id ?? item?._id ?? item?.employee_id ?? '') === leadIdStr,
+              item =>
+                String(item?.id ?? item?._id ?? item?.employee_id ?? '') ===
+                leadIdStr,
             );
 
             if (!alreadyInList) {
@@ -288,7 +291,9 @@ const LabourSearchDropdown = ({
         console.log('[JobTimeSheet] getAllLabor page:', pageNo);
         console.log('[JobTimeSheet] getAllLabor full response:', res);
         console.log('[JobTimeSheet] getAllLabor parsed list:', mergedData);
-        setItems(prev => (pageNo === 1 ? mergedData : [...prev, ...mergedData]));
+        setItems(prev =>
+          pageNo === 1 ? mergedData : [...prev, ...mergedData],
+        );
         setHasMore(Array.isArray(data) ? data.length > 0 : false);
         setPage(pageNo);
       } catch (error) {
@@ -719,7 +724,9 @@ const LabourModal = ({
                           ...prev,
                           employeeName: emp.label,
                           employeeId: emp.id,
-                          role: emp?.raw?._isCurrentLeadLabor ? 'Lead Labor' : 'Labor',
+                          role: emp?.raw?._isCurrentLeadLabor
+                            ? 'Lead Labor'
+                            : 'Labor',
                           _selectedEmployee: emp.raw,
                         }))
                       }
@@ -1202,6 +1209,12 @@ const MaterialModal = ({
 
   const applySelectedProduct = useCallback(
     product => {
+      const availableQty = Number(product?.stock_quantity ?? 0);
+      if (!Number.isFinite(availableQty) || availableQty <= 0) {
+        Alert.alert('Sold out', 'This product is currently out of stock.');
+        return;
+      }
+
       const cost = Number(
         product?.unit_cost ??
           product?.jdp_price ??
@@ -1219,6 +1232,7 @@ const MaterialModal = ({
         unit: unitStr,
         unitCost: cost > 0 ? cost : prev.unitCost ?? '',
         productId: product?.id != null ? product.id : null,
+        availableStock: Number.isFinite(availableQty) ? availableQty : 0,
         jdpPrice: Number(product?.jdp_price) || 0,
         estimatedUnitCost: Number(product?.estimated_price) || 0,
         totalOrdered: emptyQty(prev.totalOrdered) ? 1 : prev.totalOrdered,
@@ -1231,7 +1245,8 @@ const MaterialModal = ({
   );
 
   const handleSaveWithValidation = () => {
-    const {name, unit, totalOrdered, amountUsed, unitCost} = tempMaterialData;
+    const {name, unit, totalOrdered, amountUsed, unitCost, availableStock} =
+      tempMaterialData;
 
     const total = parseFloat(totalOrdered);
     const used = parseFloat(amountUsed);
@@ -1254,6 +1269,15 @@ const MaterialModal = ({
 
     if (isNaN(used) || used <= 0) {
       Alert.alert('Validation', 'Quantity used must be greater than 0');
+      return;
+    }
+
+    if (
+      tempMaterialData?.productId &&
+      Number.isFinite(Number(availableStock)) &&
+      Number(availableStock) <= 0
+    ) {
+      Alert.alert('Sold out', 'This product is currently out of stock.');
       return;
     }
 
@@ -1334,6 +1358,9 @@ const MaterialModal = ({
                         const key = String(
                           p?.id ?? p?.product_id ?? p?.jdp_sku ?? `s-${idx}`,
                         );
+                        const availableQty = Number(p?.stock_quantity ?? 0);
+                        const inStock =
+                          Number.isFinite(availableQty) && availableQty > 0;
                         return (
                           <TouchableOpacity
                             key={key}
@@ -1358,6 +1385,17 @@ const MaterialModal = ({
                               ]
                                 .filter(Boolean)
                                 .join('')}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.materialSuggestionMeta,
+                                inStock
+                                  ? styles.materialSuggestionInStock
+                                  : styles.materialSuggestionSoldOut,
+                              ]}>
+                              {inStock
+                                ? `In stock · Qty ${availableQty}`
+                                : 'Sold out'}
                             </Text>
                           </TouchableOpacity>
                         );
@@ -2053,6 +2091,92 @@ const JobTimesheet = ({navigation, route, user}) => {
     return payload;
   };
 
+  const getEntryWorkedHms = entry => {
+    const normalized = normalizeToHMS(
+      entry?.regular_hours_hms ??
+        entry?.regular_hours_input ??
+        entry?.regularHours ??
+        entry?.base_hours_hms ??
+        '00:00:00',
+    );
+    return normalized === '00:00:00'
+      ? normalizeToHMS(entry?.base_hours_hms ?? '00:00:00')
+      : normalized;
+  };
+
+  const syncManualLaborEntriesToWorkData = useCallback(async () => {
+    const manualEntries = (timesheetData?.labourEntries || []).filter(entry =>
+      String(entry?.id || '').startsWith('labour-'),
+    );
+
+    if (!manualEntries.length) {
+      return;
+    }
+
+    const jobIdForApi = isNaN(Number(currentJobId))
+      ? currentJobId
+      : Number(currentJobId);
+
+    const calls = manualEntries
+      .map(entry => {
+        const isLead = (entry?.role || 'labor')
+          .toString()
+          .toLowerCase()
+          .includes('lead');
+        const employeeRaw = entry?.employeeId;
+        if (
+          employeeRaw === undefined ||
+          employeeRaw === null ||
+          String(employeeRaw).trim() === ''
+        ) {
+          return null;
+        }
+
+        const employeeId = isNaN(Number(employeeRaw))
+          ? employeeRaw
+          : Number(employeeRaw);
+        const workedHms = getEntryWorkedHms(entry);
+
+        const workDataPayload = {
+          labor_timesheet: {
+            ...(isLead ? {lead_labor_id: employeeId} : {labor_id: employeeId}),
+            date: timesheetData?.date,
+            start_time: '00:00:00',
+            end_time: workedHms,
+            work_activity: workedHms,
+            pause_timer: [],
+            job_status: 'completed',
+          },
+        };
+        console.log(
+          '[JobTimeSheet] manual updateWorkData payload:',
+          JSON.stringify(
+            {
+              jobIdForApi,
+              workDataPayload,
+            },
+            null,
+            2,
+          ),
+        );
+
+        return updateWorkData(jobIdForApi, workDataPayload, token);
+      })
+      .filter(Boolean);
+
+    if (!calls.length) {
+      return;
+    }
+
+    const results = await Promise.allSettled(calls);
+    const failed = results.filter(r => r.status === 'rejected').length;
+    if (failed > 0) {
+      console.log(
+        `[JobTimeSheet] Manual labor timesheet sync partial failure: ${failed}/${calls.length}`,
+      );
+    }
+  }, [currentJobId, timesheetData?.date, timesheetData?.labourEntries, token]);
+
   // temp states
   const [tempLabourData, setTempLabourData] = useState({});
   const [tempMaterialData, setTempMaterialData] = useState({});
@@ -2099,11 +2223,8 @@ const JobTimesheet = ({navigation, route, user}) => {
         tempLabourData?.regular_hours_input ?? hmsToDecimalStr(hms),
       regular_hours_hms: hms,
       regularHours: hms,
-      base_hours_hms:
-        tempLabourData?.base_hours_hms ??
-        tempLabourData?.regular_hours_hms ??
-        tempLabourData?.regularHours ??
-        '00:00:00',
+      // Keep base hours aligned with selected manual duration.
+      base_hours_hms: hms,
     };
     setShowTimePicker(false);
     setTimesheetData(prev => {
@@ -2187,6 +2308,7 @@ const JobTimesheet = ({navigation, route, user}) => {
       setLoading(true);
 
       const response = await submitBluesheetComplete(payload, token);
+      await syncManualLaborEntriesToWorkData();
 
       // await AsyncStorage.setItem(submitKey(currentJobId, timesheetData.date), 'true');
       // setIsSubmittedForDay(true);
@@ -2247,7 +2369,8 @@ const JobTimesheet = ({navigation, route, user}) => {
   const canEdit = () =>
     // !isSubmittedForDay &&
     timesheetData.status === 'draft' ||
-    (profileUser?.role === 'Lead Labor' && timesheetData.status === 'submitted') ||
+    (profileUser?.role === 'Lead Labor' &&
+      timesheetData.status === 'submitted') ||
     timesheetData.status === 'rejected';
   const isReadOnly = () =>
     /* isSubmittedForDay || */ timesheetData.status === 'approved';
@@ -2499,10 +2622,16 @@ const JobTimesheet = ({navigation, route, user}) => {
 
                 <View style={styles.tableContainer}>
                   <View style={styles.tableHeader}>
-                    <Text style={[styles.tableHeaderText, {flex: 1}]}>Title</Text>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                      Title
+                    </Text>
                     <Text style={[styles.tableHeaderText, {flex: 1}]}>Qty</Text>
-                    <Text style={[styles.tableHeaderText, {flex: 1}]}>Used</Text>
-                    <Text style={[styles.tableHeaderText, {flex: 1}]}>Rest</Text>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                      Used
+                    </Text>
+                    <Text style={[styles.tableHeaderText, {flex: 1}]}>
+                      Rest
+                    </Text>
                     {canEdit() && (
                       <Text style={[styles.tableHeaderText, {flex: 1}]}>
                         Actions
@@ -2517,7 +2646,7 @@ const JobTimesheet = ({navigation, route, user}) => {
                           <Text
                             style={[
                               styles.tableCell,
-                              {width: '20%', paddingRight: spacings.normal},
+                              {width: '21%', paddingRight: spacings.normal},
                             ]}>
                             {capitalize(material?.name)}
                           </Text>
@@ -2556,7 +2685,9 @@ const JobTimesheet = ({navigation, route, user}) => {
                     })
                   ) : (
                     <View style={{padding: 10, alignItems: 'center'}}>
-                      <Text style={{color: '#777'}}>No material data found</Text>
+                      <Text style={{color: '#777'}}>
+                        No material data found
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -3106,6 +3237,8 @@ const styles = StyleSheet.create({
   },
   materialSuggestionName: {fontSize: 15, color: '#111827', fontWeight: '500'},
   materialSuggestionMeta: {fontSize: 12, color: '#6b7280', marginTop: 2},
+  materialSuggestionInStock: {color: '#10B981', fontWeight: '600'},
+  materialSuggestionSoldOut: {color: '#EF4444', fontWeight: '600'},
   dropdownSheet: {
     position: 'absolute',
     top: 52,
