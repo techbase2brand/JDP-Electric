@@ -1007,6 +1007,27 @@ const ActivitySummaryScreen = ({navigation}) => {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoaded, setInitialLoaded] = useState(false);
+  const loadingRef = useRef(false);
+  const fetchGenRef = useRef(0);
+  const hasMoreRef = useRef(true);
+  const loadJobsRef = useRef(null);
+
+  const mergeJobsById = (
+    existing = [],
+    incoming = [],
+    incomingWins = false,
+  ) => {
+    const map = new Map(existing.map(j => [String(j.id), j]));
+    incoming.forEach(j => {
+      const k = String(j.id);
+      if (!map.has(k)) {
+        map.set(k, j);
+      } else if (incomingWins) {
+        map.set(k, j);
+      }
+    });
+    return Array.from(map.values());
+  };
 
   // ======================
   // Helpers (UPDATED)
@@ -1034,6 +1055,25 @@ const ActivitySummaryScreen = ({navigation}) => {
   const secondsToHoursDecimal = (val = 0, digits = 2) => {
     const secs = toSeconds(val);
     return (secs / 3600).toFixed(digits);
+  };
+
+  /** Show s / m / h based on how much time was worked */
+  const formatDurationFromSeconds = (totalSecs = 0) => {
+    const secs = Math.max(0, Math.floor(Number(totalSecs) || 0));
+    if (secs === 0) {
+      return '0s';
+    }
+    if (secs < 60) {
+      return `${secs}s`;
+    }
+    if (secs < 3600) {
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      return s > 0 ? `${m}m ${s}s` : `${m}m`;
+    }
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
   };
 
   // Sum matched timesheets seconds (work_activity or fallback to work_hours)
@@ -1068,55 +1108,96 @@ const ActivitySummaryScreen = ({navigation}) => {
   );
 
   const jobIsCompleted = useCallback(job => {
-    // completed if any matched timesheet has job_status === 'completed' OR job.status === 'completed'
-    if (String(job?.status).toLowerCase() === 'completed') return true;
-    const tss = Array.isArray(job?.labor_timesheets)
-      ? job.labor_timesheets
-      : [];
-    return tss.some(ts => String(ts?.job_status).toLowerCase() === 'completed');
+    // Job card "completed" = job-level status only (not timesheet timer job_status)
+    return String(job?.status).toLowerCase() === 'completed';
   }, []);
 
-  // API fetch: first page 20, next pages 10
-  const fetchJobs = useCallback(async () => {
-    if (loading || !hasMore) return;
-    setLoading(true);
-    try {
-      const limit = page === 1 ? 20 : 10;
-      const res =
-        user?.management_type === 'lead_labor'
-          ? await getJobs(leadLaborId, page, limit, token)
-          : await getlabourJobs(laborId, page, limit, token);
-      console.log('resresresres', res);
+  // API fetch: page 1 replaces list; later pages append (deduped by job id)
+  const loadJobs = useCallback(
+    async (pageNum, {replace = false} = {}) => {
+      if (loadingRef.current && !replace) {
+        return;
+      }
+      if (!replace && !hasMoreRef.current) {
+        return;
+      }
+      if (!token) {
+        setInitialLoaded(true);
+        return;
+      }
+      if (user?.management_type === 'lead_labor' ? !leadLaborId : !laborId) {
+        setInitialLoaded(true);
+        return;
+      }
 
-      const newJobs = res?.data?.jobs ?? [];
-      const pg = res?.data?.pagination ?? {};
-      const total = Number(pg?.total ?? 0);
-      const loadedSoFar = (page - 1) * limit + newJobs.length;
-      const moreAvailable = loadedSoFar < total;
+      const gen = ++fetchGenRef.current;
+      loadingRef.current = true;
+      setLoading(true);
+      if (replace) {
+        setJobs([]);
+        setInitialLoaded(false);
+      }
 
-      setJobs(prev => [...prev, ...newJobs]);
-      setHasMore(moreAvailable);
-      if (newJobs.length > 0) setPage(prev => prev + 1);
-      if (!initialLoaded) setInitialLoaded(true);
-    } catch (err) {
-      console.error('Jobs fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    page,
-    hasMore,
-    loading,
-    user?.management_type,
-    leadLaborId,
-    laborId,
-    token,
-    initialLoaded,
-  ]);
+      try {
+        const limit = pageNum === 1 ? 20 : 10;
+        const res =
+          user?.management_type === 'lead_labor'
+            ? await getJobs(leadLaborId, pageNum, limit, token)
+            : await getlabourJobs(laborId, pageNum, limit, token);
+
+        console.log('[HourlyReports] API response', {
+          page: pageNum,
+          replace,
+          jobCount: res?.data?.jobs?.length ?? 0,
+          pagination: res?.data?.pagination,
+          full: res,
+        });
+
+        if (gen !== fetchGenRef.current) {
+          return;
+        }
+
+        const newJobs = res?.data?.jobs ?? [];
+        const pg = res?.data?.pagination ?? {};
+        const totalItems = Number(
+          pg?.totalItems ?? pg?.total ?? res?.data?.total ?? 0,
+        );
+        const loadedThrough = (pageNum - 1) * limit + newJobs.length;
+        const hasNext =
+          pg?.hasNextPage === true ||
+          (totalItems > 0 && loadedThrough < totalItems);
+
+        setJobs(prev =>
+          replace ? newJobs : mergeJobsById(prev, newJobs, true),
+        );
+        hasMoreRef.current = hasNext;
+        setHasMore(hasNext);
+        setPage(pageNum + 1);
+        setInitialLoaded(true);
+      } catch (err) {
+        console.error('Jobs fetch error:', err);
+        if (gen === fetchGenRef.current) {
+          setInitialLoaded(true);
+        }
+      } finally {
+        if (gen === fetchGenRef.current) {
+          loadingRef.current = false;
+          setLoading(false);
+        }
+      }
+    },
+    [token, user?.management_type, leadLaborId, laborId],
+  );
+
+  loadJobsRef.current = loadJobs;
 
   useFocusEffect(
     useCallback(() => {
-      fetchJobs(); // runs every time screen-focused
+      loadingRef.current = false;
+      hasMoreRef.current = true;
+      setHasMore(true);
+      setPage(1);
+      loadJobsRef.current?.(1, {replace: true});
     }, []),
   );
 
@@ -1172,16 +1253,19 @@ const ActivitySummaryScreen = ({navigation}) => {
 
   // ---------- Summary (Total Hours & Jobs Completed)
   const summary = useMemo(() => {
-    const hrsSecs = filteredJobs.reduce(
+    const totalSeconds = filteredJobs.reduce(
       (sum, job) => sum + getMatchedTimesheetsSeconds(job),
       0,
     );
-    const totalHours = Number(secondsToHoursDecimal(hrsSecs, 2));
     const jobsCompleted = filteredJobs.reduce(
       (count, job) => count + (jobIsCompleted(job) ? 1 : 0),
       0,
     );
-    return {totalHours, jobsCompleted};
+    return {
+      totalSeconds,
+      totalDurationLabel: formatDurationFromSeconds(totalSeconds),
+      jobsCompleted,
+    };
   }, [filteredJobs, getMatchedTimesheetsSeconds, jobIsCompleted]);
 
   // ---------- UI helpers
@@ -1425,13 +1509,7 @@ const ActivitySummaryScreen = ({navigation}) => {
 
     const isExpanded = expandedJobId === job?.id;
     const matchedSecs = getMatchedTimesheetsSeconds(job);
-    const matchedHoursStr = secondsToHoursDecimal(matchedSecs, 2); // show hours on card
-    console.log(
-      'matchedHoursStr>>',
-      matchedHoursStr,
-      'matchedSecs',
-      matchedSecs,
-    );
+    const matchedDurationLabel = formatDurationFromSeconds(matchedSecs);
 
     const customerName =
       job?.customer?.customer_name || job?.customer?.company_name || '-';
@@ -1472,13 +1550,15 @@ const ActivitySummaryScreen = ({navigation}) => {
                 <Text style={[styles.jobTitle, {marginVertical: 10}]}>
                   {capitalize(title)}
                 </Text>
-                <Text style={styles.jobCustomer}>{capitalize(customerName)}</Text>
+                <Text style={styles.jobCustomer}>
+                  {capitalize(customerName)}
+                </Text>
               </View>
             </View>
             <View style={styles.jobCardRight}>
               <View style={styles.hoursContainer}>
-                {matchedHoursStr !== '0.00' && (
-                  <Text style={styles.hoursText}>{`${matchedHoursStr}h`}</Text>
+                {matchedSecs > 0 && (
+                  <Text style={styles.hoursText}>{matchedDurationLabel}</Text>
                 )}
               </View>
               <Icon
@@ -1513,7 +1593,9 @@ const ActivitySummaryScreen = ({navigation}) => {
               <Icon name="people" size={16} color="#6B7280" />
               <Text style={styles.expandedLabel}>Assigned:</Text>
               <Text style={styles.expandedValue}>
-                {assignedAll?.length ? assignedAll.map(x => capitalize(x)).join(', ') : '-'}
+                {assignedAll?.length
+                  ? assignedAll.map(x => capitalize(x)).join(', ')
+                  : '-'}
               </Text>
             </View>
 
@@ -1568,8 +1650,8 @@ const ActivitySummaryScreen = ({navigation}) => {
   const keyExtractor = item => String(item.id);
 
   const handleEndReached = () => {
-    if (!loading && hasMore) {
-      fetchJobs();
+    if (!loadingRef.current && hasMore) {
+      loadJobs(page, {replace: false});
     }
   };
 
@@ -1593,8 +1675,11 @@ const ActivitySummaryScreen = ({navigation}) => {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.filterButton} onPress={showBottomSheet}>
-          <Icon name="filter-list" size={24} color="#FFFFFF" />
+        <TouchableOpacity
+          style={styles.filterButton}
+          // onPress={showBottomSheet}
+        >
+          {/* <Icon name="filter-list" size={24} color="#FFFFFF" /> */}
         </TouchableOpacity>
       </View>
 
@@ -1607,9 +1692,9 @@ const ActivitySummaryScreen = ({navigation}) => {
               <Icon name="schedule" size={24} color="#F59E0B" />
             </View>
             <Text style={styles.summaryCardValue}>
-              {summary?.totalHours.toFixed(2)}h
+              {summary?.totalDurationLabel}
             </Text>
-            <Text style={styles.summaryCardLabel}>Total Hours</Text>
+            <Text style={styles.summaryCardLabel}>Time Worked</Text>
           </View>
 
           <View style={styles.summaryCard}>
@@ -1634,7 +1719,7 @@ const ActivitySummaryScreen = ({navigation}) => {
           </View>
         </View>
 
-        {!initialLoaded && loading ? (
+        {loading && jobs.length === 0 ? (
           <View style={{paddingVertical: 40, alignItems: 'center'}}>
             <ActivityIndicator size="large" />
           </View>

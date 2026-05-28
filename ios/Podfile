@@ -34,5 +34,45 @@ target 'Electrician' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Xcode 26+ / Apple Clang 21: fmt 11.0.2 consteval fails; C++17 skips that path.
+    installer.pods_project.targets.each do |target|
+      next unless target.name == 'fmt'
+
+      target.build_configurations.each do |build_config|
+        build_config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      end
+    end
+
   end
+end
+
+def fix_electrician_xcode_build_cycle!
+  project_path = File.join(__dir__, 'Electrician.xcodeproj')
+  project = Xcodeproj::Project.open(project_path)
+  app_target = project.targets.find { |t| t.name == 'Electrician' }
+  return unless app_target
+
+  resources_phase = app_target.build_phases.find { |p| p.is_a?(Xcodeproj::Project::Object::PBXResourcesBuildPhase) }
+  embed_phase = app_target.build_phases.find { |p| p.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) && p.name == 'Embed Foundation Extensions' }
+
+  if resources_phase && embed_phase
+    app_target.build_phases.delete(embed_phase)
+    insert_at = app_target.build_phases.index(resources_phase) + 1
+    app_target.build_phases.insert(insert_at, embed_phase)
+  end
+
+  app_target.build_phases.each do |phase|
+    next unless phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase)
+    next unless phase.name&.include?('[RNFB] Crashlytics Configuration')
+
+    phase.input_paths.reject! { |path| path.to_s.include?('DWARF') }
+  end
+
+  project.save
+end
+
+post_integrate do |_installer|
+  # After CocoaPods re-integrates RNFB script phases (Xcode 15+ widget extension cycle).
+  fix_electrician_xcode_build_cycle!
 end

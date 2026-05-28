@@ -91,7 +91,7 @@ const JobListingScreen = ({navigation, route}) => {
   const user = useSelector(state => state.user.user);
   const token = useSelector(state => state.user.token);
   const leadLaborId = user?.lead_labor?.id;
-  console.log('leadLaborId>>', user, leadLaborId);
+  // console.log('leadLaborId>>', user, leadLaborId);
 
   const laborId = user?.labor?.id;
   const canCreateJob = useHasPermission('jobs', 'create');

@@ -263,6 +263,34 @@ export const getCustomers = async (page = 1, limit = 10, token) => {
   }
 };
 
+export const searchCustomers = async (
+  search = '',
+  page = 1,
+  limit = 100,
+  token,
+) => {
+  try {
+    const response = await api.get(
+      `/customer/searchCustomers?search=${encodeURIComponent(
+        search,
+      )}&page=${page}&limit=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      'Error searching customers:',
+      error.response?.data || error.message,
+    );
+    throw error.response?.data || {message: 'Something went wrong'};
+  }
+};
+
+
 //  Get All Labor
 export const getAllLabor = async (page = 1, limit = 10, token) => {
   try {
@@ -319,6 +347,7 @@ export const createJob = async (payload, token) => {
 
 // Get Jobs API
 export const getJobs = async (leadLaborId, page = 1, limit = 10, token) => {
+  console.log('getJobsgetJobsgetJobsgetJobs', leadLaborId, page, limit, token);
   try {
     const res = await api.get(
       `/job/getJobsByLeadLabor?leadLaborId=${leadLaborId}&page=${page}&limit=${limit}`,
@@ -339,6 +368,7 @@ export const getJobs = async (leadLaborId, page = 1, limit = 10, token) => {
 };
 //  Get Jobs API
 export const getlabourJobs = async (laborId, page = 1, limit = 10, token) => {
+    console.log('getlabourJobs', laborId, page, limit, token);
   try {
     const res = await api.get(
       `/job/getJobsByLabor?laborId=${laborId}&page=${page}&limit=${limit}`,

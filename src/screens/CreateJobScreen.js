@@ -37,6 +37,7 @@ import {
   getAllLabor,
   getContractors,
   getCustomers,
+  searchCustomers,
 } from '../config/apiConfig';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
 import {spacings} from '../constants/Fonts';
@@ -58,6 +59,122 @@ const customers = [
   {id: '5', name: 'William Miller'},
 ];
 
+const parseCustomerPhoneParts = raw => {
+  if (raw == null || raw === '') {
+    return {code: '+1', national: ''};
+  }
+  const s = String(raw).trim();
+  if (s.includes('-') && s.startsWith('+')) {
+    const i = s.indexOf('-');
+    const code = s.slice(0, i).trim() || '+1';
+    const national = s.slice(i + 1).replace(/\D/g, '').slice(0, 15);
+    return {code, national};
+  }
+  const digitsOnly = s.replace(/\D/g, '');
+  if (!digitsOnly) {
+    return {code: '+1', national: ''};
+  }
+  if (digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
+    return {code: '+1', national: digitsOnly.slice(1)};
+  }
+  return {code: '+1', national: digitsOnly.slice(0, 15)};
+};
+
+/** Map E.164 calling code (e.g. +1, +44) to react-native-phone-number-input defaultCode (ISO2). */
+const callingCodePlusToCountryCode = dialPlus => {
+  const digits = String(dialPlus || '').replace(/\D/g, '');
+  if (!digits) {
+    return 'US';
+  }
+  const byPrefix = {
+    '1': 'US',
+    '44': 'GB',
+    '91': 'IN',
+    '61': 'AU',
+    '86': 'CN',
+    '81': 'JP',
+    '49': 'DE',
+    '33': 'FR',
+    '971': 'AE',
+    '966': 'SA',
+    '92': 'PK',
+    '880': 'BD',
+    '94': 'LK',
+    '977': 'NP',
+  };
+  for (let len = 3; len >= 1; len--) {
+    const p = digits.slice(0, len);
+    if (byPrefix[p]) {
+      return byPrefix[p];
+    }
+  }
+  return 'US';
+};
+
+const getCustomerRecordContact = record => {
+  if (!record) {
+    return {phone: '', address: '', city: '', email: ''};
+  }
+  return {
+    phone:
+      record.phone ||
+      record.contact_phone ||
+      record.mobile ||
+      record.phone_number ||
+      '',
+    address:
+      record.address ||
+      record.street_address ||
+      record.customer_address ||
+      '',
+    city: record.city || record.city_zip || '',
+    email: record.email || record.customer_email || '',
+  };
+};
+
+/** Merge API customer record into job step-1 fields; keeps existing values when record omits data. */
+const applyCustomerToJobFormState = (prevForm, record, displayName) => {
+  const {phone, address, city, email} = getCustomerRecordContact(record);
+  const {code, national} = parseCustomerPhoneParts(phone);
+  const customerPhoneStr = national
+    ? `${code}-${national}`
+    : prevForm.customerPhone;
+
+  const next = {
+    ...prevForm,
+    customerName: displayName,
+  };
+  if (national) {
+    next.customerPhone = customerPhoneStr;
+  }
+  if (email) {
+    next.customerEmail = email;
+  }
+  if (address) {
+    next.customerAddress = address;
+  }
+  if (city) {
+    next.city = city;
+  }
+
+  if (next.sameAsCustomer) {
+    next.billingName = displayName;
+    if (national) {
+      next.billingPhone = customerPhoneStr;
+    }
+    if (email) {
+      next.billingEmail = email;
+    }
+    if (address) {
+      next.billingAddress = address;
+    }
+    if (city) {
+      next.billingCity = city;
+    }
+  }
+  return next;
+};
+
 const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const scrollRef = useRef(null);
   const googleRef = useRef(null);
@@ -66,6 +183,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
 
   const fieldPositions = useRef({});
   const isFetchingMoreRef = useRef(false);
+  const customerSearchDebounceRef = useRef(null);
 
   const token = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
@@ -108,6 +226,9 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
 
   const [customerCountryCode, setCustomerCountryCode] = useState('+1');
   const [customerPhoneNumber, setCustomerPhoneNumber] = useState('');
+  /** ISO2 for PhoneInput defaultCode — remount via nonce fixes lib not syncing `value` from props. */
+  const [customerPhoneCountryIso, setCustomerPhoneCountryIso] = useState('US');
+  const [customerPhoneInputNonce, setCustomerPhoneInputNonce] = useState(0);
   const [billingCountryCode, setBillingCountryCode] = useState('+1');
   const [billingPhoneNumber, setBillingPhoneNumber] = useState('');
 
@@ -174,6 +295,10 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [selectedContractorId, setSelectedContractorId] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  /** When true, picking a customer from the list fills job phone + address from that record (default on). */
+  const [fillJobContactFromCustomer, setFillJobContactFromCustomer] =
+    useState(true);
+  const prevFillJobContactRef = useRef(true);
   const [showPlaces, setShowPlaces] = useState(true);
   const [laborSearch, setLaborSearch] = useState('');
 
@@ -244,15 +369,17 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   }, [canCreateJobs, canCreateSubJobs, isSubJobFlow, navigation]);
 
   useEffect(() => {
-    if (formData.customerPhone && !customerPhoneNumber) {
-      const [code, number] = formData.customerPhone.split('-');
-      if (number) {
-        setCustomerCountryCode(code || '+1');
-        setCustomerPhoneNumber(number);
-      } else {
-        setCustomerPhoneNumber(formData.customerPhone);
-      }
+    if (!formData.customerPhone || customerPhoneNumber) {
+      return;
     }
+    const {code, national} = parseCustomerPhoneParts(formData.customerPhone);
+    if (!national) {
+      return;
+    }
+    setCustomerCountryCode(code);
+    setCustomerPhoneNumber(national);
+    setCustomerPhoneCountryIso(callingCodePlusToCountryCode(code));
+    setCustomerPhoneInputNonce(n => n + 1);
   }, [formData.customerPhone, customerPhoneNumber]);
 
   useEffect(() => {
@@ -434,48 +561,36 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   }, [route?.params?.subJobTitle, route?.params?.parentJob]);
   
   // ✅ Customers
-  const fetchCustomers = async (pageNo = 1) => {
+  const fetchCustomers = async (pageNo = 1, query = '') => {
     // page 1 ko kabhi block mat karo; baaki pages ke liye guards
-    const limit = 10;
+    const limit = 100;
+    const q = (query || '').trim();
     if (!token) return;
-    if (pageNo > 1 && (loading || isFetchingMoreRef.current || !hasMore))
+    if (pageNo > 1 && (loading || isFetchingMoreRef.current || !hasMore)) {
       return;
+    }
 
     try {
       isFetchingMoreRef.current = true;
       setLoading(true);
 
-      const res = await getCustomers(pageNo, limit, token);
-      console.log('customer::', res);
+      const res = q
+        ? await searchCustomers(q, pageNo, limit, token)
+        : await getCustomers(pageNo, limit, token);
+      console.log('[CreateJob] customers API response:', res);
 
       const newItems = res?.data?.customers || [];
       const pg = res?.data?.pagination; // { page, limit, total, totalPages }
 
       // ---- build next list (append on page>1) ----
-      let nextList;
-      if (pageNo === 1) {
-        nextList = newItems;
-      } else {
-        // ensure unique by id to avoid duplicates when API repeats boundary items
-        const prevById = new Map(customers.map(c => [c.id, c]));
-        newItems.forEach(item => prevById.set(item.id, item));
-        nextList = Array.from(prevById.values());
-      }
+      const prevList = pageNo === 1 ? [] : filtered;
+      const prevById = new Map(prevList.map(c => [c.id, c]));
+      newItems.forEach(item => prevById.set(item.id, item));
+      const nextList = Array.from(prevById.values());
 
       // ---- commit state ----
       setCustomers(nextList);
-
-      // search-based filtered update (same function you use to filter on type)
-      const q = (search || '').trim().toLowerCase();
-      if (q) {
-        setFiltered(
-          nextList.filter(c =>
-            (c?.customer_name || '').toLowerCase().includes(q),
-          ),
-        );
-      } else {
-        setFiltered(nextList);
-      }
+      setFiltered(nextList);
 
       // ---- hasMore logic ----
       if (pg?.totalPages && pg?.page) {
@@ -580,37 +695,145 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       setSelectedCustomer('');
     }
 
-    // Filter dropdown
-    if (text.length > 0) {
-      const matches = customers.filter(c =>
-        c.customer_name.toLowerCase().includes(text.toLowerCase()),
-      );
-      setFiltered(matches);
-      setShowDropdown(true);
-    } else {
-      setShowDropdown(false);
-    }
+    setShowDropdown(!!text.trim());
 
     // Show live error if nothing selected
     setValidationErrors(prev => ({
       ...prev,
       customerName: 'Please select a customer from the list',
     }));
+
+    // API search response logging (requested)
+    if (customerSearchDebounceRef.current) {
+      clearTimeout(customerSearchDebounceRef.current);
+    }
+    if (!text?.trim()) {
+      fetchCustomers(1, '');
+      return;
+    }
+    customerSearchDebounceRef.current = setTimeout(async () => {
+      fetchCustomers(1, text.trim());
+    }, 350);
   };
 
-  const handleSelectName = name => {
-    setSearch(name);
-    const chosen = customers.find(
-      c => c.customer_name.toLowerCase() === name.toLowerCase(),
-    );
-    if (chosen) {
-      setSelectedCustomerId(chosen.id); // ✅ only set on selection
-      setSelectedCustomer(chosen.customer_name);
-      setValidationErrors(prev => ({...prev, customerName: ''}));
+  useEffect(
+    () => () => {
+      if (customerSearchDebounceRef.current) {
+        clearTimeout(customerSearchDebounceRef.current);
+      }
+    },
+    [],
+  );
+
+  const handleSelectCustomer = item => {
+    if (!item) {
+      return;
     }
-    setFormData(prev => ({...prev, customerName: name}));
+    console.log('[CreateJob] customer selected (full row):', item);
+    const name = item.customer_name;
+    setSearch(name);
+    setSelectedCustomerId(item.id);
+    setSelectedCustomer(name);
+    setValidationErrors(prev => ({...prev, customerName: ''}));
     setShowDropdown(false);
+    Keyboard.dismiss();
+
+    if (fillJobContactFromCustomer) {
+      setFormData(prev =>
+        applyCustomerToJobFormState(prev, item, name),
+      );
+      const {phone, address} = getCustomerRecordContact(item);
+      const {code, national} = parseCustomerPhoneParts(phone);
+      if (national) {
+        setCustomerCountryCode(code);
+        setCustomerPhoneNumber(national);
+        setCustomerPhoneCountryIso(callingCodePlusToCountryCode(code));
+        setCustomerPhoneInputNonce(n => n + 1);
+      }
+      if (address) {
+        setTimeout(() => {
+          try {
+            googleRef.current?.setAddressText?.(address);
+          } catch (e) {
+            /* ignore */
+          }
+        }, 80);
+      }
+    } else {
+      setFormData(prev => ({...prev, customerName: name}));
+    }
   };
+
+  useEffect(() => {
+    if (fillJobContactFromCustomer) {
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      customerPhone: '',
+      customerAddress: '',
+      ...(prev.sameAsCustomer
+        ? {billingPhone: '', billingAddress: ''}
+        : {}),
+    }));
+    setCustomerCountryCode('+1');
+    setCustomerPhoneNumber('');
+    setCustomerPhoneCountryIso('US');
+    setCustomerPhoneInputNonce(n => n + 1);
+    setBillingCountryCode('+1');
+    setBillingPhoneNumber('');
+    setValidationErrors(prev => ({
+      ...prev,
+      customerPhone: '',
+      customerAddress: '',
+      billingPhone: '',
+      billingAddress: '',
+    }));
+    setTimeout(() => {
+      try {
+        googleRef.current?.setAddressText?.('');
+      } catch (e) {
+        /* ignore */
+      }
+    }, 80);
+    setShowPlaces(false);
+    setTimeout(() => setShowPlaces(true), 50);
+  }, [fillJobContactFromCustomer]);
+
+  useEffect(() => {
+    if (
+      fillJobContactFromCustomer &&
+      !prevFillJobContactRef.current &&
+      selectedCustomerId
+    ) {
+      const chosen = customers.find(
+        c => String(c.id) === String(selectedCustomerId),
+      );
+      if (chosen) {
+        setFormData(prev =>
+          applyCustomerToJobFormState(prev, chosen, chosen.customer_name),
+        );
+        const {phone, address} = getCustomerRecordContact(chosen);
+        const {code, national} = parseCustomerPhoneParts(phone);
+        if (national) {
+          setCustomerCountryCode(code);
+          setCustomerPhoneNumber(national);
+          setCustomerPhoneCountryIso(callingCodePlusToCountryCode(code));
+          setCustomerPhoneInputNonce(n => n + 1);
+        }
+        if (address) {
+          setTimeout(() => {
+            try {
+              googleRef.current?.setAddressText?.(address);
+            } catch (e) {
+              /* ignore */
+            }
+          }, 80);
+        }
+      }
+    }
+    prevFillJobContactRef.current = fillJobContactFromCustomer;
+  }, [fillJobContactFromCustomer, selectedCustomerId, customers]);
 
   // ✅ Initial load
   useEffect(() => {
@@ -1418,8 +1641,8 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
               onFocus={() => {
                 setPage(1);
                 setHasMore(true);
-                setFiltered(customers);
                 setShowDropdown(true);
+                fetchCustomers(1, search);
               }}
             />
 
@@ -1439,10 +1662,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                   renderItem={({item}) => (
                     <TouchableOpacity
                       style={styles.customerItem}
-                      onPress={() => {
-                        handleSelectName(item.customer_name),
-                          Keyboard.dismiss();
-                      }}>
+                      onPress={() => handleSelectCustomer(item)}>
                       <Text style={styles.customerText}>
                         {item.customer_name}
                       </Text>
@@ -1452,7 +1672,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                     if (hasMore && !loading && !isFetchingMoreRef.current) {
                       const nextPage = page + 1;
                       setPage(nextPage);
-                      fetchCustomers(nextPage);
+                      fetchCustomers(nextPage, search);
                     }
                   }}
                   onEndReachedThreshold={0.5}
@@ -1563,6 +1783,32 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
               <Text style={styles.subCardTitle}>Job Information</Text>
             </View>
 
+            {selected === 'customer' && (
+              <TouchableOpacity
+                style={styles.fillFromCustomerRow}
+                activeOpacity={0.65}
+                onPress={() =>
+                  setFillJobContactFromCustomer(v => !v)
+                }
+                hitSlop={{top: 4, bottom: 4, left: 0, right: 0}}>
+                <Text
+                  style={styles.fillFromCustomerLabel}
+                  numberOfLines={2}>
+                  Autofill customer address and phone
+                </Text>
+                <View
+                  style={[
+                    styles.checkbox,
+                    styles.fillFromCustomerCheckbox,
+                    fillJobContactFromCustomer && styles.checkboxChecked,
+                  ]}>
+                  {fillJobContactFromCustomer && (
+                    <Icon name="check" size={14} color="white" />
+                  )}
+                </View>
+              </TouchableOpacity>
+            )}
+
             <View
               style={styles.formGroup}
               ref={ref => (fieldPositions.current['customerPhone'] = ref)}>
@@ -1580,10 +1826,14 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                 />
                 <PhoneInput
                   ref={customerPhoneInputRef}
-                  defaultCode="US"
+                  key={`customer-phone-${customerPhoneInputNonce}`}
+                  defaultCode={customerPhoneCountryIso}
                   layout="second"
                   value={customerPhoneNumber}
                   onChangeCountry={country => {
+                    if (country?.cca2) {
+                      setCustomerPhoneCountryIso(country.cca2);
+                    }
                     const raw = country?.callingCode;
                     const cc = Array.isArray(raw) ? raw[0] : raw;
                     if (!cc) {
@@ -1622,7 +1872,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                     keyboardType: 'phone-pad',
                     backgroundColor: 'transparent',
                     style: [styles.formInput],
-                    maxLength: 10,
+                    maxLength: 15,
                   }}
                   flagButtonStyle={{
                     width: 80,
@@ -2889,13 +3139,37 @@ const styles = StyleSheet.create({
   subCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 8,
   },
   subCardTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#111827',
     marginLeft: 10,
+  },
+  fillFromCustomerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    marginTop: 0,
+    paddingVertical: 6,
+    paddingHorizontal: 0,
+  },
+  fillFromCustomerLabel: {
+    flex: 1,
+    flexShrink: 1,
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#4b5563',
+    lineHeight: 19,
+    paddingRight: 12,
+  },
+  fillFromCustomerCheckbox: {
+    width: 22,
+    height: 22,
+    marginRight: 0,
+    flexShrink: 0,
   },
   toggleContainer: {
     // flexDirection: 'row',
