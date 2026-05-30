@@ -63,7 +63,7 @@ const fmtTime = (d = new Date()) =>
   `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 
 // ---------------- Geofencing (Timer) ----------------
-const GEOFENCE_RADIUS_M = 100;
+const GEOFENCE_RADIUS_M = 1200;
 
 // Haversine distance in meters
 const getDistanceM = (lat1, lon1, lat2, lon2) => {

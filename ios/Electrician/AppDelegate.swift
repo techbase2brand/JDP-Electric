@@ -20,6 +20,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
   ) -> Bool {
     FirebaseApp.configure()
 
+    // Ignore iOS Dynamic Type / larger text in system settings for UIKit-backed controls.
+    UILabel.appearance().adjustsFontForContentSizeCategory = false
+    UITextField.appearance().adjustsFontForContentSizeCategory = false
+    UITextView.appearance().adjustsFontForContentSizeCategory = false
+
     UNUserNotificationCenter.current().delegate = self
     Messaging.messaging().delegate = self
     application.registerForRemoteNotifications()

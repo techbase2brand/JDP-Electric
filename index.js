@@ -2,6 +2,7 @@
  * @format
  */
 
+import './src/utils/disableSystemFontScaling';
 import { AppRegistry } from 'react-native';
 import notifee from '@notifee/react-native';
 import App from './App';

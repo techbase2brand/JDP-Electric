@@ -14,6 +14,8 @@ const CustomTextInput = ({ placeholder, style, rightIcon, label, required, leftI
           style={styles.input}
           placeholderTextColor={mediumGray}
           scrollEnabled={true}
+          allowFontScaling={false}
+          maxFontSizeMultiplier={1}
           {...props}
         />
         {rightIcon && <View style={styles.iconContainer}>{rightIcon}</View>}
