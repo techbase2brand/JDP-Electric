@@ -377,11 +377,20 @@ export default function TimerScreen({navigation, route}) {
   };
 
   // ---------- Native Live Activity ----------
-  const startLiveActivity = async elapsed => {
+  const getJobDisplayName = () =>
+    job?.job_title ||
+    job?.title ||
+    job?.name ||
+    job?.job?.job_title ||
+    storedJobName ||
+    'Work';
+
+  const startLiveActivity = async (elapsed, jobName) => {
     try {
       // Native widget expects seconds
       const elapsedSec = Math.floor((elapsed || 0) / 1000);
-      await TimerModule?.startActivity?.(elapsedSec);
+      const name = jobName || getJobDisplayName();
+      await TimerModule?.startActivity?.(elapsedSec, name);
     } catch {}
   };
   const updateLiveActivity = (elapsed, running) => {
@@ -630,7 +639,7 @@ export default function TimerScreen({navigation, route}) {
       // Don't show notification when app is active — only when app goes to background (handled in App.tsx)
       // await showTimerNotification(0, true, jobName);
       dispatch(startTimerWithBackground());
-      await startLiveActivity(elapsedTime);
+      await startLiveActivity(elapsedTime, jobName);
       updateLiveActivity(elapsedTime, true);
     } catch (e) {
       console.log('Start failed:', e?.message);

@@ -11,12 +11,17 @@ class TimerModule: NSObject {
   private var activity: Activity<TimerAttributes>?
 
   @objc
-  func startActivity(_ elapsedTime: NSNumber,
-                     resolver: @escaping RCTPromiseResolveBlock,
-                     rejecter: @escaping RCTPromiseRejectBlock) {
+  func startActivity(
+    _ elapsedTime: NSNumber,
+    jobName: String,
+    resolver: @escaping RCTPromiseResolveBlock,
+    rejecter: @escaping RCTPromiseRejectBlock
+  ) {
     if #available(iOS 16.1, *) {
-      
-      let attributes = TimerAttributes(taskName: "Work Timer")
+      let title = jobName.trimmingCharacters(in: .whitespacesAndNewlines)
+      let displayName = title.isEmpty ? "Work" : title
+
+      let attributes = TimerAttributes(taskName: displayName)
       let state = TimerAttributes.ContentState(
         elapsedTime: elapsedTime.intValue,
         isRunning: true
@@ -44,7 +49,6 @@ class TimerModule: NSObject {
           elapsedTime: elapsedTime.intValue,
           isRunning: isRunning
         )
-        print("🔄 Updating Live Activity: \(elapsedTime.intValue) sec, running: \(isRunning)")
         await activity?.update(using: state)
       }
     }
@@ -55,6 +59,7 @@ class TimerModule: NSObject {
     if #available(iOS 16.1, *) {
       Task {
         await activity?.end(dismissalPolicy: .immediate)
+        activity = nil
       }
     }
   }

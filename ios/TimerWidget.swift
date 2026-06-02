@@ -3,48 +3,57 @@ import SwiftUI
 import ActivityKit
 
 struct TimerLiveActivity: Widget {
-    var body: some WidgetConfiguration {
-        ActivityConfiguration(for: TimerAttributes.self) { context in
-            let startDate = Date().addingTimeInterval(-Double(context.state.elapsedTime))
+  var body: some WidgetConfiguration {
+    ActivityConfiguration(for: TimerAttributes.self) { context in
+      let startDate = Date().addingTimeInterval(-Double(context.state.elapsedTime))
+      let jobName = context.attributes.taskName
 
-            // ✅ Lock Screen UI
-            VStack {
-                Text("Work Timer")
-                    .font(.headline)
-                    .foregroundColor(.green)
+      VStack(alignment: .leading, spacing: 8) {
+        Text(jobName)
+          .font(.headline)
+          .foregroundColor(.white)
+          .lineLimit(2)
 
-                Text(timerInterval: startDate...Date.distantFuture, countsDown: false)
-                    .font(.title2)
-                    .bold()
-                    .foregroundColor(.green)
-                    .monospacedDigit()
-            }
-            .padding()
-            .activityBackgroundTint(Color.black)
-            .activitySystemActionForegroundColor(.green)
+        Text(timerInterval: startDate...Date.distantFuture, countsDown: false)
+          .font(.title2)
+          .bold()
+          .foregroundColor(.green)
+          .monospacedDigit()
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .padding()
+      .activityBackgroundTint(Color.black)
+      .activitySystemActionForegroundColor(.green)
 
-        } dynamicIsland: { context in
-            let startDate = Date().addingTimeInterval(-Double(context.state.elapsedTime))
+    } dynamicIsland: { context in
+      let startDate = Date().addingTimeInterval(-Double(context.state.elapsedTime))
+      let jobName = context.attributes.taskName
 
-            // ✅ Dynamic Island UI
-            return DynamicIsland {
-                DynamicIslandExpandedRegion(.center) {
-                    Text(timerInterval: startDate...Date.distantFuture, countsDown: false)
-                        .foregroundColor(.green)
-                        .font(.headline)
-                        .monospacedDigit()
-                }
-            } compactLeading: {
-                Text("⏱")
-                    .foregroundColor(.green)
-            } compactTrailing: {
-                Text(timerInterval: startDate...Date.distantFuture, countsDown: false)
-                    .foregroundColor(.green)
-                    .monospacedDigit()
-            } minimal: {
-                Text("⏱")
-                    .foregroundColor(.green)
-            }
+      return DynamicIsland {
+        DynamicIslandExpandedRegion(.leading) {
+          Text(jobName)
+            .font(.subheadline)
+            .bold()
+            .foregroundColor(.white)
+            .lineLimit(2)
         }
+        DynamicIslandExpandedRegion(.trailing) {
+          Text(timerInterval: startDate...Date.distantFuture, countsDown: false)
+            .font(.headline)
+            .foregroundColor(.green)
+            .monospacedDigit()
+        }
+      } compactLeading: {
+        Text(jobName)
+          .font(.caption2)
+          .lineLimit(1)
+      } compactTrailing: {
+        Text(timerInterval: startDate...Date.distantFuture, countsDown: false)
+          .font(.caption2)
+          .monospacedDigit()
+      } minimal: {
+        Image(systemName: "timer")
+      }
     }
+  }
 }
