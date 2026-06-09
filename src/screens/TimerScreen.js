@@ -9,7 +9,6 @@ import {
   FlatList,
   TouchableOpacity,
   Platform,
-  NativeModules,
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -36,8 +35,18 @@ import {
 import Geolocation from '@react-native-community/geolocation';
 import useHasPermission from '../hooks/useHasPermission';
 import { GOOGLE_MAPS_APIKEY } from '../constants/Constants';
-
-const TimerModule = NativeModules?.TimerModule;
+import {
+  startLiveActivity,
+  updateLiveActivity,
+  endLiveActivity,
+} from '../services/LiveActivityService';
+import {
+  handleTimerPausedDueToLocationOff,
+  resetLocationTimerGuard,
+  isLocationPauseActive,
+} from '../services/locationTimerGuard';
+import {ensureLocationAvailableForTimer} from '../services/timerLocationCheck';
+import {LOCATION_OFF_LIVE_MESSAGE} from '../services/LiveActivityService';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -64,6 +73,7 @@ const fmtTime = (d = new Date()) =>
 
 // ---------------- Geofencing (Timer) ----------------
 const GEOFENCE_RADIUS_M = 1200;
+const GEOFENCE_RADIUS_MI = 1; // shown in alerts (~1200 m)
 
 // Haversine distance in meters
 const getDistanceM = (lat1, lon1, lat2, lon2) => {
@@ -385,27 +395,6 @@ export default function TimerScreen({navigation, route}) {
     storedJobName ||
     'Work';
 
-  const startLiveActivity = async (elapsed, jobName) => {
-    try {
-      // Native widget expects seconds
-      const elapsedSec = Math.floor((elapsed || 0) / 1000);
-      const name = jobName || getJobDisplayName();
-      await TimerModule?.startActivity?.(elapsedSec, name);
-    } catch {}
-  };
-  const updateLiveActivity = (elapsed, running) => {
-    try {
-      // Native widget expects seconds
-      const elapsedSec = Math.floor((elapsed || 0) / 1000);
-      TimerModule?.updateActivity?.(elapsedSec, running);
-    } catch {}
-  };
-  const endLiveActivity = () => {
-    try {
-      TimerModule?.endActivity?.();
-    } catch {}
-  };
-
   const buildLaborTimesheetPayload = ({
     totalMs = 0,
     pauseList = [],
@@ -519,7 +508,7 @@ export default function TimerScreen({navigation, route}) {
   useEffect(() => {
     if (isRunning) {
       const interval = setInterval(
-        () => updateLiveActivity(elapsedTime, isRunning),
+        () => updateLiveActivity(elapsedTime, isRunning, ''),
         1000,
       );
       return () => clearInterval(interval);
@@ -528,8 +517,12 @@ export default function TimerScreen({navigation, route}) {
 
   // Ensure iOS lock-screen state switches immediately on pause/resume.
   useEffect(() => {
-    updateLiveActivity(elapsedTime, isRunning);
-  }, [isRunning]);
+    const statusMessage =
+      !isRunning && isLocationPauseActive()
+        ? LOCATION_OFF_LIVE_MESSAGE
+        : '';
+    updateLiveActivity(elapsedTime, isRunning, statusMessage);
+  }, [isRunning, elapsedTime]);
 
   // ---------- Fetch job details (date compare fixed) ----------
   const fetchJobDetails = async () => {
@@ -611,7 +604,7 @@ export default function TimerScreen({navigation, route}) {
       if (distM > GEOFENCE_RADIUS_M) {
         Alert.alert(
           'Outside Working Area',
-          `You are outside the working area. Please move within ${GEOFENCE_RADIUS_M} meters of the job location to start the timer.`,
+          `You are outside the working area. Please move within ${GEOFENCE_RADIUS_MI} mile of the job location to start the timer.`,
         );
         return;
       }
@@ -638,9 +631,10 @@ export default function TimerScreen({navigation, route}) {
       await persistTimerState(0, true, jobName);
       // Don't show notification when app is active — only when app goes to background (handled in App.tsx)
       // await showTimerNotification(0, true, jobName);
+      resetLocationTimerGuard();
       dispatch(startTimerWithBackground());
-      await startLiveActivity(elapsedTime, jobName);
-      updateLiveActivity(elapsedTime, true);
+      await startLiveActivity(0, jobName);
+      updateLiveActivity(0, true, '');
     } catch (e) {
       console.log('Start failed:', e?.message);
     } finally {
@@ -661,7 +655,7 @@ export default function TimerScreen({navigation, route}) {
       // Pehle user ko turant alert dikhao (UI responsive rahe)
       Alert.alert(
         'Timer Stopped',
-        `You moved outside the working area (more than ${GEOFENCE_RADIUS_M} meters from the job location). Your timer has been auto-stopped and time worked so far has been saved.`,
+        `You moved outside the working area (more than ${GEOFENCE_RADIUS_MI} mile from the job location). Your timer has been auto-stopped and time worked so far has been saved.`,
       );
 
       // Phir same Complete API ko background me fire‑and‑forget chalao
@@ -673,7 +667,7 @@ export default function TimerScreen({navigation, route}) {
     }
   };
 
-  // When timer running, watch location and stop if user exits 50m radius
+  // When timer running, watch location and stop if user exits geofence radius
   useEffect(() => {
     let cancelled = false;
 
@@ -707,7 +701,11 @@ export default function TimerScreen({navigation, route}) {
             forceStopDueToGeofence();
           }
         },
-        () => {},
+        error => {
+          if (error?.code === 1 || error?.code === 2 || error?.code === 3) {
+            handleTimerPausedDueToLocationOff();
+          }
+        },
         {enableHighAccuracy: true, distanceFilter: 10, interval: 5000},
       );
     };
@@ -737,7 +735,7 @@ export default function TimerScreen({navigation, route}) {
         title: pauseReason,
       });
       dispatch(pauseTimerWithBackground());
-      updateLiveActivity(elapsedTime, false);
+      updateLiveActivity(elapsedTime, false, '');
       setPauseModal(false);
 
       const duration = pauseReason === 'Other' ? '00:00:00' : toHHMMSS(0);
@@ -764,6 +762,12 @@ export default function TimerScreen({navigation, route}) {
   const handleResume = async () => {
     try {
       setResumeLoading(true);
+
+      const locationOk = await ensureLocationAvailableForTimer();
+      if (!locationOk) {
+        return;
+      }
+
       if (currentPauseStartedAt && currentPauseTitle) {
         const durSec = Math.max(
           1,
@@ -804,8 +808,9 @@ export default function TimerScreen({navigation, route}) {
         setCurrentPauseTitle(null);
         await bufferDel('ts_buffer_currentPause');
       }
+      resetLocationTimerGuard();
       dispatch(resumeTimerWithBackground());
-      updateLiveActivity(elapsedTime, true);
+      updateLiveActivity(elapsedTime, true, '');
     } catch (e) {
       console.log('Resume failed:', e?.message);
     } finally {
@@ -958,7 +963,7 @@ export default function TimerScreen({navigation, route}) {
       setCompletedWorkedTime(workedTimeText);
 
       dispatch(stopTimerWithBackground());
-      endLiveActivity();
+      await endLiveActivity();
       await cancelTimerNotification();
 
       // UI feedback only for manual completion

@@ -18,29 +18,72 @@ private enum TimerLiveTheme {
 
 // MARK: - Shared views
 
+private func formatElapsedHMS(_ totalSeconds: Int) -> String {
+  let s = max(0, totalSeconds)
+  let h = s / 3600
+  let m = (s % 3600) / 60
+  let sec = s % 60
+  if h > 0 {
+    return String(format: "%d:%02d:%02d", h, m, sec)
+  }
+  return String(format: "%02d:%02d", m, sec)
+}
+
 private struct LiveTimerText: View {
-  let startDate: Date
+  let elapsedSeconds: Int
+  let isRunning: Bool
+  let statusMessage: String
   var font: Font = .system(size: 22, weight: .bold, design: .rounded)
 
+  private var startDate: Date {
+    Date().addingTimeInterval(-Double(elapsedSeconds))
+  }
+
   var body: some View {
-    Text(timerInterval: startDate...Date.distantFuture, countsDown: false)
-      .font(font)
-      .foregroundStyle(TimerLiveTheme.accent)
-      .monospacedDigit()
-      .lineLimit(1)
-      .minimumScaleFactor(0.75)
+    Group {
+      if !statusMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        Text(statusMessage)
+          .font(.system(size: 15, weight: .semibold))
+          .foregroundStyle(Color.orange)
+          .lineLimit(3)
+          .minimumScaleFactor(0.75)
+      } else if isRunning {
+        Text(timerInterval: startDate...Date.distantFuture, countsDown: false)
+          .font(font)
+          .foregroundStyle(TimerLiveTheme.accent)
+          .monospacedDigit()
+          .lineLimit(1)
+          .minimumScaleFactor(0.75)
+      } else {
+        Text(formatElapsedHMS(elapsedSeconds))
+          .font(font)
+          .foregroundStyle(TimerLiveTheme.accent)
+          .monospacedDigit()
+          .lineLimit(1)
+          .minimumScaleFactor(0.75)
+      }
+    }
   }
 }
 
 private struct StatusPill: View {
   let isRunning: Bool
+  let hasLocationMessage: Bool
 
   var body: some View {
     HStack(spacing: 5) {
       Circle()
-        .fill(isRunning ? TimerLiveTheme.accent : Color.orange)
+        .fill(
+          hasLocationMessage
+            ? Color.orange
+            : (isRunning ? TimerLiveTheme.accent : Color.orange)
+        )
         .frame(width: 6, height: 6)
-      Text(isRunning ? "Running" : "Paused")
+      Text(
+        hasLocationMessage
+          ? "Location off"
+          : (isRunning ? "Running" : "Paused")
+      )
         .font(.system(size: 11, weight: .semibold))
         .foregroundStyle(TimerLiveTheme.label)
     }
@@ -100,24 +143,45 @@ private struct TimerArtwork: View {
 
 /// Right-side compact circle (Apple Music–style detached pill).
 private struct CompactTimerCircle: View {
-  let startDate: Date
+  let elapsedSeconds: Int
   let isRunning: Bool
+  let statusMessage: String
+
+  private var startDate: Date {
+    Date().addingTimeInterval(-Double(elapsedSeconds))
+  }
 
   var body: some View {
     ZStack {
       Circle()
         .fill(
-          isRunning
-            ? Color(red: 0.95, green: 0.45, blue: 0.12).opacity(0.9)
-            : Color.orange.opacity(0.85)
+          !statusMessage.isEmpty || !isRunning
+            ? Color.orange.opacity(0.85)
+            : Color(red: 0.95, green: 0.45, blue: 0.12).opacity(0.9)
         )
-      Text(timerInterval: startDate...Date.distantFuture, countsDown: false)
-        .font(.system(size: 10, weight: .bold, design: .rounded))
-        .foregroundStyle(.white)
-        .monospacedDigit()
-        .minimumScaleFactor(0.65)
-        .lineLimit(1)
-        .padding(2)
+      Group {
+        if !statusMessage.isEmpty {
+          Image(systemName: "location.slash")
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(.white)
+        } else if isRunning {
+          Text(timerInterval: startDate...Date.distantFuture, countsDown: false)
+            .font(.system(size: 10, weight: .bold, design: .rounded))
+            .foregroundStyle(.white)
+            .monospacedDigit()
+            .minimumScaleFactor(0.65)
+            .lineLimit(1)
+            .padding(2)
+        } else {
+          Text(formatElapsedHMS(elapsedSeconds))
+            .font(.system(size: 8, weight: .bold, design: .rounded))
+            .foregroundStyle(.white)
+            .monospacedDigit()
+            .minimumScaleFactor(0.5)
+            .lineLimit(1)
+            .padding(2)
+        }
+      }
     }
     .frame(width: 26, height: 26)
   }
@@ -128,15 +192,19 @@ private struct CompactTimerCircle: View {
 struct TimerWidgetExtensionLiveActivity: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: TimerAttributes.self) { context in
-      let startDate = Date().addingTimeInterval(-Double(context.state.elapsedTime))
       let jobName = context.attributes.taskName
+      let statusMessage = context.state.statusMessage
+      let hasLocationMessage = !statusMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
       // Lock screen card
       VStack(alignment: .leading, spacing: 12) {
         HStack(alignment: .center) {
           AppMark()
           Spacer(minLength: 8)
-          StatusPill(isRunning: context.state.isRunning)
+          StatusPill(
+            isRunning: context.state.isRunning,
+            hasLocationMessage: hasLocationMessage
+          )
         }
 
         Text(jobName)
@@ -145,7 +213,19 @@ struct TimerWidgetExtensionLiveActivity: Widget {
           .lineLimit(2)
           .fixedSize(horizontal: false, vertical: true)
 
-        LiveTimerText(startDate: startDate, font: .system(size: 34, weight: .bold, design: .rounded))
+        LiveTimerText(
+          elapsedSeconds: context.state.elapsedTime,
+          isRunning: context.state.isRunning,
+          statusMessage: statusMessage,
+          font: .system(size: hasLocationMessage ? 17 : 34, weight: .bold, design: .rounded)
+        )
+
+        if hasLocationMessage {
+          Text(formatElapsedHMS(context.state.elapsedTime))
+            .font(.system(size: 28, weight: .bold, design: .rounded))
+            .foregroundStyle(TimerLiveTheme.accent)
+            .monospacedDigit()
+        }
       }
       .padding(.horizontal, 16)
       .padding(.vertical, 14)
@@ -153,9 +233,11 @@ struct TimerWidgetExtensionLiveActivity: Widget {
       .activitySystemActionForegroundColor(TimerLiveTheme.accent)
 
     } dynamicIsland: { context in
-      let startDate = Date().addingTimeInterval(-Double(context.state.elapsedTime))
       let jobName = context.attributes.taskName
       let isRunning = context.state.isRunning
+      let statusMessage = context.state.statusMessage
+      let elapsedSeconds = context.state.elapsedTime
+      let hasLocationMessage = !statusMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 
       return DynamicIsland {
         // Expanded — Apple Music style layout (content: job + timer).
@@ -181,7 +263,11 @@ struct TimerWidgetExtensionLiveActivity: Widget {
               .foregroundStyle(TimerLiveTheme.title)
               .lineLimit(1)
               .minimumScaleFactor(0.85)
-            Text(isRunning ? "JDP Electric · Work Timer" : "JDP Electric · Paused")
+            Text(
+              hasLocationMessage
+                ? "JDP Electric · Location off"
+                : (isRunning ? "JDP Electric · Work Timer" : "JDP Electric · Paused")
+            )
               .font(.system(size: 12, weight: .medium))
               .foregroundStyle(TimerLiveTheme.label)
               .lineLimit(1)
@@ -193,11 +279,17 @@ struct TimerWidgetExtensionLiveActivity: Widget {
           VStack(spacing: 10) {
             HStack(alignment: .center) {
               LiveTimerText(
-                startDate: startDate,
+                elapsedSeconds: elapsedSeconds,
+                isRunning: isRunning,
+                statusMessage: statusMessage,
                 font: .system(size: 13, weight: .semibold, design: .rounded)
               )
               Spacer(minLength: 8)
-              Text(isRunning ? "Running" : "Paused")
+              Text(
+                hasLocationMessage
+                  ? "Location off"
+                  : (isRunning ? "Running" : "Paused")
+              )
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(TimerLiveTheme.label)
                 .monospacedDigit()
@@ -228,7 +320,11 @@ struct TimerWidgetExtensionLiveActivity: Widget {
         }
         .fixedSize(horizontal: true, vertical: false)
       } compactTrailing: {
-        CompactTimerCircle(startDate: startDate, isRunning: isRunning)
+        CompactTimerCircle(
+          elapsedSeconds: elapsedSeconds,
+          isRunning: isRunning,
+          statusMessage: statusMessage
+        )
       } minimal: {
         ZStack {
           Circle()

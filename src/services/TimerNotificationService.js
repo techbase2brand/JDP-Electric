@@ -8,7 +8,9 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TIMER_NOTIFICATION_ID = 'work-timer';
+const LOCATION_OFF_NOTIFICATION_ID = 'timer-location-off';
 const CHANNEL_ID = 'work-timer-channel';
+const LOCATION_CHANNEL_ID = 'timer-location-channel';
 export const TIMER_NOTIF_STORAGE_KEYS = {
   elapsedSec: 'timer_notif_elapsed_sec',
   isRunning: 'timer_notif_running',
@@ -159,6 +161,51 @@ export async function getPersistedTimerState() {
     };
   } catch (e) {
     return { elapsedSec: 0, isRunning: false, jobName: 'Work' };
+  }
+}
+
+/**
+ * Alert when timer was paused because location was turned off (works in background).
+ */
+export async function showTimerLocationOffNotification(
+  elapsedSec,
+  jobName = 'Work',
+) {
+  try {
+    if (Platform.OS === 'ios') {
+      const settings = await notifee.requestPermission();
+      if (settings?.authorizationStatus < 1) return;
+    } else {
+      await ensureChannel();
+      await notifee.createChannel({
+        id: LOCATION_CHANNEL_ID,
+        name: 'Timer Alerts',
+        importance: 4,
+      });
+    }
+    const title = jobName ? `${jobName} – Timer Paused` : 'Timer Paused';
+    const body = `Location is off. Time saved at ${formatHMS(elapsedSec)}. Turn on Location to resume.`;
+
+    await notifee.displayNotification({
+      id: LOCATION_OFF_NOTIFICATION_ID,
+      title,
+      body,
+      android: {
+        channelId: LOCATION_CHANNEL_ID,
+        smallIcon: 'ic_launcher',
+        pressAction: {id: 'default'},
+        autoCancel: true,
+      },
+      ios: {
+        sound: 'default',
+        foregroundPresentationOptions: {
+          alert: true,
+          sound: true,
+        },
+      },
+    });
+  } catch (e) {
+    console.warn('showTimerLocationOffNotification:', e?.message);
   }
 }
 

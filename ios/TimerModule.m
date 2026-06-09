@@ -13,8 +13,10 @@ RCT_EXTERN_METHOD(startActivity:(nonnull NSNumber *)elapsedTime
                   rejecter:(RCTPromiseRejectBlock)reject)
 
 RCT_EXTERN_METHOD(updateActivity:(nonnull NSNumber *)elapsedTime
-                  isRunning:(BOOL)isRunning)
+                  isRunning:(BOOL)isRunning
+                  statusMessage:(NSString *)statusMessage)
 
-RCT_EXTERN_METHOD(endActivity)
+RCT_EXTERN_METHOD(endActivity:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
 
 @end

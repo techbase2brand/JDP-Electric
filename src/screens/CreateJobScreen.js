@@ -175,6 +175,115 @@ const applyCustomerToJobFormState = (prevForm, record, displayName) => {
   return next;
 };
 
+const normalizeLaborId = value => {
+  if (value == null || value === '') {
+    return null;
+  }
+  const num = Number(value);
+  return Number.isNaN(num) ? null : num;
+};
+
+const laborIdsMatch = (a, b) => normalizeLaborId(a) === normalizeLaborId(b);
+
+const getLaborEntryName = entry =>
+  entry?.user?.full_name ||
+  entry?.users?.full_name ||
+  entry?.labor?.users?.full_name ||
+  entry?.full_name ||
+  '';
+
+const getLaborEntryRole = entry =>
+  entry?.user?.role || entry?.users?.role || entry?.labor?.users?.role || 'Labor';
+
+const extractAssignedLaborIdsFromJob = job => {
+  if (!job) {
+    return [];
+  }
+  const entries = [
+    ...(Array.isArray(job.assigned_labor) ? job.assigned_labor : []),
+    ...(Array.isArray(job.assigned_labour) ? job.assigned_labour : []),
+  ];
+  const ids = entries
+    .map(entry =>
+      normalizeLaborId(entry?.labor_id ?? entry?.labor?.id ?? entry?.id),
+    )
+    .filter(id => id != null);
+  return [...new Set(ids)];
+};
+
+const extractAssignedLeadLaborIdsFromJob = job => {
+  if (!job) {
+    return [];
+  }
+  const entries = Array.isArray(job.assigned_lead_labor)
+    ? job.assigned_lead_labor
+    : [];
+  const ids = entries
+    .map(entry =>
+      normalizeLaborId(
+        entry?.lead_labor_id ??
+          entry?.lead_labor?.id ??
+          entry?.labor_id ??
+          entry?.id,
+      ),
+    )
+    .filter(id => id != null);
+  return [...new Set(ids)];
+};
+
+const parseTeamMembersFromJob = job => {
+  if (!job) {
+    return [];
+  }
+
+  const members = [];
+  const laborEntries = [
+    ...(Array.isArray(job.assigned_labor) ? job.assigned_labor : []),
+    ...(Array.isArray(job.assigned_labour) ? job.assigned_labour : []),
+  ];
+
+  laborEntries.forEach((entry, index) => {
+    const id = normalizeLaborId(
+      entry?.labor_id ?? entry?.labor?.id ?? entry?.id,
+    );
+    const name = getLaborEntryName(entry);
+    if (id != null || name) {
+      members.push({
+        key: `labor-${id ?? index}`,
+        id,
+        name,
+        role: getLaborEntryRole(entry),
+        type: 'labor',
+      });
+    }
+  });
+
+  const leadEntries = Array.isArray(job.assigned_lead_labor)
+    ? job.assigned_lead_labor
+    : [];
+
+  leadEntries.forEach((entry, index) => {
+    const id = normalizeLaborId(
+      entry?.lead_labor_id ?? entry?.lead_labor?.id ?? entry?.id,
+    );
+    const name = getLaborEntryName(entry);
+    if (id != null || name) {
+      members.push({
+        key: `lead-${id ?? index}`,
+        id,
+        name,
+        role: 'Lead Labor',
+        type: 'lead_labor',
+      });
+    }
+  });
+
+  return members;
+};
+
+const hasAssignedTeamOnJob = job =>
+  parseTeamMembersFromJob(job).length > 0;
+
 const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const scrollRef = useRef(null);
   const googleRef = useRef(null);
@@ -188,6 +297,9 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const token = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
   const isSubJobFlow = !!route?.params?.parentJob;
+  const [parentJobDetails, setParentJobDetails] = useState(null);
+  const [inheritedTeamMembers, setInheritedTeamMembers] = useState([]);
+  const parentJob = parentJobDetails ?? route?.params?.parentJob;
   const canCreateJobs = useHasPermission('jobs', 'create');
   const canCreateSubJobs = useHasPermission('sub_jobs', 'create');
   const canAssignLabour = useHasPermission('assigned_labour', 'assign');
@@ -235,13 +347,16 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const toggleDropdown = () => setIsOpen(!isOpen);
 
   const handleSelect = member => {
-    const laborId = member?.id; // <- API se aata id use karein
-    const isSelected = formData.assignedTo.includes(laborId);
+    const laborId = normalizeLaborId(member?.id);
+    if (laborId == null) {
+      return;
+    }
+    const isSelected = formData.assignedTo.some(id => laborIdsMatch(id, laborId));
 
     if (isSelected) {
       updateFormData(
         'assignedTo',
-        formData.assignedTo.filter(id => id !== laborId),
+        formData.assignedTo.filter(id => !laborIdsMatch(id, laborId)),
       );
     } else {
       updateFormData('assignedTo', [...formData.assignedTo, laborId]);
@@ -464,17 +579,34 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   
   useEffect(() => {
     const subTitle = route?.params?.subJobTitle;
-    const parent = route?.params?.parentJob;
+    const parentParam = route?.params?.parentJob;
 
-    if (parent) {
-      console.log('parentparentparent', parent);
+    if (!parentParam) {
+      setParentJobDetails(null);
+      setInheritedTeamMembers([]);
+      if (subTitle && typeof subTitle === 'string') {
+        setFormData(prev => ({...prev, title: subTitle.trim()}));
+      }
+      return;
+    }
+
+    let cancelled = false;
+
+    const applyParentPrefill = parent => {
+      if (cancelled || !parent) {
+        return;
+      }
+
+      setParentJobDetails(parent);
+      const teamMembers = parseTeamMembersFromJob(parent);
+      setInheritedTeamMembers(teamMembers);
+
       const type = parent.contractor ? 'contract_based' : 'service_based';
       setJobType(type);
       const dueDate = parent.due_date
         ? new Date(parent.due_date).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0];
 
-      // 👇 Customer OR Contractor Name
       const custName =
         parent.customer?.name ||
         parent.customer?.customer_name ||
@@ -482,9 +614,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         parent.contractor?.company_name ||
         '';
 
-      const assignedIds = (parent.assigned_labor || [])
-        .map(l => l?.id ?? l?.labor_id)
-        .filter(Boolean);
+      const assignedIds = extractAssignedLaborIdsFromJob(parent);
 
       const customerAddress =
         parent.address ||
@@ -492,7 +622,6 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         parent.contractor?.address ||
         '';
 
-      // 👇 Phone fallback
       const customerPhone =
         parent.phone ||
         parent.customer_phone ||
@@ -501,7 +630,6 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         parent.contractor?.phone ||
         '';
 
-      // 👇 Email fallback
       const customerEmail =
         parent.email ||
         parent.customer_email ||
@@ -511,28 +639,21 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         '';
 
       const city = parent.city_zip || parent.city || '';
-
       const notes = parent.notes ?? parent.additional_notes ?? '';
 
       setFormData(prev => ({
         ...prev,
         title: typeof subTitle === 'string' ? subTitle.trim() : prev.title,
         description: parent.description ?? prev.description,
-
         customerName: custName || prev.customerName,
         customerPhone: customerPhone || prev.customerPhone,
         customerEmail: customerEmail || prev.customerEmail,
         customerAddress: customerAddress || prev.customerAddress,
         city: city || prev.city,
-
         dueDate,
         notes: notes || prev.notes,
-
         assignedTo: assignedIds.length > 0 ? assignedIds : prev.assignedTo,
-
         sameAsCustomer: true,
-
-        // 👇 Billing also same fallback
         billingName: custName || prev.billingName,
         billingPhone: customerPhone || prev.billingPhone,
         billingEmail: customerEmail || prev.billingEmail,
@@ -540,25 +661,91 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         billingCity: city || prev.billingCity,
       }));
 
-      // 👇 ID bhi handle kar
       const custId =
         parent.customer_id ??
         parent.customer?.id ??
         parent.contractor_id ??
         parent.contractor?.id;
 
-      if (custId) setSelectedCustomerId(custId);
+      if (custId) {
+        setSelectedCustomerId(custId);
+      }
 
       if (custName) {
         setSearch(custName);
         setSelectedCustomer(custName);
       }
 
-      setValidationErrors(prev => ({...prev, customerName: ''}));
-    } else if (subTitle && typeof subTitle === 'string') {
-      setFormData(prev => ({...prev, title: subTitle.trim()}));
+      setValidationErrors(prev => ({
+        ...prev,
+        customerName: '',
+        assignedTo: '',
+      }));
+    };
+
+    const parentId = parentParam.id ?? parentParam._id;
+    if (parentId && token) {
+      getJobById(parentId, token)
+        .then(res => {
+          const full = res?.data ?? res?.job ?? res ?? {};
+          applyParentPrefill({...parentParam, ...full});
+        })
+        .catch(() => applyParentPrefill(parentParam));
+    } else {
+      applyParentPrefill(parentParam);
     }
-  }, [route?.params?.subJobTitle, route?.params?.parentJob]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [route?.params?.subJobTitle, route?.params?.parentJob, token]);
+
+  useEffect(() => {
+    if (!isSubJobFlow || !parentJobDetails || labors.length === 0) {
+      return;
+    }
+
+    const laborEntries = [
+      ...(Array.isArray(parentJobDetails.assigned_labor)
+        ? parentJobDetails.assigned_labor
+        : []),
+      ...(Array.isArray(parentJobDetails.assigned_labour)
+        ? parentJobDetails.assigned_labour
+        : []),
+    ];
+
+    const matchedIds = laborEntries
+      .map(entry => {
+        const rawLaborId = entry?.labor_id ?? entry?.labor?.id ?? entry?.id;
+        const userId = entry?.user?.id ?? entry?.users?.id;
+        const match = labors.find(
+          labor =>
+            laborIdsMatch(labor.id, rawLaborId) ||
+            laborIdsMatch(labor.users?.id, userId) ||
+            laborIdsMatch(labor.user_id, userId),
+        );
+        return match ? normalizeLaborId(match.id) : normalizeLaborId(rawLaborId);
+      })
+      .filter(id => id != null);
+
+    const uniqueIds = [...new Set(matchedIds)];
+    if (uniqueIds.length === 0) {
+      return;
+    }
+
+    setFormData(prev => {
+      const sameLength = prev.assignedTo.length === uniqueIds.length;
+      const sameIds =
+        sameLength &&
+        prev.assignedTo.every(id =>
+          uniqueIds.some(nextId => laborIdsMatch(id, nextId)),
+        );
+      if (sameIds) {
+        return prev;
+      }
+      return {...prev, assignedTo: uniqueIds};
+    });
+  }, [isSubJobFlow, parentJobDetails, labors]);
   
   // ✅ Customers
   const fetchCustomers = async (pageNo = 1, query = '') => {
@@ -1097,8 +1284,33 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         break;
 
       case 2: // Resources
-        if (canAssignLabour && formData.assignedTo.length === 0)
-          errors.assignedTo = 'At least one team member must be assigned';
+        {
+          const hasLabourAssigned = formData.assignedTo.length > 0;
+          const hasLeadLaborAssigned =
+            canAssignLeadLabour &&
+            user?.management_type === 'lead_labor' &&
+            !!user?.lead_labor?.id;
+          const hasInheritedTeam =
+            isSubJobFlow &&
+            (inheritedTeamMembers.length > 0 || hasAssignedTeamOnJob(parentJob));
+
+          if (
+            !isSubJobFlow &&
+            canAssignLabour &&
+            !hasLabourAssigned &&
+            !hasLeadLaborAssigned
+          ) {
+            errors.assignedTo = 'At least one team member must be assigned';
+          } else if (
+            isSubJobFlow &&
+            canAssignLabour &&
+            !hasLabourAssigned &&
+            !hasLeadLaborAssigned &&
+            !hasInheritedTeam
+          ) {
+            errors.assignedTo = 'At least one team member must be assigned';
+          }
+        }
 
         if (formData.estimatedHours > 100)
           errors.estimatedHours = 'Estimated hours seems too high (max 100)';
@@ -1114,6 +1326,8 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
+
+  const dismissKeyboard = () => Keyboard.dismiss();
 
   // const nextStep = async () => {
   //   if (validateStep(currentStep)) {
@@ -1151,6 +1365,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   // };
  
   const nextStep = async () => {
+    dismissKeyboard();
     // Run validation for current step
     const isValid = validateStep(currentStep);
 
@@ -1183,6 +1398,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   console.log('nextStepnextStep', currentStep);
 
   const prevStep = () => {
+    dismissKeyboard();
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
@@ -1251,16 +1467,23 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   // };
 
   const buildJobPayload = () => {
-    const leadIds =
+    let leadIds =
       canAssignLeadLabour && user?.management_type === 'lead_labor'
-        ? [user?.lead_labor?.id]
+        ? [user?.lead_labor?.id].filter(Boolean)
         : [];
 
+    if (isSubJobFlow && leadIds.length === 0) {
+      leadIds = extractAssignedLeadLaborIdsFromJob(parentJob);
+    }
+
+    let assignedLaborList = canAssignLabour ? formData.assignedTo || [] : [];
+    if (isSubJobFlow && assignedLaborList.length === 0) {
+      assignedLaborList = extractAssignedLaborIdsFromJob(parentJob);
+    }
+
     const assigned_lead_labor_ids = JSON.stringify(leadIds);
-    
-    const assigned_labor_ids = JSON.stringify(
-      canAssignLabour ? formData.assignedTo || [] : [],
-    );
+
+    const assigned_labor_ids = JSON.stringify(assignedLaborList);
     
     const assigned_material_ids = JSON.stringify([]); // UI me material select nahi tha
 
@@ -1537,8 +1760,9 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
         ref={scrollRef}
         style={styles.stepContent}
         showsVerticalScrollIndicator={false}
-        // keyboardShouldPersistTaps="handled"
-        keyboardShouldPersistTaps="always">
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        onScrollBeginDrag={dismissKeyboard}>
         {/* Basic Information */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
@@ -2452,7 +2676,10 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       >
         <ScrollView
           style={styles.stepContent}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          onScrollBeginDrag={dismissKeyboard}>
           {/* Team Assignment */}
           <View
             style={[styles.sectionCard, isSubJobFlow && styles.lockedSection]}
@@ -2463,11 +2690,53 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
             </View>
 
             <Text style={styles.formLabel}>Assigned Team Members *</Text>
+            {isSubJobFlow && (
+              <Text style={{color: '#6B7280', marginBottom: 10}}>
+                Same team as parent job.
+              </Text>
+            )}
             {!canAssignTeam && (
               <Text style={{color: '#6B7280', marginBottom: 10}}>
                 You do not have permission to assign labor.
               </Text>
             )}
+            {isSubJobFlow ? (
+              <View style={styles.container}>
+                {inheritedTeamMembers.length > 0 ? (
+                  inheritedTeamMembers.map(member => (
+                    <View key={member.key} style={styles.dropdownItem}>
+                      <View
+                        style={[
+                          styles.checkboxChecked1,
+                          {
+                            width: 20,
+                            height: 20,
+                            borderWidth: 1,
+                            borderColor: '#aaa',
+                            marginRight: 10,
+                            borderRadius: 4,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          },
+                        ]}>
+                        <Icon name="check" size={16} color="white" />
+                      </View>
+                      <View style={styles.memberInfo1}>
+                        <Text style={[styles.memberName1, {color: 'black'}]}>
+                          {capitalize(member.name)}
+                        </Text>
+                        <Text style={styles.memberRole1}>{member.role}</Text>
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={{color: '#6B7280'}}>
+                    No team members on parent job.
+                  </Text>
+                )}
+              </View>
+            ) : (
+            <>
             {/* <View style={styles.teamMembersList}>
           {teamMembers.map(member => (
             <TouchableOpacity
@@ -2545,7 +2814,11 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                 <Text style={styles.headerText}>
                   {formData?.assignedTo?.length > 0
                     ? labors
-                        .filter(labor => formData.assignedTo.includes(labor.id))
+                        .filter(labor =>
+                          formData.assignedTo.some(id =>
+                            laborIdsMatch(id, labor.id),
+                          ),
+                        )
                         .map(labor => capitalize(labor.users?.full_name))
                         .join(', ')
                     : 'Select Members'}
@@ -2576,7 +2849,9 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                     scrollEnabled
                     style={{flexGrow: 0}}
                     renderItem={({item}) => {
-                      const isSelected = formData.assignedTo.includes(item?.id);
+                      const isSelected = formData.assignedTo.some(id =>
+                        laborIdsMatch(id, item?.id),
+                      );
                       return (
                         <TouchableOpacity
                           style={styles.dropdownItem}
@@ -2606,6 +2881,8 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                 </View>
               )}
             </View>
+            </>
+            )}
             {validationErrors.assignedTo && (
               <View style={styles.errorContainer}>
                 <Icon name="error" size={16} color="#ef4444" />
@@ -2695,12 +2972,18 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   };
 
   const renderReviewStep = () => {
-    // const assignedMembers = labors?.filter(member =>
-    //   formData.assignedTo.includes(member.users?.full_name),
-    // );
-    const assignedMembers = labors?.filter(m =>
-      formData.assignedTo.includes(m.id),
+    const assignedMembersFromLabors = labors?.filter(m =>
+      formData.assignedTo.some(id => laborIdsMatch(id, m.id)),
     );
+
+    const reviewTeamMembers =
+      isSubJobFlow && inheritedTeamMembers.length > 0
+        ? inheritedTeamMembers
+        : assignedMembersFromLabors.map(m => ({
+            key: `labor-${m.id}`,
+            name: m?.users?.full_name,
+            role: m?.users?.role,
+          }));
 
     const billingInfo = formData.sameAsCustomer
       ? {
@@ -2721,7 +3004,10 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
     return (
       <ScrollView
         style={styles.stepContent}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        onScrollBeginDrag={dismissKeyboard}>
         {validationErrors.general && (
           <View style={styles.generalErrorContainer}>
             <Icon name="error" size={24} color="#ef4444" />
@@ -2860,18 +3146,20 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
           <View style={styles.reviewContent}>
             <View style={styles.teamSummary}>
               <Text style={styles.reviewLabel}>
-                Assigned Team ({assignedMembers.length})
+                Assigned Team ({reviewTeamMembers.length})
               </Text>
-              {assignedMembers.map(member => (
-                <View key={member.id} style={styles.memberSummary}>
-                  <Text style={styles.memberSummaryName}>
-                    {capitalize(member?.users?.full_name)}
-                  </Text>
-                  <Text style={styles.memberSummaryRole}>
-                    {member?.users?.role}
-                  </Text>
-                </View>
-              ))}
+              {reviewTeamMembers.length > 0 ? (
+                reviewTeamMembers.map(member => (
+                  <View key={member.key || member.name} style={styles.memberSummary}>
+                    <Text style={styles.memberSummaryName}>
+                      {capitalize(member.name)}
+                    </Text>
+                    <Text style={styles.memberSummaryRole}>{member.role}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.reviewValue}>No team members assigned</Text>
+              )}
             </View>
 
             {/* <View style={styles.timeSummary}>
@@ -2941,17 +3229,18 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       {/* <KeyboardAvoidingView
         style={{height: heightPercentageToDP(86), backgroundColor:"red"}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}> */}
-      <View style={styles.content}>
-        <View style={{height: heightPercentageToDP(75)}}>
-          {renderProgressIndicator()}
-          {renderStepTitle()}
-          {currentStep === 1 && renderJobDetailsStep()}
-          {currentStep === 2 && renderResourcesStep()}
-          {currentStep === 3 && renderReviewStep()}
-        </View>
+      <TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
+        <View style={styles.content}>
+          <View style={{height: heightPercentageToDP(75)}}>
+            {renderProgressIndicator()}
+            {renderStepTitle()}
+            {currentStep === 1 && renderJobDetailsStep()}
+            {currentStep === 2 && renderResourcesStep()}
+            {currentStep === 3 && renderReviewStep()}
+          </View>
 
-        {/* Navigation Buttons */}
-        <View style={styles.navigationButtons}>
+          {/* Navigation Buttons */}
+          <View style={styles.navigationButtons}>
           <TouchableOpacity
             style={[
               styles.navButton,
@@ -2985,8 +3274,9 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
               </Text>
             </TouchableOpacity>
           )}
+          </View>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 };

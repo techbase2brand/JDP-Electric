@@ -106,6 +106,13 @@ import {
   updateTimerNotification,
   cancelTimerNotification,
 } from './src/services/TimerNotificationService';
+import {updateLiveActivity} from './src/services/LiveActivityService';
+import {
+  startLocationTimerGuard,
+  stopLocationTimerGuard,
+  isLocationPauseActive,
+} from './src/services/locationTimerGuard';
+import {LOCATION_OFF_LIVE_MESSAGE} from './src/services/LiveActivityService';
 import {logout} from './src/redux/userSlice';
 import {logoutApi} from './src/config/apiConfig';
 import {useNotifications} from './src/hooks/useNotifications';
@@ -273,9 +280,11 @@ const AppContent = () => {
     if (isRunning) {
       console.log('Starting background timer', isRunning);
       startBackgroundTimer(); // will run only in foreground on iOS simulator
+      startLocationTimerGuard();
     } else {
       console.log('Stopping background timer');
       stopBackgroundTimer();
+      stopLocationTimerGuard();
     }
   }, [isRunning]);
 
@@ -298,8 +307,11 @@ const AppContent = () => {
       const elapsed = t.elapsedTime ?? 0;
       const running = !!t.isRunning;
       await persistTimerState(elapsed, running);
+      // iOS Live Activity: keep elapsed in sync while running (lock screen uses native timer only when isRunning).
+      if (Platform.OS === 'ios' && running) {
+        updateLiveActivity(elapsed, true, '');
+      }
       // Only update notification when app is in background (don't show card when app is active)
-      // iOS: we rely on Live Activity (TimerModule) for lock-screen display.
       // Android: keep updating the foreground-service notification.
       if (Platform.OS === 'android' && appStateRef.current === 'background') {
         const p = await getPersistedTimerState();
@@ -345,9 +357,18 @@ const AppContent = () => {
       }
       if (prev === 'background' && nextState === 'active') {
         // Android: hide/stop foreground-service notification when user returns to app.
-        // iOS: no timer notification should be shown.
         if (Platform.OS === 'android') {
           cancelTimerNotification();
+        }
+        // iOS: sync lock screen with in-app timer after background.
+        const state = store.getState();
+        const t = state?.timer;
+        if (t && Platform.OS === 'ios') {
+          const statusMessage =
+            !t.isRunning && isLocationPauseActive()
+              ? LOCATION_OFF_LIVE_MESSAGE
+              : '';
+          updateLiveActivity(t.elapsedTime ?? 0, !!t.isRunning, statusMessage);
         }
       }
     });

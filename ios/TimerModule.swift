@@ -10,6 +10,27 @@ import ActivityKit
 class TimerModule: NSObject {
   private var activity: Activity<TimerAttributes>?
 
+  @available(iOS 16.1, *)
+  private func endAllTimerActivities() async {
+    if let current = activity {
+      await current.end(dismissalPolicy: .immediate)
+    }
+    for existing in Activity<TimerAttributes>.activities {
+      await existing.end(dismissalPolicy: .immediate)
+    }
+    activity = nil
+  }
+
+  @available(iOS 16.1, *)
+  private func resolveActiveActivity() -> Activity<TimerAttributes>? {
+    if let activity = activity {
+      return activity
+    }
+    let systemActivity = Activity<TimerAttributes>.activities.first
+    activity = systemActivity
+    return systemActivity
+  }
+
   @objc
   func startActivity(
     _ elapsedTime: NSNumber,
@@ -18,23 +39,28 @@ class TimerModule: NSObject {
     rejecter: @escaping RCTPromiseRejectBlock
   ) {
     if #available(iOS 16.1, *) {
-      let title = jobName.trimmingCharacters(in: .whitespacesAndNewlines)
-      let displayName = title.isEmpty ? "Work" : title
+      Task {
+        await self.endAllTimerActivities()
 
-      let attributes = TimerAttributes(taskName: displayName)
-      let state = TimerAttributes.ContentState(
-        elapsedTime: elapsedTime.intValue,
-        isRunning: true
-      )
-      do {
-        activity = try Activity<TimerAttributes>.request(
-          attributes: attributes,
-          contentState: state,
-          pushType: nil
+        let title = jobName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayName = title.isEmpty ? "Work" : title
+
+        let attributes = TimerAttributes(taskName: displayName)
+        let state = TimerAttributes.ContentState(
+          elapsedTime: elapsedTime.intValue,
+          isRunning: true,
+          statusMessage: ""
         )
-        resolver("Live Activity started")
-      } catch {
-        rejecter("ERR", "Could not start Live Activity", error)
+        do {
+          self.activity = try Activity<TimerAttributes>.request(
+            attributes: attributes,
+            contentState: state,
+            pushType: nil
+          )
+          resolver("Live Activity started")
+        } catch {
+          rejecter("ERR", "Could not start Live Activity", error)
+        }
       }
     } else {
       rejecter("ERR", "Live Activities not supported on this iOS", nil)
@@ -42,25 +68,36 @@ class TimerModule: NSObject {
   }
 
   @objc
-  func updateActivity(_ elapsedTime: NSNumber, isRunning: Bool) {
+  func updateActivity(
+    _ elapsedTime: NSNumber,
+    isRunning: Bool,
+    statusMessage: String?
+  ) {
     if #available(iOS 16.1, *) {
       Task {
         let state = TimerAttributes.ContentState(
           elapsedTime: elapsedTime.intValue,
-          isRunning: isRunning
+          isRunning: isRunning,
+          statusMessage: statusMessage ?? ""
         )
-        await activity?.update(using: state)
+        guard let active = self.resolveActiveActivity() else { return }
+        await active.update(using: state)
       }
     }
   }
 
   @objc
-  func endActivity() {
+  func endActivity(
+    _ resolver: @escaping RCTPromiseResolveBlock,
+    rejecter: @escaping RCTPromiseRejectBlock
+  ) {
     if #available(iOS 16.1, *) {
       Task {
-        await activity?.end(dismissalPolicy: .immediate)
-        activity = nil
+        await self.endAllTimerActivities()
+        resolver(true)
       }
+    } else {
+      resolver(true)
     }
   }
 }
