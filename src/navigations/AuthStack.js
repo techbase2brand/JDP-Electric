@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {ONBOARDING_STORAGE_KEY} from '../utils/logout';
 import LoginScreen from '../screens/LoginScreen';
 import OnBoardingScreen from '../screens/OnBoardingScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
@@ -16,12 +17,12 @@ export default function AuthStack() {
   useEffect(() => {
     const checkFirstLaunch = async () => {
       try {
-        const hasLaunched = await AsyncStorage.getItem('hasLaunched');
+        const hasLaunched = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
         if (hasLaunched === null) {
-          await AsyncStorage.setItem('hasLaunched', 'true');
-          setIsFirstLaunch(true); // Show OnBoarding
+          await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+          setIsFirstLaunch(true);
         } else {
-          setIsFirstLaunch(false); // Skip OnBoarding
+          setIsFirstLaunch(false);
         }
       } catch (error) {
         console.error('Error checking first launch:', error);

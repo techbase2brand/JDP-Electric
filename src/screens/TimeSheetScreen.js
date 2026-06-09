@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useCallback} from 'react';
+import React, {useState, useMemo, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -16,9 +16,8 @@ import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import {tabColor} from '../constants/Color';
-import {getBlueSheets} from '../config/apiConfig';
 import {useSelector} from 'react-redux';
-import {useFocusEffect} from '@react-navigation/native';
+import {useBlueSheetsAutoRefresh} from '../hooks/useBlueSheetsAutoRefresh';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -37,8 +36,9 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter] = useState('all');
   const [sortBy] = useState('date');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [blueSheetData, setBlueSheetData] = useState([]);
+  const hasLoadedRef = useRef(false);
   const capitalize = text =>
     text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
 
@@ -209,47 +209,29 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
     });
 
     return filtered;
-    // Keep existing behavior; avoid changing deps/behavior.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allTimesheets, statusFilter, searchQuery, sortBy]);
+  }, [blueSheetData, statusFilter, searchQuery, sortBy]);
 
-  useFocusEffect(
-    useCallback(() => {
-      const fetchBlueSheet = async () => {
-        console.log('logged-in user id:', loggedInUser?.labor?.id);
-        console.log('logged-in lead labor id:', loggedInUser?.lead_labor?.id);
-        console.log('token>>>', token);
+  const finishInitialLoad = useCallback(() => {
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      setLoading(false);
+    }
+  }, []);
 
-        if (loading) {
-          return;
-        }
-        setLoading(true);
-
-        try {
-          const res = await getBlueSheets(token, loggedInUser);
-          const blue = Array.isArray(res)
-            ? res
-            : res?.data ?? res?.items ?? res?.rows ?? [];
-
-          console.log('✅ full response:', res);
-          console.log('✅ normalized rows:', blue.bluesheets);
-
-          setBlueSheetData(blue.bluesheets);
-        } catch (err) {
-          console.error('Error fetching bluesheets:', err);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchBlueSheet();
-
-      // Cleanup optional (e.g. reset state)
-      return () => {};
-      // Keep existing behavior; avoid changing deps/behavior.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token, loggedInUser]),
+  const handleBlueSheetsData = useCallback(
+    sheets => {
+      setBlueSheetData(sheets);
+      finishInitialLoad();
+    },
+    [finishInitialLoad],
   );
+
+  useBlueSheetsAutoRefresh({
+    token,
+    user: loggedInUser,
+    onData: handleBlueSheetsData,
+    onError: finishInitialLoad,
+  });
 
   // Helper functions
   const getStatusColor = status => {

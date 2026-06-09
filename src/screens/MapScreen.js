@@ -15,7 +15,7 @@ import MapViewDirections from 'react-native-maps-directions';
 import Geolocation from '@react-native-community/geolocation';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {heightPercentageToDP, widthPercentageToDP} from '../utils';
-import { GOOGLE_MAPS_APIKEY } from '../constants/Constants';
+import {GOOGLE_MAPS_APIKEY, ENABLE_GEOFENCING} from '../constants/Constants';
 
 // haversine distance
 const getDistance = (lat1, lon1, lat2, lon2) => {
@@ -198,7 +198,7 @@ const MapScreen = ({route, navigation}) => {
   }, [destinationCoordinates]);
 
   useEffect(() => {
-    if (destinationCoordinates) {
+    if (ENABLE_GEOFENCING && destinationCoordinates) {
       watchUserLocation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

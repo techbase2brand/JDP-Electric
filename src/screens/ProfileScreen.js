@@ -921,7 +921,6 @@
 //   },
 // });
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
@@ -937,13 +936,12 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useDispatch, useSelector} from 'react-redux';
-import {logout} from '../redux/userSlice';
 import {
   deactivateAccount,
   getLaborById,
   getLeadLaborById,
-  logoutApi,
 } from '../config/apiConfig';
+import {performLogout} from '../utils/logout';
 import {useFocusEffect} from '@react-navigation/native';
 import {widthPercentageToDP} from '../utils';
 
@@ -1043,19 +1041,7 @@ const ProfileScreen = ({navigation}) => {
 
   const handleLogout = async () => {
     try {
-      if (!token) {
-        throw new Error('Token not found');
-      }
-
-      // await logoutApi(token); // API call
-
-      // Redux logout action
-      dispatch(logout());
-      // Clear all local persisted storage except onboarding flag
-      const keys = await AsyncStorage.getAllKeys();
-      const keepKey = 'hasLaunched';
-      const toRemove = keys.filter(k => k !== keepKey);
-      if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
+      await performLogout({token, dispatch});
     } catch (err) {
       Alert.alert('Logout Failed', err.message || 'Please try again');
     }
@@ -1090,14 +1076,7 @@ const ProfileScreen = ({navigation}) => {
 
       Alert.alert('Success', 'Your account has been deleted');
 
-      dispatch(logout());
-      const keys = await AsyncStorage.getAllKeys();
-      const keepKey = 'hasLaunched';
-      const toRemove = keys.filter(k => k !== keepKey);
-      if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
-      AsyncStorage.setItem('isLoggedIn', 'false');
-
-      navigation.navigate('AuthStack');
+      await performLogout({token, dispatch});
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to delete account');
     }
@@ -1357,8 +1336,6 @@ const ProfileScreen = ({navigation}) => {
                   setModalVisible(false);
                   if (modalConfig?.type === 'signout') {
                     await handleLogout();
-                    await AsyncStorage.setItem('isLoggedIn', 'false');
-                    // navigation.navigate('AuthStack');
                   } else if (modalConfig?.type === 'delete') {
                     // Here you can call real delete API
                     await handleDeleteAccount();

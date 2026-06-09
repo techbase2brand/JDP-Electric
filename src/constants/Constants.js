@@ -88,3 +88,6 @@ export const DEFAULT_SETTINGS = {
 
 
 export const GOOGLE_MAPS_APIKEY = 'AIzaSyBEQp-ZFMYZjsTNyximu2pAifQ9EWA4W3M';
+
+/** true = job-site radius check on timer start + auto-stop when leaving; false = timer runs without geofence */
+export const ENABLE_GEOFENCING = false;

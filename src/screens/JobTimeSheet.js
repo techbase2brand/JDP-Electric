@@ -1215,12 +1215,13 @@ const MaterialModal = ({
         return;
       }
 
-      const cost = Number(
-        product?.unit_cost ??
-          product?.jdp_price ??
+      const jdpDisplayPrice = Number(
+        product?.jdp_price ??
+          product?.unit_cost ??
           product?.estimated_price ??
           0,
       );
+      const actualUnitCost = Number(product?.unit_cost ?? 0);
       const unitStr =
         product?.unit != null && String(product.unit).trim() !== ''
           ? String(product.unit).trim()
@@ -1230,10 +1231,13 @@ const MaterialModal = ({
         ...prev,
         name: product?.product_name || prev.name || '',
         unit: unitStr,
-        unitCost: cost > 0 ? cost : prev.unitCost ?? '',
+        unitCost:
+          actualUnitCost > 0 ? actualUnitCost : prev.unitCost ?? '',
+        jdpPrice:
+          jdpDisplayPrice > 0 ? jdpDisplayPrice : prev.jdpPrice ?? '',
         productId: product?.id != null ? product.id : null,
+        productName: product?.product_name || '',
         availableStock: Number.isFinite(availableQty) ? availableQty : 0,
-        jdpPrice: Number(product?.jdp_price) || 0,
         estimatedUnitCost: Number(product?.estimated_price) || 0,
         totalOrdered: emptyQty(prev.totalOrdered) ? 1 : prev.totalOrdered,
         amountUsed: emptyQty(prev.amountUsed) ? 1 : prev.amountUsed,
@@ -1245,12 +1249,12 @@ const MaterialModal = ({
   );
 
   const handleSaveWithValidation = () => {
-    const {name, unit, totalOrdered, amountUsed, unitCost, availableStock} =
+    const {name, unit, totalOrdered, amountUsed, jdpPrice, availableStock} =
       tempMaterialData;
 
     const total = parseFloat(totalOrdered);
     const used = parseFloat(amountUsed);
-    const cost = parseFloat(unitCost);
+    const cost = parseFloat(jdpPrice ?? tempMaterialData.unitCost);
 
     if (!name || name.trim() === '') {
       Alert.alert('Validation', 'Please enter material name');
@@ -1287,7 +1291,7 @@ const MaterialModal = ({
     }
 
     if (isNaN(cost) || cost <= 0) {
-      Alert.alert('Validation', 'Unit cost must be greater than 0');
+      Alert.alert('Validation', 'JDP price must be greater than 0');
       return;
     }
 
@@ -1377,10 +1381,10 @@ const MaterialModal = ({
                                 p?.unit != null && String(p.unit).trim() !== ''
                                   ? p.unit
                                   : 'pieces',
-                                p?.unit_cost != null
-                                  ? ` · $${Number(p.unit_cost)}`
-                                  : p?.jdp_price != null
+                                p?.jdp_price != null
                                   ? ` · $${Number(p.jdp_price)}`
+                                  : p?.unit_cost != null
+                                  ? ` · $${Number(p.unit_cost)}`
                                   : null,
                               ]
                                 .filter(Boolean)
@@ -1456,19 +1460,23 @@ const MaterialModal = ({
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel}>Unit Cost</Text>
+                  <Text style={styles.formLabel}>Price</Text>
                   <TextInput
                     style={styles.formInput}
                     keyboardType="numeric"
                     value={
-                      tempMaterialData.unitCost === undefined
-                        ? ''
-                        : String(tempMaterialData.unitCost)
+                      tempMaterialData.jdpPrice !== undefined &&
+                      tempMaterialData.jdpPrice !== ''
+                        ? String(tempMaterialData.jdpPrice)
+                        : tempMaterialData.unitCost !== undefined &&
+                          tempMaterialData.unitCost !== ''
+                        ? String(tempMaterialData.unitCost)
+                        : ''
                     }
                     onChangeText={text =>
                       setTempMaterialData(prev => ({
                         ...prev,
-                        unitCost: text === '' ? '' : parseFloat(text) || 0,
+                        jdpPrice: text === '' ? '' : parseFloat(text) || 0,
                       }))
                     }
                   />
@@ -1675,6 +1683,8 @@ const JobTimesheet = ({navigation, route, user}) => {
               estimatedUnitCost,
               estimatedCost: Number((estimatedUnitCost * qty).toFixed(2)) || 0,
               productId: it?.product?.id ?? it?.product_id ?? null,
+              productName:
+                it?.product?.product_name || it?.product_name || '',
               supplierOrderId: order?.order_number || order?.order_no || '',
               returnToWarehouse: false,
               _source: 'route',
@@ -2257,7 +2267,9 @@ const JobTimesheet = ({navigation, route, user}) => {
       totalOrdered: '',
       amountUsed: '',
       unitCost: '',
+      jdpPrice: '',
       productId: null,
+      productName: '',
       supplierOrderId: '',
       returnToWarehouse: false,
     });
@@ -2297,6 +2309,7 @@ const JobTimesheet = ({navigation, route, user}) => {
       }
 
       const payload = buildBluesheetPayload();
+      console.log('payload:::::::', payload);
       if (!payload.labor_entries.length && !payload.material_entries.length) {
         Alert.alert(
           'Empty',

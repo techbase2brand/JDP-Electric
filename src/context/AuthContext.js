@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {clearLocalStorageExceptOnboarding} from '../utils/logout';
 
 const AuthContext = createContext();
 
@@ -72,11 +73,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Clear all local persisted data except onboarding flag
-      const keys = await AsyncStorage.getAllKeys();
-      const keepKey = 'hasLaunched';
-      const toRemove = keys.filter(k => k !== keepKey);
-      if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
+      await clearLocalStorageExceptOnboarding();
       setUser(null);
     } catch (error) {
       console.error('Error logging out:', error);

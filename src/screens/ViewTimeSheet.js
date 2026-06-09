@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from 'react';
+import React, {useState, useMemo, useCallback} from 'react';
 import {
   View,
   Text,
@@ -22,11 +22,14 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { heightPercentageToDP, widthPercentageToDP } from '../utils';
+import {useBlueSheetsAutoRefresh} from '../hooks/useBlueSheetsAutoRefresh';
 
 const TimesheetScreen = ({navigation, route, job}) => {
-  const {timesheet} = route?.params || {};
+  const initialTimesheet = route?.params?.timesheet;
+  const token = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
-  console.log('timesheettimesheet', timesheet);
+  const [bluesheet, setBluesheet] = useState(initialTimesheet ?? null);
+  const bluesheetId = initialTimesheet?.id;
 
   const [editingLabour, setEditingLabour] = useState(null);
   const [editingMaterial, setEditingMaterial] = useState(null);
@@ -52,34 +55,35 @@ const TimesheetScreen = ({navigation, route, job}) => {
   };
 
   const viewImages = useMemo(
-    () => normalizeImages(timesheet?.images),
-    [timesheet?.images],
+    () => normalizeImages(bluesheet?.images),
+    [bluesheet?.images],
   );
 
   // Initialize timesheet data - either from existing timesheet or create new
   const [timesheetData, setTimesheetData] = useState(() => {
-    if (timesheet) {
+    if (initialTimesheet) {
       return {
-        id: timesheet.id,
-        jobId: timesheet.jobId,
-        date: timesheet.date,
-        status: timesheet.status,
-        jobNotes: timesheet?.jobNotes,
-        submittedAt: timesheet.submittedAt,
-        approvedAt: timesheet.approvedAt,
-        approvedBy: timesheet.approvedBy,
-        rejectionReason: timesheet.rejectionReason,
+        id: initialTimesheet.id,
+        jobId: initialTimesheet.jobId,
+        date: initialTimesheet.date,
+        status: initialTimesheet.status,
+        jobNotes: initialTimesheet?.jobNotes,
+        submittedAt: initialTimesheet.submittedAt,
+        approvedAt: initialTimesheet.approved_at ?? initialTimesheet.approvedAt,
+        approvedBy: initialTimesheet.approved_by ?? initialTimesheet.approvedBy,
+        rejectionReason:
+          initialTimesheet.rejection_reason ?? initialTimesheet.rejectionReason,
         labourEntries: [
           {
             id: '1',
-            employeeName: timesheet.submittedBy,
-            employeeId: timesheet.employeeId,
+            employeeName: initialTimesheet.submittedBy,
+            employeeId: initialTimesheet.employeeId,
             role: user?.management_type || 'Labor',
-            regularHours: timesheet.labourHours,
+            regularHours: initialTimesheet.labourHours,
             overtimeHours: 0,
             regularRate: user?.management_type === 'lead_labor' ? 35 : 28,
             overtimeRate: user?.management_type === 'lead_labor' ? 52.5 : 42,
-            totalCost: timesheet.labourCost,
+            totalCost: initialTimesheet.labourCost,
             notes: 'Loaded from existing timesheet',
           },
         ],
@@ -89,10 +93,11 @@ const TimesheetScreen = ({navigation, route, job}) => {
             name: 'Electrical Wire 12AWG',
             unit: 'feet',
             totalOrdered: 500,
-            amountUsed: Math.round(timesheet.materialCost / 0.85),
-            amountRemaining: 500 - Math.round(timesheet.materialCost / 0.85),
+            amountUsed: Math.round(initialTimesheet.materialCost / 0.85),
+            amountRemaining:
+              500 - Math.round(initialTimesheet.materialCost / 0.85),
             unitCost: 0.85,
-            totalCost: timesheet.materialCost,
+            totalCost: initialTimesheet.materialCost,
             supplierOrderId: 'ORD-2024-001',
             returnToWarehouse: false,
           },
@@ -103,9 +108,9 @@ const TimesheetScreen = ({navigation, route, job}) => {
             description: 'Additional Items',
             category: 'Other',
             amount:
-              timesheet.totalCost -
-              timesheet.labourCost -
-              timesheet.materialCost,
+              initialTimesheet.totalCost -
+              initialTimesheet.labourCost -
+              initialTimesheet.materialCost,
             notes: 'Loaded from existing timesheet',
           },
         ],
@@ -185,6 +190,42 @@ const TimesheetScreen = ({navigation, route, job}) => {
   const [tempMaterialData, setTempMaterialData] = useState({});
   const [tempChargeData, setTempChargeData] = useState({});
 
+  const syncStatusFields = useCallback(sheet => {
+    if (!sheet) {
+      return;
+    }
+    setTimesheetData(prev => ({
+      ...prev,
+      status: sheet.status ?? prev.status,
+      approvedAt: sheet.approved_at ?? sheet.approvedAt ?? prev.approvedAt,
+      approvedBy: sheet.approved_by ?? sheet.approvedBy ?? prev.approvedBy,
+      rejectionReason:
+        sheet.rejection_reason ?? sheet.rejectionReason ?? prev.rejectionReason,
+      submittedAt: sheet.submitted_at ?? sheet.submittedAt ?? prev.submittedAt,
+    }));
+  }, []);
+
+  const handleBlueSheetsData = useCallback(
+    sheets => {
+      if (!bluesheetId) {
+        return;
+      }
+      const updated = sheets.find(s => String(s.id) === String(bluesheetId));
+      if (updated) {
+        setBluesheet(updated);
+        syncStatusFields(updated);
+      }
+    },
+    [bluesheetId, syncStatusFields],
+  );
+
+  useBlueSheetsAutoRefresh({
+    token,
+    user,
+    onData: handleBlueSheetsData,
+    enabled: !!bluesheetId && !!token,
+  });
+
   // Helper functions
   const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -212,7 +253,7 @@ const TimesheetScreen = ({navigation, route, job}) => {
 
   // Navigation handler - go back to appropriate screen
   const handleBack = () => {
-    if (timesheet) {
+    if (initialTimesheet) {
       // If viewing from timesheet listing, go back to listing
       navigation.goBack();
     } else {
@@ -223,6 +264,15 @@ const TimesheetScreen = ({navigation, route, job}) => {
 
   const capitalize = text =>
     text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
+
+  const getMaterialLabel = material =>
+    material?.material_name || material?.name || '';
+
+  const getMaterialProductName = material =>
+    material?.product?.product_name ||
+    material?.product_name ||
+    material?.productName ||
+    '';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -236,14 +286,14 @@ const TimesheetScreen = ({navigation, route, job}) => {
 
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>
-            {timesheet ? 'Bluesheet Details' : 'Daily Timesheet'}
+            {initialTimesheet ? 'Bluesheet Details' : 'Daily Timesheet'}
           </Text>
-          {(timesheet?.job?.jobTitle || job?.title) && (
+          {(bluesheet?.job?.jobTitle || bluesheet?.job?.job_title || job?.title) && (
             <Text style={styles.headerSubtitle}>
-              {timesheet
-                ? timesheet.job?.jobTitle
+              {bluesheet
+                ? bluesheet.job?.jobTitle || bluesheet.job?.job_title
                 : job?.title || 'Unknown Job'}{' '}
-              {/* {formatDate(timesheet?.created_at)} */}
+              {/* {formatDate(bluesheet?.created_at)} */}
             </Text>
           )}
         </View>
@@ -261,12 +311,12 @@ const TimesheetScreen = ({navigation, route, job}) => {
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <View style={styles.jobInfo}>
-              <Text style={styles.jobTitle}>{capitalize(timesheet?.job?.job_title)}</Text>
+              <Text style={styles.jobTitle}>{capitalize(bluesheet?.job?.job_title)}</Text>
               <Text style={styles.jobCustomer}>
-                {capitalize(timesheet?.job?.customer?.customer_name)}
+                {capitalize(bluesheet?.job?.customer?.customer_name)}
               </Text>
               <Text style={styles.jobLocation}>
-                {capitalize(timesheet?.job?.bill_to_address)}
+                {capitalize(bluesheet?.job?.bill_to_address)}
               </Text>
             </View>
             <View style={styles.statusBadges}>
@@ -325,7 +375,7 @@ const TimesheetScreen = ({navigation, route, job}) => {
             <Text style={styles.sectionTitle}>Labour Hours</Text>
           </View>
 
-          {timesheet?.labor_entries?.map(entry => (
+          {bluesheet?.labor_entries?.map(entry => (
             <View key={entry.id} style={styles.entryCard}>
               <View style={styles.entryHeader}>
                 <View style={styles.entryInfo}>
@@ -375,15 +425,35 @@ const TimesheetScreen = ({navigation, route, job}) => {
             <Text style={styles.sectionTitle}>Materials</Text>
           </View>
 
-          {timesheet?.material_entries?.length > 0 ? (
-            timesheet.material_entries.map(material => (
+          {bluesheet?.material_entries?.length > 0 ? (
+            bluesheet.material_entries.map(material => {
+              const materialLabel = getMaterialLabel(material);
+              const productName = getMaterialProductName(material);
+              const showProductLine =
+                productName &&
+                (!materialLabel ||
+                  productName.trim().toLowerCase() !==
+                    materialLabel.trim().toLowerCase());
+
+              return (
               <View key={material.id} style={styles.entryCard}>
                 <View style={styles.entryHeader}>
                   <View style={styles.entryInfo}>
-                    <Text style={styles.entryName}>{material.name}</Text>
-                    <Text style={styles.entryDetails}>
-                      Order ID: {material.supplier_order_id}
+                    <Text style={styles.entryName}>
+                      {capitalize(
+                        materialLabel || productName || 'N/A',
+                      )}
                     </Text>
+                    {showProductLine ? (
+                      <Text style={styles.entryDetails}>
+                        Product: {capitalize(productName)}
+                      </Text>
+                    ) : null}
+                    {material.supplier_order_id ? (
+                      <Text style={styles.entryDetails}>
+                        Order ID: {material.supplier_order_id}
+                      </Text>
+                    ) : null}
                   </View>
                 </View>
 
@@ -412,7 +482,8 @@ const TimesheetScreen = ({navigation, route, job}) => {
                   </View>
                 </View>
               </View>
-            ))
+            );
+            })
           ) : (
             <View style={{paddingVertical: 20, alignItems: 'center'}}>
               <Text style={{color: '#6b7280', fontSize: 16}}>

@@ -34,7 +34,7 @@ import {
 } from '../services/TimerNotificationService';
 import Geolocation from '@react-native-community/geolocation';
 import useHasPermission from '../hooks/useHasPermission';
-import { GOOGLE_MAPS_APIKEY } from '../constants/Constants';
+import {GOOGLE_MAPS_APIKEY, ENABLE_GEOFENCING} from '../constants/Constants';
 import {
   startLiveActivity,
   updateLiveActivity,
@@ -578,35 +578,36 @@ export default function TimerScreen({navigation, route}) {
     try {
       setStartLoading(true);
 
-      // -------- Geofence: must be within 50m to start --------
-      const dest = await ensureDestinationCoords();
-      if (!dest) {
-        Alert.alert(
-          'Working Area Not Set',
-          'Working area location is not set for this job. Please add a valid job address.',
+      if (ENABLE_GEOFENCING) {
+        const dest = await ensureDestinationCoords();
+        if (!dest) {
+          Alert.alert(
+            'Working Area Not Set',
+            'Working area location is not set for this job. Please add a valid job address.',
+          );
+          return;
+        }
+        const cur = await getCurrentCoords();
+        if (!cur?.latitude || !cur?.longitude) {
+          Alert.alert(
+            'Location Not Available',
+            'Unable to fetch your current location. Please turn on GPS and try again.',
+          );
+          return;
+        }
+        const distM = getDistanceM(
+          cur.latitude,
+          cur.longitude,
+          dest.latitude,
+          dest.longitude,
         );
-        return;
-      }
-      const cur = await getCurrentCoords();
-      if (!cur?.latitude || !cur?.longitude) {
-        Alert.alert(
-          'Location Not Available',
-          'Unable to fetch your current location. Please turn on GPS and try again.',
-        );
-        return;
-      }
-      const distM = getDistanceM(
-        cur.latitude,
-        cur.longitude,
-        dest.latitude,
-        dest.longitude,
-      );
-      if (distM > GEOFENCE_RADIUS_M) {
-        Alert.alert(
-          'Outside Working Area',
-          `You are outside the working area. Please move within ${GEOFENCE_RADIUS_MI} mile of the job location to start the timer.`,
-        );
-        return;
+        if (distM > GEOFENCE_RADIUS_M) {
+          Alert.alert(
+            'Outside Working Area',
+            `You are outside the working area. Please move within ${GEOFENCE_RADIUS_MI} mile of the job location to start the timer.`,
+          );
+          return;
+        }
       }
 
       const jobIdToStore = job?.id ?? job?.job?.id;
@@ -669,6 +670,8 @@ export default function TimerScreen({navigation, route}) {
 
   // When timer running, watch location and stop if user exits geofence radius
   useEffect(() => {
+    if (!ENABLE_GEOFENCING) return;
+
     let cancelled = false;
 
     const startWatch = async () => {

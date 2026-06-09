@@ -113,8 +113,7 @@ import {
   isLocationPauseActive,
 } from './src/services/locationTimerGuard';
 import {LOCATION_OFF_LIVE_MESSAGE} from './src/services/LiveActivityService';
-import {logout} from './src/redux/userSlice';
-import {logoutApi} from './src/config/apiConfig';
+import {performLogout} from './src/utils/logout';
 import {useNotifications} from './src/hooks/useNotifications';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import crashlytics from '@react-native-firebase/crashlytics';
@@ -381,21 +380,7 @@ const AppContent = () => {
   const handleLogout = useCallback(
     async ({skipServerLogout = false} = {}) => {
       try {
-        if (!skipServerLogout && token) {
-          try {
-            await logoutApi(token);
-          } catch (e) {
-            // Ignore server logout failure; local logout must still happen.
-            console.log('logoutApi failed, continuing local logout:', e);
-          }
-        }
-
-        dispatch(logout());
-        // Clear all persisted local storage except onboarding flag
-        const keys = await AsyncStorage.getAllKeys();
-        const keepKey = 'hasLaunched';
-        const toRemove = keys.filter(k => k !== keepKey);
-        if (toRemove.length) await AsyncStorage.multiRemove(toRemove);
+        await performLogout({token, dispatch, skipServerLogout});
       } catch (err) {
         Alert.alert('Logout Failed', err.message || 'Please try again');
       }
