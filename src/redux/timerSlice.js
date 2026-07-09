@@ -1,6 +1,6 @@
 // src/store/timerSlice.js
-import { createSlice } from "@reduxjs/toolkit";
-import BackgroundTimer from "react-native-background-timer";
+import {createSlice} from '@reduxjs/toolkit';
+import BackgroundTimer from 'react-native-background-timer';
 
 let timerId = null;
 
@@ -10,59 +10,86 @@ const initialState = {
   elapsedTime: 0,
 };
 
+const stopTicking = () => {
+  if (timerId) {
+    BackgroundTimer.clearInterval(timerId);
+    timerId = null;
+  }
+};
+
+const beginTicking = dispatch => {
+  stopTicking();
+  timerId = BackgroundTimer.setInterval(() => {
+    dispatch(updateElapsedTime());
+  }, 1000);
+};
+
 const timerSlice = createSlice({
-  name: "timer",
+  name: 'timer',
   initialState,
   reducers: {
-    startTimer: (state) => {
+    startTimer: state => {
       state.startTime = Date.now();
       state.isRunning = true;
     },
-    pauseTimer: (state) => {
+    pauseTimer: state => {
       state.isRunning = false;
     },
-    resumeTimer: (state) => {
+    resumeTimer: state => {
       state.startTime = Date.now() - state.elapsedTime;
       state.isRunning = true;
     },
-    stopTimer: (state) => {
+    stopTimer: state => {
       state.isRunning = false;
       state.startTime = null;
       state.elapsedTime = 0;
     },
-    updateElapsedTime: (state) => {
-      state.elapsedTime = Date.now() - state.startTime;
+    updateElapsedTime: state => {
+      if (state.startTime != null) {
+        state.elapsedTime = Date.now() - state.startTime;
+      }
     },
   },
 });
 
-export const { startTimer, pauseTimer, resumeTimer, stopTimer, updateElapsedTime } =
+export const {startTimer, pauseTimer, resumeTimer, stopTimer, updateElapsedTime} =
   timerSlice.actions;
 
-export const startTimerWithBackground = () => (dispatch) => {
+/** Restart the tick loop and catch up elapsed from startTime (iOS background / app relaunch). */
+export const ensureTimerTicking = () => (dispatch, getState) => {
+  const timer = getState()?.timer;
+  if (!timer?.isRunning) {
+    stopTicking();
+    return;
+  }
+
+  if (timer.startTime == null) {
+    dispatch(resumeTimer());
+  } else {
+    dispatch(updateElapsedTime());
+  }
+
+  beginTicking(dispatch);
+};
+
+export const startTimerWithBackground = () => dispatch => {
   dispatch(startTimer());
-  if (timerId) BackgroundTimer.clearInterval(timerId);
-  timerId = BackgroundTimer.setInterval(() => {
-    dispatch(updateElapsedTime());
-  }, 1000);
+  beginTicking(dispatch);
 };
 
-export const pauseTimerWithBackground = () => (dispatch) => {
+export const pauseTimerWithBackground = () => dispatch => {
   dispatch(pauseTimer());
-  if (timerId) BackgroundTimer.clearInterval(timerId);
+  stopTicking();
 };
 
-export const resumeTimerWithBackground = () => (dispatch) => {
+export const resumeTimerWithBackground = () => dispatch => {
   dispatch(resumeTimer());
-  if (timerId) BackgroundTimer.clearInterval(timerId);
-  timerId = BackgroundTimer.setInterval(() => {
-    dispatch(updateElapsedTime());
-  }, 1000);
+  beginTicking(dispatch);
 };
 
-export const stopTimerWithBackground = () => (dispatch) => {
+export const stopTimerWithBackground = () => dispatch => {
   dispatch(stopTimer());
-  if (timerId) BackgroundTimer.clearInterval(timerId);
+  stopTicking();
 };
 
 export default timerSlice.reducer;

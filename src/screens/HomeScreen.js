@@ -61,7 +61,7 @@ const HomeScreen = ({navigation}) => {
 
   const userId = user.id;
 
-  const {unreadCount} = useNotifications(userId);
+  const {unreadCount, refreshUnreadCount} = useNotifications(userId, token);
   console.log('unreadCount', unreadCount);
 
   const [loading, setLoading] = useState(false);
@@ -207,6 +207,8 @@ const HomeScreen = ({navigation}) => {
               : await getlabourJobs(laborId, 1, 10, token);
 
           const newJobs = res?.data?.jobs ?? [];
+          console.log("resss:::",res.data);
+          
           setDashboardData(res?.data);
           console.log('newJobsnewJobs>>', res);
           setJobs(newJobs);
@@ -232,8 +234,8 @@ const HomeScreen = ({navigation}) => {
 
   useFocusEffect(
     useCallback(() => {
-      // loadInitial();
-    }, [user, leadLaborId, laborId, token]),
+      refreshUnreadCount();
+    }, [refreshUnreadCount]),
   );
   // useEffect(() => {
   //   loadInitial();

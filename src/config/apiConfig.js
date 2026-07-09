@@ -411,8 +411,8 @@ export const getJobBluesheets = async (jobId, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log("blusshet dataapi:::",res.data);
-    
+    // console.log("blusshet dataapi:::",res.data);
+
     return res.data; // { data: {...} }
   } catch (error) {
     console.error(
@@ -459,7 +459,7 @@ export const createProduct = async (payload, token) => {
 };
 
 export const updateWorkData = async (jobId, payload, token) => {
-  console.log('jobId, payload, token', jobId, payload, token);
+  // console.log('jobId, payload, token', jobId, payload, token);
 
   try {
     const res = await api.post(`/job/updateWorkData/${jobId}`, payload, {
@@ -484,8 +484,8 @@ export const getJobOrders = async (jobId, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log('API Response:', res); // full response
-    console.log('Response Data:', res.data);
+    // console.log('API Response:', res);
+    // console.log('Response Data:', res.data);
     return res.data;
   } catch (error) {
     console.error(
@@ -574,7 +574,7 @@ export const searchSuppliers = async (q, token) => {
 // blue sheet
 
 export const submitBluesheetComplete = async (payload, token) => {
-  console.log('submitBluesheetComplete', payload, token);
+  // console.log('submitBluesheetComplete', payload, token);
   try {
     const res = await api.post(`/bluesheet/bluesheet/complete`, payload, {
       headers: {Authorization: `Bearer ${token}`},
@@ -673,6 +673,62 @@ export const markNotificationAsRead = async (recipientId, token = null) => {
         message: 'Something went wrong while marking notification read',
       }
     );
+  }
+};
+
+export const markAllNotificationsAsRead = async (userId, token = null) => {
+  try {
+    const headers = token ? {Authorization: `Bearer ${token}`} : {};
+    const res = await api.put(
+      `/notifications/markAllNotificationsAsRead/${userId}/read-all`,
+      null,
+      {headers},
+    );
+    return res.data;
+  } catch (error) {
+    const status = error.response?.status;
+    if (status !== 404 && status !== 405) {
+      console.error(
+        'Error marking all notifications read:',
+        error.response?.data || error.message,
+      );
+    }
+    throw error;
+  }
+};
+
+export const markAllUnreadNotificationsAsRead = async (userId, token = null) => {
+  try {
+    return await markAllNotificationsAsRead(userId, token);
+  } catch (error) {
+    let page = 1;
+    const limit = 50;
+    let marked = 0;
+
+    while (true) {
+      const res = await getNotificationsByUser(
+        userId,
+        page,
+        limit,
+        token,
+        'unread',
+      );
+      const items = res?.data?.items ?? [];
+      if (!items.length) break;
+
+      await Promise.all(
+        items.map(item =>
+          markNotificationAsRead(item.recipient_id, token).catch(() => null),
+        ),
+      );
+      marked += items.length;
+
+      const totalPages = res?.data?.pagination?.total_pages ?? page;
+      if (page >= totalPages) break;
+      page += 1;
+    }
+
+    return {marked};
   }
 };
 

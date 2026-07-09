@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import userReducer from './userSlice'; // Create this slice below
 import timerReducer from './timerSlice'; // Create this slice below
 import cartReducer from './cartSlice';
+import notificationReducer from './notificationSlice';
 
 const persistConfig = {
   key: 'root',
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   user: userReducer,
   timer: timerReducer,
   cart: cartReducer,
+  notification: notificationReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

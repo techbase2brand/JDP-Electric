@@ -288,9 +288,9 @@ const LabourSearchDropdown = ({
           }
         }
 
-        console.log('[JobTimeSheet] getAllLabor page:', pageNo);
-        console.log('[JobTimeSheet] getAllLabor full response:', res);
-        console.log('[JobTimeSheet] getAllLabor parsed list:', mergedData);
+        // console.log('[JobTimeSheet] getAllLabor page:', pageNo);
+        // console.log('[JobTimeSheet] getAllLabor full response:', res);
+        // console.log('[JobTimeSheet] getAllLabor parsed list:', mergedData);
         setItems(prev =>
           pageNo === 1 ? mergedData : [...prev, ...mergedData],
         );
@@ -1175,9 +1175,9 @@ const MaterialModal = ({
       setMaterialSearchLoading(true);
       try {
         const res = await searchProducts(trimmed, token);
-        console.log('[JobTimeSheet] searchProducts raw response:', res);
+        // console.log('[JobTimeSheet] searchProducts raw response:', res);
         const list = normalizeProductSearchList(res);
-        console.log('[JobTimeSheet] searchProducts list:', list);
+        // console.log('[JobTimeSheet] searchProducts list:', list);
         if (lastIssuedQueryRef.current === trimmed) {
           setProductSuggestions(list);
         }
@@ -1358,52 +1358,58 @@ const MaterialModal = ({
                   ) : null}
                   {productSuggestions.length > 0 ? (
                     <View style={styles.materialSuggestionList}>
-                      {productSuggestions.map((p, idx) => {
-                        const key = String(
-                          p?.id ?? p?.product_id ?? p?.jdp_sku ?? `s-${idx}`,
-                        );
-                        const availableQty = Number(p?.stock_quantity ?? 0);
-                        const inStock =
-                          Number.isFinite(availableQty) && availableQty > 0;
-                        return (
-                          <TouchableOpacity
-                            key={key}
-                            style={styles.materialSuggestionRow}
-                            activeOpacity={0.7}
-                            onPress={() => applySelectedProduct(p)}>
-                            <Text
-                              style={styles.materialSuggestionName}
-                              numberOfLines={2}>
-                              {p?.product_name || '—'}
-                            </Text>
-                            <Text style={styles.materialSuggestionMeta}>
-                              {[
-                                p?.unit != null && String(p.unit).trim() !== ''
-                                  ? p.unit
-                                  : 'pieces',
-                                p?.jdp_price != null
-                                  ? ` · $${Number(p.jdp_price)}`
-                                  : p?.unit_cost != null
-                                  ? ` · $${Number(p.unit_cost)}`
-                                  : null,
-                              ]
-                                .filter(Boolean)
-                                .join('')}
-                            </Text>
-                            <Text
-                              style={[
-                                styles.materialSuggestionMeta,
-                                inStock
-                                  ? styles.materialSuggestionInStock
-                                  : styles.materialSuggestionSoldOut,
-                              ]}>
-                              {inStock
-                                ? `In stock · Qty ${availableQty}`
-                                : 'Sold out'}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
+                      <ScrollView
+                        nestedScrollEnabled
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator
+                        style={styles.materialSuggestionScroll}>
+                        {productSuggestions.map((p, idx) => {
+                          const key = String(
+                            p?.id ?? p?.product_id ?? p?.jdp_sku ?? `s-${idx}`,
+                          );
+                          const availableQty = Number(p?.stock_quantity ?? 0);
+                          const inStock =
+                            Number.isFinite(availableQty) && availableQty > 0;
+                          return (
+                            <TouchableOpacity
+                              key={key}
+                              style={styles.materialSuggestionRow}
+                              activeOpacity={0.7}
+                              onPress={() => applySelectedProduct(p)}>
+                              <Text
+                                style={styles.materialSuggestionName}
+                                numberOfLines={2}>
+                                {p?.product_name || '—'}
+                              </Text>
+                              <Text style={styles.materialSuggestionMeta}>
+                                {[
+                                  p?.unit != null && String(p.unit).trim() !== ''
+                                    ? p.unit
+                                    : 'pieces',
+                                  p?.jdp_price != null
+                                    ? ` · $${Number(p.jdp_price)}`
+                                    : p?.unit_cost != null
+                                    ? ` · $${Number(p.unit_cost)}`
+                                    : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join('')}
+                              </Text>
+                              <Text
+                                style={[
+                                  styles.materialSuggestionMeta,
+                                  inStock
+                                    ? styles.materialSuggestionInStock
+                                    : styles.materialSuggestionSoldOut,
+                                ]}>
+                                {inStock
+                                  ? `In stock · Qty ${availableQty}`
+                                  : 'Sold out'}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
                     </View>
                   ) : null}
                 </View>
@@ -1569,8 +1575,33 @@ const JobTimesheet = ({navigation, route, user}) => {
           getJobBluesheets(currentJobId, token),
           getJobOrders(currentJobId, token).catch(() => ({data: {orders: []}})),
         ]);
-        const bluesheet = bluesheetRes?.data ?? {};
-        console.log('blueshhet:::,', bluesheet);
+        console.log('bluesheetRes::::', bluesheetRes);
+        
+        const bluesheet = bluesheetRes?.data ?? bluesheetRes ?? {};
+        const laborTimesheets =
+          bluesheet?.labor_timesheets ?? bluesheet?.data?.labor_timesheets ?? [];
+
+        console.log('[Job Bluesheet] labour hours — API fetch', {
+          api: `GET /job/getJobBluesheets/${currentJobId}`,
+          jobId_passed: currentJobId,
+          labor_id_passed_in_url: false,
+          note: 'labour id URL mein nahi jaata — har entry ke andar labor_id / lead_labor_id hota hai',
+          logged_in_labor_id: profileUser?.labor?.id ?? null,
+          logged_in_lead_labor_id: profileUser?.lead_labor?.id ?? null,
+          date: timesheetData.date,
+          labor_timesheets_count: laborTimesheets.length,
+          entries: laborTimesheets.map(entry => ({
+            id: entry?.id,
+            labor_id: entry?.labor_id ?? entry?.labor?.id,
+            lead_labor_id: entry?.lead_labor_id ?? entry?.lead_labor?.id,
+            name:
+              entry?.lead_labor?.users?.full_name ??
+              entry?.labor?.users?.full_name ??
+              'Unknown',
+            work_activity: entry?.work_activity,
+            date: entry?.date,
+          })),
+        });
 
         const jobOrders = ordersRes?.data?.orders ?? ordersRes?.orders ?? [];
         setBulesheetData({
@@ -1578,15 +1609,18 @@ const JobTimesheet = ({navigation, route, user}) => {
           orders: bluesheet.orders?.length ? bluesheet.orders : jobOrders,
         });
       } catch (error) {
-        console.log('Error fetching timesheet:', error);
-        setBulesheetData({}); // fail-safe
+        console.log('[Job Bluesheet] labour hours — API error', {
+          jobId: currentJobId,
+          error: error?.message || error,
+        });
+        setBulesheetData({});
       }
     };
 
     if (currentJobId && token) {
       fetchTimesheet();
     }
-  }, [currentJobId, timesheetData.date, token]);
+  }, [currentJobId, timesheetData.date, token, profileUser?.labor?.id, profileUser?.lead_labor?.id]);
 
   // storage key per job+date
   const storageKeyRef = useRef(tsKey(currentJobId, timesheetData?.date));
@@ -1599,7 +1633,6 @@ const JobTimesheet = ({navigation, route, user}) => {
 
         // --- Build fresh data from route (always compute) ---
         const bs = bluesheetData || {};
-        console.log('bs::::', bs);
 
         const routeLabour = (
           bs?.labor_timesheets ||
@@ -1636,7 +1669,6 @@ const JobTimesheet = ({navigation, route, user}) => {
               employeeName: name,
               employeeId: empId,
               role: isLead ? 'Lead Labor' : 'Labor',
-              // Keep HMS from timer/API as-is to avoid rounding seconds to 0.00h → 00:00:00
               regular_hours_input: hms,
               regular_hours_hms: hms,
               regularHours: hms,
@@ -1650,11 +1682,7 @@ const JobTimesheet = ({navigation, route, user}) => {
 
         const routeMaterials = [];
         const orders = bs?.orders || bs?.data?.orders || [];
-        console.log(
-          '[JobTimeSheet] BlueSheet orders for materials seed:',
-          Array.isArray(orders) ? orders.length : 0,
-          orders,
-        );
+        // console.log('[JobTimeSheet] BlueSheet orders for materials:', orders?.length);
         orders.forEach(order => {
           const orderDate = order?.order_date || order?.created_at;
           if (!orderDate || !sameDay(orderDate, date)) return;
@@ -1702,24 +1730,18 @@ const JobTimesheet = ({navigation, route, user}) => {
           const savedMaterials = Array.isArray(saved.materialEntries)
             ? saved.materialEntries
             : [];
-          console.log(
-            '[JobTimeSheet] Loaded materialEntries from AsyncStorage:',
-            savedMaterials,
-          );
+          // console.log('[JobTimeSheet] Loaded materialEntries from AsyncStorage');
 
-          // Merge by id: saved has priority; add any new route items not in saved
           const mergeById = (a = [], b = []) => {
             const map = new Map(a.map(x => [String(x.id), x]));
             b.forEach(y => {
               const k = String(y.id);
               if (!map.has(k)) map.set(k, y);
               else {
-                // optional: fill blanks from route (e.g., hours empty in saved)
                 const cur = map.get(k);
                 const merged = {
                   ...y,
                   ...cur,
-                  // ensure hours fields are consistent
                   base_hours_hms:
                     cur?.base_hours_hms ??
                     y?.base_hours_hms ??
@@ -1749,7 +1771,7 @@ const JobTimesheet = ({navigation, route, user}) => {
                       y?.regularHours ??
                       '00:00:00',
                   ),
-                  regularHours: undefined, // keep single source of truth
+                  regularHours: undefined,
                 };
                 map.set(k, merged);
               }
@@ -1759,6 +1781,18 @@ const JobTimesheet = ({navigation, route, user}) => {
 
           const mergedLabour = mergeById(savedLabour, routeLabour);
           const mergedMaterials = mergeById(savedMaterials, routeMaterials);
+
+          console.log('[Job Bluesheet] labour hours — screen table', {
+            jobId,
+            date,
+            how: 'work_activity (API) → regular_hours_hms (screen Reg.hrs column)',
+            row_count: mergedLabour.length,
+            rows: mergedLabour.map(e => ({
+              employeeId: e.employeeId,
+              name: e.employeeName,
+              reg_hrs: e.regular_hours_hms ?? e.regular_hours_input,
+            })),
+          });
 
           // set state
           setTimesheetData(prev => ({
@@ -1785,14 +1819,9 @@ const JobTimesheet = ({navigation, route, user}) => {
 
         // --- No storage: seed from route and persist ---
         const toStore = {
-          // jobNotes: 'Main electrical work and installation',
           labourEntries: routeLabour,
           materialEntries: routeMaterials,
         };
-        console.log(
-          '[JobTimeSheet] Seeding materialEntries from BlueSheet only:',
-          routeMaterials,
-        );
         await AsyncStorage.setItem(key, JSON.stringify(toStore));
 
         setTimesheetData(prev => ({
@@ -1804,6 +1833,18 @@ const JobTimesheet = ({navigation, route, user}) => {
           materialEntries: toStore.materialEntries,
           jobImages: toStore.jobImages || [],
         }));
+
+        console.log('[Job Bluesheet] labour hours — screen table', {
+          jobId,
+          date,
+          how: 'work_activity (API) → regular_hours_hms (screen Reg.hrs column)',
+          row_count: routeLabour.length,
+          rows: routeLabour.map(e => ({
+            employeeId: e.employeeId,
+            name: e.employeeName,
+            reg_hrs: e.regular_hours_hms ?? e.regular_hours_input,
+          })),
+        });
       } catch (e) {
         // soft-fail: keep current state
       }
@@ -2025,7 +2066,7 @@ const JobTimesheet = ({navigation, route, user}) => {
 
   const localMaterialToApi = m => {
     const normalizedProductId = normalizeApiProductId(m.productId);
-    console.log('m:::::::', m);
+    // console.log('m:::::::', m);
 
     const qty = Number(m.totalOrdered) || 0;
     const unitCost = Number(m.unitCost) || 0;
@@ -2057,11 +2098,7 @@ const JobTimesheet = ({navigation, route, user}) => {
     }
 
     // Log JDP price even if backend doesn't accept it
-    console.log('[JobTimeSheet] material payload (log-only extras):', {
-      ...payload,
-      jdp_price: jdpPrice,
-      estimated_unit_cost: estimatedUnitCost,
-    });
+    // console.log('[JobTimeSheet] material payload:', payload);
 
     return payload;
   };
@@ -2075,7 +2112,7 @@ const JobTimesheet = ({navigation, route, user}) => {
       .map(entry => Number(entry?.id))
       .filter(id => !isNaN(id));
 
-    console.log(' labor_timesheet_ids: laborTimesheetIds,', laborTimesheetIds);
+    // console.log('labor_timesheet_ids:', laborTimesheetIds);
 
     const payload = {
       job_id: isNaN(Number(currentJobId)) ? currentJobId : Number(currentJobId),
@@ -2097,7 +2134,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         : [],
     };
 
-    console.log('FINAL_PAYLOAD_TO_API::', JSON.stringify(payload, null, 2));
+    // console.log('FINAL_PAYLOAD_TO_API:', payload);
     return payload;
   };
 
@@ -2158,17 +2195,7 @@ const JobTimesheet = ({navigation, route, user}) => {
             job_status: 'completed',
           },
         };
-        console.log(
-          '[JobTimeSheet] manual updateWorkData payload:',
-          JSON.stringify(
-            {
-              jobIdForApi,
-              workDataPayload,
-            },
-            null,
-            2,
-          ),
-        );
+        // console.log('[JobTimeSheet] manual updateWorkData payload:', { jobIdForApi, workDataPayload });
 
         return updateWorkData(jobIdForApi, workDataPayload, token);
       })
@@ -2181,9 +2208,7 @@ const JobTimesheet = ({navigation, route, user}) => {
     const results = await Promise.allSettled(calls);
     const failed = results.filter(r => r.status === 'rejected').length;
     if (failed > 0) {
-      console.log(
-        `[JobTimeSheet] Manual labor timesheet sync partial failure: ${failed}/${calls.length}`,
-      );
+      // console.log(`[JobTimeSheet] Manual labor sync failed: ${failed}/${calls.length}`);
     }
   }, [currentJobId, timesheetData?.date, timesheetData?.labourEntries, token]);
 
@@ -2309,7 +2334,13 @@ const JobTimesheet = ({navigation, route, user}) => {
       }
 
       const payload = buildBluesheetPayload();
-      console.log('payload:::::::', payload);
+      console.log('[Job Bluesheet] submit — REQUEST', {
+        api: 'POST /bluesheet/bluesheet/complete',
+        job_id: payload.job_id,
+        labor_entries: payload.labor_entries,
+        labor_timesheet_ids: payload.labor_timesheet_ids,
+        payload,
+      });
       if (!payload.labor_entries.length && !payload.material_entries.length) {
         Alert.alert(
           'Empty',
@@ -2321,6 +2352,7 @@ const JobTimesheet = ({navigation, route, user}) => {
       setLoading(true);
 
       const response = await submitBluesheetComplete(payload, token);
+      console.log('[Job Bluesheet] submit — RESPONSE OK', response);
       await syncManualLaborEntriesToWorkData();
 
       // await AsyncStorage.setItem(submitKey(currentJobId, timesheetData.date), 'true');
@@ -2348,6 +2380,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         ],
       );
     } catch (err) {
+      console.log('[Job Bluesheet] submit — RESPONSE ERROR', err?.message || err);
       const msg = err?.message || 'Failed to submit bluesheet';
 
       if (
@@ -3241,6 +3274,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fff',
     overflow: 'hidden',
+  },
+  materialSuggestionScroll: {
+    maxHeight: 200,
   },
   materialSuggestionRow: {
     paddingHorizontal: 12,

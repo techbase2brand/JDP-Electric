@@ -93,6 +93,7 @@ import messaging from '@react-native-firebase/messaging';
 import {Provider, useDispatch, useSelector} from 'react-redux';
 import {PersistGate} from 'redux-persist/integration/react';
 import {store, persistor} from './src/redux/store';
+import {ensureTimerTicking} from './src/redux/timerSlice';
 import FloatingTimer from './src/components/FloatingTimer';
 import notifee from '@notifee/react-native';
 import {
@@ -131,12 +132,12 @@ const AppContent = () => {
   // console.log('useruser', user, token, isRunning, elapsedTime);
   const userId = user?.id;
 
-  const {unreadCount} = useNotifications(userId);
+  const {unreadCount} = useNotifications(userId, token);
   useEffect(() => {
     if (user !== null) {
       updateBadge(unreadCount);
     }
-  }, [unreadCount]);
+  }, [unreadCount, user]);
   
   const updateBadge = async count => {
     try {
@@ -275,6 +276,11 @@ const AppContent = () => {
   }
 }, [navReady, pendingLink]);
 
+  // After redux-persist rehydrate, restart tick loop if timer was left running.
+  useEffect(() => {
+    dispatch(ensureTimerTicking());
+  }, [dispatch]);
+
   useEffect(() => {
     if (isRunning) {
       console.log('Starting background timer', isRunning);
@@ -329,7 +335,7 @@ const AppContent = () => {
         persistIntervalRef.current = null;
       }
     };
-  }, [isRunning, elapsedTime]);
+  }, [isRunning]);
 
   // When app goes to background and timer is running, show notification (lock screen / shade).
   // When app comes to active, hide the notification so it doesn't show while user is in app.
@@ -354,7 +360,13 @@ const AppContent = () => {
           }
         }
       }
-      if (prev === 'background' && nextState === 'active') {
+      if (
+        (prev === 'background' || prev === 'inactive') &&
+        nextState === 'active'
+      ) {
+        // iOS: interval chain dies in background — restart and catch up elapsed time.
+        dispatch(ensureTimerTicking());
+
         // Android: hide/stop foreground-service notification when user returns to app.
         if (Platform.OS === 'android') {
           cancelTimerNotification();
@@ -372,7 +384,7 @@ const AppContent = () => {
       }
     });
     return () => sub.remove();
-  }, []);
+  }, [dispatch]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);

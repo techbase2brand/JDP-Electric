@@ -16,11 +16,13 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
+import {store} from '../redux/store';
 import {
   startTimerWithBackground,
   pauseTimerWithBackground,
   resumeTimerWithBackground,
   stopTimerWithBackground,
+  ensureTimerTicking,
 } from '../redux/timerSlice';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -274,12 +276,7 @@ export default function TimerScreen({navigation, route}) {
   const [activityLog, setActivityLog] = useState([]);
   const [lastActivityLog, setLastActivityLog] = useState([]);
   const [lastTodayActivityLog, setTodayActivityLog] = useState([]);
-  console.log(
-    'lastActivityLoglastActivityLog',
-    lastActivityLog,
-    // activityLog,
-    // lastTodayActivityLog,
-  );
+  // console.log('lastActivityLoglastActivityLog', lastActivityLog);
 
   // Modals
   const [pauseModal, setPauseModal] = useState(false);
@@ -504,16 +501,24 @@ export default function TimerScreen({navigation, route}) {
     getData();
   }, [lastTodayActivityLog]);
 
+  // Restart tick loop when this screen is open (covers stuck timer after background).
+  useFocusEffect(
+    React.useCallback(() => {
+      dispatch(ensureTimerTicking());
+    }, [dispatch]),
+  );
+
   // Keep live activity updating each second
   useEffect(() => {
-    if (isRunning) {
-      const interval = setInterval(
-        () => updateLiveActivity(elapsedTime, isRunning, ''),
-        1000,
-      );
-      return () => clearInterval(interval);
-    }
-  }, [elapsedTime, isRunning]);
+    if (!isRunning) return;
+    const interval = setInterval(() => {
+      const t = store.getState()?.timer;
+      if (t?.isRunning) {
+        updateLiveActivity(t.elapsedTime ?? 0, true, '');
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isRunning]);
 
   // Ensure iOS lock-screen state switches immediately on pause/resume.
   useEffect(() => {
@@ -531,7 +536,7 @@ export default function TimerScreen({navigation, route}) {
 
       const res = await getJobById(jobId, token);
       const data = res?.data || {};
-      console.log('resjobdata', res);
+      // console.log('resjobdata', res);
 
       setJobdata(data);
       const laborTimesheets = data?.labor_timesheets || [];
@@ -932,21 +937,27 @@ export default function TimerScreen({navigation, route}) {
         endISO: end,
         markCompleted: true,
       });
-      console.log(
-        '[TimerScreen] updateWorkData payload:',
-        JSON.stringify(
-          {
-            jobIdForApi,
-            payload,
-          },
-          null,
-          2,
-        ),
-      );
+      console.log('[Timer Complete API] REQUEST', {
+        jobId: jobIdForApi,
+        endpoint: `/job/updateWorkData/${jobIdForApi}`,
+        labor_id_in_body: payload?.labor_timesheet?.labor_id,
+        lead_labor_id_in_body: payload?.labor_timesheet?.lead_labor_id,
+        work_activity: payload?.labor_timesheet?.work_activity,
+        payload,
+      });
 
       try {
-        await updateWorkData(jobIdForApi, payload, token);
+        const response = await updateWorkData(jobIdForApi, payload, token);
+        console.log('[Timer Complete API] RESPONSE OK', {
+          jobId: jobIdForApi,
+          work_activity_sent: payload?.labor_timesheet?.work_activity,
+          response,
+        });
       } catch (e) {
+        console.log('[Timer Complete API] RESPONSE ERROR', {
+          jobId: jobIdForApi,
+          error: e?.message || e,
+        });
         // await enqueuePending(payload);
       }
 
@@ -1008,7 +1019,7 @@ export default function TimerScreen({navigation, route}) {
         item.lead_labor_id === user?.lead_labor?.id,
     ) || [];
   const lastTimesheet = filteredTimesheets[0];
-  console.log('filteredTimesheetsfilteredTimesheets', filteredTimesheets);
+  // console.log('filteredTimesheetsfilteredTimesheets', filteredTimesheets);
   const todays = new Date().toISOString().split('T')[0];
 
   const isTodayCreated = jobData?.bluesheets?.some(
@@ -1043,14 +1054,8 @@ export default function TimerScreen({navigation, route}) {
     0,
   );
   const totalDuration = formatTimes(totalSecondss || totalSeconds);
-  console.log(totalDuration);
-  console.log(
-    'lastTimesheetlastTimesheetlastTimesheet',
-    // lastActivityLog,
-    lastTodayActivityLog,
-    totalDuration,
-    totalSeconds,
-  );
+  // console.log(totalDuration);
+  // console.log('lastTodayActivityLog', lastTodayActivityLog, totalDuration, totalSeconds);
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity
@@ -1207,7 +1212,7 @@ export default function TimerScreen({navigation, route}) {
                   keyExtractor={(_, index) => index.toString()}
                   scrollEnabled={false}
                   renderItem={({item}) => {
-                    console.log('item>>>>>>>', item);
+                        // console.log('item>>>>>>>', item);
 
                     return (
                       <View style={styles.logItem}>
@@ -1266,7 +1271,7 @@ export default function TimerScreen({navigation, route}) {
                 keyExtractor={(_, index) => index.toString()}
                 scrollEnabled={false}
                 renderItem={({item}) => {
-                  console.log('itemmm', item);
+                  // console.log('itemmm', item);
 
                   return (
                     <View style={styles.logItem}>

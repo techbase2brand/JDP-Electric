@@ -588,9 +588,12 @@ import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import {
   getNotificationsByUser,
   markNotificationAsRead,
+  markAllUnreadNotificationsAsRead,
   deleteNotificationRecipient,
 } from '../config/apiConfig';
 import {useSelector} from 'react-redux';
+import {useNotifications} from '../hooks/useNotifications';
+import {useFocusEffect} from '@react-navigation/native';
 
 // Colors, Spacing, BorderRadius, Shadows
 const Colors = {
@@ -637,9 +640,16 @@ const NotificationScreen = ({route}) => {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('all'); // 'all' | 'unread'
   const [hasNextPage, setHasNextPage] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
+  const [markingAllRead, setMarkingAllRead] = useState(false);
+  const {unreadCount, refreshUnreadCount} = useNotifications(userId, token);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshUnreadCount();
+    }, [refreshUnreadCount]),
+  );
 
   useEffect(() => {
     StatusBar.setBarStyle('dark-content');
@@ -664,7 +674,7 @@ const NotificationScreen = ({route}) => {
       const items = res?.data?.items ?? [];
       console.log('items>>>>', items);
       setAllNotifications(items);
-      setUnreadCount(items.filter(i => i.status === 'unread').length);
+      await refreshUnreadCount();
       setNotifications(items);
       const totalPages = res?.data?.pagination?.total_pages ?? 1;
       setHasNextPage(1 < totalPages);
@@ -704,9 +714,7 @@ const NotificationScreen = ({route}) => {
       const totalPages = res?.data?.pagination?.total_pages ?? nextPage;
       setHasNextPage(nextPage < totalPages);
       setPage(nextPage);
-      setUnreadCount(
-        prev => prev + items.filter(i => i.status === 'unread').length,
-      );
+      await refreshUnreadCount();
     } catch (err) {
       console.error(err);
     } finally {
@@ -730,8 +738,8 @@ const NotificationScreen = ({route}) => {
               : r,
           ),
         );
-        setUnreadCount(u => Math.max(0, u - 1));
         await markNotificationAsRead(recipient.recipient_id, token);
+        await refreshUnreadCount();
       }
 
       const customLink = recipient.notification?.custom_link;
@@ -779,13 +787,36 @@ const NotificationScreen = ({route}) => {
         prev.filter(r => r.recipient_id !== recipient.recipient_id),
       );
       await deleteNotificationRecipient(recipient.recipient_id, token);
-      setUnreadCount(prev =>
-        recipient.status === 'unread' ? Math.max(0, prev - 1) : prev,
-      );
+      await refreshUnreadCount();
     } catch (err) {
       console.error(err);
       Alert.alert('Error', 'Failed to delete notification');
       await loadInitial();
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (!unreadCount || markingAllRead) return;
+    try {
+      setMarkingAllRead(true);
+      await markAllUnreadNotificationsAsRead(userId, token);
+      setAllNotifications(prev =>
+        prev.map(item =>
+          item.status === 'unread'
+            ? {...item, status: 'read', read_at: new Date().toISOString()}
+            : item,
+        ),
+      );
+      await refreshUnreadCount();
+      if (filter === 'unread') {
+        setNotifications([]);
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', 'Failed to mark all notifications as read');
+      await loadInitial();
+    } finally {
+      setMarkingAllRead(false);
     }
   };
 
@@ -913,7 +944,20 @@ const NotificationScreen = ({route}) => {
           <Icon name="arrow-back" size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <Text></Text>
+        {unreadCount > 0 ? (
+          <TouchableOpacity
+            onPress={handleMarkAllAsRead}
+            disabled={markingAllRead}
+            style={styles.markAllButton}>
+            {markingAllRead ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
+            ) : (
+              <Text style={styles.markAllText}>Mark all read</Text>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <Text />
+        )}
       </View>
 
       <View
@@ -1114,6 +1158,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {fontSize: 20, fontWeight: 'bold', color: Colors.text},
+  markAllButton: {
+    minWidth: 88,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingVertical: 4,
+  },
+  markAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.primary,
+  },
   filtersContainer: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.md,
