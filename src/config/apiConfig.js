@@ -242,6 +242,44 @@ export const createCustomer = async (payload, token) => {
   }
 };
 
+/** API returns customers + contractors in one list — keep only real customers. */
+export const isCustomerListItem = item => {
+  const type = String(item?.type ?? '').toLowerCase();
+  const tag = String(item?.tag ?? '').toLowerCase();
+  const customerType = String(item?.customer_type ?? '').toLowerCase();
+
+  if (type === 'contractor' || tag === 'contractor') {
+    return false;
+  }
+
+  return (
+    type === 'customer' || tag === 'customer' || customerType === 'customer'
+  );
+};
+
+export const filterCustomerListItems = items =>
+  (Array.isArray(items) ? items : []).filter(isCustomerListItem);
+
+const logCustomersApiList = (source, payload) => {
+  const raw = payload?.data?.customers ?? payload?.customers ?? [];
+  const customersOnly = filterCustomerListItems(raw);
+  const list = customersOnly.map(c => ({
+    id: c?.id,
+    customer_name: c?.customer_name,
+    tag: c?.tag,
+    type: c?.type,
+    customer_type: c?.customer_type,
+    phone: c?.phone ?? c?.contact_phone ?? c?.mobile,
+    email: c?.email ?? c?.customer_email,
+    address: c?.address ?? c?.customer_address,
+  }));
+  console.log(`[API Customers] ${source}:`, {
+    raw_count: raw.length,
+    customers_only_count: list.length,
+    customers: list,
+  });
+};
+
 // Get Customers
 export const getCustomers = async (page = 1, limit = 10, token) => {
   try {
@@ -253,6 +291,7 @@ export const getCustomers = async (page = 1, limit = 10, token) => {
         },
       },
     );
+    logCustomersApiList(`GET /customer/getCustomers?page=${page}&limit=${limit}`, response.data);
     return response.data; // { data: [], total: number }
   } catch (error) {
     console.error(
@@ -279,6 +318,10 @@ export const searchCustomers = async (
           Authorization: `Bearer ${token}`,
         },
       },
+    );
+    logCustomersApiList(
+      `GET /customer/searchCustomers?search=${search}&page=${page}&limit=${limit}`,
+      response.data,
     );
     return response.data;
   } catch (error) {

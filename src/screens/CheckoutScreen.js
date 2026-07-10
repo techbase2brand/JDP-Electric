@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  KeyboardAvoidingView,
+  Keyboard,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -84,6 +85,12 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [showOrderSummary, setShowOrderSummary] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const scrollViewRef = useRef(null);
+  const instructionsYRef = useRef(0);
+  const instructionsFocusedRef = useRef(false);
+  const keyboardHeightRef = useRef(0);
   const allCartItems = useSelector(state => state.cart.items);
   const cartItems = allCartItems.filter(
     item => (item.job_id ?? item.jobId) === jobId,
@@ -91,6 +98,76 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
   console.log('Labour ID:', leadLabourId, cartItems);
   console.log('Job ID:', jobData, jobId);
   console.log('Supplier ID:', supplierId);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, e => {
+      const height = e?.endCoordinates?.height ?? 0;
+      keyboardHeightRef.current = height;
+      setKeyboardVisible(true);
+      setKeyboardHeight(height);
+
+      if (Platform.OS === 'android') {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({animated: true});
+        }, 150);
+      } else if (instructionsFocusedRef.current) {
+        setTimeout(() => {
+          scrollInstructionsIntoView(height);
+        }, 100);
+      }
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+      keyboardHeightRef.current = 0;
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const scrollInstructionsIntoView = kbHeight => {
+    const height = kbHeight ?? keyboardHeightRef.current ?? 0;
+    const windowHeight = Dimensions.get('window').height;
+    const headerOffset = Platform.OS === 'ios' ? 100 : 80;
+    const visibleArea = windowHeight - height - headerOffset;
+    const targetY = Math.max(
+      0,
+      instructionsYRef.current - Math.max(visibleArea * 0.35, 60),
+    );
+
+    scrollViewRef.current?.scrollTo({y: targetY, animated: true});
+  };
+
+  const handleInstructionsFocus = () => {
+    instructionsFocusedRef.current = true;
+    if (Platform.OS === 'android') {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({animated: true});
+      }, 200);
+    }
+  };
+
+  const handleInstructionsBlur = () => {
+    instructionsFocusedRef.current = false;
+  };
+
+  const getScrollContentStyle = () => {
+    if (!keyboardVisible) {
+      return styles.scrollContentWithBottomBar;
+    }
+    if (Platform.OS === 'ios') {
+      return {paddingBottom: Spacing.lg};
+    }
+    return {paddingBottom: keyboardHeight + Spacing.lg};
+  };
 
   const handlePlaceOrder = async () => {
     if (!jobId || !cartItems?.length) {
@@ -178,7 +255,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
                       SKU: {item.jdp_sku}
                     </Text>
                     <Text style={styles.summaryItemSupplier}>
-                      Supplier: {item.suppliers.contact_person}
+                      Supplier: {item?.suppliers?.contact_person || '—'}
                     </Text>
                   </View>
                   <View style={styles.summaryItemQuantity}>
@@ -215,12 +292,7 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
   );
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}>
-      {/* <StatusBar barStyle="dark-content" backgroundColor={Colors.white} /> */}
-
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -236,106 +308,99 @@ const CheckoutScreen = ({onBack, onNavigate, route}) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        contentContainerStyle={{flexGrow: 1}}>
-        {/* Order Summary Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="inventory" size={20} color={Colors.primary} />
-            <Text style={styles.cardTitle}>Order Summary</Text>
-          </View>
+      <View style={styles.keyboardView}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={[styles.scrollContent, getScrollContentStyle()]}>
+          {/* Order Summary Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Icon name="inventory" size={20} color={Colors.primary} />
+              <Text style={styles.cardTitle}>Order Summary</Text>
+            </View>
 
-          <View style={styles.cardContent}>
-            {cartItems?.slice(0, 2).map(item => (
-              <View key={item.id} style={styles.orderItem}>
-                <View style={styles.orderItemInfo}>
-                  <Text style={styles.orderItemName}>{item.product_name}</Text>
-                  <Text style={styles.orderItemQuantity}>
-                    Qty: {item.quantity}
-                  </Text>
+            <View style={styles.cardContent}>
+              {cartItems?.slice(0, 2).map(item => (
+                <View key={item.id} style={styles.orderItem}>
+                  <View style={styles.orderItemInfo}>
+                    <Text style={styles.orderItemName}>{item.product_name}</Text>
+                    <Text style={styles.orderItemQuantity}>
+                      Qty: {item.quantity}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))}
 
-            {cartItems?.length > 2 && (
-              <TouchableOpacity
-                style={styles.viewMoreButton}
-                onPress={() => setShowOrderSummary(true)}>
-                <Text style={styles.viewMoreText}>
-                  View {cartItems.length - 2} more items
+              {cartItems?.length > 2 && (
+                <TouchableOpacity
+                  style={styles.viewMoreButton}
+                  onPress={() => setShowOrderSummary(true)}>
+                  <Text style={styles.viewMoreText}>
+                    View {cartItems.length - 2} more items
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              <View style={styles.orderSummaryDivider} />
+              <View style={styles.orderSummaryTotal}>
+                <Text style={styles.totalItemsText}>
+                  Total Items:{' '}
+                  {cartItems?.reduce((sum, item) => sum + item.quantity, 0)}
                 </Text>
-              </TouchableOpacity>
-            )}
-
-            <View style={styles.orderSummaryDivider} />
-            <View style={styles.orderSummaryTotal}>
-              <Text style={styles.totalItemsText}>
-                Total Items:{' '}
-                {cartItems?.reduce((sum, item) => sum + item.quantity, 0)}
-              </Text>
-              {/* <Text style={styles.totalValueText}>Quote on Request</Text> */}
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Special Instructions */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Special Instructions</Text>
-          </View>
+          {/* Special Instructions */}
+          <View
+            style={styles.card}
+            onLayout={e => {
+              instructionsYRef.current = e.nativeEvent.layout.y;
+            }}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Special Instructions</Text>
+            </View>
 
-          <View style={styles.cardContent}>
-            <TextInput
-              style={styles.textAreaInput}
-              value={specialInstructions}
-              onChangeText={setSpecialInstructions}
-              placeholder="Any special instructions or requirements..."
-              placeholderTextColor={Colors.textSecondary}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-          </View>
-        </View>
-
-        {/* Important Notice */}
-        {/* <View style={styles.noticeCard}>
-          <View style={styles.noticeContent}>
-            <Icon name="info" size={20} color={Colors.warning} />
-            <View style={styles.noticeText}>
-              <Text style={styles.noticeTitle}>Quote Required</Text>
-              <Text style={styles.noticeDescription}>
-                Product pricing will be provided via quote based on current
-                market rates and availability.
-              </Text>
+            <View style={styles.cardContent}>
+              <TextInput
+                style={styles.textAreaInput}
+                value={specialInstructions}
+                onChangeText={setSpecialInstructions}
+                onFocus={handleInstructionsFocus}
+                onBlur={handleInstructionsBlur}
+                placeholder="Any special instructions or requirements..."
+                placeholderTextColor={Colors.textSecondary}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
             </View>
           </View>
-        </View> */}
-
-        <View style={{height: 100}} />
-      </ScrollView>
-
-      {/* Bottom Action */}
-      <View style={styles.bottomAction}>
-        <TouchableOpacity
-          disabled={loading}
-          style={styles.placeOrderButton}
-          onPress={handlePlaceOrder}>
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.placeOrderText}>Place Order</Text>
-          )}
-        </TouchableOpacity>
+        </ScrollView>
       </View>
+
+      {!keyboardVisible ? (
+        <View style={styles.bottomAction}>
+          <TouchableOpacity
+            disabled={loading}
+            style={styles.placeOrderButton}
+            onPress={handlePlaceOrder}>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.placeOrderText}>Place Order</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       {/* Order Summary Modal */}
       {renderOrderSummaryModal()}
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -343,6 +408,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.backgroundLight,
+  },
+  keyboardView: {
+    flex: 1,
   },
 
   // Header
@@ -379,6 +447,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.lg,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  scrollContentWithBottomBar: {
+    paddingBottom: 100,
   },
 
   // Cards

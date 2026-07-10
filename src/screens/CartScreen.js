@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -75,21 +75,31 @@ const Shadows = {
   },
 };
 
-const asArray = value => {
-  if (Array.isArray(value)) {
-    return value;
-  }
-  if (Array.isArray(value?.data)) {
-    return value.data;
-  }
-  if (Array.isArray(value?.data?.data)) {
-    return value.data.data;
-  }
-  if (Array.isArray(value?.data?.products)) {
-    return value.data.products;
-  }
-  return [];
+const debounce = (fn, delay = 400) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
 };
+
+const normalizeProductSearchList = res => {
+  if (Array.isArray(res)) {
+    return res;
+  }
+  const raw =
+    res?.data?.products ??
+    res?.products ??
+    (Array.isArray(res?.data) ? res.data : null);
+  return Array.isArray(raw) ? raw : [];
+};
+
+const getProductSku = product =>
+  product?.jdp_sku ||
+  product?.sku ||
+  product?.product_sku ||
+  product?.supplier_sku ||
+  '';
 
 const CartScreen = ({onBack, onNavigate, route}) => {
   const {id, job, supplier} = route.params ?? {};
@@ -103,9 +113,9 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   const token = useSelector(state => state.user.token);
   const user = useSelector(state => state.user.user);
   const [loading, setLoading] = useState(false);
-  const materialSearchTimeoutRef = useRef(null);
+  const lastMaterialSearchQueryRef = useRef('');
 
-  console.log('cartitemss', id, jobObj?.id, user?.leadLabor?.[0].id);
+  console.log('cartitemss', id, jobObj?.id, user?.leadLabor?.[0]?.id);
 
   const getInitialMaterial = () => ({
     product_name: '',
@@ -143,16 +153,52 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   const [material, setMaterial] = useState(getInitialMaterial);
   const [materialSearchLoading, setMaterialSearchLoading] = useState(false);
   const [materialSearchResults, setMaterialSearchResults] = useState([]);
-  const [showMaterialSearch, setShowMaterialSearch] = useState(false);
   const [selectedMaterialProduct, setSelectedMaterialProduct] = useState(null);
+
+  const runMaterialProductSearch = useCallback(
+    async q => {
+      const trimmed = (q || '').trim();
+      if (!trimmed || !token) {
+        setMaterialSearchResults([]);
+        setMaterialSearchLoading(false);
+        lastMaterialSearchQueryRef.current = '';
+        return;
+      }
+      lastMaterialSearchQueryRef.current = trimmed;
+      setMaterialSearchLoading(true);
+      try {
+        const res = await searchProducts(trimmed, token);
+        const list = normalizeProductSearchList(res);
+        if (lastMaterialSearchQueryRef.current === trimmed) {
+          setMaterialSearchResults(list);
+        }
+      } catch (error) {
+        console.log('❌ material search error:', error?.message || error);
+        if (lastMaterialSearchQueryRef.current === trimmed) {
+          setMaterialSearchResults([]);
+        }
+      } finally {
+        if (lastMaterialSearchQueryRef.current === trimmed) {
+          setMaterialSearchLoading(false);
+        }
+      }
+    },
+    [token],
+  );
+
+  const debouncedMaterialProductSearch = useMemo(
+    () => debounce(q => runMaterialProductSearch(q), 400),
+    [runMaterialProductSearch],
+  );
 
   // Device unique ID
   const deviceId = DeviceInfo.getUniqueId();
 
   const closeAddMaterialModal = () => {
     setShowAddEntryModal(false);
-    setShowMaterialSearch(false);
     setMaterialSearchResults([]);
+    setMaterialSearchLoading(false);
+    lastMaterialSearchQueryRef.current = '';
     setSelectedMaterialProduct(null);
     setMaterial(getInitialMaterial());
   };
@@ -165,11 +211,11 @@ const CartScreen = ({onBack, onNavigate, route}) => {
     }
 
     setSelectedMaterialProduct(product);
-    setShowMaterialSearch(false);
+    setMaterialSearchResults([]);
     setMaterial(prev => ({
       ...prev,
       product_name: product?.product_name || '',
-      jdp_sku: product?.jdp_sku || '',
+      jdp_sku: getProductSku(product),
       description: product?.description || '',
       image: product?.image || product?.product_image || product?.image_url || '',
       product_id: product?.id || product?.product_id || '',
@@ -209,7 +255,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
             id: selectedProductId,
             product_id: selectedProductId,
             product_name: trimmedName,
-            jdp_sku: material.jdp_sku || selectedMaterialProduct?.jdp_sku || '',
+            jdp_sku: material.jdp_sku || getProductSku(selectedMaterialProduct),
             description:
               material.description || selectedMaterialProduct?.description || '',
             image:
@@ -260,51 +306,12 @@ const CartScreen = ({onBack, onNavigate, route}) => {
   };
 
   useEffect(() => {
-    if (!showAddEntryModal) return;
-    const term = (material?.product_name || '').trim();
-
-    if (materialSearchTimeoutRef.current) {
-      clearTimeout(materialSearchTimeoutRef.current);
-    }
-
-    if (term.length < 2) {
+    if (!showAddEntryModal) {
       setMaterialSearchResults([]);
       setMaterialSearchLoading(false);
-      return;
+      lastMaterialSearchQueryRef.current = '';
     }
-
-    materialSearchTimeoutRef.current = setTimeout(async () => {
-      try {
-        setMaterialSearchLoading(true);
-        const res = await searchProducts(term, token);
-        const currentSupplierId = String(id ?? '');
-        const products = asArray(res).filter(product => {
-          if (!product) {
-            return false;
-          }
-          if (!currentSupplierId) {
-            return true;
-          }
-          const productSupplierId = String(
-            product?.supplier_id ?? product?.suppliers?.id ?? '',
-          );
-          return productSupplierId === currentSupplierId;
-        });
-        setMaterialSearchResults(products);
-      } catch (error) {
-        console.log('❌ material search error:', error?.message || error);
-        setMaterialSearchResults([]);
-      } finally {
-        setMaterialSearchLoading(false);
-      }
-    }, 350);
-
-    return () => {
-      if (materialSearchTimeoutRef.current) {
-        clearTimeout(materialSearchTimeoutRef.current);
-      }
-    };
-  }, [id, material?.product_name, showAddEntryModal, token]);
+  }, [showAddEntryModal]);
 
   // ✅ Update Quantity (Redux) – scoped to current job
   const handleUpdateQuantity = (itemId, newQuantity) => {
@@ -595,7 +602,6 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                 <TextInput
                   style={styles.textInput}
                   value={material.product_name}
-                  onFocus={() => setShowMaterialSearch(true)}
                   onChangeText={text => {
                     if (
                       selectedMaterialProduct &&
@@ -604,43 +610,69 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                       setSelectedMaterialProduct(null);
                     }
                     setMaterial(prev => ({...prev, product_name: text}));
+                    debouncedMaterialProductSearch(text);
                   }}
                   placeholder="Enter material name"
                   placeholderTextColor={Colors.textLight}
                 />
-                {showMaterialSearch &&
-                (material?.product_name || '').trim().length >= 2 ? (
+                {materialSearchLoading ? (
+                  <View style={styles.searchSuggestionRow}>
+                    <ActivityIndicator size="small" color={Colors.primary} />
+                    <Text
+                      style={[
+                        styles.searchSuggestionSubText,
+                        {marginLeft: 8},
+                      ]}>
+                      Searching products…
+                    </Text>
+                  </View>
+                ) : null}
+                {materialSearchResults.length > 0 ? (
                   <View style={styles.searchSuggestionBox}>
-                    {materialSearchLoading ? (
-                      <View style={styles.searchSuggestionRow}>
-                        <Text style={styles.searchSuggestionSubText}>
-                          Searching...
-                        </Text>
-                      </View>
-                    ) : materialSearchResults.length > 0 ? (
-                      materialSearchResults.slice(0, 8).map(product => {
-                        const key =
-                          product?.id ||
-                          product?.product_id ||
-                          product?.jdp_sku;
+                    <ScrollView
+                      nestedScrollEnabled
+                      keyboardShouldPersistTaps="handled"
+                      showsVerticalScrollIndicator
+                      style={{maxHeight: 200}}>
+                      {materialSearchResults.map((product, idx) => {
+                        const key = String(
+                          product?.id ??
+                            product?.product_id ??
+                            product?.jdp_sku ??
+                            `s-${idx}`,
+                        );
                         const availableQty = Number(product?.stock_quantity ?? 0);
                         const inStock =
                           Number.isFinite(availableQty) && availableQty > 0;
+                        const productSku = getProductSku(product);
                         return (
                           <TouchableOpacity
-                            key={String(key)}
+                            key={key}
                             style={styles.searchSuggestionRow}
+                            activeOpacity={0.7}
                             onPress={() => handleSelectMaterialProduct(product)}>
                             <Text
                               style={styles.searchSuggestionTitle}
-                              numberOfLines={1}>
-                              {product?.product_name || 'Untitled product'}
+                              numberOfLines={2}>
+                              {product?.product_name || '—'}
                             </Text>
                             <Text
                               style={styles.searchSuggestionSubText}
                               numberOfLines={1}>
-                              SKU: {product?.jdp_sku || '—'}  |  Qty:{' '}
-                              {Number.isFinite(availableQty) ? availableQty : 0}
+                              {[
+                                productSku ? `SKU: ${productSku}` : null,
+                                product?.unit != null &&
+                                String(product.unit).trim() !== ''
+                                  ? product.unit
+                                  : 'pieces',
+                                product?.jdp_price != null
+                                  ? ` · $${Number(product.jdp_price)}`
+                                  : product?.unit_cost != null
+                                  ? ` · $${Number(product.unit_cost)}`
+                                  : null,
+                              ]
+                                .filter(Boolean)
+                                .join('')}
                             </Text>
                             <Text
                               style={[
@@ -649,18 +681,14 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                                   ? styles.searchSuggestionInStock
                                   : styles.searchSuggestionSoldOut,
                               ]}>
-                              {inStock ? 'In stock' : 'Sold out'}
+                              {inStock
+                                ? `In stock · Qty ${availableQty}`
+                                : 'Sold out'}
                             </Text>
                           </TouchableOpacity>
                         );
-                      })
-                    ) : (
-                      <View style={styles.searchSuggestionRow}>
-                        <Text style={styles.searchSuggestionSubText}>
-                          No material found
-                        </Text>
-                      </View>
-                    )}
+                      })}
+                    </ScrollView>
                   </View>
                 ) : null}
               </View>
@@ -909,7 +937,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
                   )}
                   <View style={styles.supplierBadge}>
                     <Text style={styles.supplierText}>
-                      {capitalize(item.suppliers.contact_person)}
+                      {capitalize(item?.suppliers?.contact_person) || '—'}
                     </Text>
                   </View>
                 </View>
@@ -1006,7 +1034,7 @@ const CartScreen = ({onBack, onNavigate, route}) => {
             style={styles.checkoutButton}
             onPress={() =>
               navigation.navigate('CheckoutScreen', {
-                leadLabourId: user?.leadLabor?.[0].id,
+                leadLabourId: user?.leadLabor?.[0]?.id,
                 jobData: job,
                 supplierId: id,
               })

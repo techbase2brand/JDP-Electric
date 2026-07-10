@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useCallback, useRef} from 'react';
+import React, {useState, useMemo, useCallback, useRef, useEffect} from 'react';
 import {
   View,
   Text,
@@ -211,6 +211,23 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
     return filtered;
   }, [blueSheetData, statusFilter, searchQuery, sortBy]);
 
+  useEffect(() => {
+    console.log('[All Bluesheets] filtered list for UI:', {
+      total: blueSheetData?.length ?? 0,
+      filtered: filteredTimesheets?.length ?? 0,
+      searchQuery,
+      statusFilter,
+      sortBy,
+      items: (filteredTimesheets ?? []).map(t => ({
+        id: t?.id,
+        status: t?.status,
+        job_title: t?.job?.job_title,
+        date: t?.date,
+        created_at: t?.created_at,
+      })),
+    });
+  }, [filteredTimesheets, blueSheetData, searchQuery, statusFilter, sortBy]);
+
   const finishInitialLoad = useCallback(() => {
     if (!hasLoadedRef.current) {
       hasLoadedRef.current = true;
@@ -220,6 +237,10 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
 
   const handleBlueSheetsData = useCallback(
     sheets => {
+      console.log('[All Bluesheets] list set on screen:', {
+        count: sheets?.length ?? 0,
+        raw: sheets,
+      });
       setBlueSheetData(sheets);
       finishInitialLoad();
     },
@@ -393,33 +414,41 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                             Job Date: {timesheet?.date}
                           </Text>
                         </View>
+                      </View>
+                      <View style={styles.detailRow}>
                         <View style={styles.detailItem}>
-                          <Feather name="clock" size={20} color={tabColor} />
+                          <Feather name="users" size={20} color={tabColor} />
                           <Text style={styles.detailText}>
-                            Hours:{' '}
-                            {timesheet?.labor_entries?.reduce((sum, item) => {
-                              const hours =
-                                parseFloat(
-                                  item?.total_hours?.replace('h', ''),
-                                ) || 0;
-                              return sum + hours;
-                            }, 0)}
-                            h
+                            Team: {timesheet?.labor_entries?.length ?? 0}
                           </Text>
                         </View>
                       </View>
+                      {(timesheet?.labor_entries?.length ?? 0) > 0 ? (
+                        <View style={styles.laborHoursList}>
+                          {timesheet.labor_entries.map((entry, idx) => (
+                            <View
+                              key={entry?.id ?? `labor-${idx}`}
+                              style={styles.laborHourRow}>
+                              <Text
+                                style={styles.laborHourName}
+                                numberOfLines={1}>
+                                {capitalize(
+                                  entry?.employee_name || `Labor ${idx + 1}`,
+                                )}
+                              </Text>
+                              <Text style={styles.laborHourValue}>
+                                {entry?.total_hours}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      ) : null}
                       <View style={styles.detailRow}>
                         <View style={styles.detailItem}>
                           <Feather name="user" size={20} color={tabColor} />
                           <Text style={styles.detailText}>
                             By:{' '}
                             {capitalize(timesheet?.created_by_user?.full_name)}
-                          </Text>
-                        </View>
-                        <View style={styles.detailItem}>
-                          <Feather name="users" size={20} color={tabColor} />
-                          <Text style={styles.detailText}>
-                            Team: {timesheet?.labor_entries?.length}
                           </Text>
                         </View>
                       </View>
@@ -823,6 +852,31 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     lineHeight: 20,
+  },
+  laborHoursList: {
+    marginTop: 4,
+    marginBottom: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#EEF2F7',
+    gap: 6,
+  },
+  laborHourRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  laborHourName: {
+    flex: 1,
+    fontSize: 13,
+    color: '#374151',
+    marginRight: 8,
+  },
+  laborHourValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#111827',
   },
   costBreakdown: {
     backgroundColor: '#f9fafb',

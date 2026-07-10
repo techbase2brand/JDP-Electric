@@ -1730,6 +1730,11 @@ const JobTimesheet = ({navigation, route, user}) => {
           const savedMaterials = Array.isArray(saved.materialEntries)
             ? saved.materialEntries
             : [];
+          const removedMaterialIds = (saved.removedMaterialIds || []).map(String);
+          const removedMaterialIdSet = new Set(removedMaterialIds);
+          const filteredRouteMaterials = routeMaterials.filter(
+            m => !removedMaterialIdSet.has(String(m.id)),
+          );
           // console.log('[JobTimeSheet] Loaded materialEntries from AsyncStorage');
 
           const mergeById = (a = [], b = []) => {
@@ -1780,7 +1785,10 @@ const JobTimesheet = ({navigation, route, user}) => {
           };
 
           const mergedLabour = mergeById(savedLabour, routeLabour);
-          const mergedMaterials = mergeById(savedMaterials, routeMaterials);
+          const mergedMaterials = mergeById(
+            savedMaterials,
+            filteredRouteMaterials,
+          ).filter(m => !removedMaterialIdSet.has(String(m.id)));
 
           console.log('[Job Bluesheet] labour hours — screen table', {
             jobId,
@@ -1802,6 +1810,7 @@ const JobTimesheet = ({navigation, route, user}) => {
             jobNotes: saved?.jobNotes ?? prev.jobNotes,
             labourEntries: mergedLabour,
             materialEntries: mergedMaterials,
+            removedMaterialIds,
           }));
 
           // also persist the merged snapshot so next open pe fresh mile
@@ -1811,6 +1820,7 @@ const JobTimesheet = ({navigation, route, user}) => {
               jobNotes: saved?.jobNotes,
               labourEntries: mergedLabour,
               materialEntries: mergedMaterials,
+              removedMaterialIds,
             }),
           );
 
@@ -1889,6 +1899,7 @@ const JobTimesheet = ({navigation, route, user}) => {
         ),
       })),
       materialEntries: (next.materialEntries || []).map(m => ({...m})),
+      removedMaterialIds: (next.removedMaterialIds || []).map(String),
       jobImages: (next.jobImages || []).map(img => ({
         uri: img?.uri,
         type: img?.type,
@@ -2326,6 +2337,40 @@ const JobTimesheet = ({navigation, route, user}) => {
     setTempMaterialData({});
   };
 
+  const handleRemoveMaterial = material => {
+    if (locked) {
+      return;
+    }
+    const materialName = material?.name || 'this material';
+    Alert.alert(
+      'Remove Material',
+      `Remove "${materialName}" from this bluesheet? It will not be included when you submit.`,
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            const id = String(material?.id);
+            setTimesheetData(prev => {
+              const next = {
+                ...prev,
+                materialEntries: (prev.materialEntries || []).filter(
+                  m => String(m.id) !== id,
+                ),
+                removedMaterialIds: [
+                  ...new Set([...(prev.removedMaterialIds || []), id]),
+                ],
+              };
+              persistLocalState(next);
+              return next;
+            });
+          },
+        },
+      ],
+    );
+  };
+
   const handleSubmitForApproval = async () => {
     try {
       if (locked) {
@@ -2723,6 +2768,15 @@ const JobTimesheet = ({navigation, route, user}) => {
                                 }}
                                 style={{padding: 4}}>
                                 <Feather name="edit" size={22} color="#555" />
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                onPress={() => handleRemoveMaterial(material)}
+                                style={[styles.deleteButton, {padding: 4}]}>
+                                <MaterialIcons
+                                  name="delete"
+                                  size={22}
+                                  color="#dc2626"
+                                />
                               </TouchableOpacity>
                             </View>
                           )}

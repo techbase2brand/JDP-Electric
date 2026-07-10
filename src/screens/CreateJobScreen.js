@@ -38,6 +38,7 @@ import {
   getContractors,
   getCustomers,
   searchCustomers,
+  filterCustomerListItems,
 } from '../config/apiConfig';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
 import {spacings} from '../constants/Fonts';
@@ -764,10 +765,23 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       const res = q
         ? await searchCustomers(q, pageNo, limit, token)
         : await getCustomers(pageNo, limit, token);
-      console.log('[CreateJob] customers API response:', res);
 
-      const newItems = res?.data?.customers || [];
+      const rawItems = res?.data?.customers || [];
+      const newItems = filterCustomerListItems(rawItems);
       const pg = res?.data?.pagination; // { page, limit, total, totalPages }
+
+      console.log('[CreateJob] customer dropdown list:', {
+        search: q || '(all)',
+        page: pageNo,
+        raw_count: rawItems.length,
+        customers_only_count: newItems.length,
+        customers: newItems.map(c => ({
+          id: c?.id,
+          customer_name: c?.customer_name,
+          tag: c?.tag,
+          type: c?.type,
+        })),
+      });
 
       // ---- build next list (append on page>1) ----
       const prevList = pageNo === 1 ? [] : filtered;

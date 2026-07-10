@@ -43,6 +43,21 @@ export function useBlueSheetsAutoRefresh({
     }
     try {
       const sheets = await fetchBlueSheetsList(token, user);
+      console.log('[All Bluesheets] API list received:', {
+        count: sheets?.length ?? 0,
+        items: (sheets ?? []).map(s => ({
+          id: s?.id,
+          status: s?.status,
+          date: s?.date,
+          created_at: s?.created_at,
+          job_id: s?.job?.id ?? s?.job_id,
+          job_title: s?.job?.job_title ?? s?.job?.jobTitle,
+          customer: s?.job?.customer?.customer_name,
+          labor_entries_count: s?.labor_entries?.length ?? 0,
+          material_entries_count: s?.material_entries?.length ?? 0,
+          created_by: s?.created_by_user?.full_name,
+        })),
+      });
       onDataRef.current?.(sheets);
     } catch (err) {
       console.error('Error refreshing bluesheets:', err);

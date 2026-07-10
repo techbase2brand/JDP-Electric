@@ -631,6 +631,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   Image,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
@@ -820,6 +821,21 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
     dispatch(addToCart({...product, job_id: jobId, jobId}));
   const handleUpdateQuantity = (productId, newQuantity) =>
     dispatch(updateQuantity({productId, newQuantity, jobId}));
+
+  const handleIncrementQuantity = (product, currentQuantity) => {
+    const stockQty = Number(product?.stock_quantity ?? 0);
+    const productName = capitalize(product?.product_name) || 'This product';
+
+    if (currentQuantity >= stockQty) {
+      Alert.alert(
+        'Out of stock',
+        `${productName} had only ${stockQty} available. You have already added ${currentQuantity} to your cart. You cannot add more — this product is now out of stock.`,
+      );
+      return;
+    }
+
+    handleUpdateQuantity(product.id, currentQuantity + 1);
+  };
 
   const getCartItemCount = () =>
     cartForThisJob.reduce((total, item) => total + item.quantity, 0);
@@ -1022,10 +1038,7 @@ const OrderProductsScreen = ({onBack, onNavigate, route}) => {
                   <Text style={styles.quantityText}>{quantity}</Text>
                   <TouchableOpacity
                     style={styles.quantityButton}
-                    disabled={quantity >= item.stock_quantity}
-                    onPress={() =>
-                      handleUpdateQuantity(item.id, quantity + 1)
-                    }>
+                    onPress={() => handleIncrementQuantity(item, quantity)}>
                     <Icon name="add" size={16} color={Colors.primary} />
                   </TouchableOpacity>
                 </View>
