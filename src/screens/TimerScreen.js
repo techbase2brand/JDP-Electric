@@ -1023,7 +1023,7 @@ export default function TimerScreen({navigation, route}) {
   const todays = new Date().toISOString().split('T')[0];
 
   const isTodayCreated = jobData?.bluesheets?.some(
-    item => item?.created_at.split('T')[0] == todays,
+    item => item?.created_at?.split('T')[0] == todays,
   );
 
   const isTodayCompleted =
@@ -1032,8 +1032,9 @@ export default function TimerScreen({navigation, route}) {
     isTodayCreated;
 
   const toSeconds = time => {
-    const [h, m, s] = time.split(':').map(Number);
-    return h * 3600 + m * 60 + s;
+    if (time == null || time === '') return 0;
+    const [h = 0, m = 0, s = 0] = String(time).split(':').map(Number);
+    return (h || 0) * 3600 + (m || 0) * 60 + (s || 0);
   };
 
   // Total seconds
