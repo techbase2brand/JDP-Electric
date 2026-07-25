@@ -190,7 +190,15 @@ const JobListingScreen = ({navigation, route}) => {
     setPendingDeepLinkJobId(null);
     navigation.navigate('JobDetail', {job: target});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingDeepLinkJobId, jobs, filteredJobs, hasMore, loading, isSearching, navigation]);
+  }, [
+    pendingDeepLinkJobId,
+    jobs,
+    filteredJobs,
+    hasMore,
+    loading,
+    isSearching,
+    navigation,
+  ]);
 
   // ---------- search debounce
   useEffect(() => {
@@ -420,7 +428,39 @@ const JobListingScreen = ({navigation, route}) => {
       j => activeTab === 'all' || j?.status === activeTab,
     );
   }, [jobs, activeTab]);
+  // const filteredJobs = useMemo(() => {
+  //   let data = [...jobs];
 
+  //   // Search
+  //   if (searchQuery.trim()) {
+  //     const query = searchQuery.trim().toLowerCase();
+
+  //     data = data.filter(job => {
+  //       const jobTitle = (job?.job_title || job?.title || '').toLowerCase();
+  //       const customerName = (
+  //         job?.customer?.name ||
+  //         job?.customer?.customer_name ||
+  //         ''
+  //       ).toLowerCase();
+  //       const jobId = (job?.jobId || job?.id || job?._id || '')
+  //         .toString()
+  //         .toLowerCase();
+
+  //       return (
+  //         jobTitle.includes(query) ||
+  //         customerName.includes(query) ||
+  //         jobId.includes(query)
+  //       );
+  //     });
+  //   }
+
+  //   // Status filter
+  //   if (activeTab !== 'all') {
+  //     data = data.filter(job => job?.status === activeTab);
+  //   }
+
+  //   return data;
+  // }, [jobs, searchQuery, activeTab]);
   // ---------- UI renderers
   const handleBack = () => {
     if (route?.params?.fromCreateJob) {
@@ -639,7 +679,11 @@ const JobListingScreen = ({navigation, route}) => {
             <Ionicons name="calendar" size={16} color={COLORS.gray500} />
             <Text style={[styles.scheduleText, {fontWeight: '600'}]}>
               {job?.due_date
-                ? new Date(job?.due_date).toLocaleDateString('en-US')
+                ? new Date(job.due_date).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
                 : '—'}
             </Text>
           </View>
@@ -886,7 +930,13 @@ const JobListingScreen = ({navigation, route}) => {
                       setShowEndPicker(false);
                     }}
                     style={styles.dateButton}>
-                    <Text>{startDate.toDateString()}</Text>
+                    <Text>
+                      {startDate.toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </Text>
                   </TouchableOpacity>
                   {showStartPicker && (
                     <DateTimePicker
@@ -907,7 +957,13 @@ const JobListingScreen = ({navigation, route}) => {
                       setShowStartPicker(false);
                     }}
                     style={styles.dateButton}>
-                    <Text>{endDate.toDateString()}</Text>
+                    <Text>
+                      {endDate.toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </Text>
                   </TouchableOpacity>
                   {showEndPicker && (
                     <DateTimePicker

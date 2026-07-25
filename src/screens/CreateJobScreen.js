@@ -42,7 +42,7 @@ import {
 } from '../config/apiConfig';
 import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
 import {spacings} from '../constants/Fonts';
-import { GOOGLE_MAPS_APIKEY } from '../constants/Constants';
+import {GOOGLE_MAPS_APIKEY} from '../constants/Constants';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -68,7 +68,10 @@ const parseCustomerPhoneParts = raw => {
   if (s.includes('-') && s.startsWith('+')) {
     const i = s.indexOf('-');
     const code = s.slice(0, i).trim() || '+1';
-    const national = s.slice(i + 1).replace(/\D/g, '').slice(0, 15);
+    const national = s
+      .slice(i + 1)
+      .replace(/\D/g, '')
+      .slice(0, 15);
     return {code, national};
   }
   const digitsOnly = s.replace(/\D/g, '');
@@ -88,20 +91,20 @@ const callingCodePlusToCountryCode = dialPlus => {
     return 'US';
   }
   const byPrefix = {
-    '1': 'US',
-    '44': 'GB',
-    '91': 'IN',
-    '61': 'AU',
-    '86': 'CN',
-    '81': 'JP',
-    '49': 'DE',
-    '33': 'FR',
-    '971': 'AE',
-    '966': 'SA',
-    '92': 'PK',
-    '880': 'BD',
-    '94': 'LK',
-    '977': 'NP',
+    1: 'US',
+    44: 'GB',
+    91: 'IN',
+    61: 'AU',
+    86: 'CN',
+    81: 'JP',
+    49: 'DE',
+    33: 'FR',
+    971: 'AE',
+    966: 'SA',
+    92: 'PK',
+    880: 'BD',
+    94: 'LK',
+    977: 'NP',
   };
   for (let len = 3; len >= 1; len--) {
     const p = digits.slice(0, len);
@@ -124,10 +127,7 @@ const getCustomerRecordContact = record => {
       record.phone_number ||
       '',
     address:
-      record.address ||
-      record.street_address ||
-      record.customer_address ||
-      '',
+      record.address || record.street_address || record.customer_address || '',
     city: record.city || record.city_zip || '',
     email: record.email || record.customer_email || '',
   };
@@ -194,7 +194,10 @@ const getLaborEntryName = entry =>
   '';
 
 const getLaborEntryRole = entry =>
-  entry?.user?.role || entry?.users?.role || entry?.labor?.users?.role || 'Labor';
+  entry?.user?.role ||
+  entry?.users?.role ||
+  entry?.labor?.users?.role ||
+  'Labor';
 
 const extractAssignedLaborIdsFromJob = job => {
   if (!job) {
@@ -282,8 +285,7 @@ const parseTeamMembersFromJob = job => {
   return members;
 };
 
-const hasAssignedTeamOnJob = job =>
-  parseTeamMembersFromJob(job).length > 0;
+const hasAssignedTeamOnJob = job => parseTeamMembersFromJob(job).length > 0;
 
 const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   const scrollRef = useRef(null);
@@ -352,7 +354,9 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
     if (laborId == null) {
       return;
     }
-    const isSelected = formData.assignedTo.some(id => laborIdsMatch(id, laborId));
+    const isSelected = formData.assignedTo.some(id =>
+      laborIdsMatch(id, laborId),
+    );
 
     if (isSelected) {
       updateFormData(
@@ -577,7 +581,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   //     setFormData(prev => ({...prev, title: subTitle.trim()}));
   //   }
   // }, [route?.params?.subJobTitle, route?.params?.parentJob]);
-  
+
   useEffect(() => {
     const subTitle = route?.params?.subJobTitle;
     const parentParam = route?.params?.parentJob;
@@ -725,7 +729,9 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
             laborIdsMatch(labor.users?.id, userId) ||
             laborIdsMatch(labor.user_id, userId),
         );
-        return match ? normalizeLaborId(match.id) : normalizeLaborId(rawLaborId);
+        return match
+          ? normalizeLaborId(match.id)
+          : normalizeLaborId(rawLaborId);
       })
       .filter(id => id != null);
 
@@ -747,7 +753,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       return {...prev, assignedTo: uniqueIds};
     });
   }, [isSubJobFlow, parentJobDetails, labors]);
-  
+
   // ✅ Customers
   const fetchCustomers = async (pageNo = 1, query = '') => {
     // page 1 ko kabhi block mat karo; baaki pages ke liye guards
@@ -940,9 +946,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
     Keyboard.dismiss();
 
     if (fillJobContactFromCustomer) {
-      setFormData(prev =>
-        applyCustomerToJobFormState(prev, item, name),
-      );
+      setFormData(prev => applyCustomerToJobFormState(prev, item, name));
       const {phone, address} = getCustomerRecordContact(item);
       const {code, national} = parseCustomerPhoneParts(phone);
       if (national) {
@@ -973,9 +977,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
       ...prev,
       customerPhone: '',
       customerAddress: '',
-      ...(prev.sameAsCustomer
-        ? {billingPhone: '', billingAddress: ''}
-        : {}),
+      ...(prev.sameAsCustomer ? {billingPhone: '', billingAddress: ''} : {}),
     }));
     setCustomerCountryCode('+1');
     setCustomerPhoneNumber('');
@@ -1040,7 +1042,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   useEffect(() => {
     fetchLabors(1);
   }, []);
-  
+
   // ✅ Fetch labors
   const fetchLabors = async (pageNo = 1) => {
     if (!token) return;
@@ -1306,7 +1308,8 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
             !!user?.lead_labor?.id;
           const hasInheritedTeam =
             isSubJobFlow &&
-            (inheritedTeamMembers.length > 0 || hasAssignedTeamOnJob(parentJob));
+            (inheritedTeamMembers.length > 0 ||
+              hasAssignedTeamOnJob(parentJob));
 
           if (
             !isSubJobFlow &&
@@ -1377,7 +1380,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
   //     setCurrentStep(prev => Math.min(prev + 1, 3));
   //   }
   // };
- 
+
   const nextStep = async () => {
     dismissKeyboard();
     // Run validation for current step
@@ -1498,7 +1501,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
     const assigned_lead_labor_ids = JSON.stringify(leadIds);
 
     const assigned_labor_ids = JSON.stringify(assignedLaborList);
-    
+
     const assigned_material_ids = JSON.stringify([]); // UI me material select nahi tha
 
     // bill-to fields
@@ -1548,7 +1551,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
 
   const capitalize = text =>
     text ? text.charAt(0).toUpperCase() + text.slice(1) : 'N/A';
-  
+
   const submitJob = async () => {
     if (!validateStep(3)) return;
     if (!token) {
@@ -2025,13 +2028,9 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
               <TouchableOpacity
                 style={styles.fillFromCustomerRow}
                 activeOpacity={0.65}
-                onPress={() =>
-                  setFillJobContactFromCustomer(v => !v)
-                }
+                onPress={() => setFillJobContactFromCustomer(v => !v)}
                 hitSlop={{top: 4, bottom: 4, left: 0, right: 0}}>
-                <Text
-                  style={styles.fillFromCustomerLabel}
-                  numberOfLines={2}>
+                <Text style={styles.fillFromCustomerLabel} numberOfLines={2}>
                   Autofill customer address and phone
                 </Text>
                 <View
@@ -2658,7 +2657,13 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                 style={styles.inputIcon}
               />
               <Text style={[styles.formInput, styles.inputWithIcon]}>
-                {formData.dueDate || 'Select Due Date'}
+                {formData?.dueDate
+                  ? new Date(formData.dueDate).toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : 'Select Due Date'}
               </Text>
             </TouchableOpacity>
             {showDueDatePicker && (
@@ -2750,8 +2755,8 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                 )}
               </View>
             ) : (
-            <>
-            {/* <View style={styles.teamMembersList}>
+              <>
+                {/* <View style={styles.teamMembersList}>
           {teamMembers.map(member => (
             <TouchableOpacity
               key={member.id}
@@ -2792,110 +2797,115 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
             </TouchableOpacity>
           ))}
         </View> */}
-            <View style={styles.container}>
-              {/* Dropdown Header */}
+                <View style={styles.container}>
+                  {/* Dropdown Header */}
 
-              <TouchableOpacity style={styles.dropdownItem}>
-                <View
-                  style={[
-                    styles.checkboxChecked1,
-                    {
-                      width: 20,
-                      height: 20,
-                      borderWidth: 1,
-                      borderColor: '#aaa',
-                      marginRight: 10,
-                      borderRadius: 4,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    },
-                  ]}>
-                  <Icon name="check" size={16} color="white" />
-                </View>
-                <View style={styles.memberInfo1}>
-                  <Text style={[styles.memberName1, {color: 'black'}]}>
-                    {capitalize(user?.full_name)}
-                  </Text>
-                  <Text style={styles.memberRole1}>
-                    {user?.management_type == 'lead_labor' && 'Lead Labor'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.dropdownHeader}
-                disabled={!canAssignLabour}
-                onPress={toggleDropdown}>
-                <Text style={styles.headerText}>
-                  {formData?.assignedTo?.length > 0
-                    ? labors
-                        .filter(labor =>
-                          formData.assignedTo.some(id =>
-                            laborIdsMatch(id, labor.id),
-                          ),
-                        )
-                        .map(labor => capitalize(labor.users?.full_name))
-                        .join(', ')
-                    : 'Select Members'}
-                </Text>
-                <Icon
-                  name={isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
-                  size={24}
-                />
-              </TouchableOpacity>
-
-              {/* Dropdown List */}
-              {isOpen && (
-                <View style={styles.dropdownList}>
-                  <View style={styles.searchInputWrapper}>
-                    <TextInput
-                      style={styles.searchInput}
-                      placeholder="Search labour..."
-                      placeholderTextColor="#9ca3af"
-                      value={laborSearch}
-                      onChangeText={text => setLaborSearch(text)}
+                  <TouchableOpacity style={styles.dropdownItem}>
+                    <View
+                      style={[
+                        styles.checkboxChecked1,
+                        {
+                          width: 20,
+                          height: 20,
+                          borderWidth: 1,
+                          borderColor: '#aaa',
+                          marginRight: 10,
+                          borderRadius: 4,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        },
+                      ]}>
+                      <Icon name="check" size={16} color="white" />
+                    </View>
+                    <View style={styles.memberInfo1}>
+                      <Text style={[styles.memberName1, {color: 'black'}]}>
+                        {capitalize(user?.full_name)}
+                      </Text>
+                      <Text style={styles.memberRole1}>
+                        {user?.management_type == 'lead_labor' && 'Lead Labor'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dropdownHeader}
+                    disabled={!canAssignLabour}
+                    onPress={toggleDropdown}>
+                    <Text style={styles.headerText}>
+                      {formData?.assignedTo?.length > 0
+                        ? labors
+                            .filter(labor =>
+                              formData.assignedTo.some(id =>
+                                laborIdsMatch(id, labor.id),
+                              ),
+                            )
+                            .map(labor => capitalize(labor.users?.full_name))
+                            .join(', ')
+                        : 'Select Members'}
+                    </Text>
+                    <Icon
+                      name={
+                        isOpen ? 'keyboard-arrow-up' : 'keyboard-arrow-down'
+                      }
+                      size={24}
                     />
-                  </View>
-                  <FlatList
-                    data={filteredLabors}
-                    keyExtractor={item => item.id.toString()}
-                    nestedScrollEnabled
-                    keyboardShouldPersistTaps="handled"
-                    scrollEnabled
-                    style={{flexGrow: 0}}
-                    renderItem={({item}) => {
-                      const isSelected = formData.assignedTo.some(id =>
-                        laborIdsMatch(id, item?.id),
-                      );
-                      return (
-                        <TouchableOpacity
-                          style={styles.dropdownItem}
-                          onPress={() => handleSelect(item)}>
-                          <View
-                            style={[
-                              styles.checkbox1,
-                              isSelected && styles.checkboxChecked1,
-                            ]}>
-                            {isSelected && (
-                              <Icon name="check" size={16} color="white" />
-                            )}
-                          </View>
-                          <View style={styles.memberInfo1}>
-                            <Text
-                              style={[styles.memberName1, {color: 'black'}]}>
-                              {capitalize(item?.users?.full_name)}
-                            </Text>
-                            <Text style={styles.memberRole1}>
-                              {item?.users?.role}
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    }}
-                  />
+                  </TouchableOpacity>
+
+                  {/* Dropdown List */}
+                  {isOpen && (
+                    <View style={styles.dropdownList}>
+                      <View style={styles.searchInputWrapper}>
+                        <TextInput
+                          style={styles.searchInput}
+                          placeholder="Search labour..."
+                          placeholderTextColor="#9ca3af"
+                          value={laborSearch}
+                          onChangeText={text => setLaborSearch(text)}
+                        />
+                      </View>
+                      <FlatList
+                        data={filteredLabors}
+                        keyExtractor={item => item.id.toString()}
+                        nestedScrollEnabled
+                        keyboardShouldPersistTaps="handled"
+                        scrollEnabled
+                        style={{flexGrow: 0}}
+                        renderItem={({item}) => {
+                          const isSelected = formData.assignedTo.some(id =>
+                            laborIdsMatch(id, item?.id),
+                          );
+                          return (
+                            <TouchableOpacity
+                              style={styles.dropdownItem}
+                              onPress={() => handleSelect(item)}>
+                              <View
+                                style={[
+                                  styles.checkbox1,
+                                  isSelected && styles.checkboxChecked1,
+                                ]}>
+                                {isSelected && (
+                                  <Icon name="check" size={16} color="white" />
+                                )}
+                              </View>
+                              <View style={styles.memberInfo1}>
+                                <Text
+                                  style={[
+                                    styles.memberName1,
+                                    {color: 'black'},
+                                  ]}>
+                                  {capitalize(item?.users?.full_name)}
+                                </Text>
+                                <Text style={styles.memberRole1}>
+                                  {item?.users?.role}
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          );
+                        }}
+                      />
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
-            </>
+              </>
             )}
             {validationErrors.assignedTo && (
               <View style={styles.errorContainer}>
@@ -3118,7 +3128,7 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
                   {new Date(formData.scheduledDate).toLocaleDateString(
                     'en-US',
                     {
-                      month: 'numeric', // "August"
+                      month: 'long',
                       day: 'numeric',
                       year: 'numeric',
                     },
@@ -3164,7 +3174,9 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
               </Text>
               {reviewTeamMembers.length > 0 ? (
                 reviewTeamMembers.map(member => (
-                  <View key={member.key || member.name} style={styles.memberSummary}>
+                  <View
+                    key={member.key || member.name}
+                    style={styles.memberSummary}>
                     <Text style={styles.memberSummaryName}>
                       {capitalize(member.name)}
                     </Text>
@@ -3255,39 +3267,39 @@ const CreateJobScreen = ({navigation, route, onCreateJob}) => {
 
           {/* Navigation Buttons */}
           <View style={styles.navigationButtons}>
-          <TouchableOpacity
-            style={[
-              styles.navButton,
-              styles.prevButton,
-              currentStep === 1 && styles.disabledButton,
-            ]}
-            onPress={prevStep}
-            disabled={currentStep === 1}>
-            <Icon name="chevron-left" size={24} color="#6b7280" />
-            <Text style={styles.prevButtonText}>Previous</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.navButton,
+                styles.prevButton,
+                currentStep === 1 && styles.disabledButton,
+              ]}
+              onPress={prevStep}
+              disabled={currentStep === 1}>
+              <Icon name="chevron-left" size={24} color="#6b7280" />
+              <Text style={styles.prevButtonText}>Previous</Text>
+            </TouchableOpacity>
 
-          {currentStep < 3 ? (
-            <TouchableOpacity
-              style={[styles.navButton, styles.nextButton]}
-              onPress={nextStep}>
-              <Text style={styles.nextButtonText}>Next</Text>
-              <Icon name="chevron-right" size={24} color="white" />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.navButton, styles.submitButton]}
-              onPress={submitJob}
-              disabled={isSubmitting}>
-              <Text style={styles.submitButtonText}>
-                {isSubmitting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  'Create Job'
-                )}
-              </Text>
-            </TouchableOpacity>
-          )}
+            {currentStep < 3 ? (
+              <TouchableOpacity
+                style={[styles.navButton, styles.nextButton]}
+                onPress={nextStep}>
+                <Text style={styles.nextButtonText}>Next</Text>
+                <Icon name="chevron-right" size={24} color="white" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.navButton, styles.submitButton]}
+                onPress={submitJob}
+                disabled={isSubmitting}>
+                <Text style={styles.submitButtonText}>
+                  {isSubmitting ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    'Create Job'
+                  )}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </TouchableWithoutFeedback>

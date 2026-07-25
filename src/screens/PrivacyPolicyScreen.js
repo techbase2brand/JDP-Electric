@@ -28,7 +28,7 @@ const PrivacyPolicyScreen = ({ navigation }) => {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.lastUpdated}>Last updated: January 15, 2024</Text>
+          <Text style={styles.lastUpdated}>Last updated: January 15, 2025</Text>
           
           <Text style={styles.introText}>
             JDP Electrics ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application.

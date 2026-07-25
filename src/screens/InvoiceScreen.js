@@ -2617,7 +2617,15 @@ const InvoiceManagementScreen = ({selectedJob, onNavigate, navigation}) => {
             </View>
             <View style={styles.previewColumn}>
               <Text style={styles.previewLabel}>Date:</Text>
-              <Text style={styles.previewText}>{invoice.date}</Text>
+              <Text style={styles.previewText}>
+                {invoice?.date
+                  ? new Date(invoice.date).toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : '--'}
+              </Text>
             </View>
           </View>
           <View style={styles.previewRow}>
@@ -2627,7 +2635,15 @@ const InvoiceManagementScreen = ({selectedJob, onNavigate, navigation}) => {
             </View>
             <View style={styles.previewColumn}>
               <Text style={styles.previewLabel}>Due Date:</Text>
-              <Text style={styles.previewText}>{invoice.dueDate}</Text>
+              <Text style={styles.previewText}>
+                {invoice?.dueDate
+                  ? new Date(invoice.dueDate).toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })
+                  : '--'}
+              </Text>
             </View>
           </View>
         </View>

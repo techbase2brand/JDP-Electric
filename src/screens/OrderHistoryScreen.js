@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -72,41 +72,39 @@ const BorderRadius = {
 const Shadows = {
   sm: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
   },
   md: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
   },
   lg: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.15,
     shadowRadius: 5,
     elevation: 8,
   },
 };
 
-
-
 const OrderHistoryScreen = ({
   user: propUser,
   onNavigate,
   hasLeadAccess: propHasLeadAccess,
-  route
+  route,
 }) => {
   const navigation = useNavigation();
 
   // Mock user data
   const mockUser = {
     role: 'Lead Labor',
-    name: 'Sarah Johnson'
+    name: 'Sarah Johnson',
   };
 
   const user = propUser || mockUser;
@@ -127,9 +125,14 @@ const OrderHistoryScreen = ({
       customerAddress: '123 Main Street, Houston, TX 77001',
       customerPhone: '(555) 123-4567',
       items: [
-        { name: '12 AWG Wire', sku: 'W12-100', price: 45.99, cartQuantity: 2 },
-        { name: 'Electrical Outlet', sku: 'EO-15A', price: 12.99, cartQuantity: 5 }
-      ]
+        {name: '12 AWG Wire', sku: 'W12-100', price: 45.99, cartQuantity: 2},
+        {
+          name: 'Electrical Outlet',
+          sku: 'EO-15A',
+          price: 12.99,
+          cartQuantity: 5,
+        },
+      ],
     },
     {
       id: 'ORD-2024-002',
@@ -144,9 +147,14 @@ const OrderHistoryScreen = ({
       customerAddress: '456 Oak Avenue, Houston, TX 77002',
       customerPhone: '(555) 123-4568',
       items: [
-        { name: 'Circuit Breaker', sku: 'CB-20A', price: "Quote Required", cartQuantity: 3 },
-        { name: 'Wire Nuts', sku: 'WN-12', price: 8.75, cartQuantity: 10 }
-      ]
+        {
+          name: 'Circuit Breaker',
+          sku: 'CB-20A',
+          price: 'Quote Required',
+          cartQuantity: 3,
+        },
+        {name: 'Wire Nuts', sku: 'WN-12', price: 8.75, cartQuantity: 10},
+      ],
     },
     {
       id: 'ORD-2024-003',
@@ -161,10 +169,10 @@ const OrderHistoryScreen = ({
       customerAddress: '789 Pine Street, Houston, TX 77003',
       customerPhone: '(555) 123-4569',
       items: [
-        { name: 'Conduit', sku: 'CD-34', price: 15.99, cartQuantity: 8 },
-        { name: 'Junction Box', sku: 'JB-46', price: 24.99, cartQuantity: 6 }
-      ]
-    }
+        {name: 'Conduit', sku: 'CD-34', price: 15.99, cartQuantity: 8},
+        {name: 'Junction Box', sku: 'JB-46', price: 24.99, cartQuantity: 6},
+      ],
+    },
   ]);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -176,103 +184,129 @@ const OrderHistoryScreen = ({
 
   // Filter orders
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch =
+      searchQuery === '' ||
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.jobId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.supplier.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    
+
+    const matchesStatus =
+      statusFilter === 'all' || order.status === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
 
   // Status configuration
-  const getStatusConfig = (status) => {
+  const getStatusConfig = status => {
     switch (status) {
-      case 'pending': 
-        return { 
-          color: Colors.warningLight, 
-          textColor: Colors.warning, 
+      case 'pending':
+        return {
+          color: Colors.warningLight,
+          textColor: Colors.warning,
           icon: 'schedule',
-          label: 'Pending' 
+          label: 'Pending',
         };
-      case 'approved': 
-        return { 
-          color: Colors.primaryLight, 
-          textColor: Colors.primary, 
+      case 'approved':
+        return {
+          color: Colors.primaryLight,
+          textColor: Colors.primary,
           icon: 'check',
-          label: 'Approved' 
+          label: 'Approved',
         };
-      case 'delivered': 
-        return { 
-          color: Colors.successLight, 
-          textColor: Colors.successDark, 
+      case 'delivered':
+        return {
+          color: Colors.successLight,
+          textColor: Colors.successDark,
           icon: 'local-shipping',
-          label: 'Delivered' 
+          label: 'Delivered',
         };
-      case 'cancelled': 
-        return { 
-          color: Colors.errorLight, 
-          textColor: Colors.error, 
+      case 'cancelled':
+        return {
+          color: Colors.errorLight,
+          textColor: Colors.error,
           icon: 'cancel',
-          label: 'Cancelled' 
+          label: 'Cancelled',
         };
-      case 'order-received': 
-        return { 
-          color: Colors.purpleLight, 
-          textColor: Colors.purple, 
+      case 'order-received':
+        return {
+          color: Colors.purpleLight,
+          textColor: Colors.purple,
           icon: 'inventory',
-          label: 'Order Received' 
+          label: 'Order Received',
         };
-      default: 
-        return { 
-          color: Colors.backgroundLight, 
-          textColor: Colors.textLight, 
+      default:
+        return {
+          color: Colors.backgroundLight,
+          textColor: Colors.textLight,
           icon: 'help',
-          label: 'Unknown' 
+          label: 'Unknown',
         };
     }
   };
 
   // Statistics
-  const totalOrderValue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-  const pendingOrders = orders.filter(order => order.status === 'pending').length;
+  const totalOrderValue = orders.reduce(
+    (sum, order) => sum + order.totalAmount,
+    0,
+  );
+  const pendingOrders = orders.filter(
+    order => order.status === 'pending',
+  ).length;
 
   // Status filter options
   const statusFilters = [
-    { key: 'all', label: 'All', count: orders.length },
-    { key: 'pending', label: 'Pending', count: orders.filter(o => o.status === 'pending').length },
-    { key: 'delivered', label: 'Delivered', count: orders.filter(o => o.status === 'delivered').length },
-    { key: 'order-received', label: 'Received', count: orders.filter(o => o.status === 'order-received').length },
-    { key: 'cancelled', label: 'Cancelled', count: orders.filter(o => o.status === 'cancelled').length },
+    {key: 'all', label: 'All', count: orders.length},
+    {
+      key: 'pending',
+      label: 'Pending',
+      count: orders.filter(o => o.status === 'pending').length,
+    },
+    {
+      key: 'delivered',
+      label: 'Delivered',
+      count: orders.filter(o => o.status === 'delivered').length,
+    },
+    {
+      key: 'order-received',
+      label: 'Received',
+      count: orders.filter(o => o.status === 'order-received').length,
+    },
+    {
+      key: 'cancelled',
+      label: 'Cancelled',
+      count: orders.filter(o => o.status === 'cancelled').length,
+    },
   ];
 
   const statusOptions = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'order-received', label: 'Order Received' },
-    { value: 'delivered', label: 'Delivered' },
-    { value: 'cancelled', label: 'Cancelled' }
+    {value: 'pending', label: 'Pending'},
+    {value: 'approved', label: 'Approved'},
+    {value: 'order-received', label: 'Order Received'},
+    {value: 'delivered', label: 'Delivered'},
+    {value: 'cancelled', label: 'Cancelled'},
   ];
 
   // Handlers
   const handleStatusUpdate = (orderId, newStatus) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId 
-        ? { ...order, status: newStatus }
-        : order
-    ));
-    Alert.alert('Success', `Order ${orderId} status updated to ${newStatus.replace('-', ' ')}`);
+    setOrders(prev =>
+      prev.map(order =>
+        order.id === orderId ? {...order, status: newStatus} : order,
+      ),
+    );
+    Alert.alert(
+      'Success',
+      `Order ${orderId} status updated to ${newStatus.replace('-', ' ')}`,
+    );
     setShowStatusPicker(false);
     setStatusUpdateOrderId(null);
   };
 
-  const handleViewDetails = (order) => {
+  const handleViewDetails = order => {
     setSelectedOrder(order);
     setShowOrderDetails(true);
   };
 
-  const handleNavigate = (screen) => {
+  const handleNavigate = screen => {
     if (onNavigate) {
       onNavigate(screen);
     } else {
@@ -284,33 +318,33 @@ const OrderHistoryScreen = ({
     navigation.goBack();
   };
 
-  const showStatusUpdatePicker = (orderId) => {
-    setStatusUpdateOrderId(orderId)
+  const showStatusUpdatePicker = orderId => {
+    setStatusUpdateOrderId(orderId);
     setShowStatusPicker(true);
   };
 
   // Render components
-  const renderFilterButton = (filter) => (
+  const renderFilterButton = filter => (
     <TouchableOpacity
       key={filter.key}
       style={[
         styles.filterButton,
-        statusFilter === filter.key && styles.activeFilterButton
+        statusFilter === filter.key && styles.activeFilterButton,
       ]}
-      onPress={() => setStatusFilter(filter.key)}
-    >
-      <Text style={[
-        styles.filterButtonText,
-        statusFilter === filter.key && styles.activeFilterButtonText
-      ]}>
+      onPress={() => setStatusFilter(filter.key)}>
+      <Text
+        style={[
+          styles.filterButtonText,
+          statusFilter === filter.key && styles.activeFilterButtonText,
+        ]}>
         {filter.label} ({filter.count})
       </Text>
     </TouchableOpacity>
   );
 
-  const renderOrderCard = ({ item: order }) => {
+  const renderOrderCard = ({item: order}) => {
     const statusConfig = getStatusConfig(order.status);
-    
+
     return (
       <View style={styles.orderCard}>
         {/* Order Header */}
@@ -318,9 +352,18 @@ const OrderHistoryScreen = ({
           <View style={styles.orderHeaderLeft}>
             <View style={styles.orderIdRow}>
               <Text style={styles.orderId}>{order.id}</Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusConfig.color }]}>
-                <Icon name={statusConfig.icon} size={12} color={statusConfig.textColor} />
-                <Text style={[styles.statusText, { color: statusConfig.textColor }]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  {backgroundColor: statusConfig.color},
+                ]}>
+                <Icon
+                  name={statusConfig.icon}
+                  size={12}
+                  color={statusConfig.textColor}
+                />
+                <Text
+                  style={[styles.statusText, {color: statusConfig.textColor}]}>
                   {statusConfig.label}
                 </Text>
               </View>
@@ -328,10 +371,20 @@ const OrderHistoryScreen = ({
             <Text style={styles.orderSubInfo}>Job: {order.jobId}</Text>
             <Text style={styles.orderSubInfo}>{order.supplier}</Text>
           </View>
-          
+
           <View style={styles.orderHeaderRight}>
-            <Text style={styles.orderAmount}>${order.totalAmount.toFixed(2)}</Text>
-            <Text style={styles.orderDate}>{order.orderDate.toLocaleDateString()}</Text>
+            <Text style={styles.orderAmount}>
+              ${order.totalAmount.toFixed(2)}
+            </Text>
+            <Text style={styles.orderDate}>
+              {order?.orderDate
+                ? new Date(order.orderDate).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
+                : '--'}
+            </Text>
           </View>
         </View>
 
@@ -341,7 +394,7 @@ const OrderHistoryScreen = ({
             <Icon name="receipt" size={16} color={Colors.primary} />
             <Text style={styles.customerDetailsTitle}>Customer Details</Text>
           </View>
-          
+
           <View style={styles.customerDetailsContent}>
             <View style={styles.customerDetailRow}>
               <Text style={styles.customerDetailLabel}>PO Number:</Text>
@@ -349,11 +402,15 @@ const OrderHistoryScreen = ({
             </View>
             <View style={styles.customerDetailRow}>
               <Text style={styles.customerDetailLabel}>Name:</Text>
-              <Text style={styles.customerDetailValue}>{order.customerName}</Text>
+              <Text style={styles.customerDetailValue}>
+                {order.customerName}
+              </Text>
             </View>
             <View style={styles.customerDetailRow}>
               <Text style={styles.customerDetailLabel}>Phone:</Text>
-              <Text style={styles.customerDetailValue}>{order.customerPhone}</Text>
+              <Text style={styles.customerDetailValue}>
+                {order.customerPhone}
+              </Text>
             </View>
             <View style={styles.customerDetailColumn}>
               {/* <Text style={styles.customerDetailLabel}>Address:</Text> */}
@@ -364,7 +421,9 @@ const OrderHistoryScreen = ({
 
         {/* Order Items Preview */}
         <View style={styles.orderItemsPreview}>
-          <Text style={styles.orderItemsTitle}>Items ({order.items.length})</Text>
+          <Text style={styles.orderItemsTitle}>
+            Items ({order.items.length})
+          </Text>
           {order.items.slice(0, 2).map((item, idx) => (
             <View key={idx} style={styles.orderItemPreview}>
               <View style={styles.orderItemInfo}>
@@ -384,25 +443,27 @@ const OrderHistoryScreen = ({
         {/* Actions */}
         <View style={styles.orderActions}>
           <View style={styles.orderStatusInfo}>
-            <Icon name={statusConfig.icon} size={16} color={statusConfig.textColor} />
+            <Icon
+              name={statusConfig.icon}
+              size={16}
+              color={statusConfig.textColor}
+            />
             <Text style={styles.orderStatusText}>{statusConfig.label}</Text>
           </View>
-          
+
           <View style={styles.orderActionButtons}>
             {/* {hasLeadAccess && order.status !== 'cancelled' && ( */}
-              <TouchableOpacity 
-                style={styles.statusUpdateButton}
-                onPress={() => showStatusUpdatePicker(order.id)}
-              >
-                <Icon name="edit" size={16} color={Colors.primary} />
-                <Text style={styles.statusUpdateText}>Update</Text>
-              </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.statusUpdateButton}
+              onPress={() => showStatusUpdatePicker(order.id)}>
+              <Icon name="edit" size={16} color={Colors.primary} />
+              <Text style={styles.statusUpdateText}>Update</Text>
+            </TouchableOpacity>
             {/* )} */}
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.detailsButton}
-              onPress={() => handleViewDetails(order)}
-            >
+              onPress={() => handleViewDetails(order)}>
               <Icon name="visibility" size={16} color={Colors.primary} />
               <Text style={styles.detailsButtonText}>Details</Text>
             </TouchableOpacity>
@@ -424,12 +485,14 @@ const OrderHistoryScreen = ({
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Icon name="arrow-back" size={24} color={Colors.white} />
           </TouchableOpacity>
-          
+
           <View style={styles.headerCenter}>
             <Text style={styles.headerTitle}>Order History</Text>
-            <Text style={styles.headerSubtitle}>{orders.length} total orders</Text>
+            <Text style={styles.headerSubtitle}>
+              {orders.length} total orders
+            </Text>
           </View>
-          
+
           <TouchableOpacity style={styles.downloadButton}>
             {/* <Icon name="download" size={20} color={Colors.white} /> */}
           </TouchableOpacity>
@@ -437,7 +500,12 @@ const OrderHistoryScreen = ({
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <Icon name="search" size={20} color={Colors.primaryLight} style={styles.searchIcon} />
+          <Icon
+            name="search"
+            size={20}
+            color={Colors.primaryLight}
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search orders..."
@@ -479,12 +547,13 @@ const OrderHistoryScreen = ({
           <Icon name="inventory" size={64} color={Colors.textLight} />
           <Text style={styles.emptyStateTitle}>No orders found</Text>
           <Text style={styles.emptyStateSubtitle}>
-            {searchQuery ? 'Try adjusting your search terms' : "You haven't placed any orders yet"}
+            {searchQuery
+              ? 'Try adjusting your search terms'
+              : "You haven't placed any orders yet"}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.startShoppingButton}
-            onPress={() => handleNavigate('SupplierSelectionScreen')}
-          >
+            onPress={() => handleNavigate('SupplierSelectionScreen')}>
             <Text style={styles.startShoppingText}>Start Shopping</Text>
           </TouchableOpacity>
         </View>
@@ -506,40 +575,54 @@ const OrderHistoryScreen = ({
           visible={showOrderDetails}
           transparent={true}
           animationType="slide"
-          onRequestClose={() => setShowOrderDetails(false)}
-        >
+          onRequestClose={() => setShowOrderDetails(false)}>
           <View style={styles.modalOverlay}>
             <View style={styles.orderDetailsModal}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Order Details - {selectedOrder.id}</Text>
-                <TouchableOpacity 
+                <Text style={styles.modalTitle}>
+                  Order Details - {selectedOrder.id}
+                </Text>
+                <TouchableOpacity
                   style={styles.closeButton}
-                  onPress={() => setShowOrderDetails(false)}
-                >
+                  onPress={() => setShowOrderDetails(false)}>
                   <Icon name="close" size={24} color={Colors.text} />
                 </TouchableOpacity>
               </View>
 
-              <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+              <ScrollView
+                style={styles.modalContent}
+                showsVerticalScrollIndicator={false}>
                 {/* Customer Information */}
                 <View style={styles.modalSection}>
                   <View style={styles.modalSectionHeader}>
                     <Icon name="receipt" size={20} color={Colors.primary} />
-                    <Text style={styles.modalSectionTitle}>Customer Information</Text>
+                    <Text style={styles.modalSectionTitle}>
+                      Customer Information
+                    </Text>
                   </View>
-                  
+
                   <View style={styles.customerInfoGrid}>
                     <View style={styles.customerInfoItem}>
                       <Text style={styles.customerInfoLabel}>PO Number:</Text>
-                      <Text style={styles.customerInfoValue}>{selectedOrder.poNumber}</Text>
+                      <Text style={styles.customerInfoValue}>
+                        {selectedOrder.poNumber}
+                      </Text>
                     </View>
                     <View style={styles.customerInfoItem}>
-                      <Text style={styles.customerInfoLabel}>Customer Name:</Text>
-                      <Text style={styles.customerInfoValue}>{selectedOrder.customerName}</Text>
+                      <Text style={styles.customerInfoLabel}>
+                        Customer Name:
+                      </Text>
+                      <Text style={styles.customerInfoValue}>
+                        {selectedOrder.customerName}
+                      </Text>
                     </View>
                     <View style={styles.customerInfoItem}>
-                      <Text style={styles.customerInfoLabel}>Phone Number:</Text>
-                      <Text style={styles.customerInfoValue}>{selectedOrder.customerPhone}</Text>
+                      <Text style={styles.customerInfoLabel}>
+                        Phone Number:
+                      </Text>
+                      <Text style={styles.customerInfoValue}>
+                        {selectedOrder.customerPhone}
+                      </Text>
                     </View>
                     <View style={styles.customerInfoItem}>
                       {/* <Text style={styles.customerInfoLabel}>Address:</Text> */}
@@ -554,9 +637,15 @@ const OrderHistoryScreen = ({
                   {selectedOrder.items.map((item, index) => (
                     <View key={index} style={styles.orderItemDetail}>
                       <View style={styles.orderItemDetailInfo}>
-                        <Text style={styles.orderItemDetailName}>{item.name}</Text>
-                        <Text style={styles.orderItemDetailSku}>SKU: {item.sku}</Text>
-                        <Text style={styles.orderItemDetailQuantity}>Quantity: {item.cartQuantity}</Text>
+                        <Text style={styles.orderItemDetailName}>
+                          {item.name}
+                        </Text>
+                        <Text style={styles.orderItemDetailSku}>
+                          SKU: {item.sku}
+                        </Text>
+                        <Text style={styles.orderItemDetailQuantity}>
+                          Quantity: {item.cartQuantity}
+                        </Text>
                       </View>
                       <View style={styles.orderItemDetailPrice}>
                         <Text style={styles.orderItemDetailPriceText}>
@@ -575,15 +664,29 @@ const OrderHistoryScreen = ({
                   <View style={styles.orderSummaryGrid}>
                     <View style={styles.orderSummaryItem}>
                       <Text style={styles.orderSummaryLabel}>Order Date:</Text>
-                      <Text style={styles.orderSummaryValue}>{selectedOrder.orderDate.toLocaleDateString()}</Text>
+                      <Text style={styles.orderSummaryValue}>
+                        {selectedOrder?.orderDate
+                          ? new Date(
+                              selectedOrder.orderDate,
+                            ).toLocaleDateString('en-US', {
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })
+                          : '--'}
+                      </Text>
                     </View>
                     <View style={styles.orderSummaryItem}>
                       <Text style={styles.orderSummaryLabel}>Supplier:</Text>
-                      <Text style={styles.orderSummaryValue}>{selectedOrder.supplier}</Text>
+                      <Text style={styles.orderSummaryValue}>
+                        {selectedOrder.supplier}
+                      </Text>
                     </View>
                     <View style={styles.orderSummaryItem}>
                       <Text style={styles.orderSummaryLabel}>Job ID:</Text>
-                      <Text style={styles.orderSummaryValue}>{selectedOrder.jobId}</Text>
+                      <Text style={styles.orderSummaryValue}>
+                        {selectedOrder.jobId}
+                      </Text>
                     </View>
                     {/* <View style={styles.orderSummaryDivider} />
                     <View style={styles.orderSummaryTotal}>
@@ -625,26 +728,25 @@ const OrderHistoryScreen = ({
           visible={showStatusPicker}
           transparent={true}
           animationType="fade"
-          onRequestClose={() => setShowStatusPicker(false)}
-        >
+          onRequestClose={() => setShowStatusPicker(false)}>
           <View style={styles.pickerModalOverlay}>
             <View style={styles.pickerModal}>
               <Text style={styles.pickerTitle}>Update Order Status</Text>
-              
-              {statusOptions.map((option) => (
+
+              {statusOptions.map(option => (
                 <TouchableOpacity
                   key={option.value}
                   style={styles.pickerOption}
-                  onPress={() => handleStatusUpdate(statusUpdateOrderId, option.value)}
-                >
+                  onPress={() =>
+                    handleStatusUpdate(statusUpdateOrderId, option.value)
+                  }>
                   <Text style={styles.pickerOptionText}>{option.label}</Text>
                 </TouchableOpacity>
               ))}
-              
+
               <TouchableOpacity
                 style={styles.pickerCancelButton}
-                onPress={() => setShowStatusPicker(false)}
-              >
+                onPress={() => setShowStatusPicker(false)}>
                 <Text style={styles.pickerCancelText}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -1117,7 +1219,7 @@ const styles = StyleSheet.create({
 
   // Order Summary Grid
   orderSummaryGrid: {
- backgroundColor: Colors.warningLight,
+    backgroundColor: Colors.warningLight,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
   },

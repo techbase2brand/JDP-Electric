@@ -411,7 +411,17 @@ const TimesheetScreen = ({navigation, user, jobs}) => {
                             color={tabColor}
                           />
                           <Text style={styles.detailText}>
-                            Job Date: {timesheet?.date}
+                            Job Date:{' '}
+                            {timesheet?.date
+                              ? new Date(timesheet.date).toLocaleDateString(
+                                  'en-US',
+                                  {
+                                    month: 'long',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                  },
+                                )
+                              : '-'}
                           </Text>
                         </View>
                       </View>

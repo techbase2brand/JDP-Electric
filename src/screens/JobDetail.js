@@ -712,8 +712,13 @@ const JobDetailScreen = ({
                               </View>
                               <Text style={styles.mainSubJobDateText}>
                                 {sub?.due_date
-                                  ? new Date(sub?.due_date).toLocaleDateString(
+                                  ? new Date(sub.due_date).toLocaleDateString(
                                       'en-US',
+                                      {
+                                        month: 'long',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                      },
                                     )
                                   : '—'}
                               </Text>
@@ -883,7 +888,18 @@ const JobDetailScreen = ({
               <Text style={styles.infoLabel}>Scheduled</Text>
               <View style={styles.infoWithIcon}>
                 <Icon name="event" size={16} color={Colors.textSecondary} />
-                <Text style={styles.infoText}>{effectiveJob?.due_date}</Text>
+                <Text style={styles.infoText}>
+                  {effectiveJob?.due_date
+                    ? new Date(effectiveJob.due_date).toLocaleDateString(
+                        'en-US',
+                        {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        },
+                      )
+                    : '--'}
+                </Text>
               </View>
             </View>
           </View>

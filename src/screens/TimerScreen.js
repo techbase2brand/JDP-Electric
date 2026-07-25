@@ -107,7 +107,11 @@ const CustomButton = ({
       styles.btn,
       {
         backgroundColor: disabled || loading ? '#ccc' : color,
-        width: fullWidth ? '100%' : widthbtn ? widthPercentageToDP(38) : undefined,
+        width: fullWidth
+          ? '100%'
+          : widthbtn
+          ? widthPercentageToDP(38)
+          : undefined,
       },
     ]}
     onPress={onPress}>
@@ -148,10 +152,16 @@ export default function TimerScreen({navigation, route}) {
     }, [loadStoredJobInfo]),
   );
   const job = route?.params?.job;
-  const jobId = job?.id || job?.job?.id || Number(stroageJobId) || Number(route?.params?.jobId);
+  const jobId =
+    job?.id ||
+    job?.job?.id ||
+    Number(stroageJobId) ||
+    Number(route?.params?.jobId);
 
-  const displayJobName = job?.job_title || job?.title || job?.name || storedJobName || '—';
-  const displayJobAddress = job?.job?.address || job?.address || storedJobAddress || '—';
+  const displayJobName =
+    job?.job_title || job?.title || job?.name || storedJobName || '—';
+  const displayJobAddress =
+    job?.job?.address || job?.address || storedJobAddress || '—';
 
   // geofence state
   const [destinationCoordinates, setDestinationCoordinates] = useState(null);
@@ -523,9 +533,7 @@ export default function TimerScreen({navigation, route}) {
   // Ensure iOS lock-screen state switches immediately on pause/resume.
   useEffect(() => {
     const statusMessage =
-      !isRunning && isLocationPauseActive()
-        ? LOCATION_OFF_LIVE_MESSAGE
-        : '';
+      !isRunning && isLocationPauseActive() ? LOCATION_OFF_LIVE_MESSAGE : '';
     updateLiveActivity(elapsedTime, isRunning, statusMessage);
   }, [isRunning, elapsedTime]);
 
@@ -1099,89 +1107,88 @@ export default function TimerScreen({navigation, route}) {
                 sakta tha. Ab wo restriction hata di gayi hai, isliye timer
                 hamesha available rahega. */}
             <View style={styles.timerCard}>
-                <View
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginBottom: 20,
-                    width:widthPercentageToDP(50),
-                  }}>
-                  <View style={{flexDirection: 'row', gap: 4}}>
-                    <Icon name="timer" size={20} color="#000" />
-                    <Text style={styles.summaryTitle}>Time Summary</Text>
-                  </View>
-                  <View
-                    style={{flexDirection: 'row', gap: 2, marginVertical: 4}}>
-                    <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
-                      Job Name:{' '}
-                    </Text>
-                    <Text style={styles.headerTitle}> {displayJobName}</Text>
-                  </View>
-                  <View style={{flexDirection: 'row', gap: 2}}>
-                    <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
-                      Job Address:{' '}
-                    </Text>
-                    <Text style={styles.headerTitle}> {displayJobAddress}</Text>
-                  </View>
+              <View
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginBottom: 20,
+                  width: widthPercentageToDP(50),
+                }}>
+                <View style={{flexDirection: 'row', gap: 4}}>
+                  <Icon name="timer" size={20} color="#000" />
+                  <Text style={styles.summaryTitle}>Time Summary</Text>
                 </View>
-
-                <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
-                <Text style={styles.statusText}>
-                  {isRunning ? 'Running' : 'Paused'}
-                </Text>
-
-                {elapsedTime === 0 && !isRunning && (
-                  <CustomButton
-                    label="Start Work"
-                    color="#4CAF50"
-                    onPress={handleStart}
-                    widthbtn={true}
-                    loading={startLoading}
-                    disabled={startLoading}
-                  />
-                )}
-
-                {isRunning && (
-                  <View style={styles.buttonRow}>
-                    <CustomButton
-                      label="Pause"
-                      color="#FF9800"
-                      onPress={() => setPauseModal(true)}
-                      widthbtn={true}
-                      loading={false}
-                    />
-                    <CustomButton
-                      label="Complete"
-                      color="#F44336"
-                      onPress={() => setCompleteModal(true)}
-                      widthbtn={true}
-                      loading={completeLoading}
-                      disabled={completeLoading}
-                    />
-                  </View>
-                )}
-
-                {!isRunning && elapsedTime > 0 && (
-                  <View style={styles.buttonRow}>
-                    <CustomButton
-                      label="Resume"
-                      color="#4CAF50"
-                      onPress={handleResume}
-                      widthbtn={true}
-                      loading={resumeLoading}
-                      disabled={resumeLoading}
-                    />
-                    <CustomButton
-                      label="Complete"
-                      color="#F44336"
-                      onPress={() => setCompleteModal(true)}
-                      widthbtn={true}
-                      loading={completeLoading}
-                      disabled={completeLoading}
-                    />
-                  </View>
-                )}
+                <View style={{flexDirection: 'row', gap: 2, marginVertical: 4}}>
+                  <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
+                    Job Name:{' '}
+                  </Text>
+                  <Text style={styles.headerTitle}> {displayJobName}</Text>
+                </View>
+                <View style={{flexDirection: 'row', gap: 2}}>
+                  <Text style={[styles.headerTitle, {fontWeight: '500'}]}>
+                    Job Address:{' '}
+                  </Text>
+                  <Text style={styles.headerTitle}> {displayJobAddress}</Text>
+                </View>
               </View>
+
+              <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
+              <Text style={styles.statusText}>
+                {isRunning ? 'Running' : 'Paused'}
+              </Text>
+
+              {elapsedTime === 0 && !isRunning && (
+                <CustomButton
+                  label="Start Work"
+                  color="#4CAF50"
+                  onPress={handleStart}
+                  widthbtn={true}
+                  loading={startLoading}
+                  disabled={startLoading}
+                />
+              )}
+
+              {isRunning && (
+                <View style={styles.buttonRow}>
+                  <CustomButton
+                    label="Pause"
+                    color="#FF9800"
+                    onPress={() => setPauseModal(true)}
+                    widthbtn={true}
+                    loading={false}
+                  />
+                  <CustomButton
+                    label="Complete"
+                    color="#F44336"
+                    onPress={() => setCompleteModal(true)}
+                    widthbtn={true}
+                    loading={completeLoading}
+                    disabled={completeLoading}
+                  />
+                </View>
+              )}
+
+              {!isRunning && elapsedTime > 0 && (
+                <View style={styles.buttonRow}>
+                  <CustomButton
+                    label="Resume"
+                    color="#4CAF50"
+                    onPress={handleResume}
+                    widthbtn={true}
+                    loading={resumeLoading}
+                    disabled={resumeLoading}
+                  />
+                  <CustomButton
+                    label="Complete"
+                    color="#F44336"
+                    onPress={() => setCompleteModal(true)}
+                    widthbtn={true}
+                    loading={completeLoading}
+                    disabled={completeLoading}
+                  />
+                </View>
+              )}
+            </View>
 
             {/* Completed banner for today (optional)
                 Agar future me sirf info dikhani ho ki aaj ek baar complete ho
@@ -1213,7 +1220,7 @@ export default function TimerScreen({navigation, route}) {
                   keyExtractor={(_, index) => index.toString()}
                   scrollEnabled={false}
                   renderItem={({item}) => {
-                        // console.log('item>>>>>>>', item);
+                    // console.log('item>>>>>>>', item);
 
                     return (
                       <View style={styles.logItem}>
@@ -1282,7 +1289,14 @@ export default function TimerScreen({navigation, route}) {
                         </Text>
 
                         <Text style={[styles.logTitle, {marginTop: 10}]}>
-                          Date: {item.date || '--'}
+                          Date:{' '}
+                          {item?.date
+                            ? new Date(item.date).toLocaleDateString('en-US', {
+                                month: 'long',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })
+                            : '--'}
                         </Text>
                       </View>
                       <View style={{alignItems: 'flex-end'}}>
@@ -1320,7 +1334,7 @@ export default function TimerScreen({navigation, route}) {
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>Pause Timer</Text>
-                <Text style={{ color: 'black',}}>Select a reason:</Text>
+                <Text style={{color: 'black'}}>Select a reason:</Text>
                 {[
                   'Lunch Break',
                   'Material Pickup',

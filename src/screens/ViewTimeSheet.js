@@ -21,7 +21,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useSelector} from 'react-redux';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { heightPercentageToDP, widthPercentageToDP } from '../utils';
+import {heightPercentageToDP, widthPercentageToDP} from '../utils';
 import {useBlueSheetsAutoRefresh} from '../hooks/useBlueSheetsAutoRefresh';
 
 const TimesheetScreen = ({navigation, route, job}) => {
@@ -288,7 +288,9 @@ const TimesheetScreen = ({navigation, route, job}) => {
           <Text style={styles.headerTitle}>
             {initialTimesheet ? 'Bluesheet Details' : 'Daily Timesheet'}
           </Text>
-          {(bluesheet?.job?.jobTitle || bluesheet?.job?.job_title || job?.title) && (
+          {(bluesheet?.job?.jobTitle ||
+            bluesheet?.job?.job_title ||
+            job?.title) && (
             <Text style={styles.headerSubtitle}>
               {bluesheet
                 ? bluesheet.job?.jobTitle || bluesheet.job?.job_title
@@ -311,7 +313,9 @@ const TimesheetScreen = ({navigation, route, job}) => {
         <View style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <View style={styles.jobInfo}>
-              <Text style={styles.jobTitle}>{capitalize(bluesheet?.job?.job_title)}</Text>
+              <Text style={styles.jobTitle}>
+                {capitalize(bluesheet?.job?.job_title)}
+              </Text>
               <Text style={styles.jobCustomer}>
                 {capitalize(bluesheet?.job?.customer?.customer_name)}
               </Text>
@@ -361,7 +365,14 @@ const TimesheetScreen = ({navigation, route, job}) => {
                 <Text style={styles.approvalTitle}>Timesheet Approved</Text>
                 <Text style={styles.approvalDetails}>
                   Approved by {timesheetData.approvedBy || 'Management'} on{' '}
-                  {new Date(timesheetData.approvedAt).toLocaleDateString()}
+                  {new Date(timesheetData.approvedAt).toLocaleDateString(
+                    'en-US',
+                    {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    },
+                  )}
                 </Text>
               </View>
             </View>
@@ -379,7 +390,9 @@ const TimesheetScreen = ({navigation, route, job}) => {
             <View key={entry.id} style={styles.entryCard}>
               <View style={styles.entryHeader}>
                 <View style={styles.entryInfo}>
-                  <Text style={styles.entryName}>{capitalize(entry?.employee_name)}</Text>
+                  <Text style={styles.entryName}>
+                    {capitalize(entry?.employee_name)}
+                  </Text>
                   <Text style={styles.entryDetails}></Text>
                 </View>
               </View>
@@ -436,53 +449,51 @@ const TimesheetScreen = ({navigation, route, job}) => {
                     materialLabel.trim().toLowerCase());
 
               return (
-              <View key={material.id} style={styles.entryCard}>
-                <View style={styles.entryHeader}>
-                  <View style={styles.entryInfo}>
-                    <Text style={styles.entryName}>
-                      {capitalize(
-                        materialLabel || productName || 'N/A',
-                      )}
-                    </Text>
-                    {showProductLine ? (
-                      <Text style={styles.entryDetails}>
-                        Product: {capitalize(productName)}
+                <View key={material.id} style={styles.entryCard}>
+                  <View style={styles.entryHeader}>
+                    <View style={styles.entryInfo}>
+                      <Text style={styles.entryName}>
+                        {capitalize(materialLabel || productName || 'N/A')}
                       </Text>
-                    ) : null}
-                    {material.supplier_order_id ? (
-                      <Text style={styles.entryDetails}>
-                        Order ID: {material.supplier_order_id}
+                      {showProductLine ? (
+                        <Text style={styles.entryDetails}>
+                          Product: {capitalize(productName)}
+                        </Text>
+                      ) : null}
+                      {material.supplier_order_id ? (
+                        <Text style={styles.entryDetails}>
+                          Order ID: {material.supplier_order_id}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+
+                  <View style={styles.materialGrid}>
+                    <View style={styles.materialGridItem}>
+                      <Text style={styles.entryLabel}>Ordered:</Text>
+                      <Text style={styles.entryValue}>
+                        {material.quantity} {material.unit}
                       </Text>
-                    ) : null}
+                    </View>
+
+                    <View style={styles.materialGridItem}>
+                      <Text style={styles.entryLabel}>Used:</Text>
+                      <Text style={styles.entryValue}>
+                        {material.material_used} {material.unit}
+                      </Text>
+                    </View>
+
+                    <View style={styles.materialGridItem}>
+                      <Text style={styles.entryLabel}>Remaining:</Text>
+                      <Text style={styles.entryValue}>
+                        {(material?.quantity || 0) -
+                          (material?.material_used || 0)}{' '}
+                        {material.unit}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-
-                <View style={styles.materialGrid}>
-                  <View style={styles.materialGridItem}>
-                    <Text style={styles.entryLabel}>Ordered:</Text>
-                    <Text style={styles.entryValue}>
-                      {material.quantity} {material.unit}
-                    </Text>
-                  </View>
-
-                  <View style={styles.materialGridItem}>
-                    <Text style={styles.entryLabel}>Used:</Text>
-                    <Text style={styles.entryValue}>
-                      {material.material_used} {material.unit}
-                    </Text>
-                  </View>
-
-                  <View style={styles.materialGridItem}>
-                    <Text style={styles.entryLabel}>Remaining:</Text>
-                    <Text style={styles.entryValue}>
-                      {(material?.quantity || 0) -
-                        (material?.material_used || 0)}{' '}
-                      {material.unit}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            );
+              );
             })
           ) : (
             <View style={{paddingVertical: 20, alignItems: 'center'}}>
@@ -533,8 +544,7 @@ const TimesheetScreen = ({navigation, route, job}) => {
           style={styles.imagePreviewOverlay}
           activeOpacity={1}
           onPress={() => setActiveImageIndex(null)}>
-          {activeImageIndex !== null &&
-          viewImages?.[activeImageIndex]?.uri ? (
+          {activeImageIndex !== null && viewImages?.[activeImageIndex]?.uri ? (
             <Image
               source={{uri: viewImages[activeImageIndex].uri}}
               style={styles.imagePreviewImg}
@@ -1045,7 +1055,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   imageThumbWrap: {
-    width:widthPercentageToDP(25.5),
+    width: widthPercentageToDP(25.5),
     height: heightPercentageToDP(14),
     borderRadius: 10,
     overflow: 'hidden',

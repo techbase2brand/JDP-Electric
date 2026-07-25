@@ -1288,7 +1288,7 @@ const ActivitySummaryScreen = ({navigation}) => {
     const day = parts.find(p => p.type === 'day')?.value ?? '';
     const month = parts.find(p => p.type === 'month')?.value ?? '';
     const year = parts.find(p => p.type === 'year')?.value ?? '';
-    return `${weekday}, ${day} ${month} ${year}`;
+    return `${weekday},${month} ${day}  ${year}`;
   };
 
   const formatDateForInput = dateString => {

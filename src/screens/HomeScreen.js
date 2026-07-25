@@ -207,8 +207,8 @@ const HomeScreen = ({navigation}) => {
               : await getlabourJobs(laborId, 1, 10, token);
 
           const newJobs = res?.data?.jobs ?? [];
-          console.log("resss:::",res.data);
-          
+          console.log('resss:::', res.data);
+
           setDashboardData(res?.data);
           console.log('newJobsnewJobs>>', res);
           setJobs(newJobs);
@@ -286,15 +286,16 @@ const HomeScreen = ({navigation}) => {
         completed: 'completed',
         thisWeek: 'all',
       };
-      navigation.navigate('JobStack', {status: statusByCard[item.key] || 'all'});
+      navigation.navigate('JobStack', {
+        status: statusByCard[item.key] || 'all',
+      });
     };
     return (
       <TouchableOpacity
         key={index}
         style={styles.statsCard}
         activeOpacity={0.7}
-        onPress={handlePress}
-      >
+        onPress={handlePress}>
         {/* <View style={[styles.headerCircle, styles.topRightCircle, {overflow:"hidden"}]} /> */}
 
         <View
@@ -408,7 +409,9 @@ const HomeScreen = ({navigation}) => {
             styles.jobHeaderLeft,
             {width: '100%', justifyContent: 'space-between'},
           ]}>
-          <Text style={[styles.jobId, {width: '50%'}]}>{capitalize(job.job_title)}</Text>
+          <Text style={[styles.jobId, {width: '50%'}]}>
+            {capitalize(job.job_title)}
+          </Text>
           <View
             style={[
               styles.statusBadge,
@@ -561,7 +564,15 @@ const HomeScreen = ({navigation}) => {
           </View>
         </View>
         <View style={styles.dateBadge}>
-          <Text style={styles.dateText}>{job.date}</Text>
+          <Text style={styles.dateText}>
+            {job?.date
+              ? new Date(job.date).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })
+              : '--'}
+          </Text>
         </View>
       </View>
       <Text style={styles.upcomingJobTitle}>{job.title}</Text>
@@ -702,7 +713,9 @@ const HomeScreen = ({navigation}) => {
                   />
                   {unreadCount !== 0 && (
                     <View style={styles.notificationBadge}>
-                      <Text style={styles.notificationCount}>{unreadCount}</Text>
+                      <Text style={styles.notificationCount}>
+                        {unreadCount}
+                      </Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -768,30 +781,33 @@ const HomeScreen = ({navigation}) => {
           {/* Today's Jobs */}
           {canViewJobs && (
             <View style={styles.section}>
-            <View
-              style={[styles.sectionHeader, {justifyContent: 'space-between'}]}>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                <AntDesign name="calendar" size={18} color={tabColor} />
-                <Text style={[styles.sectionTitle, {marginLeft: 4}]}>
-                  Today's Jobs
-                </Text>
-                <View style={styles.countBadge}>
-                  <Text style={styles.countText}>{jobs.length}</Text>
+              <View
+                style={[
+                  styles.sectionHeader,
+                  {justifyContent: 'space-between'},
+                ]}>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  <AntDesign name="calendar" size={18} color={tabColor} />
+                  <Text style={[styles.sectionTitle, {marginLeft: 4}]}>
+                    Today's Jobs
+                  </Text>
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countText}>{jobs.length}</Text>
+                  </View>
                 </View>
+                <TouchableOpacity
+                  style={styles.viewAllButton}
+                  onPress={() => navigation.navigate('JobStack')}>
+                  <Text style={styles.viewAllButtonText}>View All</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={styles.viewAllButton}
-                onPress={() => navigation.navigate('JobStack')}>
-                <Text style={styles.viewAllButtonText}>View All</Text>
-              </TouchableOpacity>
-            </View>
-            {loading ? (
-              <ActivityIndicator size="large" color="#3B82F6" />
-            ) : jobs?.length === 0 ? (
-              renderEmptyState()
-            ) : (
-              jobs?.slice(0, 10).map(renderJobCard)
-            )}
+              {loading ? (
+                <ActivityIndicator size="large" color="#3B82F6" />
+              ) : jobs?.length === 0 ? (
+                renderEmptyState()
+              ) : (
+                jobs?.slice(0, 10).map(renderJobCard)
+              )}
             </View>
           )}
 

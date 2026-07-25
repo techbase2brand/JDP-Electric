@@ -990,7 +990,15 @@ const JobActivityLogScreen = ({navigation, route}) => {
                               <Text style={styles.activityTitle}>
                                 {activity.title}
                               </Text>
-                              <Text style={styles.activityDate}>{date}</Text>
+                              <Text style={styles.activityDate}>
+                                {date
+                                  ? new Date(date).toLocaleDateString('en-US', {
+                                      month: 'long',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                    })
+                                  : '--'}
+                              </Text>{' '}
                             </View>
                             <Text style={styles.activityDescription}>
                               {activity.description}
@@ -1047,7 +1055,16 @@ const JobActivityLogScreen = ({navigation, route}) => {
                               {formattedTime}
                             </Text>
                           </Text>
-                          <Text style={styles.timesheetInfo}>Date: {date}</Text>
+                          <Text style={styles.timesheetInfo}>
+                            Date:{' '}
+                            {date
+                              ? new Date(date).toLocaleDateString('en-US', {
+                                  month: 'long',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })
+                              : '--'}
+                          </Text>{' '}
                         </View>
 
                         <View
