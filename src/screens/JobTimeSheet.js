@@ -33,7 +33,7 @@ import {
   updateWorkData,
 } from '../config/apiConfig';
 // import DateTimePicker from '@react-native-community/datetimepicker';
-import {heightPercentageToDP, widthPercentageToDP} from '../utils';
+import {heightPercentageToDP} from '../utils';
 import {spacings} from '../constants/Fonts';
 
 // Ensure placeholders remain visible in system dark mode
@@ -250,12 +250,13 @@ const LabourSearchDropdown = ({
     setQuery(selectedEmployee?.label || '');
   }, [selectedEmployee]);
 
+  const LABOUR_PAGE_SIZE = 10;
   const fetchPage = useCallback(
     async (pageNo = 1) => {
       if (!token) return;
       try {
         setLoading(true);
-        const res = await getAllLabor(pageNo, 10, token);
+        const res = await getAllLabor(pageNo, LABOUR_PAGE_SIZE, token);
         const data = res?.data?.data || [];
         let mergedData = Array.isArray(data) ? data : [];
 
@@ -294,7 +295,9 @@ const LabourSearchDropdown = ({
         setItems(prev =>
           pageNo === 1 ? mergedData : [...prev, ...mergedData],
         );
-        setHasMore(Array.isArray(data) ? data.length > 0 : false);
+        setHasMore(
+          Array.isArray(data) ? data.length >= LABOUR_PAGE_SIZE : false,
+        );
         setPage(pageNo);
       } catch (error) {
         console.log('[JobTimeSheet] getAllLabor error:', error);
@@ -344,7 +347,9 @@ const LabourSearchDropdown = ({
         <View style={styles.dropdownSheet}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
-            style={{maxHeight: 240}}>
+            nestedScrollEnabled
+            showsVerticalScrollIndicator
+            style={{maxHeight: 140}}>
             {filtered?.map(emp => {
               const label =
                 emp?.users?.full_name || emp?.name || 'Unknown Employee';
@@ -396,11 +401,6 @@ const LabourSearchDropdown = ({
               </TouchableOpacity>
             )}
           </ScrollView>
-          <TouchableOpacity
-            style={{alignItems: 'center', paddingVertical: 8}}
-            onPress={() => setOpen(false)}>
-            <Text style={{color: '#334155'}}>Close</Text>
-          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -674,13 +674,14 @@ const LabourModal = ({
       <KeyboardAvoidingView
         style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}>
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <TouchableWithoutFeedback
           onPress={() => {
             setShowAddLabour(false);
             Keyboard.dismiss();
           }}>
           <View style={styles.materialModalOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
             <View style={styles.modalContent}>
               <ScrollView
                 contentContainerStyle={styles.modalBody}
@@ -1114,6 +1115,7 @@ const LabourModal = ({
                 </TouchableOpacity>
               </View>
             </View>
+            </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -3280,10 +3282,11 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
     paddingBottom: 20,
-    minHeight: widthPercentageToDP(70),
+    minHeight: heightPercentageToDP(50),
+    maxHeight: heightPercentageToDP(88),
     width: '100%',
   },
   materialModalCard: {
