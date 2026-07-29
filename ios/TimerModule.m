@@ -19,4 +19,7 @@ RCT_EXTERN_METHOD(updateActivity:(nonnull NSNumber *)elapsedTime
 RCT_EXTERN_METHOD(endActivity:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(hasActiveActivity:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 @end

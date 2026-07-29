@@ -23,6 +23,10 @@ import useHasPermission from '../hooks/useHasPermission';
 import {getJobById} from '../config/apiConfig';
 import {style} from '../constants/Fonts';
 import {blackColor} from '../constants/Color';
+import {
+  isActiveJobFlagStale,
+  clearStaleActiveJobFlag,
+} from '../utils/activeJobFlag';
 
 // Embedded Colors - JDP Electrics Theme
 const Colors = {
@@ -518,14 +522,25 @@ const JobDetailScreen = ({
       if (activeJobId === currentJobId) {
         // Same job → allow navigation
         navigation.navigate('TimerScreen', {job});
-      } else {
-        // Different job already running → block
-        Alert.alert(
-          'Active Job Running',
-          `Another job (ID: ${activeJobId}) is already running. Please complete it first.`,
-          [{text: 'OK'}],
-        );
+        return;
       }
+
+      // Before blocking, make sure the "other job running" flag isn't just a
+      // stale leftover (e.g. left behind after the device was fully powered
+      // off, which ends Live Activities at the OS level without ever
+      // clearing our local flag).
+      if (await isActiveJobFlagStale()) {
+        await clearStaleActiveJobFlag();
+        navigation.navigate('TimerScreen', {job});
+        return;
+      }
+
+      // Different job genuinely already running → block
+      Alert.alert(
+        'Active Job Running',
+        `Another job (ID: ${activeJobId}) is already running. Please complete it first.`,
+        [{text: 'OK'}],
+      );
     } catch (error) {
       console.log('❌ Error checking jobId:', error);
     }

@@ -11,9 +11,9 @@ if (typeof global.WebSocket === 'undefined') {
 
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://wkphkaswwihndprhlsfh.supabase.co';
+const SUPABASE_URL = 'https://ajjhorzzoajbfownxbgo.supabase.co';
 const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcGhrYXN3d2lobmRwcmhsc2ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5OTg1OTMsImV4cCI6MjA5OTU3NDU5M30.zH-ceC5KyFRTQAekCisNN9wCIKBb2z7rL-fY4A8R5xc';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqamhvcnp6b2FqYmZvd254YmdvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NDU0ODAsImV4cCI6MjA5MjAyMTQ4MH0.ri5WPvKzRXSo-0BEu9raYl5U8cPkKOjhVsHIQUn_C8Y';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {

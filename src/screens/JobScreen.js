@@ -27,6 +27,10 @@ import {useSelector} from 'react-redux';
 import useHasPermission from '../hooks/useHasPermission';
 import {getJobs, getlabourJobs, searchMyJobs} from '../config/apiConfig';
 import {spacings} from '../constants/Fonts';
+import {
+  isActiveJobFlagStale,
+  clearStaleActiveJobFlag,
+} from '../utils/activeJobFlag';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -372,13 +376,24 @@ const JobListingScreen = ({navigation, route}) => {
       const currentJobId = job?.id?.toString() ?? job?._id?.toString();
       if (!activeJobId || activeJobId === currentJobId) {
         navigation.navigate('TimerScreen', {job});
-      } else {
-        Alert.alert(
-          'Active Job Running',
-          `Another job (ID: ${activeJobId}) is already running. Please complete it first.`,
-          [{text: 'OK'}],
-        );
+        return;
       }
+
+      // Before blocking, make sure the "other job running" flag isn't just a
+      // stale leftover (e.g. left behind after the device was fully powered
+      // off, which ends Live Activities at the OS level without ever
+      // clearing our local flag).
+      if (await isActiveJobFlagStale()) {
+        await clearStaleActiveJobFlag();
+        navigation.navigate('TimerScreen', {job});
+        return;
+      }
+
+      Alert.alert(
+        'Active Job Running',
+        `Another job (ID: ${activeJobId}) is already running. Please complete it first.`,
+        [{text: 'OK'}],
+      );
     } catch (error) {
       console.log('❌ Error checking jobId:', error);
     }

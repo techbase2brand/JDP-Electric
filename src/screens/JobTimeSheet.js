@@ -1215,13 +1215,15 @@ const MaterialModal = ({
         return;
       }
 
-      const jdpDisplayPrice = Number(
-        product?.jdp_price ??
-          product?.unit_cost ??
-          product?.estimated_price ??
-          0,
+      const jdpDisplayPrice = Math.round(
+        Number(
+          product?.jdp_price ??
+            product?.unit_cost ??
+            product?.estimated_price ??
+            0,
+        ),
       );
-      const actualUnitCost = Number(product?.unit_cost ?? 0);
+      const actualUnitCost = Math.round(Number(product?.unit_cost ?? 0));
       const unitStr =
         product?.unit != null && String(product.unit).trim() !== ''
           ? String(product.unit).trim()
@@ -1387,9 +1389,9 @@ const MaterialModal = ({
                                     ? p.unit
                                     : 'pieces',
                                   p?.jdp_price != null
-                                    ? ` · $${Number(p.jdp_price)}`
+                                    ? ` · $${Math.round(Number(p.jdp_price))}`
                                     : p?.unit_cost != null
-                                    ? ` · $${Number(p.unit_cost)}`
+                                    ? ` · $${Math.round(Number(p.unit_cost))}`
                                     : null,
                                 ]
                                   .filter(Boolean)
@@ -1482,7 +1484,7 @@ const MaterialModal = ({
                     onChangeText={text =>
                       setTempMaterialData(prev => ({
                         ...prev,
-                        jdpPrice: text === '' ? '' : parseFloat(text) || 0,
+                        jdpPrice: text === '' ? '' : Math.round(parseFloat(text)) || 0,
                       }))
                     }
                   />
@@ -1688,9 +1690,9 @@ const JobTimesheet = ({navigation, route, user}) => {
           if (!orderDate || !sameDay(orderDate, date)) return;
 
           (order?.items || []).forEach((it, idx) => {
-            const jdpPrice = Number(it?.product?.jdp_price ?? 0) || 0;
+            const jdpPrice = Math.round(Number(it?.product?.jdp_price ?? 0)) || 0;
             const estimatedUnitCost =
-              Number(it?.product?.estimated_price ?? 0) || 0;
+              Math.round(Number(it?.product?.estimated_price ?? 0)) || 0;
             const qty =
               Number(it?.quantity) || Number(it?.total_price ? 1 : 0) || 0;
             routeMaterials.push({
@@ -1706,10 +1708,10 @@ const JobTimesheet = ({navigation, route, user}) => {
               //       it?.product?.estimated_price ??
               //       0,
               //   ) || 0,
-              unitCost: Number(it?.product?.unit_cost) || 0,
+              unitCost: Math.round(Number(it?.product?.unit_cost)) || 0,
               jdpPrice,
               estimatedUnitCost,
-              estimatedCost: Number((estimatedUnitCost * qty).toFixed(2)) || 0,
+              estimatedCost: Math.round(estimatedUnitCost * qty) || 0,
               productId: it?.product?.id ?? it?.product_id ?? null,
               productName:
                 it?.product?.product_name || it?.product_name || '',
@@ -2080,14 +2082,18 @@ const JobTimesheet = ({navigation, route, user}) => {
     // console.log('m:::::::', m);
 
     const qty = Number(m.totalOrdered) || 0;
-    const unitCost = Number(m.unitCost) || 0;
-    const jdpPrice = Number(m.jdpPrice ?? m.jdp_price) || 0;
+    const unitCost = Math.round(Number(m.unitCost)) || 0;
+    const jdpPrice = Math.round(Number(m.jdpPrice ?? m.jdp_price)) || 0;
     const estimatedUnitCost =
-      Number(m.estimatedUnitCost ?? m.estimatedPrice ?? m.estimated_price) || 0;
+      Math.round(
+        Number(m.estimatedUnitCost ?? m.estimatedPrice ?? m.estimated_price),
+      ) || 0;
     const estimatedCost =
-      Number(
-        m.estimatedCost ??
-          (estimatedUnitCost ? estimatedUnitCost * qty : unitCost * qty),
+      Math.round(
+        Number(
+          m.estimatedCost ??
+            (estimatedUnitCost ? estimatedUnitCost * qty : unitCost * qty),
+        ),
       ) || 0;
 
     const payload = {

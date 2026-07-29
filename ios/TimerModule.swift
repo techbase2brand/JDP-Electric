@@ -100,4 +100,19 @@ class TimerModule: NSObject {
       resolver(true)
     }
   }
+
+  // Reports whether the OS actually still has a live activity running.
+  // Used to detect stale local "timer running" flags left behind after
+  // a full device power-off (which ends all Live Activities at the OS level).
+  @objc
+  func hasActiveActivity(
+    _ resolver: @escaping RCTPromiseResolveBlock,
+    rejecter: @escaping RCTPromiseRejectBlock
+  ) {
+    if #available(iOS 16.1, *) {
+      resolver(!Activity<TimerAttributes>.activities.isEmpty)
+    } else {
+      resolver(false)
+    }
+  }
 }

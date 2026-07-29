@@ -625,6 +625,7 @@ export default function TimerScreen({navigation, route}) {
 
       const jobIdToStore = job?.id ?? job?.job?.id;
       await AsyncStorage.setItem('activeJobId', String(jobIdToStore));
+      await AsyncStorage.setItem('activeJobStartedAt', String(Date.now()));
       setStoredJobId(jobIdToStore);
 
       const jobName = job?.job_title || job?.title || job?.name || 'Work';
@@ -975,6 +976,7 @@ export default function TimerScreen({navigation, route}) {
       await AsyncStorage.removeItem('activeJobId');
       await AsyncStorage.removeItem('activeJobName');
       await AsyncStorage.removeItem('activeJobAddress');
+      await AsyncStorage.removeItem('activeJobStartedAt');
       await bufferDel(LS_KEYS.start);
       await bufferDel(LS_KEYS.pauses);
       await bufferDel(LS_KEYS.elapsedOnResume);
@@ -1136,7 +1138,16 @@ export default function TimerScreen({navigation, route}) {
               <Text style={styles.statusText}>
                 {isRunning ? 'Running' : 'Paused'}
               </Text>
-
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: '#D97706',
+                  textAlign: 'center',
+                  marginBottom: 8,
+                }}>
+                Please save your timer if your phone battery is low to avoid
+                losing your work time.
+              </Text>
               {elapsedTime === 0 && !isRunning && (
                 <CustomButton
                   label="Start Work"

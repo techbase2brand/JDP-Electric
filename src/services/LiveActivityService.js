@@ -42,3 +42,16 @@ export const updateLiveActivity = (
     console.warn('updateLiveActivity:', e?.message);
   }
 };
+
+// Returns true/false when the OS can confirm real Live Activity state,
+// or null when that can't be determined (Android, older iOS, native error) —
+// callers should treat null as "unknown, don't act on it".
+export const hasActiveLiveActivity = async () => {
+  if (Platform.OS !== 'ios' || !TimerModule?.hasActiveActivity) return null;
+  try {
+    return !!(await TimerModule.hasActiveActivity());
+  } catch (e) {
+    console.warn('hasActiveLiveActivity:', e?.message);
+    return null;
+  }
+};
