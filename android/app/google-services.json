@@ -1,21 +1,40 @@
 {
   "project_info": {
-    "project_number": "55007327977",
-    "project_id": "jdp-electric",
-    "storage_bucket": "jdp-electric.firebasestorage.app"
+    "project_number": "488201906725",
+    "project_id": "jdp-8e4b1",
+    "storage_bucket": "jdp-8e4b1.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:55007327977:android:5ee934213a164c30622278",
+        "mobilesdk_app_id": "1:488201906725:android:bf41713cb5fdfdb5692dcc",
         "android_client_info": {
-          "package_name": "com.electrician"
+          "package_name": "com.Electrician.jdp"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD0qEOp0vupbswQfefkARSGKSili9bQA2U"
+          "current_key": "AIzaSyCe4ltbWCmEqvnMh0STYg5q5TJb0PcD7pQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:488201906725:android:5c56cf4aa1ac7d8f692dcc",
+        "android_client_info": {
+          "package_name": "com.marle.jdpelectric"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCe4ltbWCmEqvnMh0STYg5q5TJb0PcD7pQ"
         }
       ],
       "services": {

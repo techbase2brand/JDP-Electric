@@ -10,7 +10,7 @@ import SwiftUI
 import WidgetKit
 
 struct TimerWidgetExtensionControl: ControlWidget {
-    static let kind: String = "com.Electrician.jdp.TimerWidgetExtension"
+    static let kind: String = "com.marle.jdpelectric.TimerWidgetExtension"
 
     var body: some ControlWidgetConfiguration {
         AppIntentControlConfiguration(

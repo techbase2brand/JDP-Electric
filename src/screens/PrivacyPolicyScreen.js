@@ -5,11 +5,21 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Linking,
+  Alert,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
+const PRIVACY_POLICY_URL = 'https://www.kamartechnologies.com/privacy-policy';
+
 const PrivacyPolicyScreen = ({ navigation }) => {
+  const openPrivacyPolicy = () => {
+    Linking.openURL(PRIVACY_POLICY_URL).catch(() =>
+      Alert.alert('Error', 'Unable to open the Privacy Policy link'),
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -120,12 +130,14 @@ const PrivacyPolicyScreen = ({ navigation }) => {
 
           <Text style={styles.sectionTitle}>10. Contact Us</Text>
           <Text style={styles.paragraph}>
-            If you have any questions about this Privacy Policy, please contact us:
+            If you have any questions about this Privacy Policy, please contact us through the Support section of the app. You can also read the latest version of this policy online:
           </Text>
           <View style={styles.contactInfo}>
-            <Text style={styles.contactText}>Email: privacy@jdpelectric.com</Text>
-            <Text style={styles.contactText}>Phone: +1 (555) 123-4567</Text>
-            <Text style={styles.contactText}>Address: 1234 Business Blvd, Houston, TX 77001</Text>
+            <TouchableOpacity onPress={openPrivacyPolicy}>
+              <Text style={[styles.contactText, {color: '#2563eb', textDecorationLine: 'underline'}]}>
+                {PRIVACY_POLICY_URL}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
