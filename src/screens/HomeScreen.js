@@ -48,6 +48,7 @@ import {
 } from '../config/apiConfig';
 import {useFocusEffect} from '@react-navigation/native';
 import {useNotifications} from '../hooks/useNotifications';
+import ActiveTimerCard from '../components/ActiveTimerCard';
 
 const HomeScreen = ({navigation}) => {
   const user = useSelector(state => state.user.user);
@@ -777,6 +778,9 @@ const HomeScreen = ({navigation}) => {
               </View>
             </View>
           )}
+
+          {/* Work timer: running job, or last job's timer */}
+          <ActiveTimerCard navigation={navigation} />
 
           {/* Today's Jobs */}
           {canViewJobs && (

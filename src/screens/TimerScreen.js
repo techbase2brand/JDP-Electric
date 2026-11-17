@@ -632,6 +632,11 @@ export default function TimerScreen({navigation, route}) {
       const jobAddress = job?.job?.address || job?.address || '';
       await AsyncStorage.setItem('activeJobName', jobName);
       await AsyncStorage.setItem('activeJobAddress', jobAddress);
+      // kept after the timer stops so Home can show the last job's timer
+      await AsyncStorage.setItem(
+        'lastTimerJob',
+        JSON.stringify({id: jobIdToStore, name: jobName, address: jobAddress}),
+      );
 
       const nowISO = new Date().toISOString();
       setStartISO(nowISO);

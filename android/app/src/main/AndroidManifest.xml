@@ -5,6 +5,8 @@
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+<!-- Timer notification runs as a foreground service; Android 14+ requires a declared type -->
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 <!-- Added by the notification library but not used by this app -->
 <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" tools:node="remove" />
 <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
@@ -34,5 +36,13 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+      <service
+        android:name="app.notifee.core.ForegroundService"
+        android:foregroundServiceType="specialUse"
+        android:exported="false">
+        <property
+          android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+          android:value="Keeps the running work timer notification updated while the app is in the background" />
+      </service>
     </application>
 </manifest>
