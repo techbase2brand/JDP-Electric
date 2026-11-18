@@ -1,8 +1,9 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   StatusBar,
   StyleSheet,
@@ -14,6 +15,7 @@ import {
   TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import PurchaseOrdersSection from '../components/PurchaseOrdersSection';
 import Skeleton from 'react-native-reanimated-skeleton';
 import {useNavigation} from '@react-navigation/native';
 import {widthPercentageToDP} from '../utils';
@@ -173,6 +175,24 @@ const JobDetailScreen = ({
   const subJobs = Array.isArray(mainJob?.subJobs) ? mainJob.subJobs : [];
 
   const effectiveJob = viewingJob ?? job;
+
+  // Purchase Orders section (read-only): pull-to-refresh and load-more-on-scroll
+  const ordersRef = useRef(null);
+  const [ordersRefreshing, setOrdersRefreshing] = useState(false);
+  const handleOrdersRefresh = async () => {
+    setOrdersRefreshing(true);
+    try {
+      await ordersRef.current?.refresh();
+    } finally {
+      setOrdersRefreshing(false);
+    }
+  };
+  const handleOrdersScroll = ({nativeEvent}) => {
+    const {layoutMeasurement, contentOffset, contentSize} = nativeEvent;
+    if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 120) {
+      ordersRef.current?.loadMore();
+    }
+  };
 
   const getTimerStorageKey = () => {
     const base =
@@ -593,7 +613,14 @@ const JobDetailScreen = ({
       </View> */}
 
       {/* Timer Display */}
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={ordersRefreshing} onRefresh={handleOrdersRefresh} />
+        }
+        onScroll={handleOrdersScroll}
+        scrollEventThrottle={250}>
         {/* Main & Sub Job section: show only on overview; hide when user tapped main/sub card */}
         {canViewSubJobs &&
           mainJob &&
@@ -1351,6 +1378,12 @@ const JobDetailScreen = ({
             </TouchableOpacity>
           </TouchableOpacity>
         </Modal>
+
+        {/* Purchase Orders of the job that is open (read-only) */}
+        <PurchaseOrdersSection
+          ref={ordersRef}
+          jobId={effectiveJob?.id ?? effectiveJob?._id}
+        />
 
         {/* Bottom Spacing */}
         <View style={{height: 80}} />

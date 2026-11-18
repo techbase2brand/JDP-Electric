@@ -49,6 +49,10 @@ import {
 } from '../services/locationTimerGuard';
 import {ensureLocationAvailableForTimer} from '../services/timerLocationCheck';
 import {LOCATION_OFF_LIVE_MESSAGE} from '../services/LiveActivityService';
+import {startTimer as startServerTimer, runTimerAction} from '../services/timerApi';
+import {findMyTimer} from '../utils/myTimer';
+import {useLiveTimers} from '../hooks/useLiveTimers';
+import LiveIndicator from '../components/LiveIndicator';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -162,6 +166,14 @@ export default function TimerScreen({navigation, route}) {
     job?.job_title || job?.title || job?.name || storedJobName || '—';
   const displayJobAddress =
     job?.job?.address || job?.address || storedJobAddress || '—';
+
+  // Real-time timers: joins this job's room and keeps the server timers fresh.
+  useLiveTimers(jobId);
+  const notifyQueued = () =>
+    Alert.alert(
+      'No internet connection',
+      'Saved on this phone. It will sync automatically when you are back online.',
+    );
 
   // geofence state
   const [destinationCoordinates, setDestinationCoordinates] = useState(null);
@@ -624,6 +636,18 @@ export default function TimerScreen({navigation, route}) {
       }
 
       const jobIdToStore = job?.id ?? job?.job?.id;
+
+      // The server starts the timer (and stops anyone starting a second one).
+      try {
+        await startServerTimer({jobId: jobIdToStore});
+      } catch (e) {
+        Alert.alert(
+          e?.status === 409 ? 'Timer already running' : 'Could not start timer',
+          e?.message || 'Please try again.',
+        );
+        return;
+      }
+
       await AsyncStorage.setItem('activeJobId', String(jobIdToStore));
       await AsyncStorage.setItem('activeJobStartedAt', String(Date.now()));
       setStoredJobId(jobIdToStore);
@@ -652,7 +676,7 @@ export default function TimerScreen({navigation, route}) {
       // Don't show notification when app is active — only when app goes to background (handled in App.tsx)
       // await showTimerNotification(0, true, jobName);
       resetLocationTimerGuard();
-      dispatch(startTimerWithBackground());
+      // local timer state is mirrored from the server timer (useServerTimerBridge)
       await startLiveActivity(0, jobName);
       updateLiveActivity(0, true, '');
     } catch (e) {
@@ -749,6 +773,24 @@ export default function TimerScreen({navigation, route}) {
     try {
       setPauseConfirmLoading(true);
 
+      // Server first: it saves the break (title, note) into the timesheet.
+      const myTimer =
+        findMyTimer(store.getState().liveTimers.timers, user, jobId) ||
+        findMyTimer(store.getState().liveTimers.timers, user);
+      if (myTimer) {
+        try {
+          const r = await runTimerAction('pause', {
+            timerId: myTimer.id,
+            title: pauseReason,
+            note: pauseReason === 'Other' ? pauseNotes : '',
+          });
+          if (r?.queued) notifyQueued();
+        } catch (e) {
+          Alert.alert('Could not pause', e?.message || 'Please try again.');
+          return;
+        }
+      }
+
       const startedAt = Date.now();
       setCurrentPauseStartedAt(startedAt);
       setCurrentPauseTitle(pauseReason);
@@ -788,6 +830,19 @@ export default function TimerScreen({navigation, route}) {
       const locationOk = await ensureLocationAvailableForTimer();
       if (!locationOk) {
         return;
+      }
+
+      const myTimer =
+        findMyTimer(store.getState().liveTimers.timers, user, jobId) ||
+        findMyTimer(store.getState().liveTimers.timers, user);
+      if (myTimer) {
+        try {
+          const r = await runTimerAction('resume', {timerId: myTimer.id});
+          if (r?.queued) notifyQueued();
+        } catch (e) {
+          Alert.alert('Could not resume', e?.message || 'Please try again.');
+          return;
+        }
       }
 
       if (currentPauseStartedAt && currentPauseTitle) {
@@ -944,38 +999,25 @@ export default function TimerScreen({navigation, route}) {
       bufferedPauses = bufferedPauses.filter(p => p.duration !== '00:00:00');
       // ----------------------------------------------------
       await bufferDel(LS_KEYS.pending);
-      const payload = buildLaborTimesheetPayload({
-        totalMs: finalElapsed,
-        pauseList: bufferedPauses,
-        startISO: persistedStart,
-        endISO: end,
-        markCompleted: true,
-      });
-      console.log('[Timer Complete API] REQUEST', {
-        jobId: jobIdForApi,
-        endpoint: `/job/updateWorkData/${jobIdForApi}`,
-        labor_id_in_body: payload?.labor_timesheet?.labor_id,
-        lead_labor_id_in_body: payload?.labor_timesheet?.lead_labor_id,
-        work_activity: payload?.labor_timesheet?.work_activity,
-        payload,
-      });
 
-      try {
-        const response = await updateWorkData(jobIdForApi, payload, token);
-        console.log('[Timer Complete API] RESPONSE OK', {
-          jobId: jobIdForApi,
-          work_activity_sent: payload?.labor_timesheet?.work_activity,
-          response,
-        });
-      } catch (e) {
-        console.log('[Timer Complete API] RESPONSE ERROR', {
-          jobId: jobIdForApi,
-          error: e?.message || e,
-        });
-        // await enqueuePending(payload);
+      // The server saves the timesheet (start, end, work time, breaks, job status) when the timer stops.
+      const myTimer =
+        findMyTimer(store.getState().liveTimers.timers, user, jobIdForApi) ||
+        findMyTimer(store.getState().liveTimers.timers, user);
+      if (myTimer) {
+        try {
+          const r = await runTimerAction('stop', {
+            timerId: myTimer.id,
+            markCompleted: true,
+          });
+          if (r?.queued && !auto) notifyQueued();
+        } catch (e) {
+          if (!auto) {
+            Alert.alert('Could not complete', e?.message || 'Please try again.');
+          }
+          return; // the server refused: keep the timer so the user can retry
+        }
       }
-
-      await tryFlushPending();
 
       // buffer cleanup
       await AsyncStorage.removeItem('activeJobId');
@@ -1139,6 +1181,7 @@ export default function TimerScreen({navigation, route}) {
                 </View>
               </View>
 
+              <LiveIndicator style={{alignSelf: 'center', marginBottom: 6}} />
               <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
               <Text style={styles.statusText}>
                 {isRunning ? 'Running' : 'Paused'}

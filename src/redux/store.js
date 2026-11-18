@@ -6,6 +6,7 @@ import userReducer from './userSlice'; // Create this slice below
 import timerReducer from './timerSlice'; // Create this slice below
 import cartReducer from './cartSlice';
 import notificationReducer from './notificationSlice';
+import liveTimerReducer from './liveTimerSlice';
 
 const persistConfig = {
   key: 'root',
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   timer: timerReducer,
   cart: cartReducer,
   notification: notificationReducer,
+  liveTimers: liveTimerReducer, // server-driven timers (not persisted)
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

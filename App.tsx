@@ -116,7 +116,12 @@ import {
 import {LOCATION_OFF_LIVE_MESSAGE} from './src/services/LiveActivityService';
 import {performLogout} from './src/utils/logout';
 import {useNotifications} from './src/hooks/useNotifications';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {startTimerRealtime, stopTimerRealtime} from './src/services/timerSocket';
+import useServerTimerBridge from './src/hooks/useServerTimerBridge';
+import {
+  SafeAreaProvider,
+  SafeAreaView as InsetsSafeAreaView,
+} from 'react-native-safe-area-context';
 import crashlytics from '@react-native-firebase/crashlytics';
 const {flex} = BaseStyle;
 const AppContent = () => {
@@ -133,6 +138,18 @@ const AppContent = () => {
   const userId = user?.id;
 
   const {unreadCount} = useNotifications(userId, token);
+
+  // Keep the local timer state/notification in line with the server timer.
+  useServerTimerBridge();
+
+  // Real-time timers: one shared socket, connected after login and closed on logout.
+  useEffect(() => {
+    if (token) {
+      startTimerRealtime();
+    } else {
+      stopTimerRealtime();
+    }
+  }, [token]);
   useEffect(() => {
     if (user !== null) {
       updateBadge(unreadCount);
@@ -591,12 +608,17 @@ const AppContent = () => {
     }
   };
 
+  // React Native's SafeAreaView only works on iOS. On Android 15+ the app is drawn edge-to-edge
+  // (behind the status bar and navigation bar), so Android uses the insets-aware SafeAreaView.
+  const RootView = Platform.OS === 'android' ? InsetsSafeAreaView : SafeAreaView;
+
   return (
-    <SafeAreaView style={[flex, {backgroundColor: whiteColor}]}>
+    <RootView style={[flex, {backgroundColor: whiteColor}]}>
+      {Platform.OS === 'android' && (
+        <StatusBar barStyle="dark-content" backgroundColor={whiteColor} />
+      )}
       <KeyboardAvoidingView
-        style={{
-          height: Platform.OS === 'ios' ? hp(94.6) : hp(100),
-        }}
+        style={Platform.OS === 'ios' ? {height: hp(94.6)} : {flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <NavigationContainer
@@ -617,14 +639,16 @@ const AppContent = () => {
           <FloatingTimer />
         </NavigationContainer>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </RootView>
   );
 };
 
 const App = () => (
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
-      <AppContent />
+      <SafeAreaProvider>
+        <AppContent />
+      </SafeAreaProvider>
     </PersistGate>
   </Provider>
 );

@@ -44,6 +44,12 @@ const timerSlice = createSlice({
       state.startTime = null;
       state.elapsedTime = 0;
     },
+    // Mirror of the server timer (the server is the source of truth).
+    syncFromServer: (state, {payload}) => {
+      state.isRunning = !!payload.isRunning;
+      state.elapsedTime = Math.max(0, payload.elapsedMs || 0);
+      state.startTime = payload.isRunning ? Date.now() - state.elapsedTime : null;
+    },
     updateElapsedTime: state => {
       if (state.startTime != null) {
         state.elapsedTime = Date.now() - state.startTime;
@@ -52,8 +58,14 @@ const timerSlice = createSlice({
   },
 });
 
-export const {startTimer, pauseTimer, resumeTimer, stopTimer, updateElapsedTime} =
-  timerSlice.actions;
+export const {
+  startTimer,
+  pauseTimer,
+  resumeTimer,
+  stopTimer,
+  updateElapsedTime,
+  syncFromServer,
+} = timerSlice.actions;
 
 /** Restart the tick loop and catch up elapsed from startTime (iOS background / app relaunch). */
 export const ensureTimerTicking = () => (dispatch, getState) => {
@@ -70,6 +82,16 @@ export const ensureTimerTicking = () => (dispatch, getState) => {
   }
 
   beginTicking(dispatch);
+};
+
+/** Apply the server timer's state to the local mirror and start/stop the tick loop. */
+export const syncServerTimer = ({isRunning, elapsedMs}) => dispatch => {
+  dispatch(syncFromServer({isRunning, elapsedMs}));
+  if (isRunning) {
+    beginTicking(dispatch);
+  } else {
+    stopTicking();
+  }
 };
 
 export const startTimerWithBackground = () => dispatch => {

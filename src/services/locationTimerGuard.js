@@ -11,6 +11,8 @@ import {
   LOCATION_OFF_LIVE_MESSAGE,
 } from './LiveActivityService';
 import {showTimerLocationOffNotification} from './TimerNotificationService';
+import {runTimerAction} from './timerApi';
+import {findMyTimer} from '../utils/myTimer';
 
 let watchId = null;
 let locationPauseHandled = false;
@@ -63,6 +65,16 @@ export const handleTimerPausedDueToLocationOff = async () => {
 
   const elapsedMs = state.elapsedTime ?? 0;
   store.dispatch(pauseTimerWithBackground());
+  // tell the server too (it saves the break as "Location off")
+  const {liveTimers, user} = store.getState();
+  const myTimer = findMyTimer(liveTimers?.timers, user?.user);
+  if (myTimer) {
+    runTimerAction('pause', {
+      timerId: myTimer.id,
+      title: 'Location off',
+      reason: 'location_off',
+    }).catch(e => console.log('server pause (location off) failed:', e?.message));
+  }
   const p = await getPersistedTimerState();
   await persistTimerState(elapsedMs, false, p?.jobName || 'Work');
   await notifyUserLocationOff(elapsedMs);

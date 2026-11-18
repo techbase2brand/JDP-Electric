@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {hasActiveLiveActivity} from '../services/LiveActivityService';
+import {store} from '../redux/store';
+import {findMyTimer} from './myTimer';
 
 // If a locally-stored "started_at" timestamp is older than this, and we
 // can't otherwise confirm a Live Activity is really running, treat the
@@ -11,6 +13,11 @@ const STALE_AFTER_MS = 16 * 60 * 60 * 1000; // 16 hours
 // power-off (which ends Live Activities at the OS level but never touches
 // our AsyncStorage flag).
 export const isActiveJobFlagStale = async () => {
+  // The server knows: after a sync, the flag is real only if the server still has the user's timer.
+  const {liveTimers, user} = store.getState();
+  if (liveTimers?.lastSyncAt) {
+    return !findMyTimer(liveTimers.timers, user?.user);
+  }
   const liveActivityRunning = await hasActiveLiveActivity();
   if (liveActivityRunning === true) return false;
   if (liveActivityRunning === false) return true;
