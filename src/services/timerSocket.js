@@ -9,7 +9,7 @@ import {
   setConnection,
   clearLiveTimers,
 } from '../redux/liveTimerSlice';
-import {getActiveTimers, flushTimerQueue} from './timerApi';
+import {getActiveTimers, flushTimerQueue, refreshPendingCount} from './timerApi';
 import {TIMER_ORIGIN, TIMER_EXTRA_HEADERS} from '../config/timerConfig';
 
 /**
@@ -54,6 +54,9 @@ export const connectTimerSocket = () => {
   socket = io(TIMER_ORIGIN, {
     path: '/socket.io',
     transports: ['websocket', 'polling'],
+    // If the websocket upgrade is blocked (the production Apache does not proxy websockets yet),
+    // fall back to long-polling instead of failing.
+    tryAllTransports: true,
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
@@ -132,6 +135,7 @@ export const unsubscribeJob = jobId => {
 
 /** Call once after login. */
 export const startTimerRealtime = () => {
+  refreshPendingCount();
   connectTimerSocket();
   if (listenersStarted) return;
   listenersStarted = true;

@@ -1,7 +1,13 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {store} from '../redux/store';
-import {setClockOffset, upsertTimer, removeTimer, setTimers} from '../redux/liveTimerSlice';
+import {
+  setClockOffset,
+  upsertTimer,
+  removeTimer,
+  setTimers,
+  setPendingActions,
+} from '../redux/liveTimerSlice';
 import {TIMER_API_URL, TIMER_EXTRA_HEADERS} from '../config/timerConfig';
 
 /**
@@ -15,9 +21,20 @@ const http = axios.create({
   headers: {'Content-Type': 'application/json', ...TIMER_EXTRA_HEADERS},
 });
 
+/** TEMPORARY debug log (one JSON line per event). Remove once the timer timing is confirmed. */
+export const timerDebug = (event, data = {}) =>
+  console.log('[TIMER-DEBUG]', JSON.stringify({event, time: new Date().toISOString(), ...data}));
+
 const request = async (method, path, {body, params} = {}) => {
   const token = store.getState()?.user?.token;
   const sentAt = Date.now();
+  const dbg = {
+    action: path.replace('/timers/', ''),
+    timerId: body?.timerId ?? null,
+    jobId: body?.jobId ?? params?.jobId ?? null,
+    at: body?.at ?? null,
+    sentAt: new Date(sentAt).toISOString(),
+  };
   try {
     const res = await http.request({
       method,
@@ -27,6 +44,12 @@ const request = async (method, path, {body, params} = {}) => {
       headers: {Authorization: `Bearer ${token}`},
     });
     const b = res.data || {};
+    timerDebug('response', {
+      ...dbg,
+      status: res.status,
+      receivedAt: new Date().toISOString(),
+      ms: Date.now() - sentAt,
+    });
     if (Number.isFinite(b.serverNow)) {
       // assume the server stamped serverNow halfway through the round trip
       const mid = (sentAt + Date.now()) / 2;
@@ -34,6 +57,13 @@ const request = async (method, path, {body, params} = {}) => {
     }
     return b;
   } catch (e) {
+    timerDebug('response', {
+      ...dbg,
+      status: e.response?.status ?? 'no response',
+      error: e.response?.data?.message || e.message,
+      receivedAt: new Date().toISOString(),
+      ms: Date.now() - sentAt,
+    });
     if (e.response) {
       const err = new Error(e.response.data?.message || e.message || 'Request failed');
       err.status = e.response.status;
@@ -109,6 +139,10 @@ const writeQueue = q => AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(q)).catch
 
 export const getQueuedActionCount = async () => (await readQueue()).length;
 
+/** Re-read the saved queue and update the "not synced yet" counter. */
+export const refreshPendingCount = async () =>
+  store.dispatch(setPendingActions(await getQueuedActionCount()));
+
 const send = (type, payload, at) => {
   switch (type) {
     case 'start':
@@ -138,6 +172,8 @@ export const runTimerAction = async (type, payload = {}) => {
     const localId = type === 'start' ? `local:${Date.now()}` : undefined;
     q.push({type, payload, at: Date.now(), localId});
     await writeQueue(q);
+    store.dispatch(setPendingActions(q.length));
+    timerDebug('queued', {action: type, timerId: payload?.timerId ?? null, at: q[q.length - 1].at, waiting: q.length});
     return {queued: true, localId};
   }
 };
@@ -167,6 +203,8 @@ export const flushTimerQueue = async () => {
       await writeQueue(q);
     }
     await writeQueue(q);
+    store.dispatch(setPendingActions(q.length));
+    if (sent) timerDebug('queue-flushed', {sent, left: q.length});
     return {sent, left: q.length};
   } finally {
     flushing = false;

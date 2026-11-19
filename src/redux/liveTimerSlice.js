@@ -12,6 +12,7 @@ const initialState = {
   clockOffset: 0,
   connection: 'disconnected', // 'disconnected' | 'connecting' | 'connected' | 'reconnecting'
   lastSyncAt: null,
+  pendingActions: 0, // timer actions saved on the phone, not yet sent to the server
 };
 
 const liveTimerSlice = createSlice({
@@ -44,12 +45,22 @@ const liveTimerSlice = createSlice({
     setConnection: (state, {payload}) => {
       state.connection = payload;
     },
+    setPendingActions: (state, {payload}) => {
+      state.pendingActions = payload || 0;
+    },
     clearLiveTimers: () => initialState,
   },
 });
 
-export const {setTimers, upsertTimer, removeTimer, setClockOffset, setConnection, clearLiveTimers} =
-  liveTimerSlice.actions;
+export const {
+  setTimers,
+  upsertTimer,
+  removeTimer,
+  setClockOffset,
+  setConnection,
+  setPendingActions,
+  clearLiveTimers,
+} = liveTimerSlice.actions;
 
 /** Elapsed ms of a timer right now, from server data. */
 export const computeElapsedMs = (timer, clockOffset = 0, now = Date.now()) => {

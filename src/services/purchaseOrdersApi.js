@@ -2,7 +2,7 @@ import axios from 'axios';
 import {store} from '../redux/store';
 import {TIMER_API_URL, TIMER_EXTRA_HEADERS} from '../config/timerConfig';
 
-// Same backend (and temporary ngrok URL/headers) as the real-time timer API.
+// Same backend as the real-time timer API (see timerConfig.js).
 const http = axios.create({
   baseURL: TIMER_API_URL,
   timeout: 15000,

@@ -49,10 +49,16 @@ import {
 } from '../services/locationTimerGuard';
 import {ensureLocationAvailableForTimer} from '../services/timerLocationCheck';
 import {LOCATION_OFF_LIVE_MESSAGE} from '../services/LiveActivityService';
-import {startTimer as startServerTimer, runTimerAction} from '../services/timerApi';
+import {
+  startTimer as startServerTimer,
+  runTimerAction,
+  getActiveTimers,
+  timerDebug,
+} from '../services/timerApi';
 import {findMyTimer} from '../utils/myTimer';
 import {useLiveTimers} from '../hooks/useLiveTimers';
 import LiveIndicator from '../components/LiveIndicator';
+import SyncPendingBanner from '../components/SyncPendingBanner';
 
 // Ensure placeholders remain visible in system dark mode
 TextInput.defaultProps = {
@@ -601,6 +607,7 @@ export default function TimerScreen({navigation, route}) {
   // ---------- START ----------
   const handleStart = async () => {
     try {
+      timerDebug('tap', {button: 'start'});
       setStartLoading(true);
 
       if (ENABLE_GEOFENCING) {
@@ -771,6 +778,7 @@ export default function TimerScreen({navigation, route}) {
   const handleConfirmPause = async () => {
     if (!pauseReason) return;
     try {
+      timerDebug('tap', {button: 'pause', reason: pauseReason});
       setPauseConfirmLoading(true);
 
       // Server first: it saves the break (title, note) into the timesheet.
@@ -825,9 +833,11 @@ export default function TimerScreen({navigation, route}) {
   // ---------- RESUME ----------
   const handleResume = async () => {
     try {
+      timerDebug('tap', {button: 'resume'});
       setResumeLoading(true);
 
       const locationOk = await ensureLocationAvailableForTimer();
+      timerDebug('resume-location-check-done', {locationOk});
       if (!locationOk) {
         return;
       }
@@ -954,6 +964,58 @@ export default function TimerScreen({navigation, route}) {
       }
       const jobIdForApi = storedJobId ?? job?.id ?? job?.job?.id;
       const end = new Date().toISOString();
+      timerDebug('tap', {button: 'complete/stop', auto: !!auto});
+
+      // The server saves the timesheet (start, end, work time, breaks, job status) when the timer stops.
+      const findServerTimer = () =>
+        findMyTimer(store.getState().liveTimers.timers, user, jobIdForApi) ||
+        findMyTimer(store.getState().liveTimers.timers, user);
+      let myTimer = findServerTimer();
+      if (!myTimer) {
+        // The list on the phone may be out of date (app just reopened, sync not finished).
+        // Ask the server before deciding there is nothing to stop.
+        try {
+          await getActiveTimers();
+          myTimer = findServerTimer();
+        } catch (e) {
+          console.log('[Timer Stop] could not check the server timer:', e?.message);
+          if (!auto) {
+            Alert.alert(
+              'Could not complete',
+              e?.message || 'Unable to reach the server. Please try again.',
+            );
+          }
+          return; // do not close the timer on the phone while the server may still be running it
+        }
+      }
+      if (myTimer) {
+        console.log('[Timer Stop] request', {
+          timerId: myTimer.id,
+          jobId: jobIdForApi,
+          status: myTimer.status,
+          markCompleted: true,
+        });
+        try {
+          const r = await runTimerAction('stop', {
+            timerId: myTimer.id,
+            markCompleted: true,
+          });
+          console.log('[Timer Stop] response', {
+            queued: !!r?.queued,
+            alreadyStopped: !!r?.alreadyStopped,
+            timesheetId: r?.timesheet?.id ?? null,
+          });
+          if (r?.queued && !auto) notifyQueued();
+        } catch (e) {
+          console.log('[Timer Stop] failed', {status: e?.status, message: e?.message});
+          if (!auto) {
+            Alert.alert('Could not complete', e?.message || 'Please try again.');
+          }
+          return; // the server refused: keep the timer so the user can retry
+        }
+      } else {
+        console.log('[Timer Stop] the server has no running timer for this user: nothing to stop');
+      }
 
       //  fetch original start time
       const persistedStart =
@@ -999,25 +1061,6 @@ export default function TimerScreen({navigation, route}) {
       bufferedPauses = bufferedPauses.filter(p => p.duration !== '00:00:00');
       // ----------------------------------------------------
       await bufferDel(LS_KEYS.pending);
-
-      // The server saves the timesheet (start, end, work time, breaks, job status) when the timer stops.
-      const myTimer =
-        findMyTimer(store.getState().liveTimers.timers, user, jobIdForApi) ||
-        findMyTimer(store.getState().liveTimers.timers, user);
-      if (myTimer) {
-        try {
-          const r = await runTimerAction('stop', {
-            timerId: myTimer.id,
-            markCompleted: true,
-          });
-          if (r?.queued && !auto) notifyQueued();
-        } catch (e) {
-          if (!auto) {
-            Alert.alert('Could not complete', e?.message || 'Please try again.');
-          }
-          return; // the server refused: keep the timer so the user can retry
-        }
-      }
 
       // buffer cleanup
       await AsyncStorage.removeItem('activeJobId');
@@ -1181,6 +1224,7 @@ export default function TimerScreen({navigation, route}) {
                 </View>
               </View>
 
+              <SyncPendingBanner />
               <LiveIndicator style={{alignSelf: 'center', marginBottom: 6}} />
               <Text style={styles.timerText}>{formatTime(elapsedTime)}</Text>
               <Text style={styles.statusText}>
